@@ -48,4 +48,22 @@ reset(t::Task, x) = t.storage[:reset](x)
 *{M<:MCMCModel, S<:MCMCSampler}(m::Array{M}, s::S) = map((me) -> spinTask(me, s), m)
 *{M<:MCMCModel, S<:MCMCSampler}(m::M, s::Array{S}) = map((se) -> spinTask(m, se), s)
 
+
+#######  model creation from expression stuff + auto diff  ##########
+import Base.sum
+sum(x::Real) = x  # meant to avoid the annoying behaviour of sum(Inf) 
+
+export generateModelFunction
+
+# naming conventions
+const ACC_SYM = :__acc       # name of accumulator variable
+const PARAM_SYM = :__beta    # name of parameter vector
+const TEMP_NAME = "tmp"      # prefix of temporary variables in log-likelihood function
+const DERIV_PREFIX = "d"     # prefix of gradient variables in log-likelihood function
+
+include("modellers/parsing.jl")      #  include model processing functions		
+include("modellers/diff.jl")         #  include derivatives definitions
+include("modellers/distribs.jl")     #  include distributions definitions
+
+
 end
