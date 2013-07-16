@@ -46,11 +46,11 @@ substSymbols(ex::Vector{Expr}, smap::Dict) =  map(e -> substSymbols(e, smap), ex
 substSymbols(ex::Any, smap::Dict) =           ex
 
 ######### parameters structure  ############
-type MCMCParams
-	sym::Symbol
-	size::Vector{Integer}
-	map::Union(Integer, Range1)  
-end
+# type MCMCParams
+# 	sym::Symbol
+# 	size::Vector{Integer}
+# 	map::Union(Integer, Range1)  
+# end
 
 ######### model structure   ##############
 type MCMCModel

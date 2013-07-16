@@ -2,20 +2,12 @@ module MCMC
 
 import Base.*, Base.show
 export *
-export MCMCModel
 
-type MCMCModel
-	eval::Function
-	pmap::Dict
-	size::Integer
-	init::Vector{Float64}
-end
 
 type MCMCTask
 	task::Task
 	model::MCMCModel
 end
-
 
 type MCMCChain
 	parameters::Dict
