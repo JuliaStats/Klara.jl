@@ -9,6 +9,7 @@ export RWM
 
 println("Loading RMW(scale) sampler")
 
+# RWM sampler type
 immutable RWM <: MCMCSampler
   scale::Float64
 
@@ -19,35 +20,32 @@ immutable RWM <: MCMCSampler
 end
 RWM() = RWM(1.)
 
+
 # sampling task launcher
-function spinTask(model::MCMCModel, s::RWM)
+spinTask(model::MCMCModel, s::RWM) = MCMCTask( Task(() -> RWMTask(model, s.scale)), model)
 
-	function RWMTask(model::MCMCModel, scale::Float64)
-		local beta = copy(model.init)
-		local ll = model.eval(beta)
-		local oldbeta, oldll, jump
+# RWM sampling
+function RWMTask(model::MCMCModel, scale::Float64)
+	local beta = copy(model.init)
+	local ll = model.eval(beta)
+	local oldbeta, oldll, jump
 
-		assert(ll != -Inf, "Initial values out of model support, try other values")
+	assert(ll != -Inf, "Initial values out of model support, try other values")
 
-		task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
+	task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
 
-		while true
-			jump = randn(model.size) * scale
-			oldbeta = copy(beta)
-			beta += jump 
+	while true
+		jump = randn(model.size) * scale
+		oldbeta = copy(beta)
+		beta += jump 
 
-	 		oldll, ll = ll, model.eval(beta) 
+ 		oldll, ll = ll, model.eval(beta) 
 
- 			if rand() > exp(ll - oldll) # roll back if rejected
-				ll, beta = oldll, oldbeta
-			end
-
-			produce(beta)
+		if rand() > exp(ll - oldll) # roll back if rejected
+			ll, beta = oldll, oldbeta
 		end
+
+		produce(beta)
 	end
-
-	MCMCTask( Task(() -> RWMTask(model, s.scale)), model)
 end
-
-
 

@@ -2,6 +2,12 @@
 #    Model expression parsing
 ###############################################################################
 
+# naming conventions
+const ACC_SYM = :__acc       # name of accumulator variable
+const PARAM_SYM = :__beta    # name of parameter vector
+const TEMP_NAME = "tmp"      # prefix of temporary variables in log-likelihood function
+const DERIV_PREFIX = "d"     # prefix of gradient variables in log-likelihood function
+
 ##########  creates a parameterized type to ease AST exploration  ############
 type ExprH{H}
 	head::Symbol
@@ -52,20 +58,20 @@ substSymbols(ex::Any, smap::Dict) =           ex
 # 	map::Union(Integer, Range1)  
 # end
 
-######### model structure   ##############
-type MCMCModel
-	bsize::Int               # length of beta, the parameter vector
-	pars::Vector{MCMCParams} # parameters with their mapping to the beta real vector
-	init::Vector{Float64}    # initial values of beta
-	source::Expr             # model source, after first pass
-	exprs::Vector{Expr}      # vector of assigments that make the model
-	dexprs::Vector{Expr}     # vector of assigments that make the gradient
-	finalacc::Symbol         # last symbol of loglik accumulator after renaming
-	varsset::Set{Symbol}     # all the vars set in the model
-	pardesc::Set{Symbol}     # all the vars set in the model that depend on model parameters
-	accanc::Set{Symbol}      # all the vars (possibly external) that influence the accumulator
+######### structure for parsing model  ##############
+type ParsingStruct
+	bsize::Int                # length of beta, the parameter vector
+	pars::Dict{Symbol, PDims} # parameters with their mapping to the beta real vector
+	init::Vector{Float64}     # initial values of beta
+	source::Expr              # model source, after first pass
+	exprs::Vector{Expr}       # vector of assigments that make the model
+	dexprs::Vector{Expr}      # vector of assigments that make the gradient
+	finalacc::Symbol          # last symbol of loglik accumulator after renaming
+	varsset::Set{Symbol}      # all the vars set in the model
+	pardesc::Set{Symbol}      # all the vars set in the model that depend on model parameters
+	accanc::Set{Symbol}       # all the vars (possibly external) that influence the accumulator
 end
-MCMCModel() = MCMCModel(0, MCMCParams[], Float64[], :(), Expr[], Expr[], ACC_SYM, 
+ParsingStruct() = ParsingStruct(0, Dict{Symbol, PDims}(), Float64[], :(), Expr[], Expr[], ACC_SYM, 
 	Set{Symbol}(), Set{Symbol}(), Set{Symbol}())
 
 
@@ -73,7 +79,7 @@ MCMCModel() = MCMCModel(0, MCMCParams[], Float64[], :(), Expr[], Expr[], ACC_SYM
 #  - extracts parameters definition
 #  - rewrite ~ operators  as acc += logpdf..(=)
 #  - translates x += y into x = x + y, same for -= and *=
-function parseModel!(m::MCMCModel, source::Expr)
+function parseModel!(m::ParsingStruct, source::Expr)
 	local distribFound::Bool = false
 
 	explore(ex::Expr) =       explore(toExprH(ex))
@@ -120,7 +126,7 @@ function parseModel!(m::MCMCModel, source::Expr)
 end
 
 ######## unfolds expressions to prepare derivation ###################
-function unfold!(m::MCMCModel)
+function unfold!(m::ParsingStruct)
 
 	explore(ex::Expr) =       explore(toExprH(ex))
 	explore(ex::ExprH) =      error("[unfold] unmanaged expr type $(ex.head)")
@@ -185,7 +191,7 @@ end
 ######### renames variables set several times to make them unique  #############
 # FIXME : algo doesn't work when a variable sets individual elements, x = .. then x[3] = ...; 
 # FIXME 2 : external variables redefined within model are not renamed
-function uniqueVars!(m::MCMCModel)
+function uniqueVars!(m::ParsingStruct)
 	el = m.exprs
     subst = Dict{Symbol, Symbol}()
     used = Set(ACC_SYM)
@@ -216,12 +222,12 @@ end
 #   2) move parameter independant variables definition out the function (but within closure) 
 #   3) TODO : remove unnecessary variables (with warning)
 #   4) identify external vars
-function categorizeVars!(m::MCMCModel) 
+function categorizeVars!(m::ParsingStruct) 
 	lhsSymbol(ex) = Set(isa(ex.args[1], Symbol) ? ex.args[1] : ex.args[1].args[1])
 
     m.varsset = mapreduce(lhsSymbol, union, m.exprs)
 
-    local parset = Set{Symbol}([p.sym for p in m.pars]...)
+    local parset = Set{Symbol}(collect(keys(m.pars))...)  # [p.sym for p in m.pars]...)
     m.pardesc = copy(parset)  # start with parameter symbols
     for ex2 in m.exprs 
         lhs = lhsSymbol(ex2)
@@ -247,7 +253,7 @@ function categorizeVars!(m::MCMCModel)
 end
 
 ######### builds the gradient expression from unfolded expression ##############
-function backwardSweep!(m::MCMCModel)  
+function backwardSweep!(m::ParsingStruct)  
 
 	explore(ex::Expr) = explore(toExprH(ex))
 	explore(ex::ExprH) = error("[backwardSweep] unmanaged expr type $(ex.head)")
@@ -300,7 +306,7 @@ function backwardSweep!(m::MCMCModel)
 end
 
 ######## sets inital values from 'init' given as parameter  ##########
-function setInit!(m::MCMCModel, init)
+function setInit!(m::ParsingStruct, init)
     assert(length(init)>=1, "There should be at leat one parameter specified, none found")
 
     for p in init  # p = collect(init)[1]
@@ -310,24 +316,27 @@ function setInit!(m::MCMCModel, init)
         assert(typeof(par) == Symbol, "[setInit] not a symbol in init param : $(par)")
 
         if isa(def, Real)  #  single param declaration
-            push!(m.pars, MCMCParams(par, Integer[], m.bsize+1)) 
+            # push!(m.pars, MCMCParams(par, Integer[], m.bsize+1)) 
+            m.pars[par] = PDims(m.bsize+1, ())
             m.bsize += 1
             push!(m.init, def)
 
         elseif isa(def, Array) && ndims(def) == 1
             nb = size(def,1)
-            push!(m.pars, MCMCParams(par, Integer[nb], (m.bsize+1):(m.bsize+nb)))
+            # push!(m.pars, MCMCParams(par, Integer[nb], (m.bsize+1):(m.bsize+nb)))
+            m.pars[par] = PDims(m.bsize+1, (nb,))
             m.bsize += nb
             m.init = [m.init, def...]
 
         elseif isa(def, Array) && ndims(def) == 2
             nb1, nb2 = size(def)
-            push!(m.pars, MCMCParams(par, Integer[nb1, nb2], (m.bsize+1):(m.bsize+nb1*nb2))) 
+            # push!(m.pars, MCMCParams(par, Integer[nb1, nb2], (m.bsize+1):(m.bsize+nb1*nb2))) 
+            m.pars[par] = PDims(m.bsize+1, (nb1,nb2))
             m.bsize += nb1*nb2
             m.init = [m.init, vec(def)...]
 
         else
-            error("[setInit] forbidden parameter type for $(par)")
+            error("[setInit] unsupported parameter type for $(par)")
         end
     end
 
@@ -335,14 +344,33 @@ end
 
 
 ######### returns an array of expr assigning parameters from the beta vector  ############
-function betaAssign(m::MCMCModel)
-	pmap = m.pars
+# function betaAssign(m::ParsingStruct)
+# 	pmap = m.pars
+# 	assigns = Expr[]
+# 	for p in pmap
+# 		if length(p.size) <= 1  # scalar or vector
+# 			push!(assigns, :($(p.sym) = $PARAM_SYM[ $(Expr(:quote,p.map)) ]) )
+# 		else # matrix case  (needs a reshape)
+# 			push!(assigns, :($(p.sym) = reshape($PARAM_SYM[ $(Expr(:quote,p.map)) ], $(p.size[1]), $(p.size[2]))) )
+# 		end
+# 	end			
+# 	assigns
+# end
+function betaAssign(m::ParsingStruct)
 	assigns = Expr[]
-	for p in pmap
-		if length(p.size) <= 1  # scalar or vector
-			push!(assigns, :($(p.sym) = $PARAM_SYM[ $(Expr(:quote,p.map)) ]) )
+	for p in keys(m.pars)
+		v = m.pars[p]
+
+		if length(v.dims) == 0  # scalar
+			push!(assigns, :($p = $PARAM_SYM[ $(v.pos) ]) )
+
+		elseif length(v.dims) == 1  # vector
+			r = v.pos:(v.pos+prod(v.dims)-1)
+			push!(assigns, :($p = $PARAM_SYM[ $(Expr(:quote,r)) ]) )
+
 		else # matrix case  (needs a reshape)
-			push!(assigns, :($(p.sym) = reshape($PARAM_SYM[ $(Expr(:quote,p.map)) ], $(p.size[1]), $(p.size[2]))) )
+			r = v.pos:(v.pos+prod(v.dims)-1)
+			push!(assigns, :($p = reshape($PARAM_SYM[ $(Expr(:quote,r)) ], $(v.dims[1]), $(v.dims[2]))) )
 		end
 	end			
 	assigns
@@ -351,7 +379,7 @@ end
 ######### evaluates once all variables to give type hints for derivation ############
 #  most gradient calculation statements depend on the type of variables (Scalar or Array)
 #  this is where they are evaluated (with values stored in global Dict 'vhint' )
-function preCalculate(m::MCMCModel)
+function preCalculate(m::ParsingStruct)
     global vhint = Dict()
 
     body = Expr[ betaAssign(m)..., 
@@ -367,7 +395,7 @@ function preCalculate(m::MCMCModel)
 			          Expr(:block, :(if e == "give up eval"; return(-Inf); else; throw(e); end)))
 
 	# identify external vars and add definitions x = Main.x
-	ev = setdiff(m.accanc, union(m.varsset, Set(ACC_SYM, [p.sym for p in m.pars]...))) # vars that are external to the model
+	ev = setdiff(m.accanc, union(m.varsset, Set(ACC_SYM, collect(keys(m.pars))...))) # vars that are external to the model
 	vhooks = Expr(:block, [ :( local $v = $(Expr(:., :Main, Expr(:quote, v))) ) for v in ev]...) # assigment block
 
 	# build and evaluate the let block containing the function and external vars hooks
@@ -386,13 +414,13 @@ end
 
 ######### builds the model function ##############
 # 'init' contains the dictionary of model params and their initial value
-#    initial values are used for the precalculate run that will allow 
+#    ! Initial values are used for the precalculate run that will allow 
 #    to know all variables types.
 # If 'debug' is set to true, the function prints out the model function 
 #  that would have been created
 #
 function generateModelFunction(model::Expr; gradient=false, debug=false, init...)
-	m = MCMCModel()
+	m = ParsingStruct()
 
 	## checks initial values
 	setInit!(m, init)
@@ -456,10 +484,28 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 			end
 		end
 
-		# return statement
-		dexp = { :( vec([$(dsym(p.sym))]) ) for p in m.pars}
-		dexp = length(m.pars) > 1 ? Expr(:call, :vcat, dexp...) : dexp[1]
-		push!(body, :(($(m.finalacc), $dexp)))
+		# return statement (note : gradient vec should match beta variable mapping)
+		# dexp = { :( vec([$(dsym(p.sym))]) ) for p in m.pars}
+		gsym = dsym(PARAM_SYM)
+		push!(body, :( local $gsym = similar($PARAM_SYM)))
+		for p in keys(m.pars)
+			v = m.pars[p]
+
+			if length(v.dims) == 0  # scalar
+				push!(body, :( $gsym[ $(v.pos) ] = $(dsym(p)) ) )
+			elseif length(v.dims) == 1  # vector
+				r = v.pos:(v.pos+prod(v.dims)-1)
+				push!(body, :( $gsym[ $(Expr(:quote,r)) ] = $(dsym(p)) ) )
+			else # matrix case  (needs a reshape)
+				r = v.pos:(v.pos+prod(v.dims)-1)
+				push!(body, :( $gsym[ $(Expr(:quote,r)) ] = vec($(dsym(p))) ))
+			end
+		end
+		push!(body, :(($(m.finalacc), $gsym)))
+
+		# dexp = { :( vec([$(dsym(p))]) ) for p in keys(m.pars)}
+		# dexp = length(m.pars) > 1 ? Expr(:call, :vcat, dexp...) : dexp[1]
+		# push!(body, :(($(m.finalacc), $dexp)))
 
 		# enclose in a try block
 		body = Expr(:try, Expr(:block, body...),
@@ -481,7 +527,7 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 	end
 
 	# identify external vars and add definitions x = Main.x
-	ev = setdiff(m.accanc, union(m.varsset, Set(ACC_SYM), Set([p.sym for p in m.pars]...))) # vars that are external to the model
+	ev = setdiff(m.accanc, union(m.varsset, Set(ACC_SYM), Set(collect(keys(m.pars))...))) # vars that are external to the model
 	header = [[ :( local $v = $(Expr(:., :Main, Expr(:quote, v))) ) for v in ev]..., header...] # assigment block
 
 	# build and evaluate the let block containing the function and external vars hooks

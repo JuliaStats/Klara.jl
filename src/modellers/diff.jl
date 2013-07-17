@@ -206,7 +206,7 @@ function derive(opex::Expr, index::Integer, dsym::Union(Expr,Symbol))  # opex=:(
 		dexp = substSymbols(dexp, smap)
 
 		# unfold for easier optimization later
-	    m = MCMCModel()
+	    m = ParsingStruct()
 	    m.source = :(dummy = $dexp )
 		unfold!(m)  
 		m.exprs[end] = m.exprs[end].args[2] # remove last assignment

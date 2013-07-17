@@ -3,79 +3,66 @@
 #
 #     parameters :
 #        - DriftStep : float to scale the jumps
-#        - monitorPeriod : integer indicating how often accept rate should be reported
-#                   and the driftStep adapted (not implemented)
-#                  FIXME? : acceptRate reporting should be in the runner
-#                  FIXME? : driftStep adaptation function should be in the sampler
+#      (note 1 : I have removed the periodic monitoring, it should be in the runner, TODO)
+#      (note 2 : adaptative driftStep should be implemented within the sampler as it is 
+#       sampler specific most of the time, adaptation parameters could be specified in
+#        the MALA type though)
 #
 ###########################################################################
 
 export MALA
 
+println("Loading MALA(driftStep, monitorPeriod) sampler")
+
 # The MALA sampler type
 immutable MALA <: MCMCSampler
   driftStep::Float64
-  monitorPeriod::Integer
 
-  function MALA(x::Real, y::Integer)
+  function MALA(x::Real)
     assert(x>0, "driftStep should be > 0")
-    assert(y>0, "monitorPeriod should be > 0")
-    new(x,y)
+    new(x)
   end
 end
-MALA() = MALA(1.0, 1e5)
-MALA(x::Float64) = MALA(x, 1e5)
-
+MALA() = MALA(1.0)
 
 # sampling task launcher
-function spinTask(model::MCMCModelWithGradient, s::MALA)
+spinTask(model::MCMCModelWithGradient, s::MALA) = 
+  MCMCTask( Task(() -> MALATask(model, s.driftStep)), model)
 
-  function MALATask(model::MCMCModelWithGradient, 
-                    driftStep::Float64,
-                    monitorPeriod::Integer)
-    local beta1, grad1, betam
-    local probNewGivenOld, probOldGivenNew
+# MALA sampling
+function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
+  local beta1, grad1, betam
+  local probNewGivenOld, probOldGivenNew
+  local beta = copy(model.init)
+  local ll, grad
+  
+  ll, grad = model.evalg(beta)
+  assert(ll != -Inf, "Initial values out of model support, try other values")
+  task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
 
-    local beta = copy(model.init)
-    local ll, grad = model.eval(beta)
-    assert(ll != -Inf, "Initial values out of model support, try other values")
+  proposed, accepted = 0, 0
 
-    task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
+  i = 1
+  while true
+    proposed += 1
 
-    proposed, accepted = 0., 0.
+    betam = beta + (driftStep/2.) * grad
 
-    for i = 1:Inf
-      proposed += 1
-      
-      # beta1 = copy(beta)
-      # grad1 = model.evalgradient(beta1)
-      # betam = beta1 + (driftStep/2.) * grad1
-      betam = beta + (driftStep/2.) * grad
+    beta1 = betam + sqrt(driftStep) * randn(model.size)
+    ll1, grad1 = model.evalg(beta1)
 
-      beta1 = betam + sqrt(driftStep) * randn(model.size)
-      ll1, grad1 = model.eval(beta1)
-
-      probNewGivenOld = sum(-(betam-beta1).^2/(2*driftStep)-log(2*pi*driftStep)/2)
-      betam = beta1 + (driftStep/2) * grad1
-      probOldGivenNew = sum(-(betam-beta).^2/(2*driftStep)-log(2*pi*driftStep)/2)
-      
-      ratio = ll1 + probOldGivenNew - ll - probNewGivenOld
-      if ratio > 0 || (ratio > log(rand()))  # accepted ?
-        accepted += 1
-        beta, ll, grad = beta1, ll1, grad1
-      end
-
-      ### monitor every n steps
-      if mod(i, monitorPeriod) == 0
-        acceptRate = accepted / proposed
-        # driftStep = opts.setDriftStep(i, acceptRate, steps, burnin, driftStep)
-        println("Iteration $i of $(steps): ", round(100*acceptRate, 2), " % acceptance ratio")
-        proposed, accepted = 0., 0.
-      end
-
-      produce(beta)
+    probNewGivenOld = sum(-(betam-beta1).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    betam = beta1 + (driftStep/2) * grad1
+    probOldGivenNew = sum(-(betam-beta).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    
+    ratio = ll1 + probOldGivenNew - ll - probNewGivenOld
+    if ratio > 0 || (ratio > log(rand()))  # accepted ?
+      accepted += 1
+      beta, ll, grad = beta1, ll1, grad1
     end
 
-  MCMCTask( Task(() -> MALATask(model, s.drifStep, s.monitorPeriod)), model)
+    produce(beta)
+    i += 1
+  end
 end
 

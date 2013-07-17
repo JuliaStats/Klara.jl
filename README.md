@@ -12,52 +12,54 @@ Current prototyping directions :
 
 To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
 
+update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
+
 ```jl
 
 using MCMC
 
-# model definition 
-#   - with the log-likelihood function (here a normal distribution centered on zero)
-#   - a parameter vector of size 3
-#   - initial values of 1.0
+# Model definition, 
+#  method 1 = state explictly your functions
 
-m = MCMCModel((v)-> -dot(v,v), Dict(), 3, ones(3))
+mymodel = Model(v-> -dot(v,v), 3, ones(3))  # loglik of Normal distrib, vector of 3, initial values 1.0
 
-# The simple 'runner' calls the sampling algorithm 'steps' times, 
-#  and throws out the first 'burnin' samples
-# The sampling algorithm is indicated by the type RMW, instantiated with the settings
-# relevant to the sampler (here a scale parameter equal to 1.0)
+# or for a model providing the gradient : 
+mymodel2 = ModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  # 2nd function returns a tuple (loglik, gradient)
 
-res = run(m, RWM(1.), steps=10000, burnin=0)
 
-# res is a MCMCChain type containing the samples and the sampling task, allowing to
-#  pursue the sampling if needed :
+#  method 2 = using expression parsing and autodiff
 
-res2 = run(res, steps=10000)
+modexpr = quote
+	v ~ Normal(0, 1)
+end
 
-# to simplify the syntax, I have overloaded the getindex method allowing
-#  to replace the preceding line with the equivalent : 
+mymodel = Model(modexpr, v=ones(3))  # without gradient
+mymodel2 = ModelG(modexpr, v=ones(3))  # with gradient
 
-res2 = res[1:10000]
 
-# Not apparent in these examples is that the combination of model and sampler
-#   creates a MCMCTask structure that can be manipulated separately :
+##### running a single chain
 
-t = m * RWM(1.) # create a MCMCTask
+res = mymodel * RWM(0.1) * (100:1000)  # burnin = 99
+res.samples  # prints samples
 
-t[100:10000]  # equivalent to steps = 10000 and burnin = 99
+res = res * (1:10000)  # continue sampling where it stopped
 
-# Still playing with * operator, we can define multiple chains
-#   which is useful for starting from different initial values or to
-#  find the best sampler settings
 
-ts = m * [ RWM(10^x) for x in -2:0.3:-0.2]  # launch multiple RWM chains with different scales
+mymodel * MALA(0.1) * (1:1000) # throws an error because mymodel 
+                               #  does not provide the gradient function MALA sampling needs
 
-ts[1000:10000]
+mymodel2 * MALA(0.1) * (1:1000) # now this works
 
-# or equivalently
 
-run(ts, steps=10000, burnin=999)
+##### running multiple chains
+
+res = mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * (1:1000) # test all 3 samplers
+res[1].samples  # prints samples
+res[2].samples  # prints samples
+res[3].samples  # prints samples
+
+res = mymodel2 * [HMC(i,0.1) for i in 1:5] * (1:1000) # test HMC with varying # of inner steps
+
 
 
 ```
