@@ -24,11 +24,10 @@ type MCMCTask
 	task::Task
 	model::MCMCModel
 end
+reset(t::MCMCTask, x) = t.task.storage[:reset](x)
 
 #############  samplers  ########################
 abstract MCMCSampler
-
-reset(t::MCMCTask, x) = t.task.storage[:reset](x)
 
 include("samplers/RWM.jl")
 include("samplers/MALA.jl")

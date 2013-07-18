@@ -40,8 +40,6 @@ function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
   assert(ll != -Inf, "Initial values out of model support, try other values")
   task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
 
-  proposed, accepted = 0, 0
-
   i = 1
   while true
     proposed += 1
