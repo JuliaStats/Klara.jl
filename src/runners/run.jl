@@ -20,7 +20,7 @@ function run(t::MCMCTask; steps::Integer=100, burnin::Integer=0)
 
 	for i in 1:steps	
 		newprop = consume(t.task)
-		i > burnin && (res.samples[:beta][:, i-burnin] = newprop)
+		i > burnin && (res.samples[:beta][:, i-burnin] = newprop.beta)
 	end
 
 	res.runTime = toq()

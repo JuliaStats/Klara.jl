@@ -33,17 +33,24 @@ spinTask(model::MCMCModelWithGradient, s::MALA) =
 function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
   local beta1, grad1, betam
   local probNewGivenOld, probOldGivenNew
-  local beta = copy(model.init)
-  local ll, grad
+  local beta, ll, grad
+  local oldbeta, oldll
+
+  #  Task reset function
+  function reset(newbeta::Vector{Float64})
+    beta = newbeta
+    ll, grad = model.evalg(beta)
+  end
+  # hook inside Task to allow remote resetting
+  task_local_storage(:reset, reset) 
   
+  # Initialization
+  beta = copy(model.init)
   ll, grad = model.evalg(beta)
   assert(ll != -Inf, "Initial values out of model support, try other values")
-  task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
 
   i = 1
   while true
-    proposed += 1
-
     betam = beta + (driftStep/2.) * grad
 
     beta1 = betam + sqrt(driftStep) * randn(model.size)
@@ -55,11 +62,12 @@ function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
     
     ratio = ll1 + probOldGivenNew - ll - probNewGivenOld
     if ratio > 0 || (ratio > log(rand()))  # accepted ?
-      accepted += 1
+      produce(MCMCSample(beta1, ll1, beta, ll))
       beta, ll, grad = beta1, ll1, grad1
+    else
+      produce(MCMCSample(beta, ll, beta, ll))
     end
 
-    produce(beta)
     i += 1
   end
 end

@@ -2,52 +2,87 @@
 #
 #  Sequential Monte-Carlo 
 #
-#  Takes several MCMCTasks and performs Sequential Monte-Carlo sampling
-#   ( a kind of population based MC)
+#  Takes MCMCTasks and performs Sequential Monte-Carlo sampling
+#   ( a kind of population MC )
 #
-#  All MCMCTasks provided should be from identical models
+#  The last of the MCMCTasks should be the target distribution of interest,
+#   others can either be the same target or tempered versions (see ref).
+#
+#  Particles are an arbitrary number n of initial values on which the tasks
+#   will be run in succession, the number of tasks (target distributions) is not
+#   related to the number of particles.
+#
+#  Ref : "On population-based simulation for static inference" A.Jasra - 
+#          D.Stephens - C.Holmes, p 271
 #
 ###########################################################################
 
-# import Base.getindex, 
+export seqMC
 
-function seqMC(t::MCMCTask; steps::Integer=100, burnin::Integer=0)
+function seqMC(targets::Array{MCMCTask}, 
+			   particles::Vector{Vector{Float64}}; 
+	           steps::Integer=1, burnin::Integer=0)
+
+	tsize = targets[end].model.size
+	ntargets = length(targets)
+	npart = length(particles)
+
 	assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
 	assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
-
-	res = MCMCChain({:beta => fill(NaN, t.model.size, steps-burnin)}, t, NaN)
+	assert(all( map(t->t.model.size, targets) .== tsize),
+		   "Models do not have the same parameter vector size")
 
 	tic() # start timer
 
-	for i in 1:steps	
-		newprop = consume(t.task)
-		i > burnin && (res.samples[:beta][:, i-burnin] = newprop)
+	# initialize all tasks
+	map(t -> consume(t.task), targets)
+
+	# start loop
+	res = MCMC.MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)}, 
+		            targets[end], NaN)
+
+	logW = zeros(npart)  # log of particle weights
+	oldll = zeros(npart) # loglik of previous target distrib
+	beta = deepcopy(particles)
+
+	for i in 1:steps  # i = 1
+		for t in targets  # t = targets[1]
+			# mutate each particle with task t
+			for n in 1:npart  #  n = 1
+				MCMC.reset(t, beta[n])  # force beta of task #t to particle #n
+				sample = consume(t.task)
+				beta[n], ll, ll0 = sample.beta, sample.ll, sample.oldll
+				logW[n] += ll0 - oldll[n]
+				oldll[n] = ll
+			end
+
+			# resample if likelihood variance of particles is too high
+			#  TODO : improve, clarify, make user settable
+			if var(exp(logW)) < 1e-10
+				W = exp(logW)
+				cp = cumsum(W) / sum(W)
+				rs = fill(0, npart)
+				for n in 1:npart  #  n = 1
+					l = rand()
+					rs[n] = findfirst(p-> (p>=l), cp)
+				end
+				beta = beta[rs]
+				logW = zeros(npart)
+				println("resampled !")
+			end
+		end
+
+		println("iter $i, var $(var(exp(logW)))")
+
+		if i > burnin # store betas of all particles
+			pos = (i-burnin-1) * npart
+			for n in 1:npart  #  n = 1
+				res.samples[:beta][:, pos+n] = beta[n]
+			end
+		end
 	end
 
 	res.runTime = toq()
 	res
 end
-
-# chain continuation alternate
-run(c::MCMCChain; args...) = run(c.task; args...)
-
-# vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
-function run(t::Union(Array{MCMCTask}, Array{MCMCChain}); args...)
-	res = Array(MCMCChain, size(t))
-    for i = 1:length(t)
-        res[i] = run(t[i]; args...)
-    end	
-	res
-end
-
-# alternate version with Model and Sampler passed separately
-run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S}); args...) = 
-	run(m * s; args...)
-
-
-# syntax shorcut using *
-# getindex(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-# 	run(t, steps=i.start+i.len-1, burnin=i.start-1)
-*(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-	run(t, steps=i.start+i.len-1, burnin=i.start-1)
 

@@ -60,11 +60,17 @@ end
 #  HMC algo
 function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float64)
   local state0
-  
-  task_local_storage(:reset, (x::Vector{Float64}) -> state0.beta=x)  # hook inside Task to allow remote resetting
 
-  # starting values
-  state0 = HMCSample(model.init) 
+  #  Task reset function
+  function reset(newbeta::Vector{Float64})
+    state0 = HMCSample(newbeta)
+    calc!(state0, model.evalg)
+  end
+  # hook inside Task to allow remote resetting
+  task_local_storage(:reset, reset) 
+
+  # initialization
+  state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalg)
   assert(isfinite(state0.llik), "Initial values out of model support, try other values")
 
@@ -84,10 +90,12 @@ function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float6
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
+      produce(MCMCSample(state.beta, state.llik, state0.beta, state0.llik))
       state0 = state
+    else
+      produce(MCMCSample(state0.beta, state0.llik, state0.beta, state0.llik))
     end
 
-    produce(state0.beta)
   end
 
 end

@@ -22,22 +22,29 @@ RWM() = RWM(1.)
 
 
 # sampling task launcher
-spinTask(model::MCMCModel, s::RWM) = MCMCTask( Task(() -> RWMTask(model, s.scale)), model)
+spinTask(model::MCMCModel, s::RWM) = 
+	MCMCTask( Task(() -> RWMTask(model, s.scale)), model)
 
 # RWM sampling
 function RWMTask(model::MCMCModel, scale::Float64)
-	local beta = copy(model.init)
-	local ll = model.eval(beta)
-	local oldbeta, oldll, jump
+	local beta, ll, oldbeta, oldll
 
+	#  Task reset function
+	function reset(newbeta::Vector{Float64})
+		beta = copy(newbeta)
+		ll = model.eval(beta)
+	end
+	# hook inside Task to allow remote resetting
+	task_local_storage(:reset, reset) 
+
+	# initialization
+	beta = copy(model.init)
+	ll = model.eval(beta)
 	assert(ll != -Inf, "Initial values out of model support, try other values")
 
-	task_local_storage(:reset, (x::Vector{Float64}) -> beta=x)  # hook inside Task to allow remote resetting
-
 	while true
-		jump = randn(model.size) * scale
 		oldbeta = copy(beta)
-		beta += jump 
+		beta += randn(model.size) * scale
 
  		oldll, ll = ll, model.eval(beta) 
 
@@ -45,7 +52,7 @@ function RWMTask(model::MCMCModel, scale::Float64)
 			ll, beta = oldll, oldbeta
 		end
 
-		produce(beta)
+		produce(MCMCSample(beta, ll, oldbeta, oldll))
 	end
 end
 
