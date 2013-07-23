@@ -12,8 +12,8 @@ Current prototyping directions :
 
 To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
 
-update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
-update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is not thoroughly tested and based on my limited understanding of the corresponding paper !_
+- update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
+- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is not thoroughly tested and based on my limited understanding of the corresponding paper !_
 
 ```jl
 
@@ -110,7 +110,6 @@ res = seqMC(targets, particles, steps=30)
 
 # Plot raw samples
 ts = collect(1:10:size(res.samples[:beta],2))
-plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :scatter)
 plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
 # we don't have the real distribution yet because we didn't use the 
 #   sample weightings sequential MC produces
