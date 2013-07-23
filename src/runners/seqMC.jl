@@ -20,12 +20,12 @@
 export seqMC
 
 function seqMC(targets::Array{MCMCTask}, 
-			   particles::Vector{Vector{Float64}}; 
-	           steps::Integer=1, burnin::Integer=0)
-
-	tsize = targets[end].model.size
-	ntargets = length(targets)
-	npart = length(particles)
+				particles::Vector{Vector{Float64}}; 
+				steps::Integer=1, burnin::Integer=0, resTrigger::Float64=1e-10)
+	
+	local tsize = targets[end].model.size
+	local ntargets = length(targets)
+	local npart = length(particles)
 
 	assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
 	assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
@@ -37,13 +37,14 @@ function seqMC(targets::Array{MCMCTask},
 	# initialize all tasks
 	map(t -> consume(t.task), targets)
 
-	# start loop
-	res = MCMC.MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)}, 
+	# initialize MCMCChain result
+	res = MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)},
+					fill(NaN, (steps-burnin)*npart), # weight of samples
 		            targets[end], NaN)
 
-	logW = zeros(npart)  # log of particle weights
-	oldll = zeros(npart) # loglik of previous target distrib
-	beta = deepcopy(particles)
+	local logW = zeros(npart)  # log of particle weights
+	local oldll = zeros(npart) # loglik of previous target distrib
+	local beta = deepcopy(particles)
 
 	for i in 1:steps  # i = 1
 		for t in targets  # t = targets[1]
@@ -56,10 +57,14 @@ function seqMC(targets::Array{MCMCTask},
 				oldll[n] = ll
 			end
 
-			# resample if likelihood variance of particles is too high
-			#  TODO : improve, clarify, make user settable
-			if var(exp(logW)) < 1e-10
-				W = exp(logW)
+			# print("1- beta [ $(min(beta)), $(max(beta)) ], ")
+			# print("oldll [ $(round(min(oldll),2)), $(round(max(oldll),2)) ], ")
+			# println("logW [ $(round(min(logW),2)), $(round(max(logW),2)) ]")
+
+			# resample if likelihood variance of particles is too low
+			#  TODO : improve, clarify
+			local W = exp(logW)
+			if var(W) < resTrigger
 				cp = cumsum(W) / sum(W)
 				rs = fill(0, npart)
 				for n in 1:npart  #  n = 1
@@ -68,16 +73,22 @@ function seqMC(targets::Array{MCMCTask},
 				end
 				beta = beta[rs]
 				logW = zeros(npart)
-				println("resampled !")
+				oldll = oldll[rs]   #zeros(npart)
+				# println("resampled !")
+				# print("2- beta [ $(min(beta)), $(max(beta)) ], ")
+				# print("oldll [ $(round(min(oldll),2)), $(round(max(oldll),2)) ], ")
+				# println("logW [ $(round(min(logW),2)), $(round(max(logW),2)) ]")
 			end
 		end
 
 		println("iter $i, var $(var(exp(logW)))")
+		oldll = zeros(npart)
 
-		if i > burnin # store betas of all particles
+		if i > burnin # store betas of all particles in the result chain
 			pos = (i-burnin-1) * npart
 			for n in 1:npart  #  n = 1
 				res.samples[:beta][:, pos+n] = beta[n]
+				res.weights[pos+n] = exp(logW[n])
 			end
 		end
 	end

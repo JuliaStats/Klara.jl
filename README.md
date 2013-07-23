@@ -13,21 +13,22 @@ Current prototyping directions :
 To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
 
 update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
+update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is not thoroughly tested and based on my limited understanding of the corresponding paper !_
 
 ```jl
 
 using MCMC
 
-# Model definition, 
-#  method 1 = state explictly your functions
+######## Model definition / method 1 = state explictly your functions
 
-mymodel = Model(v-> -dot(v,v), 3, ones(3))  # loglik of Normal distrib, vector of 3, initial values 1.0
+# loglik of Normal distrib, vector of 3, initial values 1.0
+mymodel = Model(v-> -dot(v,v), 3, ones(3))  
 
 # or for a model providing the gradient : 
-mymodel2 = ModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  # 2nd function returns a tuple (loglik, gradient)
+mymodel2 = ModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  
+# Note that 2nd function returns a tuple (loglik, gradient)
 
-
-#  method 2 = using expression parsing and autodiff
+######## Model definition / method 2 = using expression parsing and autodiff
 
 modexpr = quote
 	v ~ Normal(0, 1)
@@ -37,29 +38,94 @@ mymodel = Model(modexpr, v=ones(3))  # without gradient
 mymodel2 = ModelG(modexpr, v=ones(3))  # with gradient
 
 
-##### running a single chain
+######## running a single chain ########
 
-res = mymodel * RWM(0.1) * (100:1000)  # burnin = 99
-res.samples  # prints samples
+# RWM sampler, burnin = 99, keeping iterations 100 to 1000
+res = mymodel * RWM(0.1) * (100:1000)  
+# prints samples
+res.samples  
+#  mean, std
+mapslices(mean, res.samples[:beta], 2)
+mapslices(std, res.samples[:beta], 2)
 
-res = res * (1:10000)  # continue sampling where it stopped
+# continue sampling where it stopped
+res = res * (1:10000)  
 
 
-mymodel * MALA(0.1) * (1:1000) # throws an error because mymodel 
-                               #  does not provide the gradient function MALA sampling needs
+mymodel * MALA(0.1) * (1:1000) # throws an error 
+#  ('mymodel' does not provide the gradient function MALA sampling needs)
 
 mymodel2 * MALA(0.1) * (1:1000) # now this works
 
 
-##### running multiple chains
+######## running multiple chains
 
-res = mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * (1:1000) # test all 3 samplers
-res[1].samples  # prints samples
-res[2].samples  # prints samples
-res[3].samples  # prints samples
+# test all 3 samplers at once
+res = mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * (1:1000) 
+res[2].samples  # prints samples for MALA(0.1)
 
-res = mymodel2 * [HMC(i,0.1) for i in 1:5] * (1:1000) # test HMC with varying # of inner steps
+# test HMC with varying # of inner steps
+res = mymodel2 * [HMC(i,0.1) for i in 1:5] * (1:1000) 
+
+```
 
 
+Now an example with sequential Monte-Carlo
+
+```jl
+using MCMC
+using Vega
+
+# We need to define a set of models that converge toward the 
+#  distribution of interest (in the spirit of simulated annealing)
+nmod = 10  # number of models
+p = logspace(1, -1, nmod) 
+mods = Model[]
+i = 1
+while i<=nmod
+	m = quote
+		y = abs(x)
+		y ~ Normal(1, $(p[i]) )
+	end
+
+	push!(mods, Model(m, x=0.)) # create MCMCModel
+	i += 1
+end
+
+# Plot models
+xx = linspace(-3,3,100) * ones(nmod)' 
+yy = Float64[ mods[j].eval([xx[i,j]]) for i in 1:100, j in 1:nmod]
+g = ones(100) * linspace(1,nmod,nmod)'  
+plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
+
+# Build MCMCTasks with diminishing scaling
+targets = MCMCTask[ mods[i] * RWM(sqrt(p[i])) for i in 1:nmod ]
+
+# Create a 100 particles
+particles = [ [randn()] for i in 1:100]
+
+# Launch sequential MC 
+# (30 steps x 100 particles = 3000 samples returned in a single MCMCChain)
+res = seqMC(targets, particles, steps=30)  
+
+# Plot raw samples
+ts = collect(1:10:size(res.samples[:beta],2))
+plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :scatter)
+plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
+# we don't have the real distribution yet because we didn't use the 
+#   sample weightings sequential MC produces
+
+# Now resample with replacement using weights
+ns = length(res.weights)
+cp = cumsum(res.weights) / sum(res.weights)
+rs = fill(0, ns)
+for n in 1:ns  #  n = 1
+	l = rand()
+	rs[n] = findfirst(p-> (p>=l), cp)
+end
+newsamp = vec(res.samples[:beta])[rs]
+
+mean(newsamp)
+plot(x = collect(1:ns), y = newsamp, kind = :scatter)
 
 ```

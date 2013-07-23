@@ -63,7 +63,7 @@ function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float6
 
   #  Task reset function
   function reset(newbeta::Vector{Float64})
-    state0 = HMCSample(newbeta)
+    state0 = HMCSample(copy(newbeta))
     calc!(state0, model.evalg)
   end
   # hook inside Task to allow remote resetting

@@ -38,7 +38,7 @@ function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
 
   #  Task reset function
   function reset(newbeta::Vector{Float64})
-    beta = newbeta
+    beta = copy(newbeta)
     ll, grad = model.evalg(beta)
   end
   # hook inside Task to allow remote resetting

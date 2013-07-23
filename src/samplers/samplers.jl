@@ -6,7 +6,7 @@
 
 abstract MCMCSampler
 
-######### parameters map info  ############
+######### sample type returned by samplers  ############
 immutable MCMCSample
 	beta::Vector{Float64}     # newly drawn parameter vector
 	ll::Float64               # log likelihood	
