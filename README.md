@@ -13,7 +13,7 @@ Current prototyping directions :
 To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
 
 - update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
-- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is not thoroughly tested and based on my limited understanding of the corresponding paper !_
+- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is quicly implemented and not thoroughly tested_
 
 ```jl
 
@@ -80,13 +80,13 @@ using Vega
 #  distribution of interest (in the spirit of simulated annealing)
 nmod = 10  # number of models
 mods = Model[]
-stds = logspace(1, -1, nmod)
-for fac in stds
+sts = logspace(1, -1, nmod)
+for fac in sts
 	m = quote
 		y = abs(x)
 		y ~ Normal(1, $fac )
 	end
-	println(m)
+	push!(mods,Model(m, x=0))
 end
 
 # Plot models
@@ -96,14 +96,14 @@ g = ones(100) * [1:10]'
 plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 
 # Build MCMCTasks with diminishing scaling
-targets = MCMCTask[ mods[i] * RWM(sqrt(stds[i])) for i in 1:nmod ]
+targets = MCMCTask[ mods[i] * RWM(sts[i]) for i in 1:nmod ]
 
-# Create a 100 particles
-particles = [ [randn()] for i in 1:100]
+# Create a 1000 particles
+particles = [ [randn()] for i in 1:1000]
 
 # Launch sequential MC 
-# (30 steps x 100 particles = 3000 samples returned in a single MCMCChain)
-res = seqMC(targets, particles, steps=30)  
+# (10 steps x 1000 particles = 10000 samples returned in a single MCMCChain)
+res = seqMC(targets, particles, steps=10)  
 
 # Plot raw samples
 ts = collect(1:10:size(res.samples[:beta],2))
@@ -112,8 +112,9 @@ plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
 #   sample weightings sequential MC produces
 
 # Now resample with replacement using weights
-ns = length(res.weights)
-cp = cumsum(res.weights) / sum(res.weights)
+w = res.misc[:weights]
+ns = length(w)
+cp = cumsum(w) / sum(w)
 rs = fill(0, ns)
 for n in 1:ns  #  n = 1
 	l = rand()
@@ -121,7 +122,10 @@ for n in 1:ns  #  n = 1
 end
 newsamp = vec(res.samples[:beta])[rs]
 
-mean(newsamp)
+mean(newsamp)  # close to 0 ?
 plot(x = collect(1:ns), y = newsamp, kind = :scatter)
 
 ```
+
+
+

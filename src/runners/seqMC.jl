@@ -39,14 +39,15 @@ function seqMC(targets::Array{MCMCTask},
 
 	# initialize MCMCChain result
 	res = MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)},
-					fill(NaN, (steps-burnin)*npart), # weight of samples
-		            targets[end], NaN)
+		            targets[end], NaN,
+		            {:weights => fill(NaN, (steps-burnin)*npart)}) # weight of samples
 
+	local beta = deepcopy(particles)
 	local logW = zeros(npart)  # log of particle weights
 	local oldll = zeros(npart) # loglik of previous target distrib
-	local beta = deepcopy(particles)
 
 	for i in 1:steps  # i = 1
+
 		for t in targets  # t = targets[1]
 			# mutate each particle with task t
 			for n in 1:npart  #  n = 1
@@ -56,10 +57,6 @@ function seqMC(targets::Array{MCMCTask},
 				logW[n] += ll0 - oldll[n]
 				oldll[n] = ll
 			end
-
-			# print("1- beta [ $(min(beta)), $(max(beta)) ], ")
-			# print("oldll [ $(round(min(oldll),2)), $(round(max(oldll),2)) ], ")
-			# println("logW [ $(round(min(logW),2)), $(round(max(logW),2)) ]")
 
 			# resample if likelihood variance of particles is too low
 			#  TODO : improve, clarify
@@ -73,11 +70,8 @@ function seqMC(targets::Array{MCMCTask},
 				end
 				beta = beta[rs]
 				logW = zeros(npart)
-				oldll = oldll[rs]   #zeros(npart)
+				oldll = oldll[rs]  
 				# println("resampled !")
-				# print("2- beta [ $(min(beta)), $(max(beta)) ], ")
-				# print("oldll [ $(round(min(oldll),2)), $(round(max(oldll),2)) ], ")
-				# println("logW [ $(round(min(logW),2)), $(round(max(logW),2)) ]")
 			end
 		end
 
@@ -88,7 +82,7 @@ function seqMC(targets::Array{MCMCTask},
 			pos = (i-burnin-1) * npart
 			for n in 1:npart  #  n = 1
 				res.samples[:beta][:, pos+n] = beta[n]
-				res.weights[pos+n] = exp(logW[n])
+				res.misc[:weights][pos+n] = exp(logW[n])
 			end
 		end
 	end
