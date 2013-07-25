@@ -11,9 +11,6 @@ export show, *
 export MCMCTask, MCMCChain
 
 ###########  Models and autodiff  ##########
-# import Base.sum
-# sum(x::Real) = x  # meant to avoid the annoying behaviour of sum(Inf) 
-
 include("modellers/models.jl")      #  include model types definitions		
 
 include("modellers/parsing.jl")     #  include model expression parsing function
@@ -36,8 +33,8 @@ include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
 include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 
 #  Definition of * as a shortcut operator for model and sampler combination 
-*{M<:MCMCModel, S<:MCMCSampler}(m::M,        s::S)        = spinTask(m, s)
-*{M<:MCMCModel, S<:MCMCSampler}(m::Array{M}, s::S)        = map((me) -> spinTask(me, s), m)
+*{M<:MCMCModel, S<:MCMCSampler}(m::M,        s::S       ) = spinTask(m, s)
+*{M<:MCMCModel, S<:MCMCSampler}(m::Array{M}, s::S       ) = map((me) -> spinTask(me, s), m)
 *{M<:MCMCModel, S<:MCMCSampler}(m::M,        s::Array{S}) = map((se) -> spinTask(m, se), s)
 
 

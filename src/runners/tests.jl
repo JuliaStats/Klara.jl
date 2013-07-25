@@ -25,6 +25,8 @@ mymodel2 = ModelG(modexpr, v=ones(3))  # with gradient
 
 res = mymodel * RWM(0.1) * (100:1000)  # burnin = 99
 res.samples  # prints samples
+mapslices(mean, res.samples[:beta], 2)
+mapslices(std, res.samples[:beta], 2)
 
 res = res * (1:10000)  # continue sampling where it stopped
 
@@ -38,14 +40,84 @@ mymodel2 * MALA(0.1) * (1:1000) # now this works
 ##### running multiple chains
 
 res = mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * (1:1000) # test all 3 samplers
-res[1].samples  # prints samples
-res[2].samples  # prints samples
-res[3].samples  # prints samples
+res[2].samples  # prints samples for MALA(0.1)
 
 res = mymodel2 * [HMC(i,0.1) for i in 1:5] * (1:1000) # test HMC with varying # of inner steps
 
 
 #### end of example
+
+
+#######  start of example  2 (seqMC) ##########
+
+using MCMC
+using Vega
+
+# We need to define a set of models that converge toward the 
+#  distribution of interest (in the spirit of simulated annealing)
+nmod = 10  # number of models
+p = logspace(1, -1, nmod) 
+mods = Model[]
+i = 1
+while i<=nmod
+	m = quote
+		y = abs(x)
+		y ~ Normal(1, $(p[i]) )
+	end
+
+	push!(mods, Model(m, x=0.)) # create MCMCModel
+	i += 1
+end
+
+mods = Model[]
+for fac in logspace(1, -1, 10)
+	m = quote
+		y = abs(x)
+		y ~ Normal(1, $fac )
+	end
+	println(m)
+end
+
+# Plot models
+xx = [-3:0.01:3] * ones(nmod)' #'
+yy = hcat(map(x->mods[j].eval(x), )
+Float64[ mods[j].eval([xx[i,j]]) for i in 1:100, j in 1:nmod]
+g = ones(100) * [1:10]'  #'
+plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
+
+# Build MCMCTasks with diminishing scaling
+targets = MCMCTask[ mods[i] * RWM(sqrt(p[i])) for i in 1:nmod ]
+
+# Create a 100 particles
+particles = [ [randn()] for i in 1:100]
+
+# Launch sequential MC 
+# (30 steps x 100 particles = 3000 samples returned in a single MCMCChain)
+res = seqMC(targets, particles, steps=30)  
+
+# Plot raw samples
+ts = collect(1:10:size(res.samples[:beta],2))
+plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :scatter)
+plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
+# we don't have the real distribution yet because we didn't use the 
+#   sample weightings sequential MC produces
+
+# Now resample with replacement using weights
+ns = length(res.weights)
+cp = cumsum(res.weights) / sum(res.weights)
+rs = fill(0, ns)
+for n in 1:ns  #  n = 1
+	l = rand()
+	rs[n] = findfirst(p-> (p>=l), cp)
+end
+newsamp = vec(res.samples[:beta])[rs]
+
+mean(newsamp)
+plot(x = collect(1:ns), y = newsamp, kind = :scatter)
+
+
+#######  end of example  2  ##########
+
 
 
 
@@ -228,12 +300,34 @@ plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 targets = MCMCTask[ mods[i] * RWM(sqrt(p[i])) for i in 1:nmod ]
 particles = [ [randn()] for i in 1:100]
 
-res = seqMC(targets, particles, steps=100, burnin=0)
+res = seqMC(targets, particles, steps=30, resTrigger=1e-5)
+res = seqMC(targets, particles, steps=30, burnin=0)
 res = seqMC(targets, particles, steps=200, burnin=100)
 
-ts = collect(1:100:size(res.samples[:beta],2))
+ts = collect(1:1:size(res.samples[:beta],2))
 plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :scatter)
 plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
+
+# resample using weights
+ns = length(res.weights)
+cp = cumsum(res.weights) / sum(res.weights)
+rs = fill(0, ns)
+for n in 1:ns  #  n = 1
+	l = rand()
+	rs[n] = findfirst(p-> (p>=l), cp)
+end
+newsamp = vec(res.samples[:beta])[rs]
+
+mean(newsamp)
+
+dump(res)
+res.runTime
+plot(x = collect(1:ns), y = newsamp, kind = :scatter)
+
+logW = zeros(npart)
+oldll = oldll[rs]   #zeros(npart)
+
+
 
 mean(res.samples[:beta])
 

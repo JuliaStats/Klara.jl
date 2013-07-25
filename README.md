@@ -79,27 +79,24 @@ using Vega
 # We need to define a set of models that converge toward the 
 #  distribution of interest (in the spirit of simulated annealing)
 nmod = 10  # number of models
-p = logspace(1, -1, nmod) 
 mods = Model[]
-i = 1
-while i<=nmod
+stds = logspace(1, -1, nmod)
+for fac in stds
 	m = quote
 		y = abs(x)
-		y ~ Normal(1, $(p[i]) )
+		y ~ Normal(1, $fac )
 	end
-
-	push!(mods, Model(m, x=0.)) # create MCMCModel
-	i += 1
+	println(m)
 end
 
 # Plot models
 xx = linspace(-3,3,100) * ones(nmod)' 
 yy = Float64[ mods[j].eval([xx[i,j]]) for i in 1:100, j in 1:nmod]
-g = ones(100) * linspace(1,nmod,nmod)'  
+g = ones(100) * [1:10]'  
 plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 
 # Build MCMCTasks with diminishing scaling
-targets = MCMCTask[ mods[i] * RWM(sqrt(p[i])) for i in 1:nmod ]
+targets = MCMCTask[ mods[i] * RWM(sqrt(stds[i])) for i in 1:nmod ]
 
 # Create a 100 particles
 particles = [ [randn()] for i in 1:100]
