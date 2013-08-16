@@ -40,11 +40,11 @@ include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain
-	samples::Dict
-	task::MCMCTask
-	runTime::Float64
-	misc::Dict               # dict for storing runner specific variables
-end
+   samples::Dict
+   weights::Vector{Float64}  # weight of sample, used for sequential MC
+   task::MCMCTask
+   runTime::Float64
+ end
 MCMCChain(s::Dict, t::MCMCTask) = MCMCChain(s, t, NaN)
 MCMCChain(s::Dict, t::MCMCTask, ti::Float64) = MCMCChain(s, Float64[], t, ti)
 
