@@ -1,4 +1,4 @@
-MCMC.jl  (Work in progress  !)
+MCMC.jl  (Work in progress)
 =======
 
 
@@ -22,10 +22,10 @@ using MCMC
 ######## Model definition / method 1 = state explictly your functions
 
 # loglik of Normal distrib, vector of 3, initial values 1.0
-mymodel = Model(v-> -dot(v,v), 3, ones(3))  
+mymodel = MCMCLikModel(v-> -dot(v,v), 3, ones(3))  
 
 # or for a model providing the gradient : 
-mymodel2 = ModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  
+mymodel2 = MCMCLikModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  
 # Note that 2nd function returns a tuple (loglik, gradient)
 
 ######## Model definition / method 2 = using expression parsing and autodiff
@@ -34,8 +34,8 @@ modexpr = quote
 	v ~ Normal(0, 1)
 end
 
-mymodel = Model(modexpr, v=ones(3))  # without gradient
-mymodel2 = ModelG(modexpr, v=ones(3))  # with gradient
+mymodel = MCMCLikModel(modexpr, v=ones(3))  # without gradient
+mymodel2 = MCMCLikModelG(modexpr, v=ones(3))  # with gradient
 
 
 ######## running a single chain ########
@@ -79,14 +79,14 @@ using Vega
 # We need to define a set of models that converge toward the 
 #  distribution of interest (in the spirit of simulated annealing)
 nmod = 10  # number of models
-mods = Model[]
+mods = MCMCLikModel[]
 sts = logspace(1, -1, nmod)
 for fac in sts
 	m = quote
 		y = abs(x)
 		y ~ Normal(1, $fac )
 	end
-	push!(mods,Model(m, x=0))
+	push!(mods,MCMCLikModel(m, x=0))
 end
 
 # Plot models

@@ -4,10 +4,11 @@
 #
 #################################################################
 
-export Model, ModelG
+export MCMCLikModel, MCMCLikModelG
 
-### Model types hierarchy to allow restrictions applicable samplers
-abstract MCMCModel
+### Model types hierarchy to allow restrictions on applicable samplers
+abstract Model
+abstract MCMCModel <: Model
 abstract MCMCModelWithGradient <: MCMCModel
 abstract MCMCModelWithHessian <: MCMCModelWithGradient
 
@@ -17,14 +18,15 @@ immutable PDims
 	dims::Tuple    # dimensions of user facing parameter, can be a scalar, vector or matrix
 end
 
-######### Basic (i.e. just a loglik evaluation function) model type ############
-type Model <: MCMCModel
+######### Basic MCMC model type based on evaluating the log-target ############
+### Examples of other possible models: MCMCHierarchicalModel, MCMCGPModel, MCMCKernelModel
+type MCMCLikelihoodModel <: MCMCModel
 	eval::Function                 # log-likelihood evaluation function
 	pmap::Dict{Symbol, PDims}      # map to/from parameter vector from/to user-friendly variables
 	size::Integer                  # parameter vector size
 	init::Vector{Float64}          # parameter vector initial values
 
-	function Model(f::Function, pmap::Dict{Symbol, PDims} , s::Integer, i::Vector{Float64})
+	function MCMCLikelihoodModel(f::Function, pmap::Dict{Symbol, PDims} , s::Integer, i::Vector{Float64})
 		assert(s>0, "size should be > 0")
 		assert(size(i)==(s,), "initial values vector and size not consistent ($(size(i)) <> $s)")
 
@@ -43,31 +45,29 @@ type Model <: MCMCModel
 	end
 end
 
-# Model creation with default values
-Model(f::Function) = Model(f, 1)
-Model(f::Function, s::Integer) = Model(f, s, zeros(s))
-Model(f::Function, s::Integer, i::Vector{Float64}) = Model(f, Dict([:beta], [PDims(1, (s,))]), s, i)
+# MCMCLikelihoodModel creation with default values
+MCMCLikelihoodModel(f::Function) = MCMCLikelihoodModel(f, 1)
+MCMCLikelihoodModel(f::Function, s::Integer) = MCMCLikelihoodModel(f, s, zeros(s))
+MCMCLikelihoodModel(f::Function, s::Integer, i::Vector{Float64}) = MCMCLikelihoodModel(f, Dict([:beta], [PDims(1, (s,))]), s, i)
 
 # ModelG creation using expression parsing and autodiff
-function Model(m::Expr; init...)
+function MCMCLikelihoodModel(m::Expr; init...)
 	f, s, p, i = generateModelFunction(m; gradient=false, init...)  # loglik only function
 
-	Model(f, p, s, i)
+	MCMCLikelihoodModel(f, p, s, i)
 end
 
-
-
-
+typealias MCMCLikModel MCMCLikelihoodModel
 
 ########### Model with gradient function  ####################
-type ModelG <: MCMCModelWithGradient
+type MCMCLikelihoodModelWithGradient <: MCMCModelWithGradient
 	eval::Function                 # log-likelihood evaluation function
 	evalg::Function                # tuple (log-lik, gradient vector) evaluation function
 	pmap::Dict{Symbol, PDims}      # map to/from parameter vector from/to user-friendly variables
 	size::Integer                  # parameter vector size
 	init::Vector{Float64}          # parameter vector initial values
 
-	function ModelG(f::Function, g::Function, pmap::Dict{Symbol, PDims}, s::Integer, i::Vector{Float64})
+	function MCMCLikelihoodModelWithGradient(f::Function, g::Function, pmap::Dict{Symbol, PDims}, s::Integer, i::Vector{Float64})
 		assert(s>0, "size should be > 0")
 		assert(size(i)==(s,), "initial values vector and size not consistent ($(size(i)) <> $s)")
 
@@ -89,16 +89,17 @@ type ModelG <: MCMCModelWithGradient
 end
 
 # Model creation with default values
-ModelG(f::Function, g::Function) = ModelG(f, g, 1)
-ModelG(f::Function, g::Function, s::Integer) = ModelG(f, g, s, zeros(s))
-ModelG(f::Function, g::Function, s::Integer, i::Vector{Float64}) = 
-	ModelG(f, g, Dict([:beta], [PDims(1, (s,))]), s, i)
+MCMCLikelihoodModelWithGradient(f::Function, g::Function) = MCMCLikelihoodModelWithGradient(f, g, 1)
+MCMCLikelihoodModelWithGradient(f::Function, g::Function, s::Integer) = MCMCLikelihoodModelWithGradient(f, g, s, zeros(s))
+MCMCLikelihoodModelWithGradient(f::Function, g::Function, s::Integer, i::Vector{Float64}) = 
+	MCMCLikelihoodModelWithGradient(f, g, Dict([:beta], [PDims(1, (s,))]), s, i)
 
 # ModelG creation using expression parsing and autodiff
-function ModelG(m::Expr; init...)
+function MCMCLikelihoodModelWithGradient(m::Expr; init...)
 	f, s, p, i = generateModelFunction(m; gradient=false, init...)  # loglik only function
 	g, s, p, i = generateModelFunction(m; gradient=true, init...)   # loglik and gradient function
 
-	ModelG(f, g, p, s, i)
+	MCMCLikelihoodModelWithGradient(f, g, p, s, i)
 end
 
+typealias MCMCLikModelG MCMCLikelihoodModelWithGradient
