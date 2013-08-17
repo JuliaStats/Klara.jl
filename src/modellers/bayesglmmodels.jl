@@ -2,7 +2,7 @@ export BayesLogitModel, loglik, logposterior
 
 abstract BayesGLMModel <: Model
 
-type BayesLogitModel
+type BayesLogitModel <: BayesGLMModel
   X::Array{Float64, 2} # Design matrix
   y::Vector{Float64} # Response variable
   ndata::Int # Number of data samples
