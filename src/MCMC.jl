@@ -6,6 +6,8 @@
 
 module MCMC
 
+using Distributions # logcdf() and Normal() are used in src/bayesglmmodels.jl (log-likelihood of Bayesian probit model)
+
 import Base.*, Base.show
 export show, *
 export MCMCTask, MCMCChain
