@@ -13,7 +13,7 @@ Current prototyping directions :
 To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
 
 - update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
-- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is quicly implemented and not thoroughly tested_
+- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is quickly implemented and not thoroughly tested_
 
 ```jl
 
