@@ -1,0 +1,4 @@
+"Category","Benchmark","Iterations","TotalWall","AverageWall","MaxWall","MinWall","Timestamp","JuliaHash","CodeHash","OS","CPUCores"
+"loglik eval","binomial 10x1000",1000,0.3954317399999999,0.00039543173999999993,0.024036362,0.000199894,"2013-08-19 15:10:37","","NA","Windows",2
+"loglik and gradient eval","binomial 10x1000",1000,1.8446744073041653e10,1.844674407304165e7,1.8446744072242195e10,0.000360772,"2013-08-19 15:10:38","","NA","Windows",2
+"1000 RWM steps","binomial 10x1000",1,0.40906367,0.40906367,0.40906367,0.40906367,"2013-08-19 15:10:39","","NA","Windows",2
