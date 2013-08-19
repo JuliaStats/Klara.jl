@@ -42,11 +42,3 @@ end
 # alternate version with Model and Sampler passed separately
 run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S}); args...) = 
 	run(m * s; args...)
-
-
-# syntax shorcut using *
-# getindex(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-# 	run(t, steps=i.start+i.len-1, burnin=i.start-1)
-*(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-	run(t, steps=i.start+i.len-1, burnin=i.start-1)
-
