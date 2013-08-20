@@ -14,4 +14,4 @@ mcmcmodel = MCMCLikModel(logtarget, logitmodel.npars, randprior());
 
 mcmcchain = mcmcmodel * RWM(0.1) * (5001:55000);
 
-mean(mcmcchain.samples[:beta], 2)
+#mean(mcmcchain.samples, 2)
