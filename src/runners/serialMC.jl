@@ -28,9 +28,7 @@ function serialMC(tasks::Array{MCMCTask};
 	map(t -> consume(t.task), tasks)
 
 	# initialize MCMCChain result (one Chain only)
-	res = MCMCChain({:beta => fill(NaN, tsize, steps-burnin)},
-		            tasks[end], NaN,
-		            {:mod => fill(0, steps-burnin) }) # model running
+  res = MCMCChain(1:1:2, DataFrame(tsize, steps-burnin), tasks[end])
 
 	local logW = zeros(nmods)  # log of task weights that will be adapted
 	local at = 1  # pick starting task
@@ -60,8 +58,8 @@ function serialMC(tasks::Array{MCMCTask};
 
 		if i > burnin # store beta and the model we're on
 			pos = i-burnin 
-			res.samples[:beta][:, pos] = beta
-			res.misc[:mod][pos] = at
+			res.samples[:, pos] = beta
+			#res.misc[:mod][pos] = at
 		end
 	end
 
