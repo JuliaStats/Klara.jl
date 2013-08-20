@@ -6,6 +6,7 @@
 
 module MCMC
 
+using DataFrames
 using Distributions # logcdf() and Normal() are used in src/bayesglmmodels.jl (log-likelihood of Bayesian probit model)
 
 import Base.*, Base.show
@@ -41,14 +42,30 @@ include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 *{M<:MCMCModel, S<:MCMCSampler}(m::M,        s::Array{S}) = map((se) -> spinTask(m, se), s)
 
 ### MCMCChain, the result of running a MCMCTask
+# type MCMCChain
+#    samples::Dict
+#    weights::Vector{Float64}  # weight of sample, used for sequential MC
+#    task::MCMCTask
+#    runTime::Float64
+#  end
 type MCMCChain
-   samples::Dict
-   weights::Vector{Float64}  # weight of sample, used for sequential MC
-   task::MCMCTask
-   runTime::Float64
- end
-MCMCChain(s::Dict, t::MCMCTask) = MCMCChain(s, t, NaN)
-MCMCChain(s::Dict, t::MCMCTask, ti::Float64) = MCMCChain(s, Float64[], t, ti)
+  range::Range
+  samples::DataFrame
+  gradients::DataFrame
+  diagnostics::DataFrame
+  task::MCMCTask
+  runTime::Float64
+   
+  function MCMCChain(r::Range, s::DataFrame, g::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64)
+    if !isempty(g); assert(size(s) == size(g), "samples and gradients must have the same number of rows and columns"); end
+    if !isempty(d); assert(nrow(s) == nrow(d), "samples and diagnostics must have the same number of rows"); end
+    new(r, s, g, d, t, rt)
+  end
+end
+MCMCChain(r::Range, s::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), d, t, rt)
+MCMCChain(r::Range, s::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), DataFrame(), t, rt)
+MCMCChain(r::Range, s::DataFrame, d::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), d, t, NaN)
+MCMCChain(r::Range, s::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), DataFrame(), t, NaN)
 
 function show(io::IO, res::MCMCChain)
 	local samples = 0
