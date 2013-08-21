@@ -8,23 +8,37 @@
 # import Base.getindex, 
 import Base.run
 
-export run  #, getindex
+export run
 
 function run(t::MCMCTask; steps::Integer=100, burnin::Integer=0)
   assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
   assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
 
-  res = MCMCChain(1:1:2, DataFrame(t.model.size, steps-burnin), t)
-
   tic() # start timer
 
+  # temporary array to store samples
+  samples = fill(NaN, t.model.size, steps-burnin) 
+
+  # sampling loop
   for i in 1:steps
     newprop = consume(t.task)
-    i > burnin && (res.samples[:, i-burnin] = newprop.beta)
+    i > burnin && (samples[:, i-burnin] = newprop.beta)
   end
 
-  res.runTime = toq()
-  res
+  # build the samples dataframe by splitting the 'samples' array
+  # into as many columns as there are variables in the model's pmap
+  d = DataFrame()
+  for (k,v) in t.model.pmap
+      col = mapslices(x->Array[x], samples[v.pos:(v.pos+prod(v.dims)-1), :], 2)
+      d[string(k)] = col
+  end
+
+  MCMCChain((burnin+1):1:steps,
+            d,
+            DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
+            DataFrame(),  # TODO, store diagnostics here, needs to be passed by newprop
+            t,
+            toq())
 end
 
 # chain continuation alternate
@@ -44,6 +58,4 @@ run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S})
 
 
 # syntax shorcut using *
-# getindex(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-# 	run(t, steps=i.start+i.len-1, burnin=i.start-1)
 *(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = run(t, steps=i.start+i.len-1, burnin=i.start-1)
