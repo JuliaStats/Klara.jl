@@ -10,17 +10,22 @@ import Base.run
 
 export run  #, getindex
 
-function run(t::MCMCTask; steps::Integer=100, burnin::Integer=0)
+function run(t::MCMCTask; nsteps::Integer=100, burnin::Integer=0, thinning::Integer=1)
+  local len = burnin+nsteps*thinning
+  
   assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
-  assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
+  assert(len > burnin, "Total MCMC length ($len) should be > to burnin ($burnin)")  
 
-  res = MCMCChain(1:1:2, DataFrame(t.model.size, steps-burnin), t)
+  res = MCMCChain((burnin+1):thinning:len, DataFrame(t.model.size, nsteps), t)
 
   tic() # start timer
 
-  for i in 1:steps
+  for i in 1:len
     newprop = consume(t.task)
-    i > burnin && (res.samples[:, i-burnin] = newprop.beta)
+    
+    if i > burnin && (i % thinning == 0)
+      res.samples[:, div(i-burnin, thinning)] = newprop.beta
+    end
   end
 
   res.runTime = toq()
@@ -45,5 +50,6 @@ run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S})
 
 # syntax shorcut using *
 # getindex(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = 
-# 	run(t, steps=i.start+i.len-1, burnin=i.start-1)
-*(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), i::Range1{Int}) = run(t, steps=i.start+i.len-1, burnin=i.start-1)
+# 	run(t, nsteps=i.start+i.len-1, burnin=i.start-1)
+*(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), range::Range{Int}) = run(t, nsteps=range.len, burnin=range.start-1, thinning=range.step)
+*(t::Union(MCMCTask, Array{MCMCTask}, MCMCChain, Array{MCMCChain}), range::Range1{Int}) = run(t, nsteps=range.len, burnin=range.start-1)

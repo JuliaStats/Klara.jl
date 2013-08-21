@@ -40,8 +40,10 @@ mymodel2 = MCMCLikModelG(modexpr, v=ones(3))  # with gradient
 
 ######## running a single chain ########
 
-# RWM sampler, burnin = 99, keeping iterations 100 to 1000
-res = mymodel * RWM(0.1) * (100:1000)  
+# RWM sampler, burnin = 100, keeping iterations 101 to 1000 (900 iterations)
+res = mymodel * RWM(0.1) * (101:1000)  
+# RWM sampler, burnin = 100, keeping every 5th iteration between 101 and 1000 (180 post-burnin points)
+res = mymodel * RWM(0.1) * (101:5:1000)  
 # prints samples
 res.samples  
 #  mean, std
