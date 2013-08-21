@@ -37,10 +37,13 @@ function seqMC(targets::Array{MCMCTask},
 	# initialize all tasks
 	map(t -> consume(t.task), targets)
 
-	# initialize MCMCChain result
-	res = MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)},
-		            targets[end], NaN,
-		            {:weights => fill(NaN, (steps-burnin)*npart)}) # weight of samples
+	# initialize samples and weights arrays
+	samples = fill(NaN, tsize, (steps-burnin)*npart) 
+	weights = fill(NaN, (steps-burnin)*npart)
+
+	# res = MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)},
+	# 	            targets[end], NaN,
+	# 	            {:weights => fill(NaN, (steps-burnin)*npart)}) # weight of samples
 
 	local beta = deepcopy(particles)
 	local logW = zeros(npart)  # log of particle weights
@@ -81,13 +84,30 @@ function seqMC(targets::Array{MCMCTask},
 		if i > burnin # store betas of all particles in the result chain
 			pos = (i-burnin-1) * npart
 			for n in 1:npart  #  n = 1
-				res.samples[:beta][:, pos+n] = beta[n]
-				res.misc[:weights][pos+n] = exp(logW[n])
+				samples[:, pos+n] = beta[n]
+				weights[pos+n] = exp(logW[n])
 			end
 		end
 	end
 
-	res.runTime = toq()
-	res
+	# generate column names for the samples DataFrame
+	cn = ASCIIString[]
+	for (k,v) in targets[end].model.pmap
+	  if length(v.dims) == 0 # scalar
+	    push!(cn, string(k))
+	  elseif length(v.dims) == 1 # vector
+	    cn = vcat(cn, ASCIIString[ "$k.$i" for i in 1:v.dims[1] ])
+	  elseif length(v.dims) == 2 # matrix
+	    cn = vcat(cn, ASCIIString[ "$k.$i.$j" for i in 1:v.dims[1], j in 1:v.dims[2] ])
+	  end
+	end
+
+	# create Chain
+	MCMCChain(	(burnin+1):1:((steps-burnin)*npart),
+		        DataFrame(samples', cn),
+		        DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
+		        DataFrame(weigths=weights),  # TODO, store diagnostics here, needs to be passed by newprop
+		        targets,
+		        toq())
 end
 
