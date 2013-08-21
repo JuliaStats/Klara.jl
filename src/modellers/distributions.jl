@@ -4,6 +4,8 @@
 #
 ##########################################################################################
 
+using Distributions
+
 ########## locally defined distributions #############
 # defined within the library, either because libRmath doesn't have it (Bernoulli)
 #  or because there is a significant speed gain
@@ -20,17 +22,17 @@ function logpdfBernoulli(prob::Real, x::Real)
 	end
 end
 
-function logpdfNormal(mu::Real, sigma::Real, x::Real)
-	local const fac = -log(sqrt(2pi))
-	assert(sigma > 0., "calling logpdfNormal with negative or null stdev")
-	local r = (x-mu)/sigma
-	return -r*r*0.5-log(sigma)+fac
-end
+# function logpdfNormal(mu::Real, sigma::Real, x::Real)
+# 	local const fac = -log(sqrt(2pi))
+# 	assert(sigma > 0., "calling logpdfNormal with negative or null stdev")
+# 	local r = (x-mu)/sigma
+# 	return -r*r*0.5-log(sigma)+fac
+# end
 
-function logpdfUniform(a::Real, b::Real, x::Real)
-	assert(a < b, "calling logpdfUniform with lower limit >= upper limit")
-	return (a <= x <= b) ? -log(b-a) : throw("give up eval")
-end
+# function logpdfUniform(a::Real, b::Real, x::Real)
+# 	assert(a < b, "calling logpdfUniform with lower limit >= upper limit")
+# 	return (a <= x <= b) ? -log(b-a) : throw("give up eval")
+# end
 
 ########### distributions using libRmath ######### 
 
@@ -46,8 +48,10 @@ dists = { (:Weibull, 	  "dweibull",       3),
 		  (:Poisson,  	  "dpois",          2),
 		  (:TDist,  	  "dt",             2),
 		  (:Exponential,  "dexp",           2),
-		  (:Uniform, 	  "",               3),     #  dunif in libRmath
-	      (:Normal,  	  "",               3),     #  "dnorm4" in libRmath
+		  # (:Uniform, 	  "",               3),     #  dunif in libRmath
+	   #    (:Normal,  	  "",               3),     #  "dnorm4" in libRmath
+		  (:Uniform, 	  "dunif",          3),   
+	      (:Normal,  	  "dnorm4",         3),
 		  (:Bernoulli,    "",               2)}
 
 
@@ -62,9 +66,11 @@ for d in dists  # d = dists[3]
 			function ($fsym)($([Expr(:(::), symbol("x$i"), :Real) for i in 1:npars]...))
 				local res = 0.
 
-		        res = ccall(dlsym(_jl_libRmath, $(string(d[2]))), Float64,
-		            	 	  $(Expr(:tuple, [[:Float64 for i in 1:npars]..., :Int32 ]...)),
-		            	 	  $(args...), 1	)
+		        # res = ccall(dlsym(_jl_libRmath, $(string(d[2]))), Float64,
+		        #     	 	  $(Expr(:tuple, [[:Float64 for i in 1:npars]..., :Int32 ]...)),
+		        #     	 	  $(args...), 1	)
+
+		        res = logpdf( ($(d[1]))($([symbol("x$i") for i in 1:(npars-1)]...)), $(symbol("x$npars")) )
 
 				if res == -Inf
 					throw("give up eval")
