@@ -42,27 +42,27 @@ include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain
-  range::Range
+  range::Range{Int}
   samples::DataFrame
   gradients::DataFrame
   diagnostics::DataFrame
-  task::MCMCTask
+  task::Union(MCMCTask, Array{MCMCTask})
   runTime::Float64
    
-  function MCMCChain(r::Range, s::DataFrame, g::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64)
+  function MCMCChain(r::Range{Int}, s::DataFrame, g::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64)
     if !isempty(g); assert(size(s) == size(g), "samples and gradients must have the same number of rows and columns"); end
     if !isempty(d); assert(nrow(s) == nrow(d), "samples and diagnostics must have the same number of rows"); end
     new(r, s, g, d, t, rt)
   end
 end
 
-MCMCChain(r::Range, s::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), d, t, rt)
-MCMCChain(r::Range, s::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), DataFrame(), t, rt)
-MCMCChain(r::Range, s::DataFrame, d::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), d, t, NaN)
-MCMCChain(r::Range, s::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), DataFrame(), t, NaN)
+MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), d, t, rt)
+MCMCChain(r::Range{Int}, s::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), DataFrame(), t, rt)
+MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), d, t, NaN)
+MCMCChain(r::Range{Int}, s::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), DataFrame(), t, NaN)
 
 function show(io::IO, res::MCMCChain)
-  println("$(nrow(res.samples)) parameters, $(ncol(res.samples)) samples (per parameter), $(round(res.runTime, 1)) sec.")
+  println("$(ncol(res.samples)) parameters, $(nrow(res.samples)) samples (per parameter), $(round(res.runTime, 1)) sec.")
 end
 
 #############  runners    ########################

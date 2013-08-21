@@ -41,8 +41,19 @@ mymodel2 = MCMCLikModelG(modexpr, v=ones(3))  # with gradient
 
 ######## running a single chain ########
 
-# RWM sampler, burnin = 100, keeping iterations 101 to 1000
-res = run(mymodel * RWM(0.1), steps=1000, burnin=100)  
+# Syntax 1 / RWM sampler, burnin = 100, keeping iterations 101 to 1000
+res = run(mymodel * RWM(0.1), steps=1000, burnin=100)
+
+# Syntax 1 / RWM sampler, burnin = 100, keeping every 5th iteration between 101 and 1000 
+#  (180 post-burnin points)
+res = run(mymodel * RWM(0.1), steps=1000, burnin=100, thinning=5)
+
+# Syntax 2 / using a Range for argument 'step'
+res = run(mymodel * RWM(0.1), steps=101:5:1000)
+
+# Syntax 3 / using the '*' operator instead of 'run()'
+res = mymodel * RWM(0.1) * (101:5:1000)  
+
 # prints samples
 head(res.samples)
 describe(res.samples)
