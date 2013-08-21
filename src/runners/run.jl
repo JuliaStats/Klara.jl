@@ -25,16 +25,21 @@ function run(t::MCMCTask; steps::Integer=100, burnin::Integer=0)
     i > burnin && (samples[:, i-burnin] = newprop.beta)
   end
 
-  # build the samples dataframe by splitting the 'samples' array
-  # into as many columns as there are variables in the model's pmap
-  d = DataFrame()
+  # generate column names
+  cn = []
   for (k,v) in t.model.pmap
-      col = mapslices(x->Array[x], samples[v.pos:(v.pos+prod(v.dims)-1), :], 2)
-      d[string(k)] = col
+      if length(v.dims) == 0 # scalar
+        push!(cn, string(k))
+      elseif length(v.dims) == 1 # vector
+        cn = vcat(cn, ASCIIString[ "$k.$i" for i in 1:v.dims[1] ])
+      elseif length(v.dims) == 2 # matrix
+        cn = vcat(cn, ASCIIString[ "$k.$i.$j" for i in 1:v.dims[1], j in 1:v.dims[2] ])
+      end
   end
 
+  # create Chain
   MCMCChain((burnin+1):1:steps,
-            d,
+            DataFrame(samples', cn),
             DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
             DataFrame(),  # TODO, store diagnostics here, needs to be passed by newprop
             t,

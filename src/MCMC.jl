@@ -67,7 +67,7 @@ end
 
 #############  runners    ########################
 
-include("runners/run.jl")      # Vanilla runner
-include("runners/seqMC.jl")    # Sequential Monte-Carlo runner
+include("runners/run.jl")         # Vanilla runner
+include("runners/seqMC.jl")       # Sequential Monte-Carlo runner
 include("runners/serialMC.jl")    # Serial Tempering Monte-Carlo runner
 end

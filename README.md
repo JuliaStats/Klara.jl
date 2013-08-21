@@ -18,6 +18,7 @@ To see how all this plays out, I have coded a simple runner and the Random Walk 
 ```jl
 
 using MCMC
+using DataFrames
 
 ######## Model definition / method 1 = state explictly your functions
 
@@ -40,16 +41,14 @@ mymodel2 = MCMCLikModelG(modexpr, v=ones(3))  # with gradient
 
 ######## running a single chain ########
 
-# RWM sampler, burnin = 99, keeping iterations 100 to 1000
-res = mymodel * RWM(0.1) * (100:1000)  
+# RWM sampler, burnin = 100, keeping iterations 101 to 1000
+res = run(mymodel * RWM(0.1), steps=1000, burnin=100)  
 # prints samples
-res.samples  
-#  mean, std
-mapslices(mean, res.samples[:beta], 2)
-mapslices(std, res.samples[:beta], 2)
+head(res.samples)
+describe(res.samples)
 
 # continue sampling where it stopped
-res = res * (1:10000)  
+res = run(res, steps=10000)  
 
 
 mymodel * MALA(0.1) * (1:1000) # throws an error 
@@ -61,11 +60,11 @@ mymodel2 * MALA(0.1) * (1:1000) # now this works
 ######## running multiple chains
 
 # test all 3 samplers at once
-res = mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * (1:1000) 
+res = run(mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)], steps=1000) 
 res[2].samples  # prints samples for MALA(0.1)
 
 # test HMC with varying # of inner steps
-res = mymodel2 * [HMC(i,0.1) for i in 1:5] * (1:1000) 
+res = run(mymodel2 * [HMC(i,0.1) for i in 1:5], steps=1000)
 
 ```
 
