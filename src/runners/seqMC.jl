@@ -109,8 +109,5 @@ function seqMC(targets::Array{MCMCTask},
 		        DataFrame(weigths=weights),  # TODO, store diagnostics here, needs to be passed by newprop
 		        targets,
 		        toq())
-
-	res.runTime = toq()
-	res
 end
 

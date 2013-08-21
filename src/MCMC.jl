@@ -49,17 +49,22 @@ type MCMCChain
   task::Union(MCMCTask, Array{MCMCTask})
   runTime::Float64
    
-  function MCMCChain(r::Range{Int}, s::DataFrame, g::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64)
+  function MCMCChain(	r::Range{Int}, s::DataFrame, g::DataFrame, d::DataFrame, 
+  						t::Union(MCMCTask, Array{MCMCTask}), rt::Float64)
     if !isempty(g); assert(size(s) == size(g), "samples and gradients must have the same number of rows and columns"); end
     if !isempty(d); assert(nrow(s) == nrow(d), "samples and diagnostics must have the same number of rows"); end
     new(r, s, g, d, t, rt)
   end
 end
 
-MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), d, t, rt)
-MCMCChain(r::Range{Int}, s::DataFrame, t::MCMCTask, rt::Float64) = MCMCChain(r, s, DataFrame(), DataFrame(), t, rt)
-MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), d, t, NaN)
-MCMCChain(r::Range{Int}, s::DataFrame, t::MCMCTask) = MCMCChain(r, s, DataFrame(), DataFrame(), t, NaN)
+MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
+	MCMCChain(r, s, DataFrame(), d, t, rt)
+MCMCChain(r::Range{Int}, s::DataFrame, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
+	MCMCChain(r, s, DataFrame(), DataFrame(), t, rt)
+MCMCChain(r::Range{Int}, s::DataFrame, d::DataFrame, t::Union(MCMCTask, Array{MCMCTask})) = 
+	MCMCChain(r, s, DataFrame(), d, t, NaN)
+MCMCChain(r::Range{Int}, s::DataFrame, t::Union(MCMCTask, Array{MCMCTask})) = 
+	MCMCChain(r, s, DataFrame(), DataFrame(), t, NaN)
 
 function show(io::IO, res::MCMCChain)
   println("$(ncol(res.samples)) parameters, $(nrow(res.samples)) samples (per parameter), $(round(res.runTime, 1)) sec.")
