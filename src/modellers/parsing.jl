@@ -115,7 +115,7 @@ function parseModel!(m::ParsingStruct, source::Expr)
 	end
 
 	assert(source.head==:block && length(source.args)>=1, 
-		"model should contain be a block with at least 1 statement")
+		"model should be a block with at least 1 statement")
 
 	m.source = explore(source)
 
@@ -461,9 +461,9 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 		header = Expr[]  # let block statements
 		fvars = union(Set([e.args[1] for e in body]...), Set(PARAM_SYM)) # vars that are re-evaluated at each function call
 		for ex in [m.exprs..., m.dexprs...]
-			if length(getSymbols(ex.args[2]) & fvars) > 0
+			if length(intersect(getSymbols(ex.args[2]), fvars)) > 0
 				push!(body, ex)
-				fvars |= getSymbols(ex.args[1])
+				fvars = union(fvars, getSymbols(ex.args[1]))
 			else
 				push!(header, ex)
 			end
@@ -472,15 +472,15 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 		# prefix statements with 'local' at first occurence
 		vars  = Set(PARAM_SYM)
 		for i in 1:length(header)
-			if length(getSymbols(header[i].args[1]) & vars) == 0
+			if length(intersect(getSymbols(header[i].args[1]), vars)) == 0
 				header[i] = :(local $(header[i]))
-				vars |= getSymbols(header[i].args[1])
+				vars = union(vars, getSymbols(header[i].args[1]))
 			end
 		end
 		for i in 1:length(body)
-			if length(getSymbols(body[i].args[1]) & vars) == 0
+			if length(intersect(getSymbols(body[i].args[1]), vars)) == 0
 				body[i] = :(local $(body[i]))
-				vars |= getSymbols(body[i].args[1])
+				vars = union(vars, getSymbols(body[i].args[1]))
 			end
 		end
 

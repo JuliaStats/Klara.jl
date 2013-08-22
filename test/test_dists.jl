@@ -11,7 +11,9 @@ using Distributions # used to provide exact cdf of distributions for testing
 
 N = 10000  # number of steps in MCMC for testing
 KSTHRESHOLD = 1.358  #  5% level confidence for Kolmogorov–Smirnov test
-KSTHRESHOLD = 10  # TODO : understand why KS is so bad for all samplers forcing such a high threshold to pass tests
+KSTHRESHOLD = 10  
+# TODO : understand why KS is so bad for most samplers * distribs 
+#         forcing such a high threshold to pass tests
 
 function ksValue(x, distrib) 
 	global xs = sort(x)
