@@ -11,16 +11,16 @@ using Distributions
 #  or because there is a significant speed gain
 # TODO : a few other distributions should gain speed also, should be tested
 
-function logpdfBernoulli(prob::Real, x::Real)
-	assert(0. <= prob <= 1., "calling Bernoulli with prob > 1. or < 0.")
-	if x == 0.
-		prob == 1. ? throw("give up eval") : return(log(1. - prob))
-	elseif x == 1.
-		prob == 0. ? throw("give up eval") : return(log(prob))
-	elseif
-	 	error("calling Bernoulli with variable other than 0 or 1 (false or true)")
-	end
-end
+# function logpdfBernoulli(prob::Real, x::Real)
+# 	assert(0. <= prob <= 1., "calling Bernoulli with prob > 1. or < 0.")
+# 	if x == 0.
+# 		prob == 1. ? throw("give up eval") : return(log(1. - prob))
+# 	elseif x == 1.
+# 		prob == 0. ? throw("give up eval") : return(log(prob))
+# 	elseif
+# 	 	error("calling Bernoulli with variable other than 0 or 1 (false or true)")
+# 	end
+# end
 
 # function logpdfNormal(mu::Real, sigma::Real, x::Real)
 # 	local const fac = -log(sqrt(2pi))
@@ -36,7 +36,7 @@ end
 
 ########### distributions using libRmath ######### 
 
-_jl_libRmath = dlopen("libRmath")
+# _jl_libRmath = dlopen("libRmath")
 
 #          Name           libRmath Name    Arity       !!! empty lib name means local def
 dists = { (:Weibull, 	  "dweibull",       3),
@@ -52,7 +52,7 @@ dists = { (:Weibull, 	  "dweibull",       3),
 	   #    (:Normal,  	  "",               3),     #  "dnorm4" in libRmath
 		  (:Uniform, 	  "dunif",          3),   
 	      (:Normal,  	  "dnorm4",         3),
-		  (:Bernoulli,    "",               2)}
+		  (:Bernoulli,    "blah",           2)}
 
 
 for d in dists  # d = dists[3]
