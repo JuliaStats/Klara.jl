@@ -70,7 +70,7 @@ end
 for d in dists # d = dists[1]
 	fsym = symbol("logpdf$(d[1])")
 
-	arity = d[3]
+	arity = d[2]
 	ps = [ ifloor((i-1) / 2^(j-1)) % 2 for i=2:2^arity, j=1:arity]
 
 	for l in 1:size(ps,1) # l = 3
