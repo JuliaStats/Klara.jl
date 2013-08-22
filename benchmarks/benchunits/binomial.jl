@@ -20,9 +20,8 @@ mg = MCMCLikModelG(model, vars=zeros(nbeta))
 
 name = "binomial 10x1000"
 
-b1 = benchmark(()-> m.eval(m.init), "loglik eval", name, 1000)
-b2 = benchmark(() -> mg.evalg(mg.init), "loglik and gradient eval", name, 1000)
-b3 = benchmark(() -> run(m * RWM(0.1), steps=100),  
-	           "100 RWM steps", name, 10)
+res = [	benchmark( ()-> m.eval(m.init), "loglik eval", name, 1000) ;
+		benchmark( ()-> mg.evalg(mg.init), "loglik and gradient eval", name, 1000) ;
+		benchmark( ()-> run(m * RWM(0.1), steps=100),  
+	           					"100 RWM steps", name, 10) ]
 
-res = [b1;b2;b3]
