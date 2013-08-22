@@ -174,10 +174,6 @@ end
 @dfunc logpdfPoisson(lambda::Array, x)  lambda   (x ./ lambda - 1) * ds
 
 
-#  fake distribution to test gradient code
-@dfunc logpdfTestDiff(x)    x      +ds
-
-
 ## returns sample value for the given Symbol or Expr (for refs)
 hint(v::Symbol) = vhint[v]
 hint(v) = v  # should be a value if not a Symbol or an Expression

@@ -2,25 +2,15 @@
 #
 #    Definition of distributions
 #
+#    links logpdfXXXX() functions to logpdf(XXXX(), x) in Distributions.jl
+#
 ##########################################################################################
 
 using Distributions
 
 ########## locally defined distributions #############
-# defined within the library, either because libRmath doesn't have it (Bernoulli)
-#  or because there is a significant speed gain
-# TODO : a few other distributions should gain speed also, should be tested
-
-# function logpdfBernoulli(prob::Real, x::Real)
-# 	assert(0. <= prob <= 1., "calling Bernoulli with prob > 1. or < 0.")
-# 	if x == 0.
-# 		prob == 1. ? throw("give up eval") : return(log(1. - prob))
-# 	elseif x == 1.
-# 		prob == 0. ? throw("give up eval") : return(log(prob))
-# 	elseif
-# 	 	error("calling Bernoulli with variable other than 0 or 1 (false or true)")
-# 	end
-# end
+# defined here because there is a speed gain over using Distributions.jl
+# TODO : file an issue in Distributions.jl
 
 # function logpdfNormal(mu::Real, sigma::Real, x::Real)
 # 	local const fac = -log(sqrt(2pi))
@@ -36,54 +26,43 @@ using Distributions
 
 ########### distributions using libRmath ######### 
 
-# _jl_libRmath = dlopen("libRmath")
-
-#          Name           libRmath Name    Arity       !!! empty lib name means local def
-dists = { (:Weibull, 	  "dweibull",       3),
-		  (:Binomial, 	  "dbinom",         3),
-		  (:Gamma,  	  "dgamma",         3),
-		  (:Cauchy,  	  "dcauchy",        3),
-		  (:LogNormal,    "dlnorm",         3),
-		  (:Beta, 	      "dbeta",          3),
-		  (:Poisson,  	  "dpois",          2),
-		  (:TDist,  	  "dt",             2),
-		  (:Exponential,  "dexp",           2),
-		  # (:Uniform, 	  "",               3),     #  dunif in libRmath
-	   #    (:Normal,  	  "",               3),     #  "dnorm4" in libRmath
-		  (:Uniform, 	  "dunif",          3),   
-	      (:Normal,  	  "dnorm4",         3),
-		  (:Bernoulli,    "blah",           2)}
-
+#          Name           Arity
+dists = { (:Weibull, 	  3),
+		  (:Binomial, 	  3),
+		  (:Gamma,  	  3),
+		  (:Cauchy,  	  3),
+		  (:LogNormal,    3),
+		  (:Beta, 	      3),
+		  (:Poisson,  	  2),
+		  (:TDist,  	  2),
+		  (:Exponential,  2),
+		  (:Uniform, 	  3),   
+	      (:Normal,  	  3),
+		  (:Bernoulli,    2)}
 
 for d in dists  # d = dists[3]
-	if d[2] != "" # empty means locally defined
-		fsym = symbol("logpdf$(d[1])")
+	fsym = symbol("logpdf$(d[1])")
 
-		npars = d[3]
-		args = [symbol("x$i") for i in [npars, 1:(npars-1)...]] # in correct order for libRmath
+	npars = d[2]
+	args = [symbol("x$i") for i in [npars, 1:(npars-1)...]] # in correct order for libRmath
 
-		fex = quote
-			function ($fsym)($([Expr(:(::), symbol("x$i"), :Real) for i in 1:npars]...))
-				local res = 0.
+	fex = quote
+		function ($fsym)($([Expr(:(::), symbol("x$i"), :Real) for i in 1:npars]...))
+			local res = 0.
 
-		        # res = ccall(dlsym(_jl_libRmath, $(string(d[2]))), Float64,
-		        #     	 	  $(Expr(:tuple, [[:Float64 for i in 1:npars]..., :Int32 ]...)),
-		        #     	 	  $(args...), 1	)
+	        res = logpdf( ($(d[1]))($([symbol("x$i") for i in 1:(npars-1)]...)), $(symbol("x$npars")) )
 
-		        res = logpdf( ($(d[1]))($([symbol("x$i") for i in 1:(npars-1)]...)), $(symbol("x$npars")) )
-
-				if res == -Inf
-					throw("give up eval")
-				elseif isnan(res)
-					local ar = $(Expr(:tuple, [args..., 1]))
-					error(string("calling ", $(string(fsym)), ar, " returned an error"))
-				end
-				res 
+			if res == -Inf
+				throw("give up eval")
+			elseif isnan(res)
+				local ar = $(Expr(:tuple, [args..., 1]))
+				error(string("calling ", $(string(fsym)), ar, " returned an error"))
 			end
+			res 
 		end
-
-		eval(fex)
 	end
+
+	eval(fex)
 end
 
 ####### all possible vectorized versions  ##########
@@ -112,7 +91,6 @@ for d in dists # d = dists[1]
 
 		eval(fex)
 	end
-
 end
 
 
