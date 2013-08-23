@@ -5,6 +5,7 @@
 #################################################################
 
 abstract MCMCSampler
+abstract MCMCTuner
 
 ######### sample type returned by samplers  ############
 immutable MCMCSample
@@ -13,4 +14,4 @@ immutable MCMCSample
 	oldbeta::Vector{Float64}  # previous vector
 	oldll::Float64            # previous log likelihood	
 end
-
+# TODO : add diagnostic field to MCMCSample
