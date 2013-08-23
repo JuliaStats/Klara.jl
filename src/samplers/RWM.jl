@@ -1,4 +1,5 @@
 ###########################################################################
+#
 #  Random-Walk Metropolis sampler
 #
 #     takes a scalar as parameter to give a scale to jumps
@@ -9,7 +10,7 @@ export RWM
 
 println("Loading RMW(scale) sampler")
 
-# RWM sampler type
+####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
   scale::Float64
 
