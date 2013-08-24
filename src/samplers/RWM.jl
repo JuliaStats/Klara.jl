@@ -9,14 +9,20 @@
 
 export RWM
 
-println("Loading RMW(tuner) sampler")
+println("Loading RMW(scale, tuner) sampler")
 
 #### RWM specific 'tuners'
-immutable RWMTuner  <: MCMCTuner
+abstract RWMTuner <: MCMCTuner
+
+# TODO: As a simple start, the simplest RWMTuner will not be doing any tuning at all,
+# returning the same scale parameter, which is a plausible senario if the user wants
+# to run RWM without tuning the scale.
+immutable RWMConstantTuner <: RWMTuner
 end	
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
+  scale::Float64
   tuner::RWMTuner
 end
 RWM() = RWM(RWMTuner())
