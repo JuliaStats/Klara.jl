@@ -103,7 +103,7 @@ function MCMCLikelihoodModel(m::Expr; gradient::Bool=false, args...)
 		g = nothing
 	end
 
-	MCMCLikelihoodModel(f, g, nothing; cargs...)
+	MCMCLikelihoodModel(f, g, nothing, nothing; cargs...)
 end
 
 
