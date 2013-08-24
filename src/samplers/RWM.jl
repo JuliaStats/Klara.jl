@@ -1,61 +1,57 @@
 ###########################################################################
 #
-#  Random-Walk Metropolis sampler
+#  Random-Walk Metropolis (RWM)
 #
-#     takes a scalar as parameter to give a scale to jumps
+#  Parameters:
+#    -tuner: used for scaling the jumps
 #
 ###########################################################################
 
 export RWM
 
-println("Loading RMW(scale) sampler")
+println("Loading RMW(tuner) sampler")
 
 #### RWM specific 'tuners'
-immutable DummyTuner  <: MCMCTuner
+immutable RWMTuner  <: MCMCTuner
 end	
-
-immutable DummyTuner2  <: MCMCTuner
-end	
-
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
-  tuner::MCMCTuner
+  tuner::RWMTuner
 end
-RWM() = RWM(DummyTuner())
+RWM() = RWM(RWMTuner())
 
-# sampling task launcher
-spinTask(model::MCMCModel, s::RWM) = 
-	MCMCTask( Task(() -> RWMTask(model, s)) , model )
+# Sampling task launcher
+spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s)), model)
 
 # RWM sampling
 function RWMTask(model::MCMCModel, sampler::MCMCSampler)
-	local beta, ll, oldbeta, oldll
+	local pars, proposedPars
+	local logTarget, proposedLogTarget
 
 	#  Task reset function
-	function reset(newbeta::Vector{Float64})
-		beta = copy(newbeta)
-		ll = model.eval(beta)
+	function reset(resetPars::Vector{Float64})
+		proposedPars = copy(resetPars)
+		proposedLogTarget = model.eval(proposedPars)
 	end
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset, reset) 
 
 	# initialization
-	beta = copy(model.init)
-	ll = model.eval(beta)
-	assert(ll != -Inf, "Initial values out of model support, try other values")
+	proposedPars = copy(model.init)
+	proposedLogTarget = model.eval(proposedPars)
+	assert(isfinite(proposedLogTarget), "Initial values out of model support, try other values")
 
 	while true
-		oldbeta = copy(beta)
-		beta += randn(model.size) * model.scale
+		pars = copy(proposedPars)
+		proposedPars += randn(model.size) * model.scale
 
- 		oldll, ll = ll, model.eval(beta) 
+ 		logTarget, proposedLogTarget = proposedLogTarget, model.eval(proposedPars) 
 
-		if rand() > exp(ll - oldll) # roll back if rejected
-			ll, beta = oldll, oldbeta
+		if rand() > exp(proposedLogTarget - logTarget) # roll back if rejected
+			proposedLogTarget, proposedPars = logTarget, pars
 		end
 
-		produce(MCMCSample(beta, ll, oldbeta, oldll))
+		produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
 	end
 end
-

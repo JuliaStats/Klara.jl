@@ -43,7 +43,7 @@ type MCMCLikelihoodModel <: MCMCModel
 		assert(t == nothing | hasvectormethod(t), "tensor function cannot be called with Vector{Float64}")
 
 		# check that initial values are in the support of likelihood function
-		assert(f(i) != -Inf, "Initial values out of model support, try other values")
+		assert(isfinite(f(i)), "Initial values out of model support, try other values")
 
 		new(f, g, h, t, pmap, s, i, sc)
 	end

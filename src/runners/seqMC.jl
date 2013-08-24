@@ -41,24 +41,20 @@ function seqMC(targets::Array{MCMCTask},
 	samples = fill(NaN, tsize, (steps-burnin)*npart) 
 	weights = fill(NaN, (steps-burnin)*npart)
 
-	# res = MCMCChain({:beta => fill(NaN, tsize, (steps-burnin)*npart)},
-	# 	            targets[end], NaN,
-	# 	            {:weights => fill(NaN, (steps-burnin)*npart)}) # weight of samples
-
-	local beta = deepcopy(particles)
+	local pars = deepcopy(particles)
 	local logW = zeros(npart)  # log of particle weights
-	local oldll = zeros(npart) # loglik of previous target distrib
+	local logtarget = zeros(npart) # loglik of previous target distrib
 
 	for i in 1:steps  # i = 1
 
 		for t in targets  # t = targets[1]
 			# mutate each particle with task t
 			for n in 1:npart  #  n = 1
-				MCMC.reset(t, beta[n])  # force beta of task #t to particle #n
+				MCMC.reset(t, pars[n])  # force pars of task #t to particle #n
 				sample = consume(t.task)
-				beta[n], ll, ll0 = sample.beta, sample.ll, sample.oldll
-				logW[n] += ll0 - oldll[n]
-				oldll[n] = ll
+				pars[n], plogtarget, ll0 = sample.ppars, sample.plogtarget, sample.logtarget
+				logW[n] += ll0 - logtarget[n]
+				logtarget[n] = plogtarget
 			end
 
 			# resample if likelihood variance of particles is too low
@@ -71,20 +67,20 @@ function seqMC(targets::Array{MCMCTask},
 					l = rand()
 					rs[n] = findfirst(p-> (p>=l), cp)
 				end
-				beta = beta[rs]
+				pars = pars[rs]
 				logW = zeros(npart)
-				oldll = oldll[rs]  
+				logtarget = logtarget[rs]  
 				# println("resampled !")
 			end
 		end
 
 		println("iter $i, var $(var(exp(logW)))")
-		oldll = zeros(npart)
+		logtarget = zeros(npart)
 
 		if i > burnin # store betas of all particles in the result chain
 			pos = (i-burnin-1) * npart
 			for n in 1:npart  #  n = 1
-				samples[:, pos+n] = beta[n]
+				samples[:, pos+n] = pars[n]
 				weights[pos+n] = exp(logW[n])
 			end
 		end
