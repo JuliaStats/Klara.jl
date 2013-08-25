@@ -3,18 +3,18 @@
 #
 #  Parameters :
 #    - nLeaps : number of intermediate jumps wihtin each step
-#    - leapSize : inner steps scaling
+#    - leapStep : inner steps scaling
 #
 ###########################################################################
 
 export HMC
 
-println("Loading HMC(nLeaps, leapSize) sampler")
+println("Loading HMC(nLeaps, leapStep) sampler")
 
 # The HMC sampler type
 immutable HMC <: MCMCSampler
   nLeaps::Integer
-  leapSize::Float64
+  leapStep::Float64
 
   function HMC(i::Integer, s::Real)
     assert(i>0, "inner steps should be > 0")
@@ -27,7 +27,7 @@ HMC(i::Integer) = HMC(i, 0.1)
 HMC(s::Float64) = HMC(10, s)
 
 # sampling task launcher
-spinTask(model::MCMCModel, s::HMC) = MCMCTask( Task(() -> HMCTask(model, s.nLeaps, s.leapSize)), model)
+spinTask(model::MCMCModel, s::HMC) = MCMCTask( Task(() -> HMCTask(model, s.nLeaps, s.leapStep)), model)
 
 ####### HMC sampling
 
@@ -57,7 +57,7 @@ end
 
 
 #  HMC algo
-function HMCTask(model::MCMCModel, isteps::Integer, leapSize::Float64)
+function HMCTask(model::MCMCModel, isteps::Integer, leapStep::Float64)
   local state0
 
   # Task reset function
@@ -83,7 +83,7 @@ function HMCTask(model::MCMCModel, isteps::Integer, leapSize::Float64)
 
     j=1
     while j <= isteps && isfinite(state.logTarget)
-      state = leapFrog(state, leapSize, model.evalg)
+      state = leapFrog(state, leapStep, model.evalg)
       j +=1
     end
 

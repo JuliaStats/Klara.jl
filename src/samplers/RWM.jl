@@ -16,8 +16,12 @@ println("Loading RMW(scale, tuner) sampler")
 abstract RWMTuner <: MCMCTuner
 
 # TODO 1: define scale tuner
-# immutable RWMEmpiricalTuner <: RWMTuner
-# end	
+immutable RWMEmpiricalTuner <: RWMTuner
+  rater::AcceptanceRater
+
+  function RWMEmpiricalTuner(rater::AcceptanceRater)  	
+  end
+end	
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
@@ -40,6 +44,7 @@ spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s.scale,
 function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(nothing, RWMTuner))
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
+    local proposed, accepted
 
 	#  Task reset function
 	function reset(resetPars::Vector{Float64})

@@ -4,38 +4,38 @@
 #
 #  Parameters :
 #    - nLeaps : number of leapfrog steps
-#    - leapSize : leapfrog step size
+#    - leapStep : leapfrog step size
 #    - nNewton: number of Newton steps
 #
 ###########################################################################
 
 export RMHMC
 
-println("Loading RMHMC(nLeaps, leapSize, nNewton) sampler")
+println("Loading RMHMC(nLeaps, leapStep, nNewton) sampler")
 
 # The RMHMC sampler type
 immutable RMHMC <: MCMCSampler
   nLeaps::Integer
-  leapSize::Float64
+  leapStep::Float64
   nNewton::Integer
 
-  function RMHMC(nLeaps::Integer, leapSize::Float64, nNewton::Integer)
+  function RMHMC(nLeaps::Integer, leapStep::Float64, nNewton::Integer)
     assert(nLeaps>0, "Number of leapfrog steps should be > 0")
-    assert(leapSize>0, "Leapfrog step size should be > 0")
+    assert(leapStep>0, "Leapfrog step size should be > 0")
     assert(nNewton>0, "Number of Newton steps should be > 0")    
-    new(nLeaps, leapSize, nNewton)
+    new(nLeaps, leapStep, nNewton)
   end
 end
 
 RMHMC() = RMHMC(6, 0.5, 4)
 RMHMC(nLeaps::Integer) = RMHMC(nLeaps, 3/nLeaps, 4)
-RMHMC(nLeaps::Integer, leapSize::Float64) = RMHMC(nLeaps, leapSize, 4)
+RMHMC(nLeaps::Integer, leapStep::Float64) = RMHMC(nLeaps, leapStep, 4)
 RMHMC(nLeaps::Integer, nNewton::Integer) = RMHMC(nLeaps, 3/nLeaps, nNewton)
-RMHMC(leapSize::Float64) = RMHMC(int(floor(3/leapSize)), leapSize, 4)
-RMHMC(leapSize::Float64, nNewton::Integer) = RMHMC(int(floor(3/leapSize)), leapSize, nNewton)
+RMHMC(leapStep::Float64) = RMHMC(int(floor(3/leapStep)), leapStep, 4)
+RMHMC(leapStep::Float64, nNewton::Integer) = RMHMC(int(floor(3/leapStep)), leapStep, nNewton)
 
 # sampling task launcher
-spinTask(model::MCMCModel, s::RMHMC) = MCMCTask(Task(() -> RMHMCTask(model, s.nLeaps, s.leapSize, s.nNewton)), model)
+spinTask(model::MCMCModel, s::RMHMC) = MCMCTask(Task(() -> RMHMCTask(model, s.nLeaps, s.leapStep, s.nNewton)), model)
 
 ####### RNHMC sampling
 
