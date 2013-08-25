@@ -17,59 +17,61 @@ abstract RWMTuner <: MCMCTuner
 
 # TODO 1: define scale tuner
 immutable RWMEmpiricalTuner <: RWMTuner
-  rater::AcceptanceRater
+  rate::AcceptanceRate
 
-  function RWMEmpiricalTuner(rater::AcceptanceRater)  	
+  function RWMEmpiricalTuner(rate::AcceptanceRate)
+    new(rate) 	
   end
 end	
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
   scale::Float64
-  tuner::Union(nothing, RWMTuner)
+  tuner::Union(Nothing, RWMTuner)
 
-  function RWM(x::Float64, t::Union(nothing, RWMTuner))
+  function RWM(x::Float64, t::Union(Nothing, RWMTuner))
     assert(x>0, "scale should be > 0")
     new(x, t)
   end
 end
 RWM() = RWM(1., nothing)
 RWM(x::Float64) = RWM(x, nothing)
-RWM(t::Union(nothing, RWMTuner)) = RWM(1., t)
+RWM(t::Union(Nothing, RWMTuner)) = RWM(1., t)
 
 # Sampling task launcher
 spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s.scale, s.tuner)), model)
 
 # RWM sampling
-function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(nothing, RWMTuner))
+function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(Nothing, RWMTuner))
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
     local proposed, accepted
 
 	#  Task reset function
 	function reset(resetPars::Vector{Float64})
-		proposedPars = copy(resetPars)
-		proposedLogTarget = model.eval(proposedPars)
+		pars = copy(resetPars)
+		logTarget = model.eval(pars)
 	end
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset, reset) 
 
 	# initialization
-	proposedPars = copy(model.init)
-	proposedLogTarget = model.eval(proposedPars)
-	assert(isfinite(proposedLogTarget), "Initial values out of model support, try other values")
+	pars = copy(model.init)
+	logTarget = model.eval(pars)
+	assert(isfinite(logTarget), "Initial values out of model support, try other values")
 
 	while true
-		pars = copy(proposedPars)
+		proposedPars = copy(pars)
 		# TODO 2: if tuner != nothing; tune the scale; end
-		proposedPars += randn(model.size) * model.scale
+		proposedPars += randn(model.size) * scale
+ 		proposedLogTarget = model.eval(proposedPars) 
 
- 		logTarget, proposedLogTarget = proposedLogTarget, model.eval(proposedPars) 
-
-		if rand() > exp(proposedLogTarget - logTarget) # roll back if rejected
-			proposedLogTarget, proposedPars = logTarget, pars
-		end
-
-		produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
+        ratio = proposedLogTarget-logTarget
+		if ratio > 0 || (ratio > log(rand()))
+        	produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
+         	pars, logTarget = proposedPars, proposedLogTarget
+        else
+     		produce(MCMCSample(pars, logTarget, pars, logTarget))
+    	end
 	end
 end

@@ -34,13 +34,13 @@ type MCMCLikelihoodModel <: MCMCModel
 		assert(hasvectormethod(f), "likelihood function cannot be called with Vector{Float64}")
 
 		# check that gradient function can be called with a vector of Float64 as argument
-		assert(g == nothing | hasvectormethod(g), "gradient function cannot be called with Vector{Float64}")
+		assert(g == nothing || hasvectormethod(g), "gradient function cannot be called with Vector{Float64}")
 
 		# check that hessian function can be called with a vector of Float64 as argument
-		assert(h == nothing | hasvectormethod(h), "hessian function cannot be called with Vector{Float64}")
+		assert(h == nothing || hasvectormethod(h), "hessian function cannot be called with Vector{Float64}")
 
 		# check that hessian function can be called with a vector of Float64 as argument
-		assert(t == nothing | hasvectormethod(t), "tensor function cannot be called with Vector{Float64}")
+		assert(t == nothing || hasvectormethod(t), "tensor function cannot be called with Vector{Float64}")
 
 		# check that initial values are in the support of likelihood function
 		assert(isfinite(f(i)), "Initial values out of model support, try other values")

@@ -7,10 +7,10 @@
 abstract MCMCSampler
 abstract MCMCTuner
 
-immutable AcceptanceRater
+immutable AcceptanceRate
   step::Integer
 
-  function AcceptanceRater(s::Integer)
+  function AcceptanceRate(s::Integer)
     assert(s>0, "Acceptance ratio's monitor step should be > 0")
     new(s)
   end

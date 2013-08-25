@@ -4,7 +4,7 @@
 #
 #################################################################
 
-export MCMCLikModel
+export MCMCLikModel, model
 
 ### Model types hierarchy to allow restrictions on applicable samplers
 abstract Model
@@ -40,7 +40,7 @@ hashessian{M<:MCMCModel}(m::M) = m.evalh != nothing
 
 # TODO
 
-function model(f::Function; mtype="Likelihood", args...)
+function model(f::Function; mtype="likelihood", args...)
 
 	if mtype == "likelihood"
 		return MCMCLikelihoodModel( f; args...)
@@ -55,6 +55,8 @@ end
 #### models  #####
 
 include("likmodel.jl")
-# include("models/bayesglmmodels.jl")  # TODO : not yet adapted
+
+# Uncommented temporarily the line below in order to run the examples and debug devel
+include("bayesglmmodels.jl")  # TODO : not yet adapted
 
 
