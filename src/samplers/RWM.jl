@@ -3,7 +3,8 @@
 #  Random-Walk Metropolis (RWM)
 #
 #  Parameters:
-#    -tuner: used for scaling the jumps
+#    -scale: for scaling the jumps
+#    -tuner: for tuning the scale parameter
 #
 ###########################################################################
 
@@ -14,24 +15,29 @@ println("Loading RMW(scale, tuner) sampler")
 #### RWM specific 'tuners'
 abstract RWMTuner <: MCMCTuner
 
-# TODO: As a simple start, the simplest RWMTuner will not be doing any tuning at all,
-# returning the same scale parameter, which is a plausible senario if the user wants
-# to run RWM without tuning the scale.
-immutable RWMConstantTuner <: RWMTuner
-end	
+# TODO 1: define scale tuner
+# immutable RWMEmpiricalTuner <: RWMTuner
+# end	
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
   scale::Float64
-  tuner::RWMTuner
+  tuner::Union(nothing, RWMTuner)
+
+  function RWM(x::Float64, t::Union(nothing, RWMTuner))
+    assert(x>0, "scale should be > 0")
+    new(x, t)
+  end
 end
-RWM() = RWM(RWMTuner())
+RWM() = RWM(1., nothing)
+RWM(x::Float64) = RWM(x, nothing)
+RWM(t::Union(nothing, RWMTuner)) = RWM(1., t)
 
 # Sampling task launcher
-spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s)), model)
+spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s.scale, s.tuner)), model)
 
 # RWM sampling
-function RWMTask(model::MCMCModel, sampler::MCMCSampler)
+function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(nothing, RWMTuner))
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
 
@@ -50,6 +56,7 @@ function RWMTask(model::MCMCModel, sampler::MCMCSampler)
 
 	while true
 		pars = copy(proposedPars)
+		# TODO 2: if tuner != nothing; tune the scale; end
 		proposedPars += randn(model.size) * model.scale
 
  		logTarget, proposedLogTarget = proposedLogTarget, model.eval(proposedPars) 
