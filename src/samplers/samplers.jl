@@ -5,12 +5,25 @@
 #################################################################
 
 abstract MCMCSampler
+abstract MCMCTuner
+
+immutable AcceptanceRate
+  step::Integer
+
+  function AcceptanceRate(s::Integer)
+    assert(s>0, "Acceptance ratio's monitor step should be > 0")
+    new(s)
+  end
+end
 
 ######### sample type returned by samplers  ############
 immutable MCMCSample
-	beta::Vector{Float64}     # newly drawn parameter vector
-	ll::Float64               # log likelihood	
-	oldbeta::Vector{Float64}  # previous vector
-	oldll::Float64            # previous log likelihood	
+	ppars::Vector{Float64} # proposed parameter vector
+	plogtarget::Float64    # proposed log target	
+	pars::Vector{Float64}  # parameter vector before proposal
+	logtarget::Float64     # log target before proposal
+	diagnostics::DataFrame # dataframe holding various diagnostics
 end
 
+MCMCSample(ppars::Vector{Float64}, plogtarget::Float64, pars::Vector{Float64}, logtarget::Float64) =
+  MCMCSample(ppars, plogtarget, pars, logtarget, DataFrame())

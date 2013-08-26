@@ -1,59 +1,77 @@
 ###########################################################################
 #
-#  Random-Walk Metropolis sampler
+#  Random-Walk Metropolis (RWM)
 #
-#     takes a scalar as parameter to give a scale to jumps
+#  Parameters:
+#    -scale: for scaling the jumps
+#    -tuner: for tuning the scale parameter
 #
 ###########################################################################
 
 export RWM
 
-println("Loading RMW(scale) sampler")
+println("Loading RMW(scale, tuner) sampler")
+
+#### RWM specific 'tuners'
+abstract RWMTuner <: MCMCTuner
+
+# TODO 1: define scale tuner
+immutable RWMEmpiricalTuner <: RWMTuner
+  rate::AcceptanceRate
+
+  function RWMEmpiricalTuner(rate::AcceptanceRate)
+    new(rate) 	
+  end
+end	
 
 ####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
   scale::Float64
+  tuner::Union(Nothing, RWMTuner)
 
-  function RWM(x::Real)
+  function RWM(x::Float64, t::Union(Nothing, RWMTuner))
     assert(x>0, "scale should be > 0")
-    new(x)
+    new(x, t)
   end
 end
-RWM() = RWM(1.)
+RWM() = RWM(1., nothing)
+RWM(x::Float64) = RWM(x, nothing)
+RWM(t::Union(Nothing, RWMTuner)) = RWM(1., t)
 
-
-# sampling task launcher
-spinTask(model::MCMCModel, s::RWM) = 
-	MCMCTask( Task(() -> RWMTask(model, s.scale)), model)
+# Sampling task launcher
+spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s.scale, s.tuner)), model)
 
 # RWM sampling
-function RWMTask(model::MCMCModel, scale::Float64)
-	local beta, ll, oldbeta, oldll
+function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(Nothing, RWMTuner))
+	local pars, proposedPars
+	local logTarget, proposedLogTarget
+    local proposed, accepted
 
 	#  Task reset function
-	function reset(newbeta::Vector{Float64})
-		beta = copy(newbeta)
-		ll = model.eval(beta)
+	function reset(resetPars::Vector{Float64})
+		pars = copy(resetPars)
+		logTarget = model.eval(pars)
 	end
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset, reset) 
 
 	# initialization
-	beta = copy(model.init)
-	ll = model.eval(beta)
-	assert(ll != -Inf, "Initial values out of model support, try other values")
+	pars = copy(model.init)
+	logTarget = model.eval(pars)
+	assert(isfinite(logTarget), "Initial values out of model support, try other values")
 
 	while true
-		oldbeta = copy(beta)
-		beta += randn(model.size) * scale
+		proposedPars = copy(pars)
+		# TODO 2: if tuner != nothing; tune the scale; end
+		proposedPars += randn(model.size) * scale
+ 		proposedLogTarget = model.eval(proposedPars) 
 
- 		oldll, ll = ll, model.eval(beta) 
-
-		if rand() > exp(ll - oldll) # roll back if rejected
-			ll, beta = oldll, oldbeta
-		end
-
-		produce(MCMCSample(beta, ll, oldbeta, oldll))
+        ratio = proposedLogTarget-logTarget
+		if ratio > 0 || (ratio > log(rand()))
+        	produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
+         	pars, logTarget = proposedPars, proposedLogTarget
+        else
+     		produce(MCMCSample(pars, logTarget, pars, logTarget))
+    	end
 	end
 end
-
