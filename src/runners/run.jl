@@ -5,11 +5,10 @@
 #
 ###########################################################################
 
-# import Base.getindex, 
 import Base.run
-
 export run
 
+###########################################################################
 #  Main function
 #
 #  If steps is not specified or is an Integer
@@ -18,6 +17,7 @@ export run
 #   - then keeps every 'thinning' samples
 #  If steps is a Range, then other parameters are ignored and are instead deduced from the Range
 #
+###########################################################################
 function run( t::MCMCTask; 
               steps::Union(Integer, Range{Int}, Range1{Int})=100, 
               burnin::Integer=0, 
@@ -33,12 +33,13 @@ function run( t::MCMCTask;
 
   assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
   assert(len > burnin, "Total MCMC length ($len) should be > to burnin ($burnin)")  
-  assert(thinning >= 1, "Thinning should be >= 1 to burnin ($thinning)")  
+  assert(thinning >= 1, "Thinning ($thinning) should be >= 1")  
 
   tic() # start timer
 
   # temporary array to store samples
   samples = fill(NaN, t.model.size, length(r)) 
+  diags = DataFrame(step=collect(r)) # initialize with column 'step'
 
   # sampling loop
   j = 1
@@ -46,6 +47,17 @@ function run( t::MCMCTask;
     newprop = consume(t.task)
     if contains(r, i) 
       samples[:, j] = newprop.ppars
+
+      # save diagnostics
+      for (k,v) in newprop.diagnostics
+        # if diag name not seen before, create column
+        if !contains(colnames(diags), k)
+          diags[string(k)] = DataArray(Array(typeof(v), nrow(diags)), falses(nrow(diags)) )
+        end
+        
+        diags[j, string(k)] = v
+      end
+
       j += 1
     end
   end
@@ -65,8 +77,8 @@ function run( t::MCMCTask;
   # create Chain
   MCMCChain(r,
             DataFrame(samples', cn),
-            DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
-            DataFrame(),  # TODO, store diagnostics here, needs to be passed by newprop
+            DataFrame(),  # TODO, store gradient here, needs to be passed in newprop
+            diags, 
             t,
             toq())
 end
