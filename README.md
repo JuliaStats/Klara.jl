@@ -23,10 +23,10 @@ using DataFrames
 ######## Model definition / method 1 = state explictly your functions
 
 # loglik of Normal distrib, vector of 3, initial values 1.0
-mymodel = MCMCLikModel(v-> -dot(v,v), 3, ones(3))  
+mymodel = model(v-> -dot(v,v), init=ones(3))  
 
 # or for a model providing the gradient : 
-mymodel2 = MCMCLikModelG(v-> -dot(v,v), v->(-dot(v,v), -2v), 3, ones(3))  
+mymodel2 = model(v-> -dot(v,v), v->(-dot(v,v), -2v), init=ones(3))   
 # Note that 2nd function returns a tuple (loglik, gradient)
 
 ######## Model definition / method 2 = using expression parsing and autodiff
@@ -35,9 +35,8 @@ modexpr = quote
 	v ~ Normal(0, 1)
 end
 
-mymodel = MCMCLikModel(modexpr, v=ones(3))  # without gradient
-mymodel2 = MCMCLikModelG(modexpr, v=ones(3))  # with gradient
-
+mymodel = model(modexpr, init=ones(3)) # without gradient
+mymodel2 = MCMCLikModelG(modexpr, v=ones(3)) # with gradient
 
 ######## running a single chain ########
 
