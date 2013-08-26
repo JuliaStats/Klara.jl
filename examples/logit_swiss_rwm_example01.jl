@@ -10,7 +10,7 @@ logitmodel = BayesLogitModel(X, y, logprior);
 logtarget(pars::Vector{Float64}) = logposterior(pars, logitmodel);
 randprior() = rand(distribution);
 
-mcmcmodel = MCMCLikModel(logtarget, logitmodel.npars, randprior());
+mcmcmodel = model(logtarget, init=randprior());
 
 mcmcchain01 = mcmcmodel * RWM(0.1) * (5001:55000)
 

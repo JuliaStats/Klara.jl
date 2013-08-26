@@ -1,18 +1,14 @@
 ###########################################################################
 #  Metropolis adjusted Langevin algorithm (MALA)
 #
-#     parameters :
-#        - DriftStep : float to scale the jumps
-#      (note 1 : I have removed the periodic monitoring, it should be in the runner, TODO)
-#      (note 2 : adaptative driftStep should be implemented within the sampler as it is 
-#       sampler specific most of the time, adaptation parameters could be specified in
-#        the MALA type though)
+#  Parameters :
+#    - driftStep : drift step size (for scaling the jumps)
 #
 ###########################################################################
 
 export MALA
 
-println("Loading MALA(driftStep, monitorPeriod) sampler")
+println("Loading MALA(driftStep) sampler")
 
 # The MALA sampler type
 immutable MALA <: MCMCSampler
@@ -26,49 +22,44 @@ end
 MALA() = MALA(1.0)
 
 # sampling task launcher
-spinTask(model::MCMCModelWithGradient, s::MALA) = 
-  MCMCTask( Task(() -> MALATask(model, s.driftStep)), model)
+spinTask(model::MCMCModel, s::MALA) = MCMCTask( Task(() -> MALATask(model, s.driftStep)), model)
 
 # MALA sampling
-function MALATask(model::MCMCModelWithGradient, driftStep::Float64)
-  local beta1, grad1, betam
+function MALATask(model::MCMCModel, driftStep::Float64)
+  local pars, proposedPars, parsMean
+  local logTarget, proposedLogTarget
+  local grad, proposedGrad
   local probNewGivenOld, probOldGivenNew
-  local beta, ll, grad
-  local oldbeta, oldll
 
   #  Task reset function
-  function reset(newbeta::Vector{Float64})
-    beta = copy(newbeta)
-    ll, grad = model.evalg(beta)
+  function reset(resetPars::Vector{Float64})
+    pars = copy(resetPars)
+    logTarget, grad = model.evalg(pars)
   end
   # hook inside Task to allow remote resetting
   task_local_storage(:reset, reset) 
   
   # Initialization
-  beta = copy(model.init)
-  ll, grad = model.evalg(beta)
-  assert(ll != -Inf, "Initial values out of model support, try other values")
+  pars = copy(model.init)
+  logTarget, grad = model.evalg(pars)
+  assert(isfinite(logTarget), "Initial values out of model support, try other values")
 
-  i = 1
   while true
-    betam = beta + (driftStep/2.) * grad
+    parsMean = pars + (driftStep/2.) * grad
 
-    beta1 = betam + sqrt(driftStep) * randn(model.size)
-    ll1, grad1 = model.evalg(beta1)
+    proposedPars = parsMean + sqrt(driftStep) * randn(model.size)
+    proposedLogTarget, proposedGrad = model.evalg(proposedPars)
 
-    probNewGivenOld = sum(-(betam-beta1).^2/(2*driftStep)-log(2*pi*driftStep)/2)
-    betam = beta1 + (driftStep/2) * grad1
-    probOldGivenNew = sum(-(betam-beta).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    probNewGivenOld = sum(-(parsMean-proposedPars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    parsMean = proposedPars + (driftStep/2) * proposedGrad
+    probOldGivenNew = sum(-(parsMean-pars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
     
-    ratio = ll1 + probOldGivenNew - ll - probNewGivenOld
-    if ratio > 0 || (ratio > log(rand()))  # accepted ?
-      produce(MCMCSample(beta1, ll1, beta, ll))
-      beta, ll, grad = beta1, ll1, grad1
+    ratio = proposedLogTarget + probOldGivenNew - logTarget - probNewGivenOld
+    if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
+      produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
+      pars, logTarget, grad = proposedPars, proposedLogTarget, proposedGrad
     else
-      produce(MCMCSample(beta, ll, beta, ll))
+      produce(MCMCSample(pars, logTarget, pars, logTarget))
     end
-
-    i += 1
   end
 end
-

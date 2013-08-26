@@ -1,20 +1,20 @@
 ###########################################################################
-#  Hamiltonian Monte-Carlo
+#  Hamiltonian Monte Carlo (HMC)
 #
-#     parameters :
-#        - innerSteps : number of intermediate jumps wihtin each step
-#        - stepSize : inner steps scaling
+#  Parameters :
+#    - nLeaps : number of intermediate jumps wihtin each step
+#    - leapStep : inner steps scaling
 #
 ###########################################################################
 
 export HMC
 
-println("Loading HMC(innerSteps, stepSize) sampler")
+println("Loading HMC(nLeaps, leapStep) sampler")
 
 # The HMC sampler type
 immutable HMC <: MCMCSampler
-  innerSteps::Integer
-  stepSize::Float64
+  nLeaps::Integer
+  leapStep::Float64
 
   function HMC(i::Integer, s::Real)
     assert(i>0, "inner steps should be > 0")
@@ -22,33 +22,32 @@ immutable HMC <: MCMCSampler
     new(i,s)
   end
 end
-HMC() = HMC(2, 1.)
-HMC(i::Integer) = HMC(i, 1.)
-HMC(s::Float64) = HMC(2, s)
+HMC() = HMC(10, 0.1)
+HMC(i::Integer) = HMC(i, 0.1)
+HMC(s::Float64) = HMC(10, s)
 
 # sampling task launcher
-spinTask(model::MCMCModelWithGradient, s::HMC) = 
-  MCMCTask( Task(() -> HMCTask(model, s.innerSteps, s.stepSize)), model)
+spinTask(model::MCMCModel, s::HMC) = MCMCTask( Task(() -> HMCTask(model, s.nLeaps, s.leapStep)), model)
 
 ####### HMC sampling
 
 # helper functions and types
 type HMCSample
-  beta::Vector{Float64}   # sample position
-  grad::Vector{Float64}   # gradient
-  v::Vector{Float64}    # speed
-  llik::Float64     # log likelihood 
-  H::Float64        # Hamiltonian
+  pars::Vector{Float64} # sample position
+  grad::Vector{Float64} # gradient
+  v::Vector{Float64}    # velocity
+  logTarget::Float64    # log likelihood 
+  H::Float64            # Hamiltonian
 end
-HMCSample(beta::Vector{Float64}) = HMCSample(beta, Float64[], Float64[], NaN, NaN)
+HMCSample(pars::Vector{Float64}) = HMCSample(pars, Float64[], Float64[], NaN, NaN)
 
-calc!(s::HMCSample, ll::Function) = ((s.llik, s.grad) = ll(s.beta))
-update!(s::HMCSample) = (s.H = s.llik - dot(s.v, s.v)/2)
+calc!(s::HMCSample, ll::Function) = ((s.logTarget, s.grad) = ll(s.pars))
+update!(s::HMCSample) = (s.H = s.logTarget - dot(s.v, s.v)/2)
 
 function leapFrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
   n.v += n.grad * ve / 2.
-  n.beta += ve * n.v
+  n.pars += ve * n.v
   calc!(n, ll)
   n.v += n.grad * ve / 2.
   update!(n)
@@ -58,12 +57,12 @@ end
 
 
 #  HMC algo
-function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float64)
+function HMCTask(model::MCMCModel, isteps::Integer, leapStep::Float64)
   local state0
 
-  #  Task reset function
-  function reset(newbeta::Vector{Float64})
-    state0 = HMCSample(copy(newbeta))
+  # Task reset function
+  function reset(resetPars::Vector{Float64})
+    state0 = HMCSample(copy(resetPars))
     calc!(state0, model.evalg)
   end
   # hook inside Task to allow remote resetting
@@ -72,7 +71,7 @@ function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float6
   # initialization
   state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalg)
-  assert(isfinite(state0.llik), "Initial values out of model support, try other values")
+  assert(isfinite(state0.logTarget), "Initial values out of model support, try other values")
 
   #  main loop
   while true
@@ -83,20 +82,18 @@ function HMCTask(model::MCMCModelWithGradient, isteps::Integer, stepsize::Float6
     state = state0
 
     j=1
-    while j <= isteps && isfinite(state.llik)
-      state = leapFrog(state, stepsize, model.evalg)
+    while j <= isteps && isfinite(state.logTarget)
+      state = leapFrog(state, leapStep, model.evalg)
       j +=1
     end
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
-      produce(MCMCSample(state.beta, state.llik, state0.beta, state0.llik))
+      produce(MCMCSample(state.pars, state.logTarget, state0.pars, state0.logTarget))
       state0 = state
     else
-      produce(MCMCSample(state0.beta, state0.llik, state0.beta, state0.llik))
+      produce(MCMCSample(state0.pars, state0.logTarget, state0.pars, state0.logTarget))
     end
-
   end
-
 end
 

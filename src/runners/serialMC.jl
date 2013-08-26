@@ -33,8 +33,8 @@ function serialMC(tasks::Array{MCMCTask};
 	local logW = zeros(nmods)  # log of task weights that will be adapted
 	local at = 1  # pick starting task
 	local s = consume(tasks[at].task)
-	local beta, ll, beta0
-	beta, ll, beta0 = s.beta, s.ll, s.oldbeta
+	local ppars, logtarget, pars
+	ppars, logtarget, pars = s.ppars, s.logtarget, s.pars
 
 	for i in 1:steps  # i = 1
 
@@ -43,9 +43,9 @@ function serialMC(tasks::Array{MCMCTask};
 			at2 = rand(1:(nmods-1))
 			at2 = at2 >= at ? at2+1 : at2
 
-			reset(tasks[at2], beta0)
+			reset(tasks[at2], pars)
 			s2 = consume(tasks[at2].task)
-			if rand() < exp(ll - s2.ll + logW[at2] - logW[at]) # accept swap ?
+			if rand() < exp(logtarget - s2.logtarget + logW[at2] - logW[at]) # accept swap ?
 				at, s = at2, s2
 			end
 		else
@@ -54,11 +54,11 @@ function serialMC(tasks::Array{MCMCTask};
 
 		# TODO : add logW adaptation
 
-		beta, ll, beta0 = s.beta, s.ll, s.oldbeta
+		ppars, logtarget, pars = s.ppars, s.logtarget, s.pars
 
-		if i > burnin # store beta and the model we're on
+		if i > burnin # store ppars and the model we're on
 			pos = i-burnin 
-			res.samples[:, pos] = beta
+			res.samples[:, pos] = ppars
 			#res.misc[:mod][pos] = at
 		end
 	end

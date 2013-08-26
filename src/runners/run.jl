@@ -45,7 +45,7 @@ function run( t::MCMCTask;
   for i in 1:len
     newprop = consume(t.task)
     if contains(r, i) 
-      samples[:, j] = newprop.beta
+      samples[:, j] = newprop.ppars
       j += 1
     end
   end
