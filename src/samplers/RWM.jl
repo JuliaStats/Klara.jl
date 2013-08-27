@@ -81,7 +81,7 @@ function RWMTask(model::MCMCModel, sampler::RWM)
 	logTarget = model.eval(pars)
 
 	# two different loops depending on tuner
-	#  TODO : when tuning changes so much, may be we should make new MCMCSampler altogether
+	#  TODO : when tuning changes so much, may be we should just make a new MCMCSampler altogether ??
 	if isa(sampler.tuner, RAM)  # RAM tuner
 		# start with diagonal matrix build with scale
 		S = Float64[ i==j ? scale[i] : 0. for i in 1:model.size, j in 1:model.size]

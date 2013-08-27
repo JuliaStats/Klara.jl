@@ -69,7 +69,7 @@ function MCMCLikelihoodModel(	lik::Function,
 								pmap::Union(Nothing, PMap) = nothing) 
 
 	init = isa(init, Real) ? [init] : init             # convert init to vector if needed
-	scale = isa(scale, Real) ? scale * ones(length(init)) : scale  # expand scale to initial values vector
+	scale = isa(scale, Real) ? scale * ones(length(init)) : scale  # expand scale to parameter vector size
 
 	pmap = pmap == nothing ? Dict([:pars], [PDims(1, size(init))]) : pmap # all parameters named "pars"
 
@@ -78,6 +78,9 @@ end
 
 # Model creation using expression parsing and autodiff
 function MCMCLikelihoodModel(m::Expr; gradient::Bool=false, args...)
+	# when using expressions, initial values are passed in keyword args
+	#  with one arg by parameter, therefore there is not need for an init arg
+	assert(!contains(args, :init), "'init' kwargs not allowed for model as expression\n")
 
 	# within args, remove "init", "scale" and "pmap" keys which have a
 	# special meaning for the MCMCLikelihoodModel constructor
@@ -86,7 +89,7 @@ function MCMCLikelihoodModel(m::Expr; gradient::Bool=false, args...)
 	pinit = Dict()
 	cargs = Dict()
 	for (k,v) in args
-		if contains([:init, :pmap, :scale], k)
+		if contains([:pmap, :scale], k)
 			cargs[k] = v
 		else
 			pinit[k] = v
@@ -103,7 +106,7 @@ function MCMCLikelihoodModel(m::Expr; gradient::Bool=false, args...)
 		g = nothing
 	end
 
-	MCMCLikelihoodModel(f, g, nothing, nothing; cargs...)
+	MCMCLikelihoodModel(f, g, nothing, nothing; init=i, cargs...)
 end
 
 
