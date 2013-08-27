@@ -29,6 +29,7 @@ type MCMCLikelihoodModel <: MCMCModel
 		s = size(i,1)
 
 		assert(ispartition(pmap, s), "param map is not a partition of parameter vector")
+		assert(size(sc,1) == s, "scale parameter size ($(size(sc,1))) different from initial values ($s)")
 
 		# check that likelihood function can be called with a vector of Float64 as argument
 		assert(hasvectormethod(f), "likelihood function cannot be called with Vector{Float64}")
@@ -51,7 +52,7 @@ end
 
 typealias MCMCLikModel MCMCLikelihoodModel
 
-# Model creation : no gradient or hessian
+# Model creation : gradient or hessian or tensor not specified
 MCMCLikelihoodModel( lik::Function; args...) = 
 	MCMCLikelihoodModel(lik, nothing, nothing, nothing; args...)
 MCMCLikelihoodModel( lik::Function, grad::Function; args...) = 
@@ -68,45 +69,44 @@ function MCMCLikelihoodModel(	lik::Function,
 								scale::Union(Real, Vector{Float64}) = 1.0,
 								pmap::Union(Nothing, PMap) = nothing) 
 
-	init = isa(init, Real) ? [init] : init             # convert init to vector if needed
-	scale = isa(scale, Real) ? scale * ones(length(init)) : scale  # expand scale to parameter vector size
+	# convert init to vector if needed
+	init = isa(init, Real) ? [init] : init
 
-	pmap = pmap == nothing ? Dict([:pars], [PDims(1, size(init))]) : pmap # all parameters named "pars"
+	# expand scale to parameter vector size if needed
+	scale = isa(scale, Real) ? scale * ones(length(init)) : scale
+
+	# all parameters named "pars" by default
+	pmap = pmap == nothing ? Dict([:pars], [PDims(1, size(init))]) : pmap 
 
 	MCMCLikelihoodModel(lik, grad, hessian, tensor, init, scale, pmap)
 end
 
 # Model creation using expression parsing and autodiff
-function MCMCLikelihoodModel(m::Expr; gradient::Bool=false, args...)
+function MCMCLikelihoodModel(	m::Expr; 
+								gradient::Bool=false,
+								init=nothing,
+								pmap=nothing,
+								scale::Union(Real, Vector{Float64}) = 1.0,
+								args...)
+
 	# when using expressions, initial values are passed in keyword args
 	#  with one arg by parameter, therefore there is not need for an init arg
-	assert(!contains(args, :init), "'init' kwargs not allowed for model as expression\n")
+	assert(init == nothing, "'init' kwargs not allowed for model as expression\n")
 
-	# within args, remove "init", "scale" and "pmap" keys which have a
-	# special meaning for the MCMCLikelihoodModel constructor
-	# remaining keys will be used by generateModelFunction to identify
-	# model parameters in the model expression m
-	pinit = Dict()
-	cargs = Dict()
-	for (k,v) in args
-		if contains([:pmap, :scale], k)
-			cargs[k] = v
-		else
-			pinit[k] = v
-		end
-	end
+	# same thing with 'pmap'
+	assert(pmap == nothing, "'pmap' kwargs not allowed for model as expression\n")
 
 	# generate lik function
-	f, s, p, i = generateModelFunction(m; gradient=false, pinit...) # loglik only function
+	f, s, p, i = generateModelFunction(m; gradient=false, args...) # loglik only function
 
 	# generate gradient function if requested
 	if gradient
-		g, s, p, i = generateModelFunction(m; gradient=true, pinit...) # loglik and gradient function
+		g, s, p, i = generateModelFunction(m; gradient=true, args...) # loglik and gradient function
 	else
 		g = nothing
 	end
 
-	MCMCLikelihoodModel(f, g, nothing, nothing; init=i, cargs...)
+	MCMCLikelihoodModel(f, g, nothing, nothing; init=i, pmap=p, scale=scale)
 end
 
 
