@@ -32,11 +32,11 @@ mymodel2 = model(v-> -dot(v,v), v->(-dot(v,v), -2v), init=ones(3))
 ######## Model definition / method 2 = using expression parsing and autodiff
 
 modexpr = quote
-	v ~ Normal(0, 1)
+    v ~ Normal(0, 1)
 end
 
-mymodel = model(modexpr, init=ones(3)) # without gradient
-mymodel2 = MCMCLikModelG(modexpr, v=ones(3)) # with gradient
+mymodel = model(modexpr, v=ones(3)) # without gradient
+mymodel2 = model(modexpr, gradient=true, v=ones(3)) # with gradient
 
 ######## running a single chain ########
 
@@ -56,6 +56,10 @@ res = mymodel * RWM(0.1) * (101:5:1000)
 # prints samples
 head(res.samples)
 describe(res.samples)
+
+# prints run diagnostics
+head(res.diagnostics)
+
 
 # continue sampling where it stopped
 res = run(res, steps=10000)  
