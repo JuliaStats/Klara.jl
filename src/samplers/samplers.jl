@@ -30,5 +30,5 @@ MCMCSample(ppars::Vector{Float64}, plogtarget::Float64, pars::Vector{Float64}, l
 
 
 # Sampling task launcher
-spinTask(m::MCMCModel, s::MCMCSampler) = MCMCTask(Task(() -> RWMTask(m, s)), m)
+spinTask(m::MCMCModel, s::MCMCSampler) = MCMCTask(Task(() -> SamplerTask(m, s)), m)
 

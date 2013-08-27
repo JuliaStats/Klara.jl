@@ -9,29 +9,42 @@
 
 export HMC
 
-println("Loading HMC(nLeaps, leapStep) sampler")
+println("Loading HMC(nLeaps, leapStep, tuner) sampler")
 
-# The HMC sampler type
+###########################################################################
+#                  HMC specific 'tuners'
+###########################################################################
+abstract HMCTuner <: MCMCTuner
+
+
+###########################################################################
+#                  HMC type
+###########################################################################
+
 immutable HMC <: MCMCSampler
   nLeaps::Integer
   leapStep::Float64
+  tuner::Union(Nothing, HMCTuner)
 
-  function HMC(i::Integer, s::Real)
+  function HMC(i::Integer, s::Real, t::Union(Nothing, HMCTuner))
     assert(i>0, "inner steps should be > 0")
     assert(s>0, "inner steps scaling should be > 0")
-    new(i,s)
+    new(i,s,t)
   end
 end
-HMC() = HMC(10, 0.1)
-HMC(i::Integer) = HMC(i, 0.1)
-HMC(s::Float64) = HMC(10, s)
+HMC(i::Integer=10, s::Float64=0.1                                      ) = HMC(i , s  , nothing)
+HMC(               s::Float64    , t::Union(Nothing, HMCTuner)=nothing ) = HMC(10, s  , t)
+HMC(i::Integer   ,                 t::HMCTuner                         ) = HMC(i , 0.1, t)
+HMC(                               t::HMCTuner                         ) = HMC(10, 0.1, t)
+# keyword args version
+HMC(;init=10, scale=0.1, tuner=nothing) = HMC(init, scale, tuner)
 
-# sampling task launcher
-spinTask(model::MCMCModel, s::HMC) = MCMCTask( Task(() -> HMCTask(model, s.nLeaps, s.leapStep)), model)
 
-####### HMC sampling
+###########################################################################
+#                  HMC task
+###########################################################################
 
-# helper functions and types
+####  Helper functions and types for HMC sampling task
 type HMCSample
   pars::Vector{Float64} # sample position
   grad::Vector{Float64} # gradient
@@ -56,22 +69,20 @@ function leapFrog(s::HMCSample, ve, ll::Function)
 end
 
 
-#  HMC algo
-function HMCTask(model::MCMCModel, isteps::Integer, leapStep::Float64)
+####  HMC task
+function SamplerTask(model::MCMCModel, sampler::HMC)
   local state0
 
-  # Task reset function
-  function reset(resetPars::Vector{Float64})
-    state0 = HMCSample(copy(resetPars))
-    calc!(state0, model.evalg)
-  end
+  assert(hasgradient(model), "HMC sampler requires model with gradient function")
+
   # hook inside Task to allow remote resetting
-  task_local_storage(:reset, reset) 
+  task_local_storage(:reset,
+             (resetPars::Vector{Float64}) -> (state0 = HMCSample(copy(resetPars)); 
+                                              calc!(state0, model.evalg)) ) 
 
   # initialization
   state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalg)
-  assert(isfinite(state0.logTarget), "Initial values out of model support, try other values")
 
   #  main loop
   while true
@@ -82,18 +93,25 @@ function HMCTask(model::MCMCModel, isteps::Integer, leapStep::Float64)
     state = state0
 
     j=1
-    while j <= isteps && isfinite(state.logTarget)
-      state = leapFrog(state, leapStep, model.evalg)
+    while j <= sampler.nLeaps && isfinite(state.logTarget)
+      state = leapFrog(state, sampler.leapStep, model.evalg)
       j +=1
     end
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
-      produce(MCMCSample(state.pars, state.logTarget, state0.pars, state0.logTarget))
+      ms = MCMCSample(state.pars, state.logTarget, 
+                      state0.pars, state0.logTarget,
+                      {"accept" => true} )
+      produce(ms)
       state0 = state
     else
-      produce(MCMCSample(state0.pars, state0.logTarget, state0.pars, state0.logTarget))
+      ms = MCMCSample(state0.pars, state0.logTarget, 
+                      state0.pars, state0.logTarget,
+                      {"accept" => false} )
+      produce(ms)
     end
   end
+
 end
 
