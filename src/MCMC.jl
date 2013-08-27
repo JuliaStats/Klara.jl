@@ -32,7 +32,7 @@ reset(t::MCMCTask, x) = t.task.storage[:reset](x)
 include("samplers/samplers.jl")  # Common definitions for samplers
 
 include("samplers/RWM.jl")    # Random-walk Metropolis sampler
-# include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
+include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
 include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 
 #  Definition of * as a shortcut operator for model and sampler combination 
