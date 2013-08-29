@@ -20,8 +20,11 @@ mg = model(ex, gradient=true, vars=zeros(nbeta))
 
 name = "binomial 10x1000"
 
-res = [	benchmark( ()-> m.eval(m.init), "loglik eval", name, 1000) ;
-		benchmark( ()-> mg.evalg(mg.init), "loglik and gradient eval", name, 1000) ;
-		benchmark( ()-> run(m * RWM(0.1), steps=100),  
-	           					"100 RWM steps", name, 10) ]
+f1 = ()-> m.eval(m.init)
+f2 = ()-> mg.evalg(mg.init)
+f3 = ()-> run(m * RWM(0.1), steps=100)
+
+res = [	benchmark( f1, "loglik eval", name, 1000) ;
+		benchmark( f2, "loglik and gradient eval", name, 1000) ;
+		benchmark( f3, "100 RWM steps", name, 10) ]
 
