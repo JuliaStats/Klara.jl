@@ -5,18 +5,18 @@ const VECTOR_SIZE = 1000
 v = ones(VECTOR_SIZE)
 
 function bench(ex::Expr)  # ex = :(Weibull(1, 1))
-	model = Expr(:block, :(y = x * v ; y ~ $ex))
+      # to get valid intial values, use the mean of the distribution
+      exactMean = eval( :(mean($ex)) )
+      # some distribs (Cauchy) have no defined mean
+      exactMean = isfinite(exactMean) ? exactMean : 1.0  
 
-	# to get valid intial values, use the mean of the distribution
-	exactMean = eval( :(mean($ex)) )
-	# some distribs (Cauchy) have no defined mean
-	exactMean = isfinite(exactMean) ? exactMean : 1.0  
+      # exactStd = eval( :(std($ex)) )
+      # exactStd = isfinite(exactStd) ? exactStd : 1.0
 
-	# exactStd = eval( :(std($ex)) )
-	# exactStd = isfinite(exactStd) ? exactStd : 1.0
+	mex = Expr(:block, :(y = x * v ; y ~ $ex))
 
-	m = MCMCLikModel(model, x=exactMean)
-	mg = MCMCLikModelG(model, x=exactMean)
+	m = model(mex, x=exactMean)
+	mg = model(mex, gradient=true, x=exactMean)
 
 	name = "$ex on vector of $VECTOR_SIZE"
 
