@@ -86,20 +86,22 @@ res = run(mymodel2 * [HMC(i,0.1) for i in 1:5], steps=1000)
 Now an example with sequential Monte-Carlo
 
 ```jl
+using DataFrames
+using Distributions
 using MCMC
 using Vega
 
 # We need to define a set of models that converge toward the 
 #  distribution of interest (in the spirit of simulated annealing)
 nmod = 10  # number of models
-mods = MCMCLikModel[]
+mods = Array(MCMCLikModel, nmod)
 sts = logspace(1, -1, nmod)
-for fac in sts
+for i in 1:nmod
 	m = quote
 		y = abs(x)
-		y ~ Normal(1, $fac )
+		y ~ Normal(1, $(sts[i]) )
 	end
-	push!(mods,MCMCLikModel(m, x=0))
+	mods[i] = model(m, x=0)
 end
 
 # Plot models
@@ -116,27 +118,19 @@ particles = [ [randn()] for i in 1:1000]
 
 # Launch sequential MC 
 # (10 steps x 1000 particles = 10000 samples returned in a single MCMCChain)
-res = seqMC(targets, particles, steps=10)  
+res = seqMC(targets, particles, steps=10, burnin=0)  
 
-# Plot raw samples
-ts = collect(1:10:size(res.samples[:beta],2))
-plot(x = ts, y = vec(res.samples[:beta])[ts], kind = :line)
+# Plot a subset of raw samples
+ts = collect(1:10:nrow(res.samples))
+plot(x = ts, y = res.samples[ts, "x"], kind = :scatter)
 # we don't have the real distribution yet because we didn't use the 
 #   sample weightings sequential MC produces
 
 # Now resample with replacement using weights
-w = res.misc[:weights]
-ns = length(w)
-cp = cumsum(w) / sum(w)
-rs = fill(0, ns)
-for n in 1:ns  #  n = 1
-	l = rand()
-	rs[n] = findfirst(p-> (p>=l), cp)
-end
-newsamp = vec(res.samples[:beta])[rs]
+newsamp = wsample(res.samples["x"], res.diagnostics["weigths"], 1000)
 
 mean(newsamp)  # close to 0 ?
-plot(x = collect(1:ns), y = newsamp, kind = :scatter)
+plot(x = [1:1000], y = newsamp, kind = :scatter)
 
 ```
 

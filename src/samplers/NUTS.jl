@@ -150,8 +150,8 @@ function SamplerTask(model::MCMCModel, sampler::NUTS)
 	lebar = 0.0
 
 	### main loop
-	# using a for loop instead of while true for this sampler
-	# so that the tuner a sampling counter 
+	# using a 'for' loop instead of 'while true' for this sampler
+	#  because leapStep adaptation requires a sampling counter 
  	for i in 1:Inf  
  		local alpha, nalpha, n, s, j, n1, s1
  		local dummy, state_minus, state_plus, state, state1

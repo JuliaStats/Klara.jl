@@ -58,7 +58,7 @@ function seqMC(targets::Array{MCMCTask},
 			end
 
 			# resample if likelihood variance of particles is too low
-			#  TODO : improve, clarify
+			#  TODO : improve, make user-settable, ..
 			local W = exp(logW)
 			if var(W) < resTrigger
 				cp = cumsum(W) / sum(W)
@@ -102,7 +102,8 @@ function seqMC(targets::Array{MCMCTask},
 	MCMCChain(	(burnin+1):1:((steps-burnin)*npart),
 		        DataFrame(samples', cn),
 		        DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
-		        DataFrame(weigths=weights),  # TODO, store diagnostics here, needs to be passed by newprop
+		        DataFrame(weigths=weights, 
+		        	      particle=rep([1:npart],(steps-burnin))),  
 		        targets,
 		        toq())
 end
