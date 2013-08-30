@@ -9,14 +9,14 @@ beta0 = randn((nbeta,))
 Y = rand(n) .< ( 1 ./ (1. + exp(X * beta0)))
 
 # define model
-model = quote
+ex = quote
 	vars ~ Normal(0, 1.0)  # Normal prior, std 1.0 for predictors
 	prob = 1 / (1. + exp(X * vars)) 
 	Y ~ Bernoulli(prob)
 end
 
-m = MCMCLikModel(model, vars=zeros(nbeta))
-mg = MCMCLikModelG(model, vars=zeros(nbeta))
+m = model(ex, vars=zeros(nbeta))
+mg = model(ex, vars=zeros(nbeta))
 
 name = "binomial 10x1000"
 
