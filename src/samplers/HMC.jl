@@ -4,6 +4,7 @@
 #  Parameters :
 #    - nLeaps : number of intermediate jumps wihtin each step
 #    - leapStep : inner steps scaling
+#    - tuner: for tuning the HMC parameters
 #
 ###########################################################################
 
@@ -37,8 +38,7 @@ HMC(               s::Float64    , t::Union(Nothing, HMCTuner)=nothing ) = HMC(1
 HMC(i::Integer   ,                 t::HMCTuner                         ) = HMC(i , 0.1, t)
 HMC(                               t::HMCTuner                         ) = HMC(10, 0.1, t)
 # keyword args version
-HMC(;init=10, scale=0.1, tuner=nothing) = HMC(init, scale, tuner)
-
+HMC(;init::Integer=10, scale::Float64=0.1, tuner::Union(Nothing, HMCTuner)=nothing) = HMC(init, scale, tuner)
 
 ###########################################################################
 #                  HMC task

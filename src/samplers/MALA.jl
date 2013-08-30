@@ -3,29 +3,41 @@
 #
 #  Parameters :
 #    - driftStep : drift step size (for scaling the jumps)
+#    - tuner: for tuning the drift step size
 #
 ###########################################################################
 
 export MALA
 
-println("Loading MALA(driftStep) sampler")
+println("Loading MALA(driftStep, tuner) sampler")
+
+###########################################################################
+# MALA specific 'tuners'
+###########################################################################
+abstract MALATuner <: MCMCTuner
+
+###########################################################################
+#  MALA type
+###########################################################################
 
 # The MALA sampler type
 immutable MALA <: MCMCSampler
   driftStep::Float64
-
-  function MALA(x::Real)
-    assert(x>0, "driftStep should be > 0")
-    new(x)
+  tuner::Union(Nothing, MALATuner)
+  
+  function MALA(s::Real, t::Union(Nothing, MALATuner))
+    assert(s>0, "MALA drift step should be > 0")
+    new(s, t)
   end
 end
-MALA() = MALA(1.0)
 
-# sampling task launcher
-spinTask(model::MCMCModel, s::MALA) = MCMCTask( Task(() -> MALATask(model, s.driftStep)), model)
+MALA() = MALA(1.0)
+MALA(s::Float64) = MALA(s, nothing)
+MALA(s::MALATuner) = MALA(1.0, t)
+MALA(;scale::Float64=1.0, tuner::Union(Nothing, MALATuner)=nothing) = MALA(scale, tuner)
 
 # MALA sampling
-function MALATask(model::MCMCModel, driftStep::Float64)
+function SamplerTask(model::MCMCModel, sampler::MALA)
   local pars, proposedPars, parsMean
   local logTarget, proposedLogTarget
   local grad, proposedGrad
@@ -45,14 +57,14 @@ function MALATask(model::MCMCModel, driftStep::Float64)
   assert(isfinite(logTarget), "Initial values out of model support, try other values")
 
   while true
-    parsMean = pars + (driftStep/2.) * grad
+    parsMean = pars + (sampler.driftStep/2.) * grad
 
-    proposedPars = parsMean + sqrt(driftStep) * randn(model.size)
+    proposedPars = parsMean + sqrt(sampler.driftStep) * randn(model.size)
     proposedLogTarget, proposedGrad = model.evalg(proposedPars)
 
-    probNewGivenOld = sum(-(parsMean-proposedPars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
-    parsMean = proposedPars + (driftStep/2) * proposedGrad
-    probOldGivenNew = sum(-(parsMean-pars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    probNewGivenOld = sum(-(parsMean-proposedPars).^2/(2*sampler.driftStep)-log(2*pi*sampler.driftStep)/2)
+    parsMean = proposedPars + (sampler.driftStep/2) * proposedGrad
+    probOldGivenNew = sum(-(parsMean-pars).^2/(2*sampler.driftStep)-log(2*pi*sampler.driftStep)/2)
     
     ratio = proposedLogTarget + probOldGivenNew - logTarget - probNewGivenOld
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
