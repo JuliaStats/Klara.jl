@@ -1,7 +1,7 @@
 ######### multiple distributions  ###########
 using Distributions
 
-const VECTOR_SIZE = 1000
+VECTOR_SIZE = 1000
 v = ones(VECTOR_SIZE)
 
 function bench(ex::Expr)  # ex = :(Weibull(1, 1))
