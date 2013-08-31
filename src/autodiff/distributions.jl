@@ -40,7 +40,7 @@ dists = { (:Weibull, 	  3),
 	      (:Normal,  	  3),
 		  (:Bernoulli,    2)}
 
-for d in dists  # d = dists[3]
+for d in dists  # d = dists[11]
 	fsym = symbol("logpdf$(d[1])")
 
 	npars = d[2]
@@ -73,7 +73,7 @@ for d in dists # d = dists[1]
 	arity = d[2]
 	ps = [ ifloor((i-1) / 2^(j-1)) % 2 for i=2:2^arity, j=1:arity]
 
-	for l in 1:size(ps,1) # l = 3
+	for l in 1:size(ps,1) # l = 4
 		pars = Symbol[ps[l,j]==0 ? :Real : :AbstractArray for j in 1:arity]
 
 		rv = symbol("x$(findfirst(pars .== :AbstractArray))")
