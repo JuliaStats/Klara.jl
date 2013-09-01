@@ -78,11 +78,11 @@ function SamplerTask(model::MCMCModel, sampler::HMC)
   # hook inside Task to allow remote resetting
   task_local_storage(:reset,
              (resetPars::Vector{Float64}) -> (state0 = HMCSample(copy(resetPars)); 
-                                              calc!(state0, model.evalg)) ) 
+                                              calc!(state0, model.evalallg)) ) 
 
   # initialization
   state0 = HMCSample(copy(model.init))
-  calc!(state0, model.evalg)
+  calc!(state0, model.evalallg)
 
   #  main loop
   while true
@@ -94,7 +94,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC)
 
     j=1
     while j <= sampler.nLeaps && isfinite(state.logTarget)
-      state = leapFrog(state, sampler.leapStep, model.evalg)
+      state = leapFrog(state, sampler.leapStep, model.evalallg)
       j +=1
     end
 

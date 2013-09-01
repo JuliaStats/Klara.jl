@@ -49,13 +49,13 @@ type RMHMCSample
   grad::Vector{Float64} # gradient
   tensor::Matrix{Float64} # Metric tensor
   dtensor::Array{Float64, 3} # Derivative of metric tensor
+  momentum::Vector{Float64} # momentum
   logtarget::Float64 # log-target 
   H::Float64 # Hamiltonian
 end
 
 RMHMCSample(pars::Vector{Float64}) = RMHMCSample(pars, Array(Float64, 0), Array(Float64, 0, 0), Array(Float64, 0, 0, 0), NaN, NaN)
 
-calc!(s::RMHMCSample, m::Function) = ((s.logTarget, s.grad, s.tensor, s.dtensor) = m(s.pars))
 # update!(s::HMCSample) = (s.H = s.logTarget - dot(s.v, s.v)/2)
 # 
 # function leapFrog(s::HMCSample, ve, ll::Function)
@@ -78,4 +78,7 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC)
   # initialization
   state0 = RMHMCSample(copy(model.init))
   calc!(state0, model.evaldt)
+  
+  while true
+  end
 end
