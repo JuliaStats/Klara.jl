@@ -31,8 +31,7 @@ immutable MALA <: MCMCSampler
   end
 end
 
-MALA() = MALA(1.0)
-MALA(s::Float64) = MALA(s, nothing)
+MALA(s::Float64=1.0) = MALA(s, nothing)
 MALA(s::MALATuner) = MALA(1.0, t)
 MALA(;scale::Float64=1.0, tuner::Union(Nothing, MALATuner)=nothing) = MALA(scale, tuner)
 
