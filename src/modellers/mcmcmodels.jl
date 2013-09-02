@@ -34,8 +34,8 @@ end
 #### misc functions common to all models  ####
 hasvectormethod(f::Function) = !isgeneric(f) | length(methods(f, (Vector{Float64},))) == 1
 hasgradient{M<:MCMCModel}(m::M) = m.evalg != nothing
-hashessian{M<:MCMCModel}(m::M) = m.evalh != nothing
 hastensor{M<:MCMCModel}(m::M) = m.evalt != nothing
+hasdtensor{M<:MCMCModel}(m::M) = m.evaldt != nothing
 
 #### User-facing model creation function  ####
 

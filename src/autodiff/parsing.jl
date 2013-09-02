@@ -163,7 +163,7 @@ function unfold!(m::ParsingStruct)
 		# if more than 2 arguments, +, sum and * are converted  to nested expressions
 		#  (easier for derivation)
 		# TODO : apply to other n-ary (n>2) operators ?
-		if contains([:+, :*, :sum], na[1]) 
+		if in(na[1], [:+, :*, :sum])
 			while length(args) > 2
 				a2 = pop!(args)
 				a1 = pop!(args)
@@ -202,7 +202,7 @@ function uniqueVars!(m::ParsingStruct)
 
         # second, rename lhs symbol if set before
         lhs = collect(getSymbols(el[idx].args[1]))[1]  # there should be only one
-        if contains(used, lhs) # if var already set once => create a new one
+        if in(lhs, used) # if var already set once => create a new one
             subst[lhs] = gensym("$lhs") # generate new name, add it to substitution list for following statements
             el[idx].args[1] = substSymbols(el[idx].args[1], subst)
         else # var set for the first time
@@ -245,8 +245,8 @@ function categorizeVars!(m::ParsingStruct)
         !isempty(intersect(lhs, m.accanc)) && union!(m.accanc, rhs)
     end
 
-    assert(contains(m.pardesc, m.finalacc), "Model parameters do not seem to influence model outcome")
-
+    assert(in(m.finalacc, m.pardesc), "Model parameters do not seem to influence model outcome")
+    
     local parset2 = setdiff(parset, m.accanc)
     assert(isempty(parset2), "Model parameter(s) $(collect(parset2)) do not seem to influence model outcome")
 
@@ -274,14 +274,14 @@ function backwardSweep!(m::ParsingStruct)
 		rhs = ex.args[2]
 		if !isa(rhs,Symbol) && !isa(rhs,Expr) # some kind of number, nothing to do
 
-		elseif isa(rhs,Symbol) 
-			if contains(avars, rhs)
+		elseif isa(rhs,Symbol)
+			if in(rhs, avars)
 				vsym2 = symbol("$(DERIV_PREFIX)$rhs")
 				push!(m.dexprs, :( $vsym2 = $dsym2))
 			end
 
 		elseif isa(toExprH(rhs), Exprref)
-			if contains(avars, rhs.args[1])
+			if in(rhs.args[1], avars)
 				vsym2 = Expr(:ref, symbol("$(DERIV_PREFIX)$(rhs.args[1])"), rhs.args[2:end]...)
 				push!(m.dexprs, :( $vsym2 = $dsym2))
 			end
@@ -289,7 +289,7 @@ function backwardSweep!(m::ParsingStruct)
 		elseif isa(toExprH(rhs), Exprcall)  
 			for i in 2:length(rhs.args) 
 				vsym = rhs.args[i]
-				if isa(vsym, Symbol) && contains(avars, vsym)
+				if isa(vsym, Symbol) && in(vsym, avars)
 					m.dexprs = vcat(m.dexprs, derive(rhs, i-1, dsym))
 				end
 			end
