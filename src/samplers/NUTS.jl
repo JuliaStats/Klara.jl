@@ -82,23 +82,23 @@ function SamplerTask(model::MCMCModel, sampler::NUTS)
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset,
 	             (resetPars::Vector{Float64}) -> (state0 = NUTSSample(copy(resetPars)); 
-	                                              calc!(state0, model.evalg)) ) 
+	                                              calc!(state0, model.evalallg)) ) 
 	
 	# initialization
 	state0 = NUTSSample(copy(model.init))
-	calc!(state0, model.evalg)
+	calc!(state0, model.evalallg)
 	scale = model.scale 
 
 	# find initial value for epsilon
 	epsilon = 1.
 	state0.v = randn(model.size) .* scale
-	state1 = leapFrog(state0, epsilon, model.evalg)
+	state1 = leapFrog(state0, epsilon, model.evalallg)
 
 	ratio = exp(state1.H - state0.H)
 	a = 2*(ratio>0.5)-1.
 	while ratio^a > 2^-a
 		epsilon *= 2^a
-		state1 = leapFrog(state0, epsilon, model.evalg)
+		state1 = leapFrog(state0, epsilon, model.evalallg)
 		ratio = exp(state1.H - state0.H)
 	end
 
@@ -169,9 +169,9 @@ function SamplerTask(model::MCMCModel, sampler::NUTS)
  		while s && j < sampler.maxdoublings
  			dir = randbool() ? 1 : -1
  			if dir == -1
- 				state_minus, dummy, state1, n1, s1, alpha, nalpha = buildTree(state_minus, dir, j, model.evalg)
+ 				state_minus, dummy, state1, n1, s1, alpha, nalpha = buildTree(state_minus, dir, j, model.evalallg)
  			else
- 				dummy, state_plus, state1, n1, s1, alpha, nalpha = buildTree(state_plus, dir, j, model.evalg)
+ 				dummy, state_plus, state1, n1, s1, alpha, nalpha = buildTree(state_plus, dir, j, model.evalallg)
  			end
  			if s1 && rand() < n1/n  # accept 
  				state = state1

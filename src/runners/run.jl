@@ -45,13 +45,13 @@ function run( t::MCMCTask;
   j = 1
   for i in 1:len
     newprop = consume(t.task)
-    if contains(r, i) 
+    if in(i, r)
       samples[:, j] = newprop.ppars
 
       # save diagnostics
       for (k,v) in newprop.diagnostics
         # if diag name not seen before, create column
-        if !contains(colnames(diags), k)
+        if !in(k, colnames(diags))
           diags[string(k)] = DataArray(Array(typeof(v), nrow(diags)), falses(nrow(diags)) )
         end
         

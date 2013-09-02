@@ -31,8 +31,7 @@ immutable MALA <: MCMCSampler
   end
 end
 
-MALA() = MALA(1.0)
-MALA(s::Float64) = MALA(s, nothing)
+MALA(s::Float64=1.0) = MALA(s, nothing)
 MALA(s::MALATuner) = MALA(1.0, t)
 MALA(;scale::Float64=1.0, tuner::Union(Nothing, MALATuner)=nothing) = MALA(scale, tuner)
 
@@ -46,21 +45,21 @@ function SamplerTask(model::MCMCModel, sampler::MALA)
   #  Task reset function
   function reset(resetPars::Vector{Float64})
     pars = copy(resetPars)
-    logTarget, grad = model.evalg(pars)
+    logTarget, grad = model.evalallg(pars)
   end
   # hook inside Task to allow remote resetting
   task_local_storage(:reset, reset) 
   
   # Initialization
   pars = copy(model.init)
-  logTarget, grad = model.evalg(pars)
+  logTarget, grad = model.evalallg(pars)
   assert(isfinite(logTarget), "Initial values out of model support, try other values")
 
   while true
     parsMean = pars + (sampler.driftStep/2.) * grad
 
     proposedPars = parsMean + sqrt(sampler.driftStep) * randn(model.size)
-    proposedLogTarget, proposedGrad = model.evalg(proposedPars)
+    proposedLogTarget, proposedGrad = model.evalallg(proposedPars)
 
     probNewGivenOld = sum(-(parsMean-proposedPars).^2/(2*sampler.driftStep)-log(2*pi*sampler.driftStep)/2)
     parsMean = proposedPars + (sampler.driftStep/2) * proposedGrad
