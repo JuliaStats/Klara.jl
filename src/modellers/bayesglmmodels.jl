@@ -60,3 +60,7 @@ function loglik(pars::Vector{Float64}, model::BayesProbitModel)
 end
 
 logposterior(pars::Vector{Float64}, model::BayesProbitModel) = loglik(pars, model)+model.logprior(pars)
+
+function grad(pars::Vector{Float64}, model::BayesProbitModel)
+  return (model.X'*(model.y-1./(1+exp(-model.X*pars)))-pars/data["priorVar"])
+end
