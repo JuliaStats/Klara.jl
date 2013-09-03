@@ -21,7 +21,7 @@ mg = model(ex, gradient=true, vars=zeros(nbeta))
 name = "binomial 10x1000"
 
 f1 = ()-> m.eval(m.init)
-f2 = ()-> mg.evalg(mg.init)
+f2 = ()-> mg.evalallg(mg.init)
 f3 = ()-> run(m * RWM(0.1), steps=100)
 
 res = [	benchmark( f1, "loglik eval", name, 1000) ;

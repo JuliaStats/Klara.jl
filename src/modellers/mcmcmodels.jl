@@ -34,8 +34,8 @@ end
 #### misc functions common to all models  ####
 hasvectormethod(f::Function) = !isgeneric(f) | length(methods(f, (Vector{Float64},))) == 1
 hasgradient{M<:MCMCModel}(m::M) = m.evalg != nothing
-hashessian{M<:MCMCModel}(m::M) = m.evalh != nothing
 hastensor{M<:MCMCModel}(m::M) = m.evalt != nothing
+hasdtensor{M<:MCMCModel}(m::M) = m.evaldt != nothing
 
 #### User-facing model creation function  ####
 
@@ -60,6 +60,14 @@ end
 function model(f1::Function, f2::Function, f3::Function; mtype="likelihood", args...)
 	if mtype == "likelihood"
 		return MCMCLikelihoodModel(f1, f2, f3; args...)
+	elseif mtype == "whatever"
+	else
+	end
+end
+
+function model(f1::Function, f2::Function, f3::Function, f4::Function; mtype="likelihood", args...)
+	if mtype == "likelihood"
+		return MCMCLikelihoodModel(f1, f2, f3, f4; args...)
 	elseif mtype == "whatever"
 	else
 	end
