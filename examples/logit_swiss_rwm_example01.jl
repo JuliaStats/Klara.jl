@@ -44,6 +44,8 @@ dt(pars::Vector{Float64}) = derivTensor(pars, logitmodel);
 
 mcmcmodel = model(l, grad, t, dt, init=randprior());
 
-mcmcchain01 = mcmcmodel * RWM(0.1) * (5001:55000)
+# mcmcchain01 = mcmcmodel * RWM(0.1) * (5001:55000)
 
-mcmcchain02 = mcmcmodel * RWM(0.1) * (5001:5:55000)
+# mcmcchain02 = mcmcmodel * RWM(0.1) * (5001:5:55000)
+
+mcmcchain03 = mcmcmodel * RMHMC(0.1) * (101:1000)
