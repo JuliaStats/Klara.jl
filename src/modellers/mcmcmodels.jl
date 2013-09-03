@@ -65,6 +65,14 @@ function model(f1::Function, f2::Function, f3::Function; mtype="likelihood", arg
 	end
 end
 
+function model(f1::Function, f2::Function, f3::Function, f4::Function; mtype="likelihood", args...)
+	if mtype == "likelihood"
+		return MCMCLikelihoodModel(f1, f2, f3, f4; args...)
+	elseif mtype == "whatever"
+	else
+	end
+end
+
 function model(m::Expr; mtype="likelihood", args...)
 	if mtype == "likelihood"
 		return MCMCLikelihoodModel(m::Expr; args...)
