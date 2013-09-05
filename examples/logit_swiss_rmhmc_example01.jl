@@ -45,3 +45,6 @@ dt(pars::Vector{Float64}) = derivTensor(pars, logitmodel);
 mcmcmodel = model(l, grad, t, dt, init=randprior());
 
 mcmcchain01 = mcmcmodel * RMHMC(0.1) * (101:1000)
+
+# To run MMALA, try for example
+# mcmcchain01 = mcmcmodel * MMALA(0.1) * (5001:10000)

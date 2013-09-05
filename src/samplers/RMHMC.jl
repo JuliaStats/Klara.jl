@@ -14,9 +14,14 @@ export RMHMC
 
 println("Loading RMHMC(nLeaps, leapStep, nNewton, tuner) sampler")
 
+###########################################################################
+# RMHMC specific tuners
+###########################################################################
 abstract RMHMCTuner <: MCMCTuner
 
-# The RMHMC sampler type
+###########################################################################
+# RMHMC type
+###########################################################################
 immutable RMHMC <: MCMCSampler
   nLeaps::Integer
   leapStep::Float64
@@ -40,8 +45,9 @@ RMHMC(leapStep::Float64, tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(int(
 RMHMC(leapStep::Float64, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner)=nothing) = 
   RMHMC(int(floor(3/leapStep)), leapStep, nNewton, tuner)
 
-####### RMHMC sampling
-
+###########################################################################
+# RMHMC sampler
+###########################################################################
 function SamplerTask(model::MCMCModel, sampler::RMHMC)
   # Define local variables
   local pars, proposedPars, leapPars
