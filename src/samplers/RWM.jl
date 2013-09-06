@@ -8,7 +8,7 @@
 #
 ###########################################################################
 
-export RWM
+export RWM, RAM
 
 println("Loading RMW(scale, tuner) sampler")
 

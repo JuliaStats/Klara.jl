@@ -16,22 +16,22 @@ type MCMCLikelihoodModel <: MCMCModel
 	evalg::Union(Nothing,Function) # gradient vector evaluation function
 	evalt::Union(Nothing,Function) # tensor evaluation function
 	evaldt::Union(Nothing,Function) # tensor derivative evaluation function
-  evalallg::Union(Nothing,Function) # 2-tuple (log-lik, gradient vector) evaluation function
-  evalallt::Union(Nothing,Function) # 3-tuple (log-lik, gradient vector, tensor) evaluation function
-  evalalldt::Union(Nothing,Function) # 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
+  	evalallg::Union(Nothing,Function) # 2-tuple (log-lik, gradient vector) evaluation function
+  	evalallt::Union(Nothing,Function) # 3-tuple (log-lik, gradient vector, tensor) evaluation function
+  	evalalldt::Union(Nothing,Function) # 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
 	pmap::PMap                     # map to/from parameter vector from/to user-friendly variables
 	size::Integer                  # parameter vector size
 	init::Vector{Float64}          # parameter vector initial values
 	scale::Vector{Float64}         # scaling hint on parameters
 
-  MCMCLikelihoodModel(	f::Function, 
-									g::Union(Nothing, Function), 
-									t::Union(Nothing, Function),
-									dt::Union(Nothing, Function),
-									i::Vector{Float64}, sc::Vector{Float64}, pmap::PMap) = begin
+	MCMCLikelihoodModel(	f::Function, 
+		g::Union(Nothing, Function), 
+		t::Union(Nothing, Function),
+		dt::Union(Nothing, Function),
+		i::Vector{Float64}, sc::Vector{Float64}, pmap::PMap) = begin
 
-    s = size(i, 1)
-    
+		s = size(i, 1)
+
 		assert(ispartition(pmap, s), "param map is not a partition of parameter vector")
 		assert(size(sc,1) == s, "scale parameter size ($(size(sc,1))) different from initial values ($s)")
 
@@ -50,20 +50,29 @@ type MCMCLikelihoodModel <: MCMCModel
 		# check that initial values are in the support of likelihood function
 		assert(isfinite(f(i)), "Initial values out of model support, try other values")
 
-    instance = new()
-    instance.eval = f
-    instance.evalg = g
-    instance.evalt = t
-    instance.evaldt = dt
-    instance.init = i
-    instance.scale = sc
-    instance.pmap =pmap
-    
-    instance.size = s
-    instance.evalallg = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars)))
-    instance.evalallt = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars), instance.evalt(pars)))
-    instance.evalalldt = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars), instance.evalt(pars), instance.evaldt(pars)))
-        
+		instance = new()
+		instance.eval = f
+		instance.evalt = t
+		instance.evaldt = dt
+		instance.init = i
+		instance.scale = sc
+		instance.pmap =pmap
+		instance.size = s
+
+		# to find out if gradient g returns a tuple (llik, gradient) or a gradient only
+		#  TODO : this should be improved !
+		res = g(i)
+		if isa(res, Vector)
+			instance.evalg = g
+			instance.evalallg = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars)))
+		elseif isa(res, Tuple)
+			instance.evalallg = g
+			instance.evalg = (pars::Vector{Float64} -> instance.evalallg(pars)[2])
+		end
+
+		instance.evalallt = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars), instance.evalt(pars)))
+		instance.evalalldt = (pars::Vector{Float64} -> (instance.eval(pars), instance.evalg(pars), instance.evalt(pars), instance.evaldt(pars)))
+
 		instance
 	end
 end
