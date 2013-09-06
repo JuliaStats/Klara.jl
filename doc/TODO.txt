@@ -1,0 +1,17 @@
+01) Add tuners based on established adaptive MCMC schemes
+02) Port empirical tuner from GeometricMCMC
+03 - done) Allow storage of gradients in runners
+04 - done) Port zero-variance estimators from GeometricMCMC
+05) Extend MCMCLikModel constructor to allow for user-inputed evalall functions
+06) Possibly split RWM according to employed tuner
+07) Extend autodiff capabilities for MCMC samplers that need higher order derivatives
+08) Update README file to reflect current state of MCMC package
+09) Write a user guide using LaTeX (to be placed in doc directory)
+10) Organize Bayesian logit and probit examples and tests better, until GLM provides Bayesian methods
+11) Add RMLMC (Semi-Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
+12) Add eRMLMC (Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
+13) Add PMALA (Position Independent MALA) sampler
+14) Add WHMC (Wormhole Hamiltonian Monte Carlo) sampler
+15) Design and implement parallel population MCMC capable of running on cluster workers
+16) Use BUGS approach using graphical models to define Gibbs-based algorithms
+17) Implement MCMC diagnostic tools and stats mostly on the basis of the R coda package

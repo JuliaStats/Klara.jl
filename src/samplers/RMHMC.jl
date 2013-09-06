@@ -14,9 +14,14 @@ export RMHMC
 
 println("Loading RMHMC(nLeaps, leapStep, nNewton, tuner) sampler")
 
+###########################################################################
+# RMHMC specific tuners
+###########################################################################
 abstract RMHMCTuner <: MCMCTuner
 
-# The RMHMC sampler type
+###########################################################################
+# RMHMC type
+###########################################################################
 immutable RMHMC <: MCMCSampler
   nLeaps::Integer
   leapStep::Float64
@@ -40,8 +45,9 @@ RMHMC(leapStep::Float64, tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(int(
 RMHMC(leapStep::Float64, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner)=nothing) = 
   RMHMC(int(floor(3/leapStep)), leapStep, nNewton, tuner)
 
-####### RMHMC sampling
-
+###########################################################################
+# RMHMC sampler
+###########################################################################
 function SamplerTask(model::MCMCModel, sampler::RMHMC)
   # Define local variables
   local pars, proposedPars, leapPars
@@ -141,10 +147,10 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC)
     ratio = (H-proposedH)[1]
 
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
-      produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
+      produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad, {"accept" => true}))
       pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
     else
-      produce(MCMCSample(pars, logTarget, pars, logTarget))
+      produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad, {"accept" => false}))
     end
   end
 end

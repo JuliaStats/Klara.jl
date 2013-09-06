@@ -35,6 +35,8 @@ include("samplers/RWM.jl")    # Random-walk Metropolis sampler
 include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
 include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
+include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
+include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
 
 #  Definition of * as a shortcut operator for model and sampler combination 
@@ -77,4 +79,8 @@ end
 include("runners/run.jl")         # Vanilla runner
 include("runners/seqMC.jl")       # Sequential Monte-Carlo runner
 include("runners/serialMC.jl")    # Serial Tempering Monte-Carlo runner
+
+#############  MCMC output analysis and diagnostics    ########################
+include("stats/zv.jl") # Functions for calculating ZV-MCMC estimators
+
 end
