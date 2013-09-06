@@ -1,5 +1,5 @@
 ###########################################################################
-#  Metropolis Metropolis adjusted Langevin algorithm (MALA)
+#  Manifold Metropolis adjusted Langevin algorithm (MMALA)
 #
 #  Parameters :
 #    - driftStep : drift step size (for scaling the jumps)
@@ -52,7 +52,7 @@ function SamplerTask(model::MCMCModel, sampler::MMALA)
   secondTerm = Array(Float64, model.size, model.size)
   proposedSecondTerm = Array(Float64, model.size, model.size)
 
-   #  Task reset function
+  # Task reset function
   function reset(resetPars::Vector{Float64})
     pars = copy(resetPars)
     logTarget, grad, G, dG = model.evalalldt(pars)
@@ -107,9 +107,9 @@ function SamplerTask(model::MCMCModel, sampler::MMALA)
 
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
       produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
-      pars, logTarget, grad = proposedPars, proposedLogTarget, proposedGrad
-      G, invG = proposedG, proposedInvG
-      firstTerm, secondTerm, thirdTerm = proposedFirstTerm, copy(proposedSecondTerm), proposedThirdTerm
+      pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
+      G, invG = copy(proposedG), copy(proposedInvG)
+      firstTerm, secondTerm, thirdTerm = copy(proposedFirstTerm), copy(proposedSecondTerm), copy(proposedThirdTerm)
     else
       produce(MCMCSample(pars, logTarget, pars, logTarget))
     end

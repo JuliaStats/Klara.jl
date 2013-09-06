@@ -35,6 +35,7 @@ include("samplers/RWM.jl")    # Random-walk Metropolis sampler
 include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
 include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
+include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
 

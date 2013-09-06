@@ -68,7 +68,7 @@ function SamplerTask(model::MCMCModel, sampler::MALA)
     ratio = proposedLogTarget + probOldGivenNew - logTarget - probNewGivenOld
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
       produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
-      pars, logTarget, grad = proposedPars, proposedLogTarget, proposedGrad
+      pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
     else
       produce(MCMCSample(pars, logTarget, pars, logTarget))
     end

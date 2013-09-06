@@ -46,5 +46,8 @@ mcmcmodel = model(l, grad, t, dt, init=randprior());
 
 mcmcchain01 = mcmcmodel * RMHMC(0.1) * (101:1000)
 
+# TODO: organize Bayesian logit and probit files and examples, until GLM provides Bayesian methods
 # To run MMALA, try for example
-# mcmcchain01 = mcmcmodel * MMALA(0.1) * (5001:10000)
+# mcmcchain01 = mcmcmodel * MMALA(0.01) * (5001:10000)
+# and for SMMALA, try
+# mcmcchain01 = mcmcmodel * SMMALA(0.01) * (5001:10000)
