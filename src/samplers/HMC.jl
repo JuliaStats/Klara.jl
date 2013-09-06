@@ -100,14 +100,14 @@ function SamplerTask(model::MCMCModel, sampler::HMC)
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
-      ms = MCMCSample(state.pars, state.logTarget, 
-                      state0.pars, state0.logTarget,
+      ms = MCMCSample(state.pars, state.logTarget, state.grad,
+                      state0.pars, state0.logTarget, state0.grad,
                       {"accept" => true} )
       produce(ms)
       state0 = state
     else
-      ms = MCMCSample(state0.pars, state0.logTarget, 
-                      state0.pars, state0.logTarget,
+      ms = MCMCSample(state0.pars, state0.logTarget, state0.grad,
+                      state0.pars, state0.logTarget, state0.grad,
                       {"accept" => false} )
       produce(ms)
     end

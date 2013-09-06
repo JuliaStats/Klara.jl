@@ -191,8 +191,8 @@ function SamplerTask(model::MCMCModel, sampler::NUTS)
 			epsilon = exp(lebar)
 		end
 
-		ms = MCMCSample(state.pars, state.logTarget, 
-		                state0.pars, state0.logTarget,
+		ms = MCMCSample(state.pars, state.logTarget, state.grad, 
+		                state0.pars, state0.logTarget, state0.grad,
 		                {"epsilon" => epsilon, "ndoublings" => j} )
 		produce(ms)
 

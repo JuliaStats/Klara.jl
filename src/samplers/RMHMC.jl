@@ -147,10 +147,10 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC)
     ratio = (H-proposedH)[1]
 
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
-      produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad))
+      produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad, {"accept" => true}))
       pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
     else
-      produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad))
+      produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad, {"accept" => false}))
     end
   end
 end
