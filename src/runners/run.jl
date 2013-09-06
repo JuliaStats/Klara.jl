@@ -38,7 +38,8 @@ function run( t::MCMCTask;
   tic() # start timer
 
   # temporary array to store samples
-  samples = fill(NaN, t.model.size, length(r)) 
+  samples = fill(NaN, t.model.size, length(r))
+  gradients = fill(NaN, t.model.size, length(r))
   diags = DataFrame(step=collect(r)) # initialize with column 'step'
 
   # sampling loop
@@ -47,6 +48,9 @@ function run( t::MCMCTask;
     newprop = consume(t.task)
     if in(i, r)
       samples[:, j] = newprop.ppars
+      if newprop.pgrads != nothing
+        gradients[:, j] = newprop.pgrads
+      end
 
       # save diagnostics
       for (k,v) in newprop.diagnostics
@@ -77,7 +81,7 @@ function run( t::MCMCTask;
   # create Chain
   MCMCChain(r,
             DataFrame(samples', cn),
-            DataFrame(),  # TODO, store gradient here, needs to be passed in newprop
+            DataFrame(gradients', cn),
             diags, 
             t,
             toq())
