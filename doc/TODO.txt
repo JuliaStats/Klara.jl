@@ -12,6 +12,6 @@
 12) Add eRMLMC (Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
 13) Add PMALA (Position Independent MALA) sampler
 14) Add WHMC (Wormhole Hamiltonian Monte Carlo) sampler
-15) Design and implement parallel MCMC capable of running on cluster workers
+15) Design and implement parallel population MCMC capable of running on cluster workers
 16) Use BUGS approach using graphical models to define Gibbs-based algorithms
 17) Implement MCMC diagnostic tools and stats mostly on the basis of the R coda package
