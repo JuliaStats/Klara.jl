@@ -79,4 +79,8 @@ end
 include("runners/run.jl")         # Vanilla runner
 include("runners/seqMC.jl")       # Sequential Monte-Carlo runner
 include("runners/serialMC.jl")    # Serial Tempering Monte-Carlo runner
+
+#############  MCMC output analysis and diagnostics    ########################
+include("stats/zv.jl") # Functions for calculating ZV-MCMC estimators
+
 end
