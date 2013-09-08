@@ -25,6 +25,7 @@ m = model(ex, vars=zeros(nbeta), gradient=true)
 res = run(m * RWM(0.05), steps=100:1000)
 res = run(m * HMC(2, 0.1), steps=100:1000)
 res = run(m * NUTS(), steps=100:1000)
+res = run(m * MALA(0.001), steps=100:1000)
 # TODO : add other samplers here
 
 # different syntax

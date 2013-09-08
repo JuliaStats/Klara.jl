@@ -48,21 +48,21 @@ HMC(;init::Integer=10, scale::Float64=0.1, tuner::Union(Nothing, HMCTuner)=nothi
 type HMCSample
   pars::Vector{Float64} # sample position
   grad::Vector{Float64} # gradient
-  v::Vector{Float64}    # velocity
+  m::Vector{Float64}    # momentum
   logTarget::Float64    # log likelihood 
   H::Float64            # Hamiltonian
 end
 HMCSample(pars::Vector{Float64}) = HMCSample(pars, Float64[], Float64[], NaN, NaN)
 
 calc!(s::HMCSample, ll::Function) = ((s.logTarget, s.grad) = ll(s.pars))
-update!(s::HMCSample) = (s.H = s.logTarget - dot(s.v, s.v)/2)
+update!(s::HMCSample) = (s.H = s.logTarget - dot(s.m, s.m)/2)
 
 function leapFrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
-  n.v += n.grad * ve / 2.
-  n.pars += ve * n.v
+  n.m += n.grad * ve / 2.
+  n.pars += ve * n.m
   calc!(n, ll)
-  n.v += n.grad * ve / 2.
+  n.m += n.grad * ve / 2.
   update!(n)
 
   n
@@ -88,7 +88,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC)
   while true
     local j, state
 
-    state0.v = randn(model.size)
+    state0.m = randn(model.size)
     update!(state0)
     state = state0
 
