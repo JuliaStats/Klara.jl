@@ -34,6 +34,7 @@ function ksTest(ex::Expr)
 
 	for (k,v) in {	"RWM" => RWM(exactStd),
 					"HMC" => HMC(2, exactStd/5),
+					"MALA" => MALA(exactStd),
 					"NUTS" => NUTS()}  # TODO : add other samplers
 		print("testing $k sampler on $ex   -")
 		srand(1)
