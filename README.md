@@ -1,19 +1,21 @@
-MCMC.jl  (Work in progress)
+MCMC.jl
 =======
 
+# Scope
+
+The Julia MCMC package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
+Carlo (MCMC) methods. While the package's framework aims at being extensible to acoommodate user-specific models and
+sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
+diagnostic MCMC tools.
+
+# Prototype
 
 Current prototyping directions : 
 
-   - a MCMC chain is produced by a triplet : Model x Sampler x Runner :
-   - Model = 1) a function that returns a log-likelihood _optionnally accompanied with a gradient / hessian / whatever a specific sampler might need_ + 2) the dimension of the model parameter vector + 3) initial values for model parameters
-   - Sampler = an algorithm that from an intial parameter vector produces another parameter vector, the 'proposal', and can be called repeatedly. The sampler will need to store an internal state (such as variables that are adaptively tuned during the run). It is currently implemented as a Julia Task. The Task will be stored in the result structure (the 'chain') which will allow to restart the chain where it stopped.
-   - Runner = at its simplest a loop that calls the sampler n times and stores the successive parameter vectors in the chain structure. For population MCMC, an algorithm that starts several sampling runs and adapts the initial parameter vector of the next step accordingly.
-
-
-To see how all this plays out, I have coded a simple runner and the Random Walk Metropolis.
-
-- update (July 17th) : added MALA and HMC samplers, tweaked syntax + ported all expression parsing and autodiff
-- update (July 23rd) : added seqMC() a sequential Monte-Carlo runner to see if population MC algorithms can be implemented smoothly in this architecture (see example below) _note that all this is quickly implemented and not thoroughly tested_
+- a MCMC chain is produced by a triplet : Model x Sampler x Runner :
+- Model = 1) a function that returns a log-likelihood _optionnally accompanied with a gradient / hessian / whatever a specific sampler might need_ + 2) the dimension of the model parameter vector + 3) initial values for model parameters
+- Sampler = an algorithm that from an intial parameter vector produces another parameter vector, the 'proposal', and can be called repeatedly. The sampler will need to store an internal state (such as variables that are adaptively tuned during the run). It is currently implemented as a Julia Task. The Task will be stored in the result structure (the 'chain') which will allow to restart the chain where it stopped.
+- Runner = at its simplest a loop that calls the sampler n times and stores the successive parameter vectors in the chain structure. For population MCMC, an algorithm that starts several sampling runs and adapts the initial parameter vector of the next step accordingly.
 
 ```jl
 
