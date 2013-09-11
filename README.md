@@ -1,21 +1,36 @@
-MCMC.jl
-=======
-
-# Scope
+## Julia MCMC
 
 The Julia MCMC package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
 Carlo (MCMC) methods. While the package's framework aims at being extensible to acoommodate user-specific models and
 sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
-diagnostic MCMC tools.
+MCMC diagnostic tools.
 
-# Prototype
+## Features (To write up - main points jotted down below)
 
-Current prototyping directions : 
+- list of MCMC samplers
+- integration with dataframes and distributions
+- syntax for model specification (parser)
+- autodiff based MCMC simulation
+- tasks for start/stop
+- variance reduction methods
 
-- a MCMC chain is produced by a triplet : Model x Sampler x Runner :
-- Model = 1) a function that returns a log-likelihood _optionnally accompanied with a gradient / hessian / whatever a specific sampler might need_ + 2) the dimension of the model parameter vector + 3) initial values for model parameters
-- Sampler = an algorithm that from an intial parameter vector produces another parameter vector, the 'proposal', and can be called repeatedly. The sampler will need to store an internal state (such as variables that are adaptively tuned during the run). It is currently implemented as a Julia Task. The Task will be stored in the result structure (the 'chain') which will allow to restart the chain where it stopped.
-- Runner = at its simplest a loop that calls the sampler n times and stores the successive parameter vectors in the chain structure. For population MCMC, an algorithm that starts several sampling runs and adapts the initial parameter vector of the next step accordingly.
+## Main Components of MCMC Chains in Julia
+
+A Monte Carlo chain is produced by a triplet model x sampler x runner:
+- The model component refers in general to a Bayesian model on which MCMC inference is performed. Likelihood-based
+modelling is currently supported, which typically requires knowledge of the log-likelihood and of the model parameters'
+initial values. The derivatives of the log-likelihood (including its gradient, tensor and derivative of tensor) are
+required by some of the MCMC routines and can be optionally specified as functions or computed by the package's
+automatic differentiation algorithms.
+- The sampler represents the MCMC algorithm. Starting from an intial parameter vector, it produces another parameter
+vector, the 'proposal', and can be called repeatedly. The sampler stores an internal state, such as variables that are
+adaptively tuned during the run. It is implemented as a Julia `Task`. The task is stored in the result structure, the
+'chain', which allows to restart the chain where it stopped.
+- The runner is at its simplest a loop that calls the sampler repeatedly and stores the successive parameter vectors in
+the chain structure. For population MCMC, the runner spawns several sampling runs and adapts the initial parameter
+vector of the next step accordingly.
+
+## Examples (To adapt Frederic's examples below)
 
 ```jl
 
@@ -135,5 +150,4 @@ plot(x = [1:1000], y = newsamp, kind = :scatter)
 
 ```
 
-
-
+## Future Features (To write up)
