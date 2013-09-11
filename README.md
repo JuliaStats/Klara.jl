@@ -119,8 +119,7 @@ mychain = run(mychain, steps=10000)
 
 `mymodel3` does not provide the gradient of the log-target, since the `gradient` named argument of `model()` defaults
 to `false`. Therefore, `mymodel3` can not be run in combination with a sampler that requires the gradient. On the other
-hand, `mymodel4` provides the gradient function that is needed for sampling with MCMC routines that require gradient
-information.
+hand, `mymodel4` provides the log-target's gradient that is needed by some MCMC routines such as HMC or MALA.
 
 ```jl
 mymodel3 * MALA(0.1) * (1:1000) # Throws an error 
@@ -128,7 +127,7 @@ mymodel3 * MALA(0.1) * (1:1000) # Throws an error
 mymodel4 * MALA(0.1) * (1:1000) # It works
 ```
 
-######## Running multiple chains
+#### Running multiple chains
 
 It is possible to run multiple independent chains for different samplers or for varying field values of the same
 sampler:
@@ -180,7 +179,7 @@ mean(mychain2)
 The `Vega` package is used for plotting the output of the sequential Monte Carlo simulation.
 
 ```jl
-using Vega
+using DataFrames, Vega
 
 # Plot models
 xx = linspace(-3,3,100) * ones(nmod)' 
@@ -190,7 +189,7 @@ plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 
 # Plot a subset of raw samples
 ts = collect(1:10:nrow(mychain1.samples))
-plot(x = ts, y = mychain1.samples[ts, "x"], kind = :scatter)
+plot(x = ts, y = vector(mychain1.samples[ts, "x"]), kind = :scatter)
 
 # Plot weighted samples
 plot(x = [1:1000], y = mychain2, kind = :scatter)
@@ -204,4 +203,4 @@ Future development is planned to provide:
 - extended automatic differentiation that covers MCMC samplers which use higher order derivatives of the log-target,
 - rejection, importance and slice sampling,
 - Gibbs sampling and more generally sampling by assuming different target for each of the model parameters,
-- parallel implementation of MCMC suitable for running on clusters.
+- parallel implementation of population MCMC and its cluster job submission.
