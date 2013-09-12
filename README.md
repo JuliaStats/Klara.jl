@@ -3,7 +3,9 @@
 The Julia MCMC package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
 Carlo (MCMC) methods. While the package's framework aims at being extensible to accommodate user-specific models and
 sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
-MCMC diagnostic tools.
+MCMC diagnostic tools. 
+
+_This package is built on the prior work that went into the GeometricMCMC and SimpleMCMC packages._
 
 ## Features
 
@@ -11,7 +13,7 @@ The core functionality of Julia's MCMC package includes:
 - various MCMC samplers, up-to-date with contemporary advances in MCMC methodology,
 - ability to suspend/resume MCMC simulations flexibly by using Julia tasks,
 - user-friendly syntax for model specification,
-- use of automatic differentiation to simulate models whose higher order derivatives are not available in close form,
+- use of automatic differentiation to generate the gradient function (higher order derivatives generation is under consideration),
 - integration with and use of functionality of DataFrames and Distributions packages,
 - post-processing of MCMC output, such as variance reduction methods.
 
@@ -21,8 +23,8 @@ A Monte Carlo chain is produced by a triplet model x sampler x runner:
 - The model component refers in general to a Bayesian model on which MCMC inference is performed. Likelihood-based
 modelling is currently supported, which typically requires knowledge of the log-likelihood and of the model parameters'
 initial values. The derivatives of the log-likelihood (including its gradient, tensor and derivatives of tensor) are
-required by some of the MCMC routines and can be optionally specified as functions or computed by the package's
-automatic differentiation algorithms.
+required by some of the MCMC routines and can be optionally specified as functions (or computed by the package's
+automatic differentiation algorithms in the case of the gradient).
 - The sampler represents the MCMC algorithm. Starting from an intial parameter vector, it produces another parameter
 vector, the 'proposal', and can be called repeatedly. The sampler stores an internal state, such as variables that are
 adaptively tuned during the run. It is implemented as a Julia `Task`. The task is stored in the result structure, the
@@ -175,7 +177,7 @@ mychain2 = wsample(mychain1.samples["x"], mychain1.diagnostics["weigths"], 1000)
 mean(mychain2)
 ```
 
-The `Vega` package is used for plotting the output of the sequential Monte Carlo simulation.
+The output of the sequential Monte Carlo simulation can be plotted with any graphical package. Below is an example using the `Vega` package.
 
 ```jl
 using DataFrames, Vega
@@ -198,8 +200,9 @@ plot(x = [1:1000], y = mychain2, kind = :scatter)
 
 Future development is planned to provide:
 - MCMC diagnostic tools and more extensive output analysis,
-- finer tuning and adaptive MCMC sampling,
-- extended automatic differentiation that covers MCMC samplers which use higher order derivatives of the log-target,
-- rejection, importance and slice sampling,
+- Finer tuning and adaptive MCMC sampling,
+- Extended automatic differentiation that covers MCMC samplers which use higher order derivatives of the log-target,
+- Rejection, importance and slice sampling,
 - Gibbs sampling and more generally sampling by assuming different target for each of the model parameters,
-- parallel implementation of population MCMC and its cluster job submission.
+- Parallel implementation of population MCMC and its cluster job submission.
+- Model DSL improvements such as loops, truncation / censoring 
