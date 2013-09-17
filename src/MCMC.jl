@@ -81,8 +81,8 @@ include("runners/seqMC.jl")       # Sequential Monte-Carlo runner
 include("runners/serialMC.jl")    # Serial Tempering Monte-Carlo runner
 
 #############  MCMC output analysis and diagnostics    ########################
-include("stats/acf.jl") # Autocorrelation functions (temporarily placed here, it will be part of Stats)
-include("stats/ess.jl") # Effective sample size and integrated autocorrelation time functions
+include("stats/acf.jl") # Autocorrelation functions (temporarily placed here)
 include("stats/var.jl") # MCMC variance estimators
+include("stats/ess.jl") # Effective sample size and integrated autocorrelation time functions
 include("stats/zv.jl")  # ZV-MCMC estimators
 end
