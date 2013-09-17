@@ -2,7 +2,7 @@ import Base.var, Base.std
 export var, var_imse, std, std_imse
 
 # Variance for dataframe argument
-function var(x::DataFrame)
+function var_iid(x::DataFrame)
   nrows, ncols = size(x)
   variance = Array(Float64, ncols)
 
@@ -14,7 +14,7 @@ function var(x::DataFrame)
 end
 
 # Standard deviation for dataframe argument
-std(x::DataFrame) = sqrt(var(x))
+std_iid(x::DataFrame) = sqrt(var_iid(x))
 
 # Function for estimating the variance of a single MCMC chain using the initial monotone sequence estimator (IMSE) of
 # Geyer, see Practical Markov Chain Monte Carlo, C. J. Geyer, Statistical Science, Vol. 7, No. 4. (1992), pp. 473-483
@@ -72,12 +72,14 @@ std_imse(mcmc::DataFrame, maxlag::Int) = sqrt(var_imse(mcmc::DataFrame, maxlag))
 std_imse(mcmc::DataFrame) = sqrt(var_imse(mcmc::DataFrame, size(mcmc, 1)-1))
 
 # Wrapper function for computing MCMC variance using various approaches
-vtypes = (:imse, :ipse)
+vtypes = (:iid, :imse, :ipse)
 
 function var(mcmc::DataFrame; vtype::Symbol=:imse)
   assert(in(vtype, vtypes), "Unknown variance type $vtype")
 
-  if vtype == :imse
+  if vtype == :iid
+    return var_iid(mcmc)
+  elseif vtype == :imse
     return var_imse(mcmc)
   end
 end
@@ -86,7 +88,9 @@ end
 function std(mcmc::DataFrame; vtype::Symbol=:imse)
   assert(in(vtype, vtypes), "Unknown standard error type $vtype")
 
-  if vtype == :imse
+  if vtype == :iid
+    return std_iid(mcmc)
+  elseif vtype == :imse
     return std_imse(mcmc)
   end
 end
