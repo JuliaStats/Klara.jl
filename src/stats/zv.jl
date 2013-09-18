@@ -1,6 +1,10 @@
+# Functions for calculating zero variance (ZV) MCMC estimators, see
+# Mira A, Solgi R, Imparato D. Zero Variance Markov Chain Monte Carlo for Bayesian Estimators. Statistics and
+# Computing, 2013, 23 (5), pp 653-662
+
 export linearZv, quadraticZv
 
-# Function for calculating ZV-c.samples estimators using linear polynomial
+# Function for calculating ZV-MCMC estimators using linear polynomial
 function linearZv(c::MCMCChain)
   npars = size(c.samples, 2)
 
@@ -23,7 +27,7 @@ function linearZv(c::MCMCChain)
   return zvChain, a
 end
 
-# Function for calculating ZV-c.samples estimators using quadratic polynomial
+# Function for calculating ZV-MCMC estimators using quadratic polynomial
 function quadraticZv(c::MCMCChain)
   nsamples, npars = size(c.samples)
   k = convert(Int, npars*(npars+3)/2)

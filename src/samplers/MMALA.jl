@@ -1,6 +1,9 @@
 ###########################################################################
 #  Manifold Metropolis adjusted Langevin algorithm (MMALA)
 #
+#  Reference: Girolami M, Calderhead B. Riemann Manifold Langevin and Hamiltonian Monte Carlo Methods. Journal of the
+#  Royal Statistical Society: Series B (Statistical Methodology), 2011, 73 (2), pp 123–214
+#
 #  Parameters :
 #    - driftStep : drift step size (for scaling the jumps)
 #    - tuner: for tuning the drift step size

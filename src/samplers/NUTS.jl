@@ -2,7 +2,8 @@
 #
 #  NUTS variant Hamiltonian Monte Carlo
 #
-#  Ref : The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo - Hoffman/Gelman
+#  Reference: Hoffman M.D, Gelman A.The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.
+#  arXiv, 2011
 #
 #  Parameters :
 #    - maxdoublings : max number of doublings in inner steps

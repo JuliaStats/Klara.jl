@@ -1,19 +1,17 @@
 export ess, actime
 
 # Effective sample size (ESS)
-function ess(c::MCMCChain; vtype::Symbol=:imse)
-  assert(in(vtype, vtypes), "Unknown ESS type $vtype")
+actypes = (:imse, :ipse)
 
-  if vtype == :imse
-    return size(c.samples, 1)*var(c, vtype=:iid)./var(c, vtype=vtype)
-  end
+function ess(c::MCMCChain; vtype::Symbol=:imse)
+  assert(in(vtype, actypes), "Unknown ESS type $vtype")
+
+  return size(c.samples, 1)*var(c, vtype=:iid)./var(c, vtype=vtype)
 end
 
 # Integrated autocorrelation time
 function actime(c::MCMCChain; vtype::Symbol=:imse)
-  assert(in(vtype, vtypes), "Unknown integrated autocorrelation time type $vtype")
+  assert(in(vtype, actypes), "Unknown integrated autocorrelation time type $vtype")
 
-  if vtype == :imse
-    return var(c, vtype=vtype)./var(c, vtype=:iid)
-  end
+  return var(c, vtype=vtype)./var(c, vtype=:iid)
 end
