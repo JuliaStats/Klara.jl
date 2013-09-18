@@ -1,25 +1,25 @@
 import Base.var, Base.std
 export var, var_imse, std, std_imse
 
-# Variance for dataframe argument
-function var_iid(x::DataFrame)
-  nrows, ncols = size(x)
-  variance = Array(Float64, ncols)
+# Variance of MCMCChain
+function var_iid(c::MCMCChain)
+  nsamples, npars = size(c.samples)
+  variance = Array(Float64, npars)
 
-  for i = 1:ncols
-    variance[i] = var(x[:, i])
+  for i = 1:npars
+    variance[i] = var(c.samples[:, i])
   end
 
-  variance
+  return variance/nsamples
 end
 
-# Standard deviation for dataframe argument
-std_iid(x::DataFrame) = sqrt(var_iid(x))
+# Standard deviation of MCMCChain
+std_iid(c::MCMCChain) = sqrt(var_iid(c.samples))
 
 # Function for estimating the variance of a single MCMC chain using the initial monotone sequence estimator (IMSE) of
 # Geyer, see Practical Markov Chain Monte Carlo, C. J. Geyer, Statistical Science, Vol. 7, No. 4. (1992), pp. 473-483
-function var_imse(mcmc::DataFrame, maxlag::Int)
-  nsamples, npars = size(mcmc)
+function var_imse(c::MCMCChain, maxlag::Int)
+  nsamples, npars = size(c.samples)
 
   k = convert(Int, floor((maxlag-1)/2))
   
@@ -31,7 +31,7 @@ function var_imse(mcmc::DataFrame, maxlag::Int)
 
   # Calculate empirical autocovariance
   for i = 1:npars
-    acv[:, i] = acf(mcmc[:, i], 0:maxlag, correlation=false)
+    acv[:, i] = acf(c.samples[:, i], 0:maxlag, correlation=false)
   end
 
   # Calculate \hat{G}_{n, m} from the autocovariances, see pp. 477 in Geyer
@@ -64,33 +64,33 @@ function var_imse(mcmc::DataFrame, maxlag::Int)
   return variance/nsamples
 end
 
-var_imse(mcmc::DataFrame) = var_imse(mcmc::DataFrame, size(mcmc, 1)-1)
+var_imse(c::MCMCChain) = var_imse(c, size(c.samples, 1)-1)
 
 # Standard deviation using Geyer's IMSE
-std_imse(mcmc::DataFrame, maxlag::Int) = sqrt(var_imse(mcmc::DataFrame, maxlag))
+std_imse(c::MCMCChain, maxlag::Int) = sqrt(var_imse(c, maxlag))
 
-std_imse(mcmc::DataFrame) = sqrt(var_imse(mcmc::DataFrame, size(mcmc, 1)-1))
+std_imse(c::MCMCChain) = sqrt(var_imse(c, size(c.samples, 1)-1))
 
 # Wrapper function for computing MCMC variance using various approaches
 vtypes = (:iid, :imse, :ipse)
 
-function var(mcmc::DataFrame; vtype::Symbol=:imse)
+function var(c::MCMCChain; vtype::Symbol=:imse)
   assert(in(vtype, vtypes), "Unknown variance type $vtype")
 
   if vtype == :iid
-    return var_iid(mcmc)
+    return var_iid(c)
   elseif vtype == :imse
-    return var_imse(mcmc)
+    return var_imse(c)
   end
 end
 
 # Wrapper function for computing Monte Carlo (standard) error using various approaches
-function std(mcmc::DataFrame; vtype::Symbol=:imse)
+function std(c::MCMCChain; vtype::Symbol=:imse)
   assert(in(vtype, vtypes), "Unknown standard error type $vtype")
 
   if vtype == :iid
-    return std_iid(mcmc)
+    return std_iid(c)
   elseif vtype == :imse
-    return std_imse(mcmc)
+    return std_imse(c)
   end
 end

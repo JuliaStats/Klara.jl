@@ -1,15 +1,15 @@
 ## Julia MCMC
 
-The Julia MCMC package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
+The Julia `MCMC` package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
 Carlo (MCMC) methods. While the package's framework aims at being extensible to accommodate user-specific models and
 sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
 MCMC diagnostic tools. 
 
-_This package is built on the prior work that went into the GeometricMCMC and SimpleMCMC packages._
+_This package is built on the prior work that went into the `GeometricMCMC` and `SimpleMCMC` packages._
 
 ## Features
 
-The core functionality of Julia's MCMC package includes:
+The core functionality of Julia's `MCMC` package includes:
 - various MCMC samplers, up-to-date with contemporary advances in MCMC methodology,
 - ability to suspend/resume MCMC simulations flexibly by using Julia tasks,
 - user-friendly syntax for model specification,
@@ -35,7 +35,7 @@ vector of the next step accordingly.
 
 ## Short tutorial
 
-To demonstrate MCMC's usage, two introductory examples are provided. A user guide will be available soon to
+To demonstrate `MCMC`'s usage, two introductory examples are provided. A user guide will be available soon to
 elaborate on the package's features in further detail.
 
 ### Example 1: Basic syntax for running a single Monte Carlo chain
