@@ -5,18 +5,18 @@ using MCMC
 
 # generate a random dataset
 srand(1)
-n = 1000
-nbeta = 10 # number of covariates, including intercept
+const n = 1000
+const nbeta = 10 # number of covariates, including intercept
 
-X = [ones(n) randn((n, nbeta-1))]  # covariates
+const X = [ones(n) randn((n, nbeta-1))]  # covariates
 
-beta0 = randn((nbeta,))
-Y = rand(n) .< ( 1 ./ (1. + exp(X * beta0))) # logistic response
+const beta0 = randn((nbeta,))
+const Y = rand(n) .< ( 1 ./ (1. + exp(- X * beta0))) # logistic response
 
 # define model
 ex = quote
 	vars ~ Normal(0, 1.0)  # Normal prior, std 1.0 for predictors
-	prob = 1 / (1. + exp(X * vars)) 
+	prob = 1 / (1. + exp(- X * vars)) 
 	Y ~ Bernoulli(prob)
 end
 
