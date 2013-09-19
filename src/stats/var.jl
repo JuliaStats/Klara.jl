@@ -16,6 +16,28 @@ end
 # Standard deviation of MCMCChain
 std_iid(c::MCMCChain) = sqrt(var_iid(c.samples))
 
+# Function for estimating Monte Carlo standard error using batch means, see for instance
+# Flegal J.M, Jones, G.L. Batch Means and Spectral Variance Estimators in Markov chain Monte Carlo. Annals of
+# Statistics, 2010, 38 (2), pp 1034-1070
+function std_bm(c::MCMCChain, batchlen::Int=100)
+  nsamples, npars = size(c.samples)
+  nbatches = div(nsamples, batchlen)  
+  assert(nbatches > 1, "Choose batch size such that the number of batches is greather than one")
+  nbsamples = nbatches*batchlen
+
+  batchmeans, mcse = Array(Float64, nbatches), Array(Float64, npars)
+
+  for i = 1:npars
+    for j = 1:nbatches
+      batchmeans[j] = mean(c[((j-1)*batchlen+1):(j*batchlen), i])
+    end
+
+    mcse[i] = sqrt(batchlen*var(batchmeans)/nbsamples)
+  end
+
+  return mcse
+end
+
 # Function for estimating the variance of a single MCMC chain using the initial monotone sequence estimator (IMSE), see
 # Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
 function var_imse(c::MCMCChain, maxlag::Int)
