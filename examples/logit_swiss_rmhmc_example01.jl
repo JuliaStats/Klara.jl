@@ -42,7 +42,7 @@ end
 
 dt(pars::Vector{Float64}) = derivTensor(pars, logitmodel);
 
-mcmcmodel = model(l, grad, t, dt, init=randprior());
+mcmcmodel = mcmcmodel = model(l, grad=grad, tensor=t, dtensor=dt, init=randprior());
 
 mcmcchain01 = mcmcmodel * RMHMC(0.1) * (101:1000)
 

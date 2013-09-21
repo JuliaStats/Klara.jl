@@ -10,7 +10,7 @@
 10) Organize Bayesian logit and probit examples and tests better, until GLM provides Bayesian methods
 11) Add RMLMC (Semi-Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
 12) Add eRMLMC (Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
-13) Add PMALA (Position Independent MALA) sampler
+13 - done) Add PMALA (Position-dependent MALA) sampler
 14) Add WHMC (Wormhole Hamiltonian Monte Carlo) sampler
 15) Design and implement parallel population MCMC capable of running on cluster workers
 16) Use BUGS approach based on graphical models to define Gibbs-based algorithms

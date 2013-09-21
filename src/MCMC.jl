@@ -37,6 +37,7 @@ include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
 include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler
+include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
 
 #  Definition of * as a shortcut operator for model and sampler combination 
