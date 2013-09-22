@@ -4,13 +4,7 @@ export var, std
 # Variance of MCMCChain
 function var_iid(c::MCMCChain)
   nsamples, npars = size(c.samples)
-  variance = Array(Float64, npars)
-
-  for i = 1:npars
-    variance[i] = var(c.samples[:, i])
-  end
-
-  return variance/nsamples
+  [var(c.samples[:, i]) for i = 1:npars]/nsamples
 end
 
 # Standard deviation of MCMCChain
