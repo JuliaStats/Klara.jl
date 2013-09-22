@@ -6,7 +6,7 @@ export linearZv, quadraticZv
 
 # Function for calculating ZV-MCMC estimators using linear polynomial
 function linearZv(c::MCMCChain)
-  npars = size(c.samples, 2)
+  npars = ncol(c.samples)
 
   covAll = Array(Float64, npars+1, npars+1, npars)
   precision = Array(Float64, npars, npars, npars)

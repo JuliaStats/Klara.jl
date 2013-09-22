@@ -4,7 +4,7 @@ export var, std
 # Variance of MCMCChain
 function var_iid(c::MCMCChain)
   nsamples, npars = size(c.samples)
-  [var(c.samples[:, i]) for i = 1:npars]/nsamples
+  Float64[var(c.samples[:, i]) for i = 1:npars]/nsamples
 end
 
 # Standard deviation of MCMCChain
@@ -22,10 +22,7 @@ function var_bm(c::MCMCChain; batchlen::Int=100)
   batchmeans, variance = Array(Float64, nbatches), Array(Float64, npars)
 
   for i = 1:npars
-    for j = 1:nbatches
-      batchmeans[j] = mean(c.samples[((j-1)*batchlen+1):(j*batchlen), i])
-    end
-
+    batchmeans = Float64[mean(c.samples[((j-1)*batchlen+1):(j*batchlen), i]) for j = 1:nbatches]
     variance[i] = batchlen*var(batchmeans)/nbsamples
   end
 
@@ -37,7 +34,7 @@ std_bm(c::MCMCChain; batchlen::Int=100) = sqrt(var_bm(c, batchlen=batchlen))
 
 # Function for estimating the variance of a single MCMC chain using the initial monotone sequence estimator (IMSE), see
 # Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
-function var_imse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1)
+function var_imse(c::MCMCChain; maxlag::Int=nrow(c.samples)-1)
   nsamples, npars = size(c.samples)
 
   k = convert(Int, floor((maxlag-1)/2))
@@ -46,7 +43,6 @@ function var_imse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1)
   acv = Array(Float64, maxlag+1, npars)
   g = Array(Float64, k+1, npars)
   m = (k+1)*ones(npars)
-  variance = Array(Float64, npars)
 
   # Calculate empirical autocovariance
   for i = 1:npars
@@ -76,19 +72,15 @@ function var_imse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1)
   end
 
   # Calculate the initial monotone sequence estimator
-  for i = 1:npars
-    variance[i] = -acv[1, i]+2*sum(g[1:m[i], i])
-  end
-  
-  return variance/nsamples
+  return Float64[-acv[1, i]+2*sum(g[1:m[i], i]) for i = 1:npars]/nsamples
 end
 
 # Standard deviation using Geyer's IMSE
-std_imse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1) = sqrt(var_imse(c, maxlag=maxlag))
+std_imse(c::MCMCChain; maxlag::Int=nrow(c.samples)-1) = sqrt(var_imse(c, maxlag=maxlag))
 
 # Function for estimating the variance of a single MCMC chain using the initial positive sequence estimator (IPSE), see
 # Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
-function var_ipse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1)
+function var_ipse(c::MCMCChain; maxlag::Int=nrow(c.samples)-1)
   nsamples, npars = size(c.samples)
 
   k = convert(Int, floor((maxlag-1)/2))
@@ -115,16 +107,12 @@ function var_ipse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1)
     end
   end
 
-  # Calculate the initial positive sequence estimator
-  for i = 1:npars
-    variance[i] = -acv[1, i]+2*sum(g[1:m[i], i])
-  end
-  
-  return variance/nsamples
+  # Calculate the initial positive sequence estimator  
+  return Float64[-acv[1, i]+2*sum(g[1:m[i], i]) for i = 1:npars]/nsamples
 end
 
 # Standard deviation using Geyer's IPSE
-std_ipse(c::MCMCChain; maxlag::Int=size(c.samples, 1)-1) = sqrt(var_ipse(c, maxlag=maxlag))
+std_ipse(c::MCMCChain; maxlag::Int=nrow(c.samples)-1) = sqrt(var_ipse(c, maxlag=maxlag))
 
 # Wrapper function for computing MCMC variance using various approaches
 vtypes = (:bm, :iid, :imse, :ipse)

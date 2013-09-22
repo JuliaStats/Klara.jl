@@ -6,7 +6,7 @@ actypes = (:bm, :imse, :ipse)
 function ess(c::MCMCChain; vtype::Symbol=:imse, args...)
   assert(in(vtype, actypes), "Unknown ESS type $vtype")
 
-  return size(c.samples, 1)*var(c, vtype=:iid)./var(c, vtype=vtype, args...)
+  return nrow(c.samples)*var(c, vtype=:iid)./var(c, vtype=vtype, args...)
 end
 
 # Integrated autocorrelation time
