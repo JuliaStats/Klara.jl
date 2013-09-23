@@ -15,6 +15,8 @@ The core functionality of Julia's `MCMC` package includes:
 - user-friendly syntax for model specification,
 - use of automatic differentiation to generate the gradient function (higher order derivatives generation is under consideration),
 - integration with and use of functionality of DataFrames and Distributions packages,
+- summary statistics for MCMC, such as Monte Carlo standard error and variance, effective sample size (ESS),
+integrated autocorrelation time,
 - post-processing of MCMC output, such as variance reduction methods.
 
 ## Main Components of MCMC Chains in Julia
@@ -96,18 +98,110 @@ mychain = mymodel1 * RWM(0.1) * (101:5:1000)
 
 The output of the MCMC simulation is stored in a composite type called `MCMCChain` whose `samples` and `gradients`
 fields are dataframes containing the simulated chain and its gradient respectively. Being dataframes, these fields can
-be printed, summarized and manipulated using the relevant facilities of the `DataFrames` package.
+be printed and manipulated using the relevant facilities of the `DataFrames` package. Furthermore, summary statistics
+specific to MCMC are provided via a range of functions as demonstrated below.
 
 ```jl
 using DataFrames
 
-# Print samples and diagnostics
-head(mychain.samples)
-head(mychain.diagnostics)
+# Simulate a chain
 
-# Get a summary of the simulated chain
-describe(mychain.samples)
+mychain2 = run(mymodel2 * HMC(0.75), steps=10000, burnin=1000)
+
+# Print samples and diagnostics
+head(mychain2.samples)
+head(mychain2.gradients)
+head(mychain2.diagnostics)
+
+# Get acceptance rate
+
+acceptance(mychain2)
+# 79.75555555555556
+
+# Get a summary of the simulated chain (including min, max, mean, Monte Carlo standard error, effective sample size,
+# integrated autocorrelation time, number and percentage of NAs)
+
+describe(mychain2)
+# pars.1
+# Min        -2.71008842709661
+# Mean       0.018065833149137886
+# Max        2.9118531885857117
+# MC Error   9.267529957211366e-5
+# ESS        5333.527226085543
+# AC Time    1.687438653351622
+# NAs        0
+# NA%        0.0%
+# 
+# pars.2
+# Min        -2.5820182335271307
+# Mean       -0.00534093391434661
+# Max        2.659367922721943
+# MC Error   9.285780740766642e-5
+# ESS        5333.717273768112
+# AC Time    1.687378527591465
+# NAs        0
+# NA%        0.0%
+# 
+# pars.3
+# Min        -3.0370582727775197
+# Mean       -0.012687064590981605
+# Max        2.94691439248352
+# MC Error   9.176389696514437e-5
+# ESS        5334.081721827846
+# AC Time    1.6872632384259652
+# NAs        0
+# NA%        0.0%
+
+# Get effective sample size
+
+ess(mychain2)
+# 3-element Array{Float64,1}:
+#  5333.53
+#  5333.72
+#  5334.08
+
+# Get integrated autocorrelation time
+
+actime(mychain2)
+# 3-element Array{Float64,1}:
+#  1.68744
+#  1.68738
+#  1.68726
+
+# Get Geyer's initial monotone sequence estimator (IMSE) of MCMC variance
+
+var(mychain2)
+# 3-element Array{Float64,1}:
+#  9.26753e-5
+#  9.28578e-5
+#  9.17639e-5
+
+# Get ordinary variance estimator for IID stochastic processes (notice that this is smaller than the IMSE estimator)
+
+var(mychain2, vtype=:iid)
+# 3-element Array{Float64,1}:
+#  5.49207e-5
+#  5.50308e-5
+#  5.43862e-5
+
+# Get Geyer's initial positive sequence estimator (IPSE) of MCMC variance
+
+var(mychain2, vtype=:ipse)
+# 3-element Array{Float64,1}:
+#  9.26753e-5
+#  9.28578e-5
+#  9.17639e-5
+
+# Get MCMC variance estimator based on batch means
+
+var(mychain2, vtype=:bm)
+# 3-element Array{Float64,1}:
+#  9.13673e-5
+#  9.40208e-5
+#  7.33864e-5
 ```
+
+The `acceptance`, `ess()`, `actime()`, `var()` and `std()` functions can be called with various other named arguments.
 
 #### Resuming MCMC simulation
 
@@ -172,9 +266,9 @@ particles = [[randn()] for i in 1:1000]
 mychain1 = seqMC(targets, particles, steps=10, burnin=0)
 
 # Resample with replacement using weights to approximate the real distribution
-mychain2 = wsample(mychain1.samples["x"], mychain1.diagnostics["weigths"], 1000)
+mychain3 = wsample(mychain1.samples["x"], mychain1.diagnostics["weigths"], 1000)
 
-mean(mychain2)
+mean(mychain3)
 ```
 
 The output of the sequential Monte Carlo simulation can be plotted with any graphical package. Below is an example using the `Vega` package.
@@ -193,13 +287,13 @@ ts = collect(1:10:nrow(mychain1.samples))
 plot(x = ts, y = vector(mychain1.samples[ts, "x"]), kind = :scatter)
 
 # Plot weighted samples
-plot(x = [1:1000], y = mychain2, kind = :scatter)
+plot(x = [1:1000], y = mychain3, kind = :scatter)
 ```
 
 ## Future Features
 
 Future development is planned to provide:
-- MCMC diagnostic tools and more extensive output analysis,
+- MCMC convergence diagnostic tools and estimation of MCMC quantiles,
 - Finer tuning and adaptive MCMC sampling,
 - Extended automatic differentiation that covers MCMC samplers which use higher order derivatives of the log-target,
 - Rejection, importance and slice sampling,

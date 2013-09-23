@@ -1,9 +1,11 @@
-import Base.mean
+import Base.mean, DataFrames.describe
 
 export mean, acceptance, describe
 
 # Mean of MCMCChain
-mean(c::MCMCChain) = Float64[mean(c.samples[:, i]) for i = 1:ncol(c.samples)]
+mean(c::MCMCChain, pars::Ranges=1:ncol(c.samples)) = Float64[mean(c.samples[:, i]) for i = pars]
+
+mean(c::MCMCChain, par::Real) = mean(c, par:par)
 
 # Compute acceptance or rejection rate of MCMCChain
 function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=false)
@@ -11,9 +13,9 @@ function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=f
   assert (lags[end] <= nrow(c.samples), "Range of acceptance rate not within post-burnin range of MCMC chain")
 
   if reject
-    return (rlen-sum(mychain.diagnostics[lags, "accept"]))*100/rlen
+    return (rlen-sum(c.diagnostics[lags, "accept"]))*100/rlen
   else
-    return sum(mychain.diagnostics[lags, "accept"])*100/rlen
+    return sum(c.diagnostics[lags, "accept"])*100/rlen
   end
 end
 
@@ -38,14 +40,21 @@ function describe(io, c::MCMCChain)
 
     filtered = float(removeNA(col))
     qs = quantile(filtered, [0, 1])
-    statNames = ["Min", "Mean", "Max"]
-    statVals = [qs[1], mean(filtered), qs[2]]
-    for i = 1:3
-        println(io, string(rpad(statNames[i], 8, " "), " ", string(statVals[i])))
+    nrows = nrow(c.samples)
+    varimse = mcvar_imse(filtered)
+    variid = var(filtered)/nrows
+    mcerror = sqrt(varimse)
+    ss = nrows*variid./varimse
+    act = varimse./variid
+
+    statNames = ["Min", "Mean", "Max", "MC Error", "ESS", "AC Time"]
+    statVals = [qs[1], mean(filtered), qs[2], mcerror, ss, act]
+    for i = 1:6
+        println(io, string(rpad(statNames[i], 10, " "), " ", string(statVals[i])))
     end
     nas = sum(isna(col))
-    println(io, "NAs      $nas")
-    println(io, "NA%      $(round(nas*100/length(col), 2))%")
+    println(io, "NAs        $nas")
+    println(io, "NA%        $(round(nas*100/length(col), 2))%")
 
     println(io, )
   end

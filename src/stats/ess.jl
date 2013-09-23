@@ -3,15 +3,19 @@ export ess, actime
 # Effective sample size (ESS)
 actypes = (:bm, :imse, :ipse)
 
-function ess(c::MCMCChain; vtype::Symbol=:imse, args...)
+function ess(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
   assert(in(vtype, actypes), "Unknown ESS type $vtype")
 
-  return nrow(c.samples)*var(c, vtype=:iid)./var(c, vtype=vtype, args...)
+  return nrow(c.samples)*var(c, pars; vtype=:iid)./var(c, pars; vtype=vtype, args...)
 end
+
+ess(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = ess(c, par:par; vtype=vtype, args...)
 
 # Integrated autocorrelation time
-function actime(c::MCMCChain; vtype::Symbol=:imse, args...)
+function actime(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
   assert(in(vtype, actypes), "Unknown integrated autocorrelation time type $vtype")
 
-  return var(c, vtype=vtype)./var(c, vtype=:iid, args...)
+  return var(c, pars; vtype=vtype, args...)./var(c, pars; vtype=:iid)
 end
+
+actime(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = actime(c, par:par; vtype=vtype, args...)
