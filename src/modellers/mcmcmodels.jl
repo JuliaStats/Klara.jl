@@ -49,8 +49,3 @@ end
 #### models  #####
 
 include("likmodel.jl")
-
-# Uncommented temporarily the line below in order to run the examples and debug devel
-include("bayesglmmodels.jl")  # TODO : not yet adapted
-
-

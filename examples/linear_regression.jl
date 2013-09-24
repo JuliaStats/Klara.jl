@@ -1,7 +1,6 @@
 ######### linear regression 1000 obs x 10 var  ###########
 
-using DataFrames
-using MCMC
+using DataFrames, MCMC
 
 # simulate dataset
 srand(1)
@@ -20,17 +19,14 @@ end
 
 m = model(ex, vars=zeros(nbeta))
 
-# run random walk metropolis (10000 steps, 1000 for burnin, thinning 10)
-# no adaptation
-res = run(m * RWM(0.05), steps=10000:10:100000)
+# run random walk metropolis (10000 steps, 1000 for burnin, thinning 10), no adaptation
+mcchain01 = run(m * RWM(0.05), steps=10000:10:100000)
 
-mean(res.diagnostics["accept"])  #  ~ 3%, too low
+acceptance(mcchain01) # ~ 3%, too low
 
 # with adaptation (target acceptance = 30%)
-res = run(m * RWM(tuner=RAM(0.3)), steps=10000:10:100000)
+mcchain02 = run(m * RWM(tuner=RAM(0.3)), steps=10000:10:100000)
 
-mean(res.diagnostics["accept"])  #  ~ 29.7%, Ok
+acceptance(mcchain02) # ~ 29.7%, Ok
 
-[colwise(mean, res.samples) beta0 ] # mean sample vs original coefs
-
-
+[mean(mcchain02) beta0] # mean sample vs original coefs

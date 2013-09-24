@@ -1,7 +1,6 @@
 ######### fitting an Ornstein–Uhlenbeck process  ###########
 
-using DataFrames
-using MCMC
+using DataFrames, MCMC
 
 # generate serie
 srand(1)
@@ -31,16 +30,15 @@ m = model(ex, tau=0.05, sigma=1., mu=1., gradient=true)
 m.scale = [1000., 1., 10.]  # scale hint for tau, sigma and mu, to help sampling
 
 # run random walk metropolis (10000 steps, 1000 for burnin, setting initial values)
-res = run(m * RWM(tuner=RAM()), steps=1000:10000)
+mcchain01 = run(m * RWM(tuner=RAM()), steps=1000:10000)
 
-describe(res.samples)
-describe(res.diagnostics["accept"]) # acceptance stats
+describe(mcchain01)
+acceptance(mcchain01) # acceptance rate
 
 # run Hamiltonian Monte-Carlo (10000 steps, 1000 for burnin, 5 inner steps, 0.002 inner step size)
-res = m * HMC(5, 0.002) * (1000:10000)
+mcchain02 = m * HMC(5, 0.002) * (1000:10000)
 
 # run NUTS - HMC (1000 steps, 500 for burnin)
-res = m * NUTS() * (500:1000)
+mcchain03 = m * NUTS() * (500:1000)
 
-describe(res.diagnostics["ndoublings"]) # check # of doublings in NUTS algo
-
+describe(mcchain03.diagnostics["ndoublings"]) # check # of doublings in NUTS algo

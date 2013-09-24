@@ -1,7 +1,6 @@
 ######### logistic regression on 1000 obs x 10 var  ###########
 
-using DataFrames
-using MCMC
+using DataFrames, MCMC
 
 # generate a random dataset
 srand(1)
@@ -23,13 +22,16 @@ end
 m = model(ex, vars=zeros(nbeta), gradient=true)
 
 # run random walk metropolis (10000 steps, 1000 for burnin)
-res = run(m * RWM(0.05), steps=1000:10000)
+mcchain01 = run(m * RWM(0.05), steps=1000:10000)
 
-head(res.samples)
-[colwise(mean, res.samples) beta0 ] # mean sample vs original coefs
+describe(mcchain01)
 
 # run Hamiltonian Monte-Carlo (10000 steps, 1000 for burnin, 2 inner steps, 0.1 inner step size)
-res = run(m * HMC(2, 0.1), steps=1000:10000)
+mcchain02 = run(m * HMC(2, 0.1), steps=1000:10000)
+
+acceptance(mcchain02)
 
 # run NUTS HMC (10000 steps, 1000 for burnin)
-res = run(m * NUTS(), steps=1000:10000)
+mcchain03 = run(m * NUTS(), steps=1000:10000)
+
+var(mcchain03)

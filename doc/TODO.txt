@@ -3,11 +3,11 @@
 03 - done) Allow storage of gradients in runners
 04 - done) Port zero-variance estimators from GeometricMCMC
 05 - done) Extend MCMCLikModel constructor to allow for user-inputed evalall functions
-06) Split RWM according to employed tuner or wrap tuning code in tune() functions
+06- note needed) Split RWM according to employed tuner or wrap tuning code in tune() functions
 07) Extend autodiff capabilities for MCMC samplers that need higher order derivatives
 08 - done) Update README file to reflect current state of MCMC package
 09) Write a user guide using LaTeX (to be placed in doc directory)
-10) Organize Bayesian logit and probit examples and tests better, until GLM provides Bayesian methods
+10 - done) Organize Bayesian logit and probit examples and tests better
 11) Add RMLMC (Semi-Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
 12) Add eRMLMC (Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
 13 - done) Add PMALA (Position-dependent MALA) sampler
