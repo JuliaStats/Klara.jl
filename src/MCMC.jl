@@ -32,11 +32,12 @@ reset(t::MCMCTask, x) = t.task.storage[:reset](x)
 include("samplers/samplers.jl")  # Common definitions for samplers
 
 include("samplers/RWM.jl")    # Random-walk Metropolis sampler
+include("samplers/RAM.jl")    # Robust adaptive Metropolis sampler
 include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler
 include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
 include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
-include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler
+# include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler (deprecated)
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
 

@@ -1,5 +1,6 @@
 ###########################################################################
 #  Manifold Metropolis adjusted Langevin algorithm (MMALA)
+#  MMALA has been deprecated and succeeded by PMALA
 #
 #  Reference: Girolami M, Calderhead B. Riemann Manifold Langevin and Hamiltonian Monte Carlo Methods. Journal of the
 #  Royal Statistical Society: Series B (Statistical Methodology), 2011, 73 (2), pp 123–214

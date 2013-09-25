@@ -25,7 +25,7 @@ mcchain01 = run(m * RWM(0.05), steps=10000:10:100000)
 acceptance(mcchain01) # ~ 3%, too low
 
 # with adaptation (target acceptance = 30%)
-mcchain02 = run(m * RWM(tuner=RAM(0.3)), steps=10000:10:100000)
+mcchain02 = run(m * RAM(1., 0.3), steps=10000:10:100000)
 
 acceptance(mcchain02) # ~ 29.7%, Ok
 

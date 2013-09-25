@@ -30,7 +30,7 @@ m = model(ex, tau=0.05, sigma=1., mu=1., gradient=true)
 m.scale = [1000., 1., 10.]  # scale hint for tau, sigma and mu, to help sampling
 
 # run random walk metropolis (10000 steps, 1000 for burnin, setting initial values)
-mcchain01 = run(m * RWM(tuner=RAM()), steps=1000:10000)
+mcchain01 = run(m * RAM(), steps=1000:10000)
 
 describe(mcchain01)
 acceptance(mcchain01) # acceptance rate
