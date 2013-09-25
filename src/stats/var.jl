@@ -4,14 +4,8 @@ import Base.var, Base.std
 export mcvar, var, mcse, std
 
 # Variance of MCMCChain
-function mcvar_iid(c::MCMCChain, pars::Ranges=1:ncol(c.samples))
-  npars = pars.len
-  variance = Array(Float64, npars)
-  for i = 1:npars
-    variance[i] = var(c.samples[:, pars[i]])
-  end
-  return variance/nrow(c.samples)
-end
+mcvar_iid(c::MCMCChain, pars::Ranges=1:ncol(c.samples)) =
+  Float64[var(c.samples[:, pars[i]]) for i = 1:pars.len]/nrow(c.samples)
 
 mcvar_iid(c::MCMCChain, par::Real) = mcvar_iid(c, par:par)
 
@@ -31,14 +25,8 @@ function mcvar_bm(x::AbstractVector; batchlen::Int=100)
   return batchlen*var(batchmeans)/nbsamples
 end
 
-function mcvar_bm(c::MCMCChain, pars::Ranges=1:ncol(c.samples); batchlen::Int=100)
-  npars = pars.len
-  variance = Array(Float64, npars)
-  for i = 1:npars
-    variance[i] = mcvar_bm(c.samples[:, pars[i]]; batchlen=batchlen)
-  end
-  return variance
-end
+mcvar_bm(c::MCMCChain, pars::Ranges=1:ncol(c.samples); batchlen::Int=100) =
+  Float64[mcvar_bm(c.samples[:, pars[i]]; batchlen=batchlen) for i = 1:pars.len]
 
 mcvar_bm(c::MCMCChain, par::Real; batchlen::Int=100) = mcvar_bm(c, par:par; batchlen=batchlen)
 
@@ -51,10 +39,10 @@ mcse_bm(c::MCMCChain, par::Real; batchlen::Int=100) = mcse_bm(c, par:par; batchl
 # Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
 function mcvar_imse(x::AbstractVector; maxlag::Int=length(x)-1)
   k = convert(Int, floor((maxlag-1)/2))
-  
+  m = k+1
+
   # Preallocate memory
   g = Array(Float64, k+1)
-  m = k+1
 
   # Calculate empirical autocovariance
   acv = acf(x, 0:maxlag, correlation=false)
@@ -81,14 +69,8 @@ function mcvar_imse(x::AbstractVector; maxlag::Int=length(x)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
 
-function mcvar_imse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1)
-  npars = pars.len
-  variance = Array(Float64, npars)
-  for i = 1:npars
-    variance[i] = mcvar_imse(c.samples[:, pars[i]]; maxlag=maxlag)
-  end
-  return variance
-end
+mcvar_imse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1) =
+  Float64[mcvar_imse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
 
 mcvar_imse(c::MCMCChain, par::Real; maxlag::Int=nrow(c.samples)-1) = mcvar_imse(c, par:par; maxlag=maxlag)
 
@@ -123,14 +105,8 @@ function mcvar_ipse(x::AbstractVector; maxlag::Int=length(x)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
 
-function mcvar_ipse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1)
-  npars = pars.len
-  variance = Array(Float64, npars)
-  for i = 1:npars
-    variance[i] = mcvar_ipse(c.samples[:, pars[i]]; maxlag=maxlag)
-  end
-  return variance
-end
+mcvar_ipse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1) =
+  Float64[mcvar_ipse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
 
 mcvar_ipse(c::MCMCChain, par::Real; maxlag::Int=nrow(c.samples)-1) = mcvar_ipse(c, par:par; maxlag=maxlag)
 
