@@ -7,15 +7,6 @@
 abstract MCMCSampler
 abstract MCMCTuner
 
-immutable AcceptanceRate
-  step::Integer
-
-  function AcceptanceRate(s::Integer)
-    assert(s>0, "Acceptance ratio's monitor step should be > 0")
-    new(s)
-  end
-end
-
 ######### sample type returned by samplers  ############
 immutable MCMCSample
 	ppars::Vector{Float64}                  # proposed parameter vector

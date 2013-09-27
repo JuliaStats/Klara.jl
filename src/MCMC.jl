@@ -77,6 +77,7 @@ function show(io::IO, res::MCMCChain)
 end
 
 #############  runners    ########################
+include("runners/runners.jl")  # Common definitions for runners
 
 include("runners/run.jl")         # Vanilla runner
 include("runners/seqMC.jl")       # Sequential Monte-Carlo runner

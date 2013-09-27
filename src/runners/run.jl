@@ -8,16 +8,31 @@
 import Base.run
 export run
 
-###########################################################################
-#  Main function
-#
-#  If steps is not specified or is an Integer
-#   - runs the Task 'steps' times
-#   - does keep the first 'burnin' samples
-#   - then keeps every 'thinning' samples
-#  If steps is a Range, then other parameters are ignored and are instead deduced from the Range
-#
-###########################################################################
+immutable SingleMCRunner <: MCMCRunner
+  burnin::Integer
+  thinning::Integer
+  len::Integer
+  r::Range
+
+  function SingleMCRunner(steps::Range{Int})
+  r = steps
+
+  burnin = first(r)-1
+  thinning = r.step
+  len = last(r)
+
+  assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
+  assert(len > burnin, "Total MCMC length ($len) should be > to burnin ($burnin)")  
+  assert(thinning >= 1, "Thinning ($thinning) should be >= 1") 
+
+  new(burnin, thinning, len, r)
+  end
+end
+
+SingleMCRunner(steps::Range1{Int}) = SingleMCRunner(first(steps):1:last(steps))
+
+SingleMCRunner(steps::Integer, burnin::Integer=0, thinning::Integer=1) = SingleMCRunner((burnin+1):thinning:steps)
+
 function run( t::MCMCTask; 
               steps::Union(Integer, Range{Int}, Range1{Int})=100, 
               burnin::Integer=0, 
