@@ -4,11 +4,7 @@
 #
 #################################################################
 
-export MCMCLikModel, model
-
-### Model types hierarchy to allow restrictions on applicable samplers
-abstract Model
-abstract MCMCModel <: Model
+export model
 
 ######### parameters map info  ############
 # These types are used to map scalars in the
@@ -45,7 +41,3 @@ function model(f::Union(Function, Expr); mtype="likelihood", args...)
 	else
 	end
 end
-
-#### models  #####
-
-include("likmodel.jl")

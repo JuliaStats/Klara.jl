@@ -17,20 +17,34 @@
 #
 ###########################################################################
 
-export seqMC
+export SeqMC
 
-function seqMC(targets::Array{MCMCTask}, 
-				particles::Vector{Vector{Float64}}; 
-				steps::Integer=1, burnin::Integer=0, resTrigger::Float64=1e-10)
-	
-	local tsize = targets[end].model.size
+println("Loading SeqMC(steps, burnin, swapPeriod) runner")
+
+immutable SeqMC <: MCMCRunner
+  steps::Integer
+  burnin::Integer
+  trigger::Float64
+
+  function SeqMC(steps::Integer, burnin::Integer, trigger::Float64)
+	  assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
+	  assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
+
+    new(steps, burnin, trigger)
+  end
+end
+
+SeqMC(; steps::Integer=1, burnin::Integer=0, trigger::Float64=1e-10) = SeqMC(steps, burnin, trigger)
+
+function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} = [[randn()] for i in 1:100])
 	local ntargets = length(targets)
 	local npart = length(particles)
+	local tsize = targets[end].model.size
+  local steps = targets[end].runner.steps
+  local burnin = targets[end].runner.burnin
+  local trigger = targets[end].runner.trigger
 
-	assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
-	assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
-	assert(all( map(t->t.model.size, targets) .== tsize),
-		   "Models do not have the same parameter vector size")
+  assert(all( map(t->t.model.size, targets) .== tsize), "Models do not have the same parameter vector size")
 
 	tic() # start timer
 
@@ -60,7 +74,7 @@ function seqMC(targets::Array{MCMCTask},
 			# resample if likelihood variance of particles is too low
 			#  TODO : improve, make user-settable, ..
 			local W = exp(logW)
-			if var(W) < resTrigger
+			if var(W) < trigger
 				cp = cumsum(W) / sum(W)
 				rs = fill(0, npart)
 				for n in 1:npart  #  n = 1
@@ -108,3 +122,8 @@ function seqMC(targets::Array{MCMCTask},
 		        toq())
 end
 
+# TODO: check that all elements of array contain MCMCTasks of the same type
+function resume_seqmc(targets::Array{MCMCTask}; steps::Integer=100)
+	run(MCMCTask[targets[i].model * targets[i].sampler * SeqMC(steps=steps, trigger=targets[i].runner.trigger)
+		for i in 1:length(targets)])
+end

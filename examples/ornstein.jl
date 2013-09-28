@@ -30,15 +30,15 @@ m = model(ex, tau=0.05, sigma=1., mu=1., gradient=true)
 m.scale = [1000., 1., 10.]  # scale hint for tau, sigma and mu, to help sampling
 
 # run random walk metropolis (10000 steps, 1000 for burnin, setting initial values)
-mcchain01 = run(m * RAM(), steps=1000:10000)
+mcchain01 = run(m * RAM() * SerialMC(1000:10000))
 
 describe(mcchain01)
 acceptance(mcchain01) # acceptance rate
 
 # run Hamiltonian Monte-Carlo (10000 steps, 1000 for burnin, 5 inner steps, 0.002 inner step size)
-mcchain02 = m * HMC(5, 0.002) * (1000:10000)
+mcchain02 = run(m * HMC(5, 0.002) * SerialMC(1000:10000))
 
 # run NUTS - HMC (1000 steps, 500 for burnin)
-mcchain03 = m * NUTS() * (500:1000)
+mcchain03 = run(m * NUTS() * SerialMC(500:1000))
 
 describe(mcchain03.diagnostics["ndoublings"]) # check # of doublings in NUTS algo

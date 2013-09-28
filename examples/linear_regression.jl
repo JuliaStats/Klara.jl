@@ -20,12 +20,12 @@ end
 m = model(ex, vars=zeros(nbeta))
 
 # run random walk metropolis (10000 steps, 1000 for burnin, thinning 10), no adaptation
-mcchain01 = run(m * RWM(0.05), steps=10000:10:100000)
+mcchain01 = run(m * RWM(0.05) * SerialMC(10000:10:100000))
 
 acceptance(mcchain01) # ~ 3%, too low
 
 # with adaptation (target acceptance = 30%)
-mcchain02 = run(m * RAM(1., 0.3), steps=10000:10:100000)
+mcchain02 = run(m * RAM(1., 0.3) * SerialMC(10000:10:100000))
 
 acceptance(mcchain02) # ~ 29.7%, Ok
 

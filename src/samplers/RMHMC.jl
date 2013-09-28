@@ -51,7 +51,7 @@ RMHMC(leapStep::Float64, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner)=not
 ###########################################################################
 # RMHMC sampler
 ###########################################################################
-function SamplerTask(model::MCMCModel, sampler::RMHMC)
+function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   # Define local variables
   local pars, proposedPars, leapPars
   local logTarget, proposedLogTarget

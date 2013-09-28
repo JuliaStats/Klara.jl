@@ -39,12 +39,12 @@ function grad_log_posterior(pars::Vector{Float64})
     -(1-y).*exp(-(XPars.^2+log(2*pi))/2-logcdf(normal, XPars)))-pars/(priorstd^2))
 end
 
-mcmodel = mcmodel = model(log_posterior, grad=grad_log_posterior, init=randprior())
+mcmodel = model(log_posterior, grad=grad_log_posterior, init=randprior())
 
-mcchain01 = mcmodel * RWM(0.5) * (1001:10000)
+mcchain01 = run(mcmodel * RWM(0.5) * SerialMC(1001:10000))
 
 acceptance(mcchain01)
 
-mcchain02 = mcmodel * HMC(0.001) * (1001:10000)
+mcchain02 = run(mcmodel * HMC(0.001) * SerialMC(1001:10000))
 
 acceptance(mcchain02)

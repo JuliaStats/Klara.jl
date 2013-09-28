@@ -22,16 +22,16 @@ end
 m = model(ex, vars=zeros(nbeta), gradient=true)
 
 # run random walk metropolis (10000 steps, 1000 for burnin)
-mcchain01 = run(m * RWM(0.05), steps=1000:10000)
+mcchain01 = run(m * RWM(0.05) * SerialMC(1000:10000))
 
 describe(mcchain01)
 
 # run Hamiltonian Monte-Carlo (10000 steps, 1000 for burnin, 2 inner steps, 0.1 inner step size)
-mcchain02 = run(m * HMC(2, 0.1), steps=1000:10000)
+mcchain02 = run(m * HMC(2, 0.1) * SerialMC(1000:10000))
 
 acceptance(mcchain02)
 
 # run NUTS HMC (10000 steps, 1000 for burnin)
-mcchain03 = run(m * NUTS(), steps=1000:10000)
+mcchain03 = run(m * NUTS() * SerialMC(1000:10000))
 
 var(mcchain03)

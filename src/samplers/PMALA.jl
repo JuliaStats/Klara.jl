@@ -39,7 +39,7 @@ PMALA(;scale::Float64=1.0, tuner::Union(Nothing, PMALATuner)=nothing) = PMALA(sc
 ###########################################################################
 # PMALA sampler
 ###########################################################################
-function SamplerTask(model::MCMCModel, sampler::PMALA)
+function SamplerTask(model::MCMCModel, sampler::PMALA, runner::MCMCRunner)
   # Define local variables
   local pars, proposedPars, parsMean
   local logTarget, proposedLogTarget

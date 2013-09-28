@@ -38,7 +38,7 @@ RAM(;scale::Float64=1.0, rate::Float64=0.234) = RAM(scale, rate)
 ###########################################################################
 
 # RAM sampling
-function SamplerTask(model::MCMCModel, sampler::RAM)
+function SamplerTask(model::MCMCModel, sampler::RAM, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
   local proposed

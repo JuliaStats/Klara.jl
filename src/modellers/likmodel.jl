@@ -11,6 +11,8 @@
 
 export MCMCLikModel
 
+println("Loading MCMCLikModel model")
+
 typealias FOrNothing 	Union(Nothing, Function)
 typealias ROrVector 	Union(Real, Vector{Float64})
 

@@ -72,26 +72,27 @@ mymodel3 = model(modelxpr, v=ones(3)) # without specifying the gradient
 mymodel4 = model(modelxpr, gradient=true, v=ones(3)) # with gradient
 ```
 
-#### Single chain run
+#### Serial chain run
 
-A single Monte Carlo chain can be simulated either by using the `run()` function or the `*` operator. For example, a
-Random Walk Metropolis (RWM) sampler with scale parameter equal to 0.1 is run for `mymodel1`.
+An ordinary serial Monte Carlo chain can be simulated by using the `SerialMC()`. The example below shows how to define
+the triplet model x sampler x runner in order to run a serial Monte Carlo simulation from `mymodel1` with a Random Walk
+Metropolis (RWM) sampler and with scale parameter equal to 0.1.
 
 ```jl
-### Syntax 1 (using run())
+### Syntax 1 (calling run() function with the tuple (model, sampler, runner) as its input arguments)
 
 # burnin = 100, keeping iterations 101 to 1000 (900 post-burnin iterations)
-mychain = run(mymodel1 * RWM(0.1), steps=1000, burnin=100)
+mychain = run(mymodel1, RWM(0.1), SerialMC(steps=1000, burnin=100))
 
 # burnin = 100, keeping every 5th iteration between 101 and 1000 (180 post-burnin iterations)
-mychain = run(mymodel1 * RWM(0.1), steps=1000, burnin=100, thinning=5)
+mychain = run(mymodel1, RWM(0.1), SerialMC(steps=1000, burnin=100, thinning=5))
 
-# As before, but expressed alternatively by using a range for steps
-mychain = run(mymodel1 * RWM(0.1), steps=101:5:1000)
+# As before, but expressed alternatively by using a range
+mychain = run(mymodel1, RWM(0.1), SerialMC(101:5:1000))
 
-### Syntax 2 (using the `*` operator formatted as model * sampler * range)
+### Syntax 2 (calling run() function on the product model * sampler * range)
 
-mychain = mymodel1 * RWM(0.1) * (101:5:1000)  
+mychain = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
 ```
 
 #### Output summary and printing
@@ -106,7 +107,7 @@ using DataFrames
 
 # Simulate a chain
 
-mychain2 = run(mymodel2 * HMC(0.75), steps=10000, burnin=1000)
+mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
 # Print samples and diagnostics
 head(mychain2.samples)
@@ -205,10 +206,10 @@ The `acceptance`, `ess()`, `actime()`, `var()` and `std()` functions can be call
 
 #### Resuming MCMC simulation
 
-To resume simulation whence it was left, the `run()` function is invoked on the chain.
+To resume simulation whence it was left, the `resume()` function is invoked on the chain.
 
 ```jl
-mychain = run(mychain, steps=10000)
+mychain = resume(mychain, steps=10000)
 ```
 
 #### Model and sampler specifications must match
@@ -218,9 +219,9 @@ to `false`. Therefore, `mymodel3` can not be run in combination with a sampler t
 hand, `mymodel4` provides the log-target's gradient that is needed by some MCMC routines such as HMC or MALA.
 
 ```jl
-mymodel3 * MALA(0.1) * (1:1000) # Throws an error 
+run(mymodel3 * MALA(0.1) * SerialMC(1:1000)) # Throws an error 
 
-mymodel4 * MALA(0.1) * (1:1000) # It works
+run(mymodel4 * MALA(0.1) * SerialMC(1:1000)) # It works
 ```
 
 #### Running multiple chains
@@ -230,11 +231,11 @@ sampler.
 
 ```jl
 # Run all 3 samplers via a single command
-mychain = run(mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)], steps=1000) 
+mychain = run(mymodel2 * [RWM(0.1), MALA(0.1), HMC(3,0.1)] * SerialMC(steps=1000)) 
 mychain[2].samples  # prints samples for MALA(0.1)
 
 # Run HMC with varying number of inner steps
-mychain = run(mymodel2 * [HMC(i,0.1) for i in 1:5], steps=1000)
+mychain = run(mymodel2 * [HMC(i,0.1) for i in 1:5] * SerialMC(steps=1000))
 ```
 
 ### Example 2: An example of a sequential Monte Carlo simulation
@@ -257,13 +258,13 @@ for i in 1:nmod
 end
 
 # Build MCMCTasks with diminishing scaling
-targets = MCMCTask[mods[i] * RWM(sts[i]) for i in 1:nmod]
+targets = MCMCTask[mods[i] * RWM(sts[i]) * SeqMC(steps=10, burnin=0) for i in 1:nmod]
 
 # Create 1000 particles
 particles = [[randn()] for i in 1:1000]
 
 # Launch sequential MC (10 steps x 1000 particles = 10000 samples returned in a single MCMCChain)
-mychain1 = seqMC(targets, particles, steps=10, burnin=0)
+mychain1 = run(targets, particles=particles)
 
 # Resample with replacement using weights to approximate the real distribution
 mychain3 = wsample(mychain1.samples["x"], mychain1.diagnostics["weigths"], 1000)

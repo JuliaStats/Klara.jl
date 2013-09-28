@@ -4,9 +4,6 @@
 #
 #################################################################
 
-abstract MCMCSampler
-abstract MCMCTuner
-
 ######### sample type returned by samplers  ############
 immutable MCMCSample
 	ppars::Vector{Float64}                  # proposed parameter vector
@@ -30,4 +27,4 @@ MCMCSample(ppars::Vector{Float64}, plogtarget::Float64, pgrads::Union(Vector{Flo
   MCMCSample(ppars, plogtarget, pgrads, pars, logtarget, grads, Dict())
 
 # Sampling task launcher
-spinTask(m::MCMCModel, s::MCMCSampler) = MCMCTask(Task(() -> SamplerTask(m, s)), m)
+spinTask(m::MCMCModel, s::MCMCSampler, r::MCMCRunner) = MCMCTask(Task(() -> SamplerTask(m, s, r)), m, s, r)

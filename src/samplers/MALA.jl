@@ -36,7 +36,7 @@ MALA(s::MALATuner) = MALA(1.0, t)
 MALA(;scale::Float64=1.0, tuner::Union(Nothing, MALATuner)=nothing) = MALA(scale, tuner)
 
 # MALA sampling
-function SamplerTask(model::MCMCModel, sampler::MALA)
+function SamplerTask(model::MCMCModel, sampler::MALA, runner::MCMCRunner)
   local pars, proposedPars, parsMean
   local logTarget, proposedLogTarget
   local grad, proposedGrad

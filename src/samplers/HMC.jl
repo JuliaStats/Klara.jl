@@ -70,7 +70,7 @@ end
 
 
 ####  HMC task
-function SamplerTask(model::MCMCModel, sampler::HMC)
+function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
 
   assert(hasgradient(model), "HMC sampler requires model with gradient function")

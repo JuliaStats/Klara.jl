@@ -21,4 +21,7 @@
 22) MCMC for hierarchical models (constrained Monte Carlo)
 23) Simulated annealing
 24) ABC (Approximate Bayesian Computation) methods
-25) Implement MCMC diagnostic tools and stats mostly on the basis of the R coda package
+25 - done) Implement estimators for MCMC variance, Monte Carlo error, effective sample size(ESS) and integrated
+autocorrelation time
+26) Implement MCMC summary statistics and MCMC convergence diagnostics that require spectral computations
+27) Make algebraic changes in samplers to speed them up

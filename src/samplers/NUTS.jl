@@ -73,7 +73,7 @@ function leapFrog(s::NUTSSample, ve, ll::Function)
 end
 
 ####  HMC task
-function SamplerTask(model::MCMCModel, sampler::NUTS)
+function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
     local epsilon, u_slice
     local state0  # starting state of each loop
     local scale

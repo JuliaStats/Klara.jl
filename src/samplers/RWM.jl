@@ -40,7 +40,7 @@ RWM(;scale::Float64=1.0, tuner::Union(Nothing, RWMTuner)=nothing) = RWM(scale, t
 ###########################################################################
 
 # RWM sampling
-function SamplerTask(model::MCMCModel, sampler::RWM)
+function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
   local proposed

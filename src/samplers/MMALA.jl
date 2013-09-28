@@ -40,7 +40,7 @@ MMALA(;scale::Float64=1.0, tuner::Union(Nothing, MMALATuner)=nothing) = MMALA(sc
 ###########################################################################
 # MMALA sampler
 ###########################################################################
-function SamplerTask(model::MCMCModel, sampler::MMALA)
+function SamplerTask(model::MCMCModel, sampler::MMALA, runner::MCMCRunner)
   # Define local variables
   local pars, proposedPars, parsMean
   local logTarget, proposedLogTarget
