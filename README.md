@@ -74,9 +74,9 @@ mymodel4 = model(modelxpr, gradient=true, v=ones(3)) # with gradient
 
 #### Serial chain run
 
-An ordinary serial Monte Carlo chain can be simulated by using the `SerialMC()`. The example below shows how to define
-the triplet model x sampler x runner in order to run a serial Monte Carlo simulation from `mymodel1` with a Random Walk
-Metropolis (RWM) sampler and with scale parameter equal to 0.1.
+An ordinary serial Monte Carlo chain can be simulated via the `SerialMC()` runner. The example below shows how to
+define the triplet model x sampler x runner in order to run a serial Monte Carlo simulation for `mymodel1` using a
+Random Walk Metropolis (RWM) sampler with scale parameter equal to 0.1.
 
 ```jl
 ### Syntax 1 (calling run() function with the tuple (model, sampler, runner) as its input arguments)
@@ -92,7 +92,7 @@ mychain = run(mymodel1, RWM(0.1), SerialMC(101:5:1000))
 
 ### Syntax 2 (calling run() function on the product model * sampler * range)
 
-mychain = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
+mychain1 = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
 ```
 
 #### Output summary and printing
@@ -209,7 +209,7 @@ The `acceptance`, `ess()`, `actime()`, `var()` and `std()` functions can be call
 To resume simulation whence it was left, the `resume()` function is invoked on the chain.
 
 ```jl
-mychain = resume(mychain, steps=10000)
+mychain1 = resume(mychain1, steps=10000)
 ```
 
 #### Model and sampler specifications must match
@@ -264,12 +264,12 @@ targets = MCMCTask[mods[i] * RWM(sts[i]) * SeqMC(steps=10, burnin=0) for i in 1:
 particles = [[randn()] for i in 1:1000]
 
 # Launch sequential MC (10 steps x 1000 particles = 10000 samples returned in a single MCMCChain)
-mychain1 = run(targets, particles=particles)
+mychain3 = run(targets, particles=particles)
 
 # Resample with replacement using weights to approximate the real distribution
-mychain3 = wsample(mychain1.samples["x"], mychain1.diagnostics["weigths"], 1000)
+mychain4 = wsample(mychain3.samples["x"], mychain3.diagnostics["weigths"], 1000)
 
-mean(mychain3)
+mean(mychain4)
 ```
 
 The output of the sequential Monte Carlo simulation can be plotted with any graphical package. Below is an example using the `Vega` package.
@@ -284,11 +284,11 @@ g = ones(100) * [1:10]'
 plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 
 # Plot a subset of raw samples
-ts = collect(1:10:nrow(mychain1.samples))
-plot(x = ts, y = vector(mychain1.samples[ts, "x"]), kind = :scatter)
+ts = collect(1:10:nrow(mychain3.samples))
+plot(x = ts, y = vector(mychain3.samples[ts, "x"]), kind = :scatter)
 
 # Plot weighted samples
-plot(x = [1:1000], y = mychain3, kind = :scatter)
+plot(x = [1:1000], y = mychain4, kind = :scatter)
 ```
 
 ## Future Features
