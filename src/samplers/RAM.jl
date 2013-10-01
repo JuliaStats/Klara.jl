@@ -11,7 +11,7 @@
 #
 ###########################################################################
 
-export RAM, RAMTuner
+export RAM
 
 println("Loading RAM(scale, rate) sampler")
 

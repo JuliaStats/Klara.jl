@@ -19,7 +19,7 @@
 
 export SeqMC
 
-println("Loading SeqMC(steps, burnin, swapPeriod) runner")
+println("Loading SeqMC(steps, burnin, trigger) runner")
 
 immutable SeqMC <: MCMCRunner
   steps::Integer

@@ -36,7 +36,7 @@ SMMALA(;scale::Float64=1.0, tuner::Union(Nothing, SMMALATuner)=nothing) = SMMALA
 ###########################################################################
 # SMMALA sampler
 ###########################################################################
-function SamplerTask(model::MCMCModel, sampler::SMMALA)
+function SamplerTask(model::MCMCModel, sampler::SMMALA, runner::MCMCRunner)
   # Define local variables
   local pars, proposedPars, parsMean
   local logTarget, proposedLogTarget

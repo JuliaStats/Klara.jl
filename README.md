@@ -109,6 +109,9 @@ using DataFrames
 
 mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
+# To simulate using adaptive HMC with dual averaging, run for instance
+# mychain2 = run(mymodel2, HMCDA(len=.5), SerialMC(steps=10000, burnin=1000))
+
 # Print samples and diagnostics
 head(mychain2.samples)
 head(mychain2.gradients)
