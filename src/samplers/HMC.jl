@@ -55,8 +55,8 @@ type EmpiricalDMCTune
   end
 end
 
-function adapt!(tune::EmpiricalDMCTune, tuner::EDMCTuner, rate::Float64)            
-  tune.leapStep *= (1/(1+exp(-11*(rate-tuner.targetRate)))+0.5)
+function adapt!(tune::EmpiricalDMCTune, tuner::EDMCTuner)        
+  tune.leapStep *= (1/(1+exp(-11*(tune.accepted/tune.proposed-tuner.targetRate)))+0.5)
   tune.nLeaps = min(tuner.maxLeapStep, ceil(tuner.targetPath/tune.leapStep))
 end
 
@@ -118,6 +118,7 @@ end
 ####  HMC task
 function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
+  local nLeaps, leapStep
 
   assert(hasgradient(model), "HMC sampler requires model with gradient function")
 
@@ -137,15 +138,20 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   while true
     local j, state
 
-    if isa(sampler.tuner, EDMCTuner); tune.proposed += 1; end
+    if isa(sampler.tuner, EDMCTuner)
+      tune.proposed += 1
+      nLeaps, leapStep = tune.nLeaps, tune.leapStep
+    else
+      nLeaps, leapStep = sampler.nLeaps, sampler.leapStep
+    end
 
     state0.m = randn(model.size)
     update!(state0)
     state = state0
 
     j=1
-    while j <= sampler.nLeaps && isfinite(state.logTarget)
-      state = leapFrog(state, sampler.leapStep, model.evalallg)
+    while j <= nLeaps && isfinite(state.logTarget)
+      state = leapFrog(state, leapStep, model.evalallg)
       j +=1
     end
 
@@ -165,7 +171,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
     end
 
     if isa(sampler.tuner, EDMCTuner) && mod(i, sampler.tuner.adaptStep) == 0
-      adapt!(tune, sampler.tuner, tune.accepted/tune.proposed)
+      adapt!(tune, sampler.tuner)
       reset!(tune)
     end
 
