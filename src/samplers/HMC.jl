@@ -8,15 +8,61 @@
 #
 ###########################################################################
 
-export HMC
+export HMC, EDMCTuner
 
 println("Loading HMC(nLeaps, leapStep, tuner) sampler")
 
 ###########################################################################
 #                  HMC specific 'tuners'
 ###########################################################################
-abstract HMCTuner <: MCMCTuner
+abstract HMCTuner <: DMCTuner
 
+immutable EmpiricalDMCTuner <: DMCTuner
+  adaptStep::Integer
+  maxLeapStep::Integer
+  targetPath::Float64
+  targetRate::Float64
+
+  function EmpiricalDMCTuner(adaptStep::Integer, maxLeapStep::Integer, targetPath::Float64, targetRate::Float64)
+    assert(adaptStep > 0, "Adaptation step size ($adaptStep) should be > 0")
+    assert(maxLeapStep > 0, "Adaptation step size ($maxLeapStep) should be > 0")    
+    assert(0 < targetRate < 1, "Target acceptance rate ($targetRate) should be between 0 and 1")
+    new(adaptStep, maxLeapStep, targetPath, targetRate)
+  end
+end
+
+typealias EDMCTuner EmpiricalDMCTuner
+
+EDMCTuner(adaptStep::Integer, targetPath::Float64, targetRate::Float64) =
+  EDMCTuner(adaptStep, 200, targetPath, targetRate)
+
+EDMCTuner(targetPath::Float64, targetRate::Float64) = EDMCTuner(100, 200, targetPath, targetRate)
+
+EDMCTuner(targetRate::Float64) = EDMCTuner(100, 200, 3.5, targetRate)
+
+type EmpiricalDMCTune
+  nLeaps::Integer
+  leapStep::Float64
+  accepted::Integer
+  proposed::Integer
+
+  function EmpiricalDMCTune(nLeaps::Integer, leapStep::Float64, accepted::Integer, proposed::Integer)
+    assert(nLeaps > 0, "Number of leapfrog steps ($nLeaps) should be > 0")
+    assert(leapStep > 0, "Leapfrog step size ($leapStep) should be > 0")
+    assert(0 <= accepted, "Number of accepted Monte Carlo steps ($accepted) should be non negative")
+    assert(0 <= proposed, "Number of proposed Monte Carlo steps ($proposed) should be non negative")      
+    new(nLeaps, leapStep, accepted, proposed)
+  end
+end
+
+function adapt!(tune::EmpiricalDMCTune, tuner::EDMCTuner, rate::Float64)            
+  tune.leapStep *= (1/(1+exp(-11*(rate-tuner.targetRate)))+0.5)
+  tune.nLeaps = min(tuner.maxLeapStep, ceil(tuner.targetPath/tune.leapStep))
+end
+
+count!(tune::EmpiricalDMCTune) = (tune.accepted += 1)
+
+reset!(tune::EmpiricalDMCTune) = ((tune.accepted, tune.proposed) = (0, 0))
 
 ###########################################################################
 #                  HMC type
@@ -25,20 +71,20 @@ abstract HMCTuner <: MCMCTuner
 immutable HMC <: MCMCSampler
   nLeaps::Integer
   leapStep::Float64
-  tuner::Union(Nothing, HMCTuner)
+  tuner::Union(Nothing, DMCTuner)
 
-  function HMC(i::Integer, s::Real, t::Union(Nothing, HMCTuner))
+  function HMC(i::Integer, s::Real, t::Union(Nothing, DMCTuner))
     assert(i>0, "inner steps should be > 0")
     assert(s>0, "inner steps scaling should be > 0")
     new(i,s,t)
   end
 end
 HMC(i::Integer=10, s::Float64=0.1                                      ) = HMC(i , s  , nothing)
-HMC(               s::Float64    , t::Union(Nothing, HMCTuner)=nothing ) = HMC(10, s  , t)
-HMC(i::Integer   ,                 t::HMCTuner                         ) = HMC(i , 0.1, t)
-HMC(                               t::HMCTuner                         ) = HMC(10, 0.1, t)
+HMC(               s::Float64    , t::Union(Nothing, DMCTuner)=nothing ) = HMC(10, s  , t)
+HMC(i::Integer   ,                 t::DMCTuner                         ) = HMC(i , 0.1, t)
+HMC(                               t::DMCTuner                         ) = HMC(10, 0.1, t)
 # keyword args version
-HMC(;init::Integer=10, scale::Float64=0.1, tuner::Union(Nothing, HMCTuner)=nothing) = HMC(init, scale, tuner)
+HMC(;init::Integer=10, scale::Float64=0.1, tuner::Union(Nothing, DMCTuner)=nothing) = HMC(init, scale, tuner)
 
 ###########################################################################
 #                  HMC task
@@ -84,9 +130,14 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalallg)
 
+  if isa(sampler.tuner, EDMCTuner); tune = EmpiricalDMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
+
   #  main loop
+  i = 1
   while true
     local j, state
+
+    if isa(sampler.tuner, EDMCTuner); tune.proposed += 1; end
 
     state0.m = randn(model.size)
     update!(state0)
@@ -105,12 +156,20 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
                       {"accept" => true} )
       produce(ms)
       state0 = state
+      if isa(sampler.tuner, EDMCTuner); tune.accepted += 1; end
     else
       ms = MCMCSample(state0.pars, state0.logTarget, state0.grad,
                       state0.pars, state0.logTarget, state0.grad,
                       {"accept" => false} )
       produce(ms)
     end
+
+    if isa(sampler.tuner, EDMCTuner) && mod(i, sampler.tuner.adaptStep) == 0
+      adapt!(tune, sampler.tuner, tune.accepted/tune.proposed)
+      reset!(tune)
+    end
+
+    i += 1
   end
 
 end
