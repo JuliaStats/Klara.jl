@@ -10,9 +10,9 @@ export SerialMC
 println("Loading SerialMC(steps, burnin, thinning) runner")
 
 immutable SerialMC <: MCMCRunner
-  burnin::Integer
-  thinning::Integer
-  len::Integer
+  burnin::Int
+  thinning::Int
+  len::Int
   r::Range
 
   function SerialMC(steps::Range{Int})
@@ -32,7 +32,7 @@ end
 
 SerialMC(steps::Range1{Int}) = SerialMC(first(steps):1:last(steps))
 
-SerialMC(; steps::Integer=100, burnin::Integer=0, thinning::Integer=1) = SerialMC((burnin+1):thinning:steps)
+SerialMC(; steps::Int=100, burnin::Int=0, thinning::Int=1) = SerialMC((burnin+1):thinning:steps)
 
 function run_serialmc(t::MCMCTask)
   tic() # start timer
@@ -82,7 +82,7 @@ function run_serialmc(t::MCMCTask)
   MCMCChain(t.runner.r, DataFrame(samples', cn), DataFrame(gradients', cn), diags, t, toq())
 end
 
-function resume_serialmc(t::MCMCTask; steps::Integer=100)
+function resume_serialmc(t::MCMCTask; steps::Int=100)
   assert(typeof(t.runner) == SerialMC,
     "resume_serialmc can not be called on an MCMCTask whose runner is of type $(fieldtype(t, :runner))")
   run(t.model, t.sampler, SerialMC(steps=steps, thinning=t.runner.thinning))

@@ -32,15 +32,15 @@ end
 run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S}), r::MCMCRunner) = run(m*s*r)
 
 # Functions for resuming MCMCTasks as well as arrays of MCMCTasks
-function resume(t::MCMCTask; steps::Integer=100)
+function resume(t::MCMCTask; steps::Int=100)
   if isa(t.runner, SerialMC)
     resume_serialmc(t, steps=steps)
   end
 end
 
-resume(c::MCMCChain; steps::Integer=100) = resume(c.task, steps=steps)
+resume(c::MCMCChain; steps::Int=100) = resume(c.task, steps=steps)
 
-function resume(t::Array{MCMCTask}; steps::Integer=100, args...)
+function resume(t::Array{MCMCTask}; steps::Int=100, args...)
   if isa(t[end].runner, SerialMC)
     res = Array(MCMCChain, size(t))
       for i = 1:length(t)

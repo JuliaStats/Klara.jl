@@ -28,45 +28,33 @@ abstract NUTSTuner <: MCMCTuner
 #                  NUTS type
 ###########################################################################
 immutable NUTS <: MCMCSampler
-  maxdoublings::Integer
+  maxdoublings::Int
   tuner::Union(Nothing, NUTSTuner)
 
-  function NUTS(i::Integer, t::Union(Nothing, NUTSTuner))
+  function NUTS(i::Int, t::Union(Nothing, NUTSTuner))
     assert(i>0, "max doublings should be > 0")
     assert(i<20, "max doublings reasonably be < 20")
     new(i,t)
   end
 end
-NUTS(i::Integer=5) = NUTS(i , nothing)
+NUTS(i::Int=5) = NUTS(i , nothing)
 NUTS(t::NUTSTuner) = NUTS(5, t)
 # keyword args version
-NUTS(;maxdoublings::Integer=5, tuner::Union(Nothing, NUTSTuner)=nothing) = NUTS(maxdoublings, tuner)
+NUTS(;maxdoublings::Int=5, tuner::Union(Nothing, NUTSTuner)=nothing) = NUTS(maxdoublings, tuner)
 
 ###########################################################################
 #                  HMC task
 ###########################################################################
 
 ####  Helper functions and types for HMC sampling task
-# TODO : these are identical to HMC's,   factorize ?
-type NUTSSample
-  pars::Vector{Float64} # sample position
-  grad::Vector{Float64} # gradient
-  v::Vector{Float64}    # velocity
-  logTarget::Float64    # log likelihood 
-  H::Float64            # Hamiltonian
-end
-NUTSSample(pars::Vector{Float64}) = NUTSSample(pars, Float64[], Float64[], NaN, NaN)
+uturn(s1::HMCSample, s2::HMCSample) = dot(s2.pars-s1.pars, s1.m) < 0. || dot(s2.pars-s1.pars, s2.m) < 0.
 
-calc!(s::NUTSSample, ll::Function) = ((s.logTarget, s.grad) = ll(s.pars))
-update!(s::NUTSSample) = (s.H = s.logTarget - dot(s.v, s.v)/2)
-uturn(s1::NUTSSample, s2::NUTSSample) = dot(s2.pars-s1.pars, s1.v) < 0. || dot(s2.pars-s1.pars, s2.v) < 0.
-
-function leapFrog(s::NUTSSample, ve, ll::Function)
+function leapFrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
-  n.v += n.grad * ve / 2.
-  n.pars += ve * n.v
+  n.m += n.grad * ve / 2.
+  n.pars += ve * n.m
   calc!(n, ll)
-  n.v += n.grad * ve / 2.
+  n.m += n.grad * ve / 2.
   update!(n)
 
   n
@@ -82,17 +70,17 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset,
-	             (resetPars::Vector{Float64}) -> (state0 = NUTSSample(copy(resetPars)); 
+	             (resetPars::Vector{Float64}) -> (state0 = HMCSample(copy(resetPars)); 
 	                                              calc!(state0, model.evalallg)) ) 
 	
 	# initialization
-	state0 = NUTSSample(copy(model.init))
+	state0 = HMCSample(copy(model.init))
 	calc!(state0, model.evalallg)
 	scale = model.scale 
 
 	# find initial value for epsilon
 	epsilon = 1.
-	state0.v = randn(model.size) .* scale
+	state0.m = randn(model.size) .* scale
 	state1 = leapFrog(state0, epsilon, model.evalallg)
 
 	ratio = exp(state1.H - state0.H)
@@ -157,7 +145,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
  		local alpha, nalpha, n, s, j, n1, s1
  		local dummy, state_minus, state_plus, state, state1
 
- 		state0.v = randn(model.size) .* scale
+ 		state0.m = randn(model.size) .* scale
  		update!(state0)
 
  		u_slice  = log(rand()) + state0.H # use log ( != paper) to avoid underflow

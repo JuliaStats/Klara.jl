@@ -161,7 +161,7 @@ end
 # TODO : other continuous distribs ? : Pareto, Rayleigh, Logistic, Levy, Laplace, Dirichlet, FDist
 # TODO : other discrete distribs ? : NegativeBinomial, DiscreteUniform, HyperGeometric, Geometric, Categorical
 
-## Bernoulli distribution (Note : no derivation on x parameter as it is an integer)
+## Bernoulli distribution (Note : no derivation on x parameter as it is an Int)
 @dfunc logpdfBernoulli(p::Real, x)     p     sum(1. ./ (p - (1. - x))) * ds
 @dfunc logpdfBernoulli(p::Array, x)    p     (1. ./ (p - (1. - x))) * ds
 
@@ -169,7 +169,7 @@ end
 @dfunc logpdfBinomial(n, p::Real, x)   p    sum(x ./ p - (n-x) ./ (1 - p)) * ds
 @dfunc logpdfBinomial(n, p::Array, x)  p    (x ./ p - (n-x) ./ (1 - p)) * ds
 
-## Poisson distribution (Note : no derivation on x parameter as it is an integer)
+## Poisson distribution (Note : no derivation on x parameter as it is an Int)
 @dfunc logpdfPoisson(lambda::Real, x)   lambda   sum(x ./ lambda - 1) * ds
 @dfunc logpdfPoisson(lambda::Array, x)  lambda   (x ./ lambda - 1) * ds
 
@@ -185,7 +185,7 @@ end
 
 
 ## Returns gradient expression of opex
-function derive(opex::Expr, index::Integer, dsym::Union(Expr,Symbol))  # opex=:(z^x);index=2;dsym=:y
+function derive(opex::Expr, index::Int, dsym::Union(Expr,Symbol))  # opex=:(z^x);index=2;dsym=:y
 	vs = opex.args[1+index]
 	ds = symbol("$DERIV_PREFIX$dsym")
 	args = opex.args[2:end]

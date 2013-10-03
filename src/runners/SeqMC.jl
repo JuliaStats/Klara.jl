@@ -22,11 +22,11 @@ export SeqMC
 println("Loading SeqMC(steps, burnin, trigger) runner")
 
 immutable SeqMC <: MCMCRunner
-  steps::Integer
-  burnin::Integer
+  steps::Int
+  burnin::Int
   trigger::Float64
 
-  function SeqMC(steps::Integer, burnin::Integer, trigger::Float64)
+  function SeqMC(steps::Int, burnin::Int, trigger::Float64)
 	  assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
 	  assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
 
@@ -34,7 +34,7 @@ immutable SeqMC <: MCMCRunner
   end
 end
 
-SeqMC(; steps::Integer=1, burnin::Integer=0, trigger::Float64=1e-10) = SeqMC(steps, burnin, trigger)
+SeqMC(; steps::Int=1, burnin::Int=0, trigger::Float64=1e-10) = SeqMC(steps, burnin, trigger)
 
 function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} = [[randn()] for i in 1:100])
 	local ntargets = length(targets)
@@ -123,7 +123,7 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 end
 
 # TODO: check that all elements of array contain MCMCTasks of the same type
-function resume_seqmc(targets::Array{MCMCTask}; steps::Integer=100)
+function resume_seqmc(targets::Array{MCMCTask}; steps::Int=100)
 	run(MCMCTask[targets[i].model * targets[i].sampler * SeqMC(steps=steps, trigger=targets[i].runner.trigger)
 		for i in 1:length(targets)])
 end

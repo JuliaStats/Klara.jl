@@ -26,12 +26,12 @@ abstract RMHMCTuner <: MCMCTuner
 # RMHMC type
 ###########################################################################
 immutable RMHMC <: MCMCSampler
-  nLeaps::Integer
+  nLeaps::Int
   leapStep::Float64
-  nNewton::Integer
-  tuner::Union(Nothing, RMHMCTuner)
+  nNewton::Int
+  tuner::Union(Nothing, MCMCTuner)
   
-  function RMHMC(nLeaps::Integer, leapStep::Float64, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner))
+  function RMHMC(nLeaps::Int, leapStep::Float64, nNewton::Int, tuner::Union(Nothing, MCMCTuner))
     assert(nLeaps>0, "Number of leapfrog steps should be > 0")
     assert(leapStep>0, "Leapfrog step size should be > 0")
     assert(nNewton>0, "Number of Newton steps should be > 0")    
@@ -39,13 +39,12 @@ immutable RMHMC <: MCMCSampler
   end
 end
 
-RMHMC(tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(6, 0.5, 4, tuner)
-RMHMC(nLeaps::Integer, tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(nLeaps, 3/nLeaps, 4, tuner)
-RMHMC(nLeaps::Integer, leapStep::Float64, tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(nLeaps, leapStep, 4, tuner)
-RMHMC(nLeaps::Integer, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner)=nothing) = 
-  RMHMC(nLeaps, 3/nLeaps, nNewton, tuner)
-RMHMC(leapStep::Float64, tuner::Union(Nothing, RMHMCTuner)=nothing) = RMHMC(int(floor(3/leapStep)), leapStep, 4, tuner)
-RMHMC(leapStep::Float64, nNewton::Integer, tuner::Union(Nothing, RMHMCTuner)=nothing) = 
+RMHMC(tuner::Union(Nothing, MCMCTuner)=nothing) = RMHMC(6, 0.5, 4, tuner)
+RMHMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = RMHMC(nLeaps, 3/nLeaps, 4, tuner)
+RMHMC(nLeaps::Int, leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = RMHMC(nLeaps, leapStep, 4, tuner)
+RMHMC(nLeaps::Int, nNewton::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = RMHMC(nLeaps, 3/nLeaps, nNewton, tuner)
+RMHMC(leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = RMHMC(int(floor(3/leapStep)), leapStep, 4, tuner)
+RMHMC(leapStep::Float64, nNewton::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = 
   RMHMC(int(floor(3/leapStep)), leapStep, nNewton, tuner)
 
 ###########################################################################
@@ -60,6 +59,7 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   local G, invG, cholG, dG, invGxdG, traceInvGxdG
   local momentum, leapMomentum, momentumTerm, invGMomentum01, invGMomentum02
   local timeStep, nRandomLeaps
+  local nLeaps, leapStep
 
   # Allocate memory for some of the local variables
   invGxdG = Array(Float64, model.size, model.size, model.size)
@@ -78,6 +78,9 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   pars = copy(model.init)
   logTarget, grad = model.evalallg(pars)
   
+  if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
+
+  i = 1
   while true 
     proposedPars = copy(pars)
 
@@ -100,7 +103,15 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
 
     # Perform leapfrog steps
     timeStep = (randn() > 0.5 ? 1. : -1.)
-    nRandomLeaps = ceil(rand()*sampler.nLeaps)
+
+    if isa(sampler.tuner, EmpMCTuner)
+      tune.proposed += 1
+      nLeaps, leapStep = tune.nLeaps, tune.leapStep
+    else
+      nLeaps, leapStep = sampler.nLeaps, sampler.leapStep
+    end
+
+    nRandomLeaps = ceil(rand()*nLeaps)
     
     for j = 1:nRandomLeaps
       leapGrad = model.evalg(proposedPars)
@@ -110,7 +121,7 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
         for r = 1:model.size
           momentumTerm[r] = (0.5*(leapMomentum'*invGxdG[:, :, r]*invGMomentum01))[1]
         end
-        leapMomentum = (momentum+timeStep*(sampler.leapStep/2)*(leapGrad-0.5*traceInvGxdG+momentumTerm))
+        leapMomentum = (momentum+timeStep*(leapStep/2)*(leapGrad-0.5*traceInvGxdG+momentumTerm))
       end
 
       momentum = copy(leapMomentum)
@@ -119,7 +130,7 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
       for k = 1:sampler.nNewton
         G = model.evalt(leapPars)
         invGMomentum01 = G\momentum
-        leapPars = proposedPars+(timeStep*(sampler.leapStep/2))*(invGMomentum01+invGMomentum02)
+        leapPars = proposedPars+(timeStep*(leapStep/2))*(invGMomentum01+invGMomentum02)
       end
       
       proposedPars = copy(leapPars)
@@ -136,10 +147,9 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
       end
 
       proposedGrad = model.evalg(proposedPars)
-      momentum = (momentum+timeStep*(sampler.leapStep/2)*(proposedGrad-0.5*traceInvGxdG+momentumTerm))
+      momentum = (momentum+timeStep*(leapStep/2)*(proposedGrad-0.5*traceInvGxdG+momentumTerm))
     end
     
-
     # Calculate log-target based on the proposed parameters
     proposedLogTarget = model.eval(proposedPars)
 
@@ -152,8 +162,19 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
       produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad, {"accept" => true}))
       pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
+      if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
       produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad, {"accept" => false}))
     end
+
+    if isa(sampler.tuner, EmpMCTuner) && i<= runner.burnin && mod(i, sampler.tuner.adaptStep) == 0
+      adapt!(tune, sampler.tuner)
+      reset!(tune)
+      if sampler.tuner.verbose
+        println("Burn-in teration $i of $(runner.burnin): ", round(100*tune.rate, 2), " % acceptance rate")
+      end
+    end
+
+    i += 1
   end
 end

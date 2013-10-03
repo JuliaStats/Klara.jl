@@ -19,8 +19,6 @@ abstract MCMCModel <: Model
 abstract MCMCSampler
 
 abstract MCMCTuner
-# Abstract tuner for all dynamic Monte Carlo samplers relying on Hamiltonians or Lagrangians
-abstract DMCTuner <: MCMCTuner
 
 abstract MCMCRunner
 

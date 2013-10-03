@@ -17,7 +17,8 @@ npars += 1
 
 # Define log-prior
 priorstd = 10.
-distribution = MvNormal(size(X, 2), priorstd)
+priorvar = priorstd^2
+distribution = MvNormal(zeros(size(X, 2)), priorvar*eye(npars))
 logprior(pars::Vector{Float64}) = logpdf(distribution, pars)
 randprior() = rand(distribution)
 
@@ -36,10 +37,36 @@ function grad_log_posterior(pars::Vector{Float64})
   XPars = X*pars
   normal = Normal()
   return (X'*(y.*exp(-(XPars.^2+log(2*pi))/2-logcdf(normal, XPars))
-    -(1-y).*exp(-(XPars.^2+log(2*pi))/2-logcdf(normal, XPars)))-pars/(priorstd^2))
+    -(1-y).*exp(-(XPars.^2+log(2*pi))/2-logcdf(normal, -XPars)))-pars/priorvar)
 end
 
-mcmodel = model(log_posterior, grad=grad_log_posterior, init=randprior())
+# Define metric tensor
+function tensor(pars::Vector{Float64})    
+  XPars = X*pars
+  normal = Normal()
+  vector = exp(-XPars.^2-logcdf(normal, XPars)-logcdf(normal, -XPars)-log(2*pi))
+  return ((X'.*repmat(vector', npars, 1))*X+(eye(npars)/priorvar))
+end
+
+# Define derivatives of metric tensor
+function deriv_tensor(pars::Vector{Float64})
+  output = Array(Float64, npars, npars, npars)
+  
+  XPars = X*pars
+  normal = Normal()
+  vector01 = exp(-XPars.^2-2*logcdf(normal, XPars)-logcdf(normal, -XPars)-log(2*pi))
+
+  for i = 1:npars
+    vector02 = (vector01.*(exp(-(XPars.^2+log(2*pi))/2-logcdf(normal, -XPars))
+      -2*(pdf(normal, XPars)+XPars.*cdf(normal, XPars))).*X[:, i])
+    
+    output[:, :, i] = (X'.*repmat(vector02', npars, 1))*X
+  end
+  
+  return output
+end
+
+mcmodel = model(log_posterior, grad=grad_log_posterior, tensor=tensor, dtensor=deriv_tensor, init=randprior())
 
 mcchain01 = run(mcmodel * RWM(0.5) * SerialMC(1001:10000))
 

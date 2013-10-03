@@ -26,7 +26,7 @@ type MCMCLikelihoodModel <: MCMCModel
   	evalallt::FOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
   	evalalldt::FOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
 	pmap::PMap                     # map to/from parameter vector from/to user-friendly variables
-	size::Integer                  # parameter vector size
+	size::Int                  # parameter vector size
 	init::Vector{Float64}          # parameter vector initial values
 	scale::Vector{Float64}         # scaling hint on parameters
 

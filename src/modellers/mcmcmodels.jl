@@ -11,12 +11,12 @@ export model
 #   parameter vector to user facing variables
 #
 immutable PDims
-	pos::Integer   # starting position of parameter in the parameter vector
+	pos::Int   # starting position of parameter in the parameter vector
 	dims::Tuple    # dimensions of user facing parameter, can be a scalar, vector or matrix
 end
 typealias PMap Dict{Symbol, PDims}
 
-function ispartition(m::PMap, n::Integer)
+function ispartition(m::PMap, n::Int)
 	c = zeros(n)
 	for v in values(m)
 		c[v.pos:(v.pos+prod(v.dims)-1)] += 1
