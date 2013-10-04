@@ -46,7 +46,6 @@ end
 
 typealias EmpMCTuner EmpiricalMCMCTuner
 
-# I stopped here, thinking on how to define the alternative constructors of EmpMCTuner
 EmpMCTuner(targetRate::Float64; adaptStep::Int=100, maxStep::Int=200, targetPath::Float64=1., verbose::Bool=false) =
   EmpMCTuner(adaptStep, maxStep, targetPath, targetRate, verbose)
 

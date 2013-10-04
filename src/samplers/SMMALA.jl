@@ -21,9 +21,9 @@ abstract SMMALATuner <: MCMCTuner
 ###########################################################################
 immutable SMMALA <: MCMCSampler
   driftStep::Float64
-  tuner::Union(Nothing, SMMALATuner)
+  tuner::Union(Nothing, MCMCTuner)
   
-  function SMMALA(s::Real, t::Union(Nothing, SMMALATuner))
+  function SMMALA(s::Real, t::Union(Nothing, MCMCTuner))
     assert(s>0, "SMMALA drift step should be > 0")
     new(s, t)
   end
@@ -31,7 +31,7 @@ end
 
 SMMALA(s::Float64=1.0) = SMMALA(s, nothing)
 SMMALA(s::MALATuner) = SMMALA(1.0, t)
-SMMALA(;scale::Float64=1.0, tuner::Union(Nothing, SMMALATuner)=nothing) = SMMALA(scale, tuner)
+SMMALA(;scale::Float64=1.0, tuner::Union(Nothing, MCMCTuner)=nothing) = SMMALA(scale, tuner)
 
 ###########################################################################
 # SMMALA sampler
@@ -45,6 +45,7 @@ function SamplerTask(model::MCMCModel, sampler::SMMALA, runner::MCMCRunner)
   local G, invG, cholOfInvG, proposedG, proposedInvG
   local firstTerm, proposedFirstTerm
   local probNewGivenOld, probOldGivenNew
+  local driftStep
 
    # Task reset function
   function reset(resetPars::Vector{Float64})
@@ -57,31 +58,43 @@ function SamplerTask(model::MCMCModel, sampler::SMMALA, runner::MCMCRunner)
   # Initialization
   pars = copy(model.init)
   logTarget, grad, G = model.evalallt(pars)
+  assert(isfinite(logTarget), "Initial values out of model support, try other values")
+
   invG = inv(G)
   firstTerm = invG*grad
   
+  if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalMALATune(sampler.driftStep, 0, 0); end
+
+  i = 1
   while true
+    if isa(sampler.tuner, EmpMCTuner)
+      tune.proposed += 1
+      driftStep = tune.driftStep
+    else
+      driftStep = sampler.driftStep
+    end
+
     # Calculate the drift term
-    parsMean = pars+(sampler.driftStep/2)*firstTerm
+    parsMean = pars+(driftStep/2)*firstTerm
 
     # Calculate proposed parameters
-    cholOfInvG = chol(sampler.driftStep*invG)
+    cholOfInvG = chol(driftStep*invG)
     proposedPars = parsMean+cholOfInvG'*randn(model.size)
 
     # Update model based on the proposed parameters
     proposedLogTarget, proposedGrad, proposedG = model.evalallt(proposedPars)
 
     probNewGivenOld = (-sum(log(diag(cholOfInvG)))
-      -(0.5*(parsMean-proposedPars)'*(G/sampler.driftStep)*(parsMean-proposedPars))[1])
+      -(0.5*(parsMean-proposedPars)'*(G/driftStep)*(parsMean-proposedPars))[1])
 
     proposedInvG = inv(proposedG)
     proposedFirstTerm = proposedInvG*proposedGrad
 
     # Calculate the drift term
-    parsMean = proposedPars+(sampler.driftStep/2)*proposedFirstTerm
+    parsMean = proposedPars+(driftStep/2)*proposedFirstTerm
 
-    probOldGivenNew = (-sum(log(diag(chol(sampler.driftStep*eye(model.size)*proposedInvG))))
-      -(0.5*(parsMean-pars)'*(proposedG/sampler.driftStep)*(parsMean-pars))[1])
+    probOldGivenNew = (-sum(log(diag(chol(driftStep*eye(model.size)*proposedInvG))))
+      -(0.5*(parsMean-pars)'*(proposedG/driftStep)*(parsMean-pars))[1])
  
     ratio = proposedLogTarget+probOldGivenNew-logTarget-probNewGivenOld
 
@@ -89,8 +102,19 @@ function SamplerTask(model::MCMCModel, sampler::SMMALA, runner::MCMCRunner)
       produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad, {"accept" => true}))
       pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
       G, invG, firstTerm = copy(proposedG), copy(proposedInvG), copy(proposedFirstTerm)
+      if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
       produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad, {"accept" => false}))
     end
+
+    if isa(sampler.tuner, EmpMCTuner) && i<= runner.burnin && mod(i, sampler.tuner.adaptStep) == 0
+      adapt!(tune, sampler.tuner)
+      reset!(tune)
+      if sampler.tuner.verbose
+        println("Burn-in teration $i of $(runner.burnin): ", round(100*tune.rate, 2), " % acceptance rate")
+      end
+    end
+
+    i += 1
   end
 end

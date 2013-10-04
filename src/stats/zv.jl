@@ -4,16 +4,16 @@
 
 export linearZv, quadraticZv
 
-# Function for calculating ZV-MCMC estimators using linear polynomial
-function linearZv(c::MCMCChain)
-  npars = ncol(c.samples)
+# Functions for calculating ZV-MCMC estimators using linear polynomial
+function linearZv(chain::DataFrame, grad::DataFrame)
+  npars = ncol(chain)
 
   covAll = Array(Float64, npars+1, npars+1, npars)
   precision = Array(Float64, npars, npars, npars)
   sigma = Array(Float64, npars, npars)
   a = Array(Float64, npars, npars)
 
-  zvChain, z = matrix(c.samples), matrix(-c.gradients/2)
+  zvChain, z = matrix(chain), matrix(-grad/2)
 
   for i = 1:npars
      covAll[:, :, i] = cov([z zvChain[:, i]])
@@ -27,9 +27,11 @@ function linearZv(c::MCMCChain)
   return zvChain, a
 end
 
-# Function for calculating ZV-MCMC estimators using quadratic polynomial
-function quadraticZv(c::MCMCChain)
-  nsamples, npars = size(c.samples)
+linearZv(c::MCMCChain) = linearZv(c.samples, c.gradients)
+
+# Functions for calculating ZV-MCMC estimators using quadratic polynomial
+function quadraticZv(chain::DataFrame, grad::DataFrame)
+  nsamples, npars = size(chain)
   k = convert(Int, npars*(npars+3)/2)
   l = 2*npars+1
   
@@ -39,7 +41,7 @@ function quadraticZv(c::MCMCChain)
   sigma = Array(Float64, k, npars)
   a = Array(Float64, k, npars)
 
-  zvChain, z = matrix(c.samples), matrix(-c.gradients/2)
+  zvChain, z = matrix(chain), matrix(-grad/2)
 
   zQuadratic[:, 1:npars] = z
   zQuadratic[:, (npars+1):(2*npars)] = 2*z.*zvChain-1
@@ -62,3 +64,5 @@ function quadraticZv(c::MCMCChain)
 
   return zvChain, a
 end
+
+quadraticZv(c::MCMCChain) = quadraticZv(c.samples, c.gradients)

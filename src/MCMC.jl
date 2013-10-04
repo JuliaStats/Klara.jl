@@ -7,6 +7,7 @@
 module MCMC
 
 using DataFrames
+using Stats
 
 import Base.*, Base.show
 export show, *
@@ -95,7 +96,6 @@ include("runners/SerialTempMC.jl") # Serial Tempering Monte-Carlo runner
 include("runners/SeqMC.jl") # Sequential Monte-Carlo runner
 
 #############  MCMC output analysis and diagnostics    ########################
-include("stats/acf.jl") # Autocorrelation functions (temporarily placed here)
 include("stats/var.jl") # MCMC variance estimators
 include("stats/ess.jl") # Effective sample size and integrated autocorrelation time functions
 include("stats/summary.jl") # Summary statistics for MCMCChain

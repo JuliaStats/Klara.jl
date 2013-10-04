@@ -75,3 +75,7 @@ acceptance(mcchain01)
 mcchain02 = run(mcmodel * HMC(0.001) * SerialMC(1001:10000))
 
 acceptance(mcchain02)
+
+mcchain03 = run(mcmodel * RMHMC(0.5, EmpMCTuner(0.8, verbose=true)) * SerialMC(5001:10000))
+
+acceptance(mcchain03)
