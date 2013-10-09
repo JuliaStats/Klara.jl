@@ -71,8 +71,7 @@ function SamplerTask(model::MCMCModel, sampler::ERMLMC, runner::MCMCRunner)
   cholG = chol(G)
   traceInvGxdG = Float64[trace(invG*dG[:, :, i]) for i = 1:model.size]
   dphi = -grad+0.5*traceInvGxdG
-  #C = 0.5*(permutedims(dG, [3 2 1])+permutedims(dG, [1 3 2])-dG)
-  C = 0.5dG
+  C = 0.5*(permutedims(dG, [3 2 1])+permutedims(dG, [1 3 2])-dG)
 
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
 
@@ -133,8 +132,7 @@ function SamplerTask(model::MCMCModel, sampler::ERMLMC, runner::MCMCRunner)
       proposedTraceInvGxdG = Float64[trace(proposedInvG*proposeddG[:, :, k]) for k = 1:model.size]
 
       proposeddphi = -proposedGrad+0.5*proposedTraceInvGxdG
-      # proposedC = 0.5*(permutedims(proposeddG, [3 2 1])+permutedims(proposeddG, [1 3 2])-proposeddG)
-      proposedC = 0.5*proposeddG
+      proposedC = 0.5*(permutedims(proposeddG, [3 2 1])+permutedims(proposeddG, [1 3 2])-proposeddG)
 
       # Update velocity
       for k = 1:model.size
