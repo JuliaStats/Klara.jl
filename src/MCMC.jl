@@ -53,6 +53,7 @@ include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin
 # include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler (deprecated)
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
+include("samplers/ERMLMC.jl") # Explicit Riemannian manifold Lagrangian Monte Carlo (ERMLMC)
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain

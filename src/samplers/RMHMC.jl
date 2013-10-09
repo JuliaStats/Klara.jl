@@ -81,7 +81,14 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
 
   i = 1
-  while true 
+  while true    
+    if isa(sampler.tuner, EmpMCTuner)
+      tune.proposed += 1
+      nLeaps, leapStep = tune.nLeaps, tune.leapStep
+    else
+      nLeaps, leapStep = sampler.nLeaps, sampler.leapStep
+    end
+
     proposedPars = copy(pars)
 
     # Calculate metric tensor G, its inverse invG and its Cholesky factor cholG
@@ -103,14 +110,6 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
 
     # Perform leapfrog steps
     timeStep = (randn() > 0.5 ? 1. : -1.)
-
-    if isa(sampler.tuner, EmpMCTuner)
-      tune.proposed += 1
-      nLeaps, leapStep = tune.nLeaps, tune.leapStep
-    else
-      nLeaps, leapStep = sampler.nLeaps, sampler.leapStep
-    end
-
     nRandomLeaps = ceil(rand()*nLeaps)
     
     for j = 1:nRandomLeaps
