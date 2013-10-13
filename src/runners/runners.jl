@@ -12,18 +12,16 @@ end
 run(c::MCMCChain) = run(c.task)
 
 # vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
-# TODO 1: use multiple cores if available
-# TODO 2: check that all elements of array contain MCMCTasks of the same type
 function run(t::Array{MCMCTask}; args...)
-  if isa(t[end].runner, SerialMC)
-    res = Array(MCMCChain, size(t))
-      for i = 1:length(t)
-        res[i] = run(t[i])
-      end 
-    res
-  elseif isa(t[end].runner, SerialTempMC)
+  lastrunner = t[end].runner
+  assert(eltype(t) == MCMCTask, "run takes an Array{MCMCTask} as input, array of type $(eltype(t)) was given")
+  assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
+
+  if isa(lastrunner, SerialMC)
+    pmap(run_serialmc, t)
+  elseif isa(lastrunner, SerialTempMC)
     run_serialtempmc(t)
-  else isa(t[end].runner, SeqMC)
+  else isa(lastrunner, SeqMC)
     run_seqmc(t; args...)    
   end
 end
