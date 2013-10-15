@@ -1,7 +1,7 @@
 import Base.run
-export run, resume
+export run, resume, prun
 
-# General run() functions which invoke run function specific to Task.runner field
+# General run() function which invoke run function specific to Task.runner field
 function run(t::MCMCTask)
   if isa(t.runner, SerialMC)
     run_serialmc(t)
@@ -14,15 +14,29 @@ run(c::MCMCChain) = run(c.task)
 # vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
 function run(t::Array{MCMCTask}; args...)
   lastrunner = t[end].runner
-  assert(eltype(t) == MCMCTask, "run takes an Array{MCMCTask} as input, array of type $(eltype(t)) was given")
   assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
 
   if isa(lastrunner, SerialMC)
-    pmap(run_serialmc, t)
+    res = Array(MCMCChain, size(t))
+    for i = 1:length(t)
+      res[i] = run(t[i])
+    end 
+    res
   elseif isa(lastrunner, SerialTempMC)
     run_serialtempmc(t)
   else isa(lastrunner, SeqMC)
     run_seqmc(t; args...)    
+  end
+end
+
+# parallel vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
+function prun(t::Array{MCMCTask}; args...)
+  lastrunner = t[end].runner
+  assert(eltype(t) == MCMCTask, "run takes an Array{MCMCTask} as input, array of type $(eltype(t)) was given")
+  assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
+
+  if isa(lastrunner, SerialMC)
+    pmap(run_serialmc_exittask, t)   
   end
 end
 
