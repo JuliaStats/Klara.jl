@@ -32,7 +32,6 @@ end
 # parallel vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
 function prun(t::Array{MCMCTask}; args...)
   lastrunner = t[end].runner
-  assert(eltype(t) == MCMCTask, "run takes an Array{MCMCTask} as input, array of type $(eltype(t)) was given")
   assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
 
   if isa(lastrunner, SerialMC)
