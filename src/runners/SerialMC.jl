@@ -82,6 +82,12 @@ function run_serialmc(t::MCMCTask)
   MCMCChain(t.runner.r, DataFrame(samples', cn), DataFrame(gradients', cn), diags, t, toq())
 end
 
+function run_serialmc_exittask(t::MCMCTask)
+  chain = run_serialmc(t)
+  chain.task.task.done = true
+  return chain
+end
+
 function resume_serialmc(t::MCMCTask; steps::Int=100)
   assert(typeof(t.runner) == SerialMC,
     "resume_serialmc can not be called on an MCMCTask whose runner is of type $(fieldtype(t, :runner))")
