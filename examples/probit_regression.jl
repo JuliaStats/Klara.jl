@@ -4,7 +4,7 @@
 using Distributions, MCMC
 
 # Create design matrix X and response variable y from vaso data array
-vaso = readdlm(Pkg.dir("MCMC","examples","vaso.txt"), ' ')
+vaso = readdlm(joinpath(dirname(@__FILE__),"vaso.txt"), ' ')
 covariates, y = vaso[:, 1:end-1], vaso[:, end]
 nsamples, npars = size(covariates)
 covariates = (broadcast(-, covariates, mean(covariates, 1))./repmat(std(covariates, 1), nsamples, 1))

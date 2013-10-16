@@ -82,9 +82,9 @@ function run_serialmc(t::MCMCTask)
   MCMCChain(t.runner.r, DataFrame(samples', cn), DataFrame(gradients', cn), diags, t, toq())
 end
 
-function run_serialmc_exittask(t::MCMCTask)
+function run_serialmc_exit(t::MCMCTask)
   chain = run_serialmc(t)
-  chain.task.task.done = true
+  stop!(chain)
   return chain
 end
 

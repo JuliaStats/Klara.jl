@@ -1,6 +1,8 @@
 import Base.run
 export run, resume, prun
 
+stop!(c::MCMCChain) = (c.task.task.done == false ? c.task.task.done = true : nothing)
+
 # General run() function which invoke run function specific to Task.runner field
 function run(t::MCMCTask)
   if isa(t.runner, SerialMC)
@@ -35,7 +37,7 @@ function prun(t::Array{MCMCTask}; args...)
   assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
 
   if isa(lastrunner, SerialMC)
-    pmap(run_serialmc_exittask, t)   
+    pmap(run_serialmc_exit, t)   
   end
 end
 
