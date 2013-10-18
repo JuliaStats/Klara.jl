@@ -43,7 +43,6 @@ RWM(;scale::Float64=1.0, tuner::Union(Nothing, RWMTuner)=nothing) = RWM(scale, t
 function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
-  local proposed
   local scale
 
 	# hook inside Task to allow remote resetting
@@ -56,7 +55,7 @@ function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
   @assert isfinite(logTarget) "Initial values out of model support, try other values"
   
 	# main loop
-	for i in 1:Inf
+	while true
 		proposedPars = pars + randn(model.size) .* scale
 		proposedLogTarget = model.eval(proposedPars) 
 

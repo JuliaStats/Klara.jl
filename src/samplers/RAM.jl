@@ -41,7 +41,6 @@ RAM(;scale::Float64=1.0, rate::Float64=0.234) = RAM(scale, rate)
 function SamplerTask(model::MCMCModel, sampler::RAM, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
-  local proposed
   local scale
 
 	# hook inside Task to allow remote resetting
@@ -56,7 +55,7 @@ function SamplerTask(model::MCMCModel, sampler::RAM, runner::MCMCRunner)
 	S = Float64[ i==j ? scale[i] : 0. for i in 1:model.size, j in 1:model.size]
 		
 	# main loop
-	for i in 1:Inf
+	while true
 		rvec = randn(model.size)
 		proposedPars = pars + S * rvec
 		proposedLogTarget = model.eval(proposedPars) 

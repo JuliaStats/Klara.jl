@@ -43,6 +43,7 @@ reset(t::MCMCTask, x) = t.task.storage[:reset](x)
 
 #############  samplers  ########################
 include("samplers/samplers.jl")  # Common definitions for samplers
+include("samplers/IMH.jl")    # Independent Metropolis-Hastings sampler
 include("samplers/RWM.jl")    # Random-walk Metropolis sampler
 include("samplers/RAM.jl")    # Robust adaptive Metropolis sampler
 include("samplers/MALA.jl")   # Metropolis adjusted Langevin algorithm sampler

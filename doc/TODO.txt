@@ -8,20 +8,29 @@
 08 - done) Update README file to reflect current state of MCMC package
 09) Write a user guide using LaTeX (to be placed in doc directory)
 10 - done) Organize Bayesian logit and probit examples and tests better
-11) Add RMLMC (Semi-Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
-12 - done) Add eRMLMC (Explicit Riemmanian Manifold Lagrangian Monte Carlo) sampler
-13 - done) Add PMALA (Position-dependent MALA) sampler
-14) Add WHMC (Wormhole Hamiltonian Monte Carlo) sampler
-15) Design and implement parallel population MCMC capable of running on cluster workers
-16) Use BUGS approach based on graphical models to define Gibbs-based algorithms
-17) EM (expectation-maximization) algorithm
-18) Rejection sampling
-19) Slice sampling
-20) Importance sampling
-22) MCMC for hierarchical models (constrained Monte Carlo)
-23) Simulated annealing
-24) ABC (Approximate Bayesian Computation) methods
-25 - done) Implement estimators for MCMC variance, Monte Carlo error, effective sample size(ESS) and integrated
+11) Add the following samplers:
+11.01 - done) Independent Metropolis Hastings (IMH)
+11.02) Adaptive Metropolis (AM) by H. Haario, E. Saksman, and J. Tamminen
+11.03) Adaptive Optimal Scaling Metropolis Hastings (AOSMH) by P. H. Garthwaite, Y. Fan, S. A. Sisson
+11.04) Hit-And-Run Metropolis (HARM), see LaplacesDemon R package
+11.05) Componentwise Hit-And-Run Metropolis (CHARM), see LaplacesDemon R package
+11.06) Kernel Adaptive Metropolis-Hastings (KAM), known as MCMC Kameleon
+11.07) Orientational Bias Monte Carlo (OBMC)
+11.08 - done) Position-Dependent MALA (PMALA)
+11.09) Subsample-Adapting Langevin Algorithm (SALA)
+11.10 - done) Explicit Riemmanian Manifold Lagrangian Monte Carlo (eRMLMC)
+11.11) Semi-Explicit Riemmanian Manifold Lagrangian Monte Carlo (RMLMC)
+11.12) Wormhole Hamiltonian Monte Carlo (WHMC)
+12) Design and implement parallel population MCMC capable of running on cluster workers
+13) Use BUGS approach based on graphical models to define Gibbs-based algorithms
+14) EM (expectation-maximization) algorithm
+15) Rejection sampling
+16) Slice sampling
+17) Importance sampling
+18) MCMC for hierarchical models (constrained Monte Carlo)
+19) Simulated annealing
+20) Approximate Bayesian Computation (ABC) methods
+21 - done) Implement estimators for MCMC variance, Monte Carlo error, effective sample size(ESS) and integrated
 autocorrelation time
-26) Implement MCMC summary statistics and MCMC convergence diagnostics that require spectral computations
-27) Make algebraic changes in samplers to speed them up
+22) Implement MCMC summary statistics and MCMC convergence diagnostics that require spectral computations
+23) Make algebraic changes in samplers to speed them up
