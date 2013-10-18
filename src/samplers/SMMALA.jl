@@ -47,6 +47,9 @@ function SamplerTask(model::MCMCModel, sampler::SMMALA, runner::MCMCRunner)
   local probNewGivenOld, probOldGivenNew
   local driftStep
 
+  @assert hasgradient(model) "SMMALA sampler requires model with gradient function"
+  @assert hastensor(model) "SMMALA sampler requires model with tensor function"
+
    # Task reset function
   function reset(resetPars::Vector{Float64})
     pars = copy(resetPars)

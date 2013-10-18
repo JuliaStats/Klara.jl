@@ -83,7 +83,8 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
   # initialization
   state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalallg)
-
+  @assert isfinite(state0.logTarget) "Initial values out of model support, try other values"
+  
   state0.m = randn(model.size)
   leapStep = initializeHMCDAStep(model, state0)
   mu = log(10*leapStep)

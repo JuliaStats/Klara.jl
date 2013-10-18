@@ -61,6 +61,10 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   local timeStep, nRandomLeaps
   local nLeaps, leapStep
 
+  @assert hasgradient(model) "RMHMC sampler requires model with gradient function"
+  @assert hastensor(model) "RMHMC sampler requires model with tensor function"
+  @assert hasdtensor(model) "RMHMC sampler requires model with function of tensor derivatives"
+
   # Allocate memory for some of the local variables
   invGxdG = Array(Float64, model.size, model.size, model.size)
   traceInvGxdG = Array(Float64, model.size)
@@ -77,7 +81,8 @@ function SamplerTask(model::MCMCModel, sampler::RMHMC, runner::MCMCRunner)
   # Initialization
   pars = copy(model.init)
   logTarget, grad = model.evalallg(pars)
-  
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
+    
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
 
   i = 1

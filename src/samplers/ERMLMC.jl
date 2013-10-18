@@ -56,6 +56,10 @@ function SamplerTask(model::MCMCModel, sampler::ERMLMC, runner::MCMCRunner)
   local nRandomLeaps
   local nLeaps, leapStep
 
+  @assert hasgradient(model) "ERMLMC sampler requires model with gradient function"
+  @assert hastensor(model) "ERMLMC sampler requires model with tensor function"
+  @assert hasdtensor(model) "ERMLMC sampler requires model with function of tensor derivatives"
+
    #  Task reset function
   function reset(resetPars::Vector{Float64})
     pars = copy(resetPars)
@@ -67,6 +71,8 @@ function SamplerTask(model::MCMCModel, sampler::ERMLMC, runner::MCMCRunner)
   # Initialization
   pars = copy(model.init)
   logTarget, grad, G, dG = model.evalalldt(pars)
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
+
   invG = inv(G)
   cholG = chol(G)
   traceInvGxdG = Float64[trace(invG*dG[:, :, i]) for i = 1:model.size]

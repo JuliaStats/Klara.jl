@@ -53,7 +53,8 @@ function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 	scale = model.scale .* sampler.scale  # rescale model scale by sampler scale
 	pars = copy(model.init)
 	logTarget = model.eval(pars)
-
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
+  
 	# main loop
 	for i in 1:Inf
 		proposedPars = pars + randn(model.size) .* scale

@@ -50,6 +50,10 @@ function SamplerTask(model::MCMCModel, sampler::PMALA, runner::MCMCRunner)
   local probNewGivenOld, probOldGivenNew
   local driftStep
 
+  @assert hasgradient(model) "PMALA sampler requires model with gradient function"
+  @assert hastensor(model) "PMALA sampler requires model with tensor function"
+  @assert hasdtensor(model) "PMALA sampler requires model with function of tensor derivatives"
+
   # Allocate memory for some of the local variables
   invGxdG = Array(Float64, model.size, model.size, model.size)
   secondTerm = Array(Float64, model.size, model.size)

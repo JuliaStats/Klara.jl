@@ -112,6 +112,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   # initialization
   state0 = HMCSample(copy(model.init))
   calc!(state0, model.evalallg)
+  @assert isfinite(state0.logTarget) "Initial values out of model support, try other values"
 
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
 
