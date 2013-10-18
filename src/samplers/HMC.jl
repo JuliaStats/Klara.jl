@@ -25,10 +25,10 @@ type EmpiricalHMCTune
   rate::Float64
 
   function EmpiricalHMCTune(nLeaps::Int, leapStep::Float64, accepted::Int, proposed::Int, rate::Float64)
-    assert(nLeaps > 0, "Number of leapfrog steps ($nLeaps) should be > 0")
-    assert(leapStep > 0, "Leapfrog step size ($leapStep) should be > 0")
-    assert(0 <= accepted, "Number of accepted Monte Carlo steps ($accepted) should be non negative")
-    assert(0 <= proposed, "Number of proposed Monte Carlo steps ($proposed) should be non negative") 
+    @assert nLeaps > 0 "Number of leapfrog steps ($nLeaps) should be > 0"
+    @assert leapStep > 0 "Leapfrog step size ($leapStep) should be > 0"
+    @assert 0 <= accepted "Number of accepted Monte Carlo steps ($accepted) should be non negative"
+    @assert 0 <= proposed "Number of proposed Monte Carlo steps ($proposed) should be non negative" 
     new(nLeaps, leapStep, accepted, proposed)
   end
 end
@@ -56,8 +56,8 @@ immutable HMC <: MCMCSampler
   tuner::Union(Nothing, MCMCTuner)
 
   function HMC(i::Int, s::Real, t::Union(Nothing, MCMCTuner))
-    assert(i>0, "inner steps should be > 0")
-    assert(s>0, "inner steps scaling should be > 0")
+    @assert i>0 "inner steps should be > 0"
+    @assert s>0 "inner steps scaling should be > 0"
     new(i,s,t)
   end
 end
@@ -102,7 +102,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
   local nLeaps, leapStep
 
-  assert(hasgradient(model), "HMC sampler requires model with gradient function")
+  @assert hasgradient(model) "HMC sampler requires model with gradient function"
 
   # hook inside Task to allow remote resetting
   task_local_storage(:reset,

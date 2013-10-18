@@ -16,7 +16,7 @@ run(c::MCMCChain) = run(c.task)
 # vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
 function run(t::Array{MCMCTask}; args...)
   lastrunner = t[end].runner
-  assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
+  @assert all(map(t->isa(t.runner, typeof(lastrunner)), t)) "Runners do not have the same runner type"
 
   if isa(lastrunner, SerialMC)
     res = Array(MCMCChain, size(t))
@@ -34,7 +34,7 @@ end
 # parallel vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
 function prun(t::Array{MCMCTask}; args...)
   lastrunner = t[end].runner
-  assert(all(map(t->isa(t.runner, typeof(lastrunner)), t)), "Runners do not have the same runner type")
+  @assert all(map(t->isa(t.runner, typeof(lastrunner)), t)) "Runners do not have the same runner type"
 
   if isa(lastrunner, SerialMC)
     pmap(run_serialmc_exit, t)   

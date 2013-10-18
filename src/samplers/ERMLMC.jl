@@ -28,8 +28,8 @@ immutable ERMLMC <: MCMCSampler
   tuner::Union(Nothing, MCMCTuner)
   
   function ERMLMC(nLeaps::Int, leapStep::Float64, tuner::Union(Nothing, MCMCTuner))
-    assert(nLeaps>0, "Number of leapfrog steps should be > 0")
-    assert(leapStep>0, "Leapfrog step size should be > 0")   
+    @assert nLeaps>0 "Number of leapfrog steps should be > 0"
+    @assert leapStep>0 "Leapfrog step size should be > 0"
     new(nLeaps, leapStep, tuner)
   end
 end

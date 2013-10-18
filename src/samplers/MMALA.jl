@@ -28,7 +28,7 @@ immutable MMALA <: MCMCSampler
   tuner::Union(Nothing, MCMCTuner)
   
   function MMALA(s::Real, t::Union(Nothing, MCMCTuner))
-    assert(s>0, "MMALA drift step should be > 0")
+    @assert s>0 "MMALA drift step should be > 0"
     new(s, t)
   end
 end
@@ -68,7 +68,7 @@ function SamplerTask(model::MCMCModel, sampler::MMALA, runner::MCMCRunner)
   # Initialization
   pars = copy(model.init)
   logTarget, grad, G, dG = model.evalalldt(pars)
-  assert(isfinite(logTarget), "Initial values out of model support, try other values")
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
 
   invG = inv(G)
   firstTerm = invG*grad

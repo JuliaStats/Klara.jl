@@ -19,7 +19,7 @@ msce_iid(c::MCMCChain, par::Real) = msce_iid(c, par:par)
 # Statistics, 2010, 38 (2), pp 1034-1070
 function mcvar_bm(x::AbstractVector; batchlen::Int=100)
   nbatches = div(length(x), batchlen)  
-  assert(nbatches > 1, "Choose batch size such that the number of batches is greather than one")
+  @assert nbatches > 1 "Choose batch size such that the number of batches is greather than one"
   nbsamples = nbatches*batchlen
   batchmeans = Float64[mean(x[((j-1)*batchlen+1):(j*batchlen)]) for j = 1:nbatches]
   return batchlen*var(batchmeans)/nbsamples
@@ -120,7 +120,7 @@ mcse_ipse(c::MCMCChain, par::Real; maxlag::Int=nrow(c.samples)-1) = mcse_ipse(c,
 vtypes = (:bm, :iid, :imse, :ipse)
 
 function var(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
-  assert(in(vtype, vtypes), "Unknown variance type $vtype")
+  @assert in(vtype, vtypes) "Unknown variance type $vtype"
 
   if vtype == :bm
     return mcvar_bm(c, pars; args...) 
@@ -137,7 +137,7 @@ var(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = var(c, par:par; vty
 
 # Wrapper function for computing Monte Carlo (standard) error using various approaches
 function std(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
-  assert(in(vtype, vtypes), "Unknown standard error type $vtype")
+  @assert in(vtype, vtypes) "Unknown standard error type $vtype"
 
   if vtype == :bm
     return mcse_bm(c, pars; args...)

@@ -37,9 +37,9 @@ immutable EmpiricalMCMCTuner <: MCMCTuner
   verbose::Bool
 
   function EmpiricalMCMCTuner(adaptStep::Int, maxStep::Int, targetPath::Float64, targetRate::Float64, verbose::Bool)
-    assert(adaptStep > 0, "Adaptation step size ($adaptStep) should be > 0")
-    assert(maxStep > 0, "Adaptation step size ($maxStep) should be > 0")    
-    assert(0 < targetRate < 1, "Target acceptance rate ($targetRate) should be between 0 and 1")
+    @assert adaptStep > 0 "Adaptation step size ($adaptStep) should be > 0"
+    @assert maxStep > 0 "Adaptation step size ($maxStep) should be > 0" 
+    @assert 0 < targetRate < 1 "Target acceptance rate ($targetRate) should be between 0 and 1"
     new(adaptStep, maxStep, targetPath, targetRate, verbose)
   end
 end

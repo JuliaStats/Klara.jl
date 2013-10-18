@@ -66,8 +66,8 @@ type MCMCChain
    
   function MCMCChain(	r::Range{Int}, s::DataFrame, g::DataFrame, d::DataFrame, 
   						t::Union(MCMCTask, Array{MCMCTask}), rt::Float64)
-    if !isempty(g); assert(size(s) == size(g), "samples and gradients must have the same number of rows and columns"); end
-    if !isempty(d); assert(nrow(s) == nrow(d), "samples and diagnostics must have the same number of rows"); end
+    if !isempty(g); @assert size(s) == size(g) "samples and gradients must have the same number of rows and columns"; end
+    if !isempty(d); @assert nrow(s) == nrow(d) "samples and diagnostics must have the same number of rows"; end
     new(r, s, g, d, t, rt)
   end
 end

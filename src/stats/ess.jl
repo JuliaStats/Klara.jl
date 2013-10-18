@@ -4,7 +4,7 @@ export ess, actime
 actypes = (:bm, :imse, :ipse)
 
 function ess(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
-  assert(in(vtype, actypes), "Unknown ESS type $vtype")
+  @assert in(vtype, actypes) "Unknown ESS type $vtype"
 
   return nrow(c.samples)*var(c, pars; vtype=:iid)./var(c, pars; vtype=vtype, args...)
 end
@@ -13,7 +13,7 @@ ess(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = ess(c, par:par; vty
 
 # Integrated autocorrelation time
 function actime(c::MCMCChain, pars::Ranges=1:ncol(c.samples); vtype::Symbol=:imse, args...)
-  assert(in(vtype, actypes), "Unknown integrated autocorrelation time type $vtype")
+  @assert in(vtype, actypes) "Unknown integrated autocorrelation time type $vtype"
 
   return var(c, pars; vtype=vtype, args...)./var(c, pars; vtype=:iid)
 end

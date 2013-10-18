@@ -41,7 +41,7 @@ function ksTest(ex::Expr)
 		res = model(mex, gradient=true, x=exactMean) * v * (1000:N) 
 		ksv = ksValue(res.samples["x"], distrib)
 		println(" KS measure = $ksv")
-		assert(ksv < KSTHRESHOLD, "correct distrib hyp. rejected")
+		@assert ksv < KSTHRESHOLD "correct distrib hyp. rejected"
 	end
 
 end

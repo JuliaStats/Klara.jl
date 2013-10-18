@@ -14,13 +14,13 @@ using Distributions
 
 # function logpdfNormal(mu::Real, sigma::Real, x::Real)
 # 	local const fac = -log(sqrt(2pi))
-# 	assert(sigma > 0., "calling logpdfNormal with negative or null stdev")
+# 	@assert sigma > 0. "calling logpdfNormal with negative or null stdev"
 # 	local r = (x-mu)/sigma
 # 	return -r*r*0.5-log(sigma)+fac
 # end
 
 # function logpdfUniform(a::Real, b::Real, x::Real)
-# 	assert(a < b, "calling logpdfUniform with lower limit >= upper limit")
+# 	@assert a < b "calling logpdfUniform with lower limit >= upper limit"
 # 	return (a <= x <= b) ? -log(b-a) : throw("give up eval")
 # end
 

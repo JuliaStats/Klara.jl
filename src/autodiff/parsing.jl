@@ -114,8 +114,7 @@ function parseModel!(m::ParsingStruct, source::Expr)
 		return :($ACC_SYM = $ACC_SYM + $(Expr(:call, fn, ex.args[3].args[2:end]..., ex.args[2])))
 	end
 
-	assert(source.head==:block && length(source.args)>=1, 
-		"model should be a block with at least 1 statement")
+	@assert source.head==:block && length(source.args)>=1 "model should be a block with at least 1 statement"
 
 	m.source = explore(source)
 
@@ -141,8 +140,8 @@ function unfold!(m::ParsingStruct)
 	
 	function explore(ex::Exprequal) 
 		lhs = ex.args[1]
-		assert(typeof(lhs) == Symbol ||  (typeof(lhs) == Expr && lhs.head == :ref),
-			"[unfold] not a symbol on LHS of assigment $ex")
+		@assert typeof(lhs) == Symbol ||  (typeof(lhs) == Expr && lhs.head == :ref)
+			"[unfold] not a symbol on LHS of assigment $ex"
 
 		rhs = ex.args[2]
 		if isa(rhs, Symbol) || isa(rhs, Real)
@@ -245,10 +244,10 @@ function categorizeVars!(m::ParsingStruct)
         !isempty(intersect(lhs, m.accanc)) && union!(m.accanc, rhs)
     end
 
-    assert(in(m.finalacc, m.pardesc), "Model parameters do not seem to influence model outcome")
+    @assert in(m.finalacc, m.pardesc) "Model parameters do not seem to influence model outcome"
     
     local parset2 = setdiff(parset, m.accanc)
-    assert(isempty(parset2), "Model parameter(s) $(collect(parset2)) do not seem to influence model outcome")
+    @assert isempty(parset2) "Model parameter(s) $(collect(parset2)) do not seem to influence model outcome"
 
 end
 
@@ -300,20 +299,20 @@ function backwardSweep!(m::ParsingStruct)
 
 	avars = intersect(m.accanc, m.pardesc)
 	for ex2 in reverse(m.exprs)  # proceed backwards
-		assert(isa(ex2, Expr), "[backwardSweep] not an expression : $ex2")
+		@assert isa(ex2, Expr) "[backwardSweep] not an expression : $ex2"
 		explore(ex2)
 	end
 end
 
 ######## sets inital values from 'init' given as parameter  ##########
 function setInit!(m::ParsingStruct, init)
-    assert(length(init)>=1, "There should be at leat one parameter specified, none found")
+    @assert length(init)>=1 "There should be at leat one parameter specified, none found"
 
     for p in init  # p = collect(init)[1]
         par = p[1]  # param symbol defined here
         def = p[2]
 
-        assert(typeof(par) == Symbol, "[setInit] not a symbol in init param : $(par)")
+        @assert typeof(par) == Symbol "[setInit] not a symbol in init param : $(par)"
 
         if isa(def, Real)  #  single param declaration
             # push!(m.pars, MCMCParams(par, Integer[], m.bsize+1)) 

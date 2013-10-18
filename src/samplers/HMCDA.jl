@@ -29,10 +29,10 @@ immutable HMCDA <: MCMCSampler
   step::Float64
 
   function HMCDA(rate::Float64, len::Float64, shrinkage::Float64, t0::Float64, step::Float64)
-    assert(0. < rate < 1., "Target acceptance rate ($rate) should be between 0 and 1")
-    assert(len > 0, "len parameter of HMCDA sampler ($len) must be non-negative")
-    assert(shrinkage > 0, "shrinkage parameter of HMCDA sampler ($shrinkage) must be positive")
-    assert(t0 >= 0, "t0 parameter of HMCDA sampler ($t0) must be non-negative")
+    @assert 0. < rate < 1. "Target acceptance rate ($rate) should be between 0 and 1"
+    @assert len > 0 "len parameter of HMCDA sampler ($len) must be non-negative"
+    @assert shrinkage > 0. "shrinkage parameter of HMCDA sampler ($shrinkage) must be positive"
+    @assert t0 >= 0 "t0 parameter of HMCDA sampler ($t0) must be non-negative"
 
     new(rate, len, shrinkage, t0, step)
   end
@@ -74,7 +74,7 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
   local p, i
   local nLeaps, leapStep, dualLeapStep
 
-  assert(hasgradient(model), "HMCDA sampler requires model with gradient function")
+  @assert hasgradient(model) "HMCDA sampler requires model with gradient function"
 
   # hook inside Task to allow remote resetting
   task_local_storage(:reset,

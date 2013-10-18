@@ -19,8 +19,8 @@ immutable SerialTempMC <: MCMCRunner
   swapPeriod::Int
 
   function SerialTempMC(steps::Int, burnin::Int, swapPeriod::Int)
-	  assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
-	  assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
+	  @assert burnin >= 0 "Burnin rounds ($burnin) should be >= 0"
+	  @assert steps > burnin "Steps ($steps) should be > to burnin ($burnin)"
 
     new(steps, burnin, swapPeriod)
   end
@@ -36,8 +36,7 @@ function run_serialtempmc(tasks::Array{MCMCTask})
   local burnin = tasks[end].runner.burnin
   local swapPeriod = tasks[end].runner.swapPeriod
 
-	assert(all( map(t->t.model.size, tasks) .== tsize),
-		   "Models do not have the same parameter vector size")
+	@assert all(map(t->t.model.size, tasks) .== tsize) "Models do not have the same parameter vector size"
 
 	tic() # start timer
 

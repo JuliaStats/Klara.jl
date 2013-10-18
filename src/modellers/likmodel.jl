@@ -40,18 +40,18 @@ type MCMCLikelihoodModel <: MCMCModel
 
 		s = size(i, 1)
 
-		assert(ispartition(pmap, s), "param map is not a partition of parameter vector")
-		assert(size(sc,1) == s, "scale parameter size ($(size(sc,1))) different from initial values ($s)")
+		@assert ispartition(pmap, s) "param map is not a partition of parameter vector"
+		@assert size(sc,1) == s "scale parameter size ($(size(sc,1))) different from initial values ($s)"
 
 		# check that all functions can be called with a vector of Float64 as argument
 		for ff in [f, g, ag, t, at, dt, adt]
-			assert(ff==nothing || hasvectormethod(f), 
-					"one of the supplied functions cannot be called with Vector{Float64}")
+			@assert ff==nothing || hasvectormethod(f) 
+					"one of the supplied functions cannot be called with Vector{Float64}"
 			#TODO : make error message print which function is problematic
 		end
 
 		# check that initial values are in the support of likelihood function
-		assert(isfinite(f(i)), "Initial values out of model support, try other values")
+		@assert isfinite(f(i)) "Initial values out of model support, try other values"
 
 		new(f, g, t, dt, ag, at, adt, pmap, s, i, sc)
 	end
@@ -68,10 +68,10 @@ function MCMCLikelihoodModel(	m::Expr;
 								args...)
 	# when using expressions, initial values are passed in keyword args
 	#  with one arg by parameter, therefore there is not need for an init arg
-	assert(init == nothing, "'init' kwargs not allowed for model as expression\n")
+	@assert init == nothing "'init' kwargs not allowed for model as expression\n"
 
 	# same thing with 'pmap'
-	assert(pmap == nothing, "'pmap' kwargs not allowed for model as expression\n")
+	@assert pmap == nothing "'pmap' kwargs not allowed for model as expression\n"
 
 	# generate lik function
 	f, s, p, i = generateModelFunction(m; gradient=false, args...) # loglik only function
@@ -120,7 +120,7 @@ function MCMCLikelihoodModel(	lik::Function;
 			if i == 1
 				fmat[i,2] = (v) -> (lik(v), f1(v))
 			else
-				assert(isa(fmat[i-1,2], Function), "missing function !")
+				@assert isa(fmat[i-1,2], Function) "missing function !"
 				fmat[i,2] = (v) -> tuple(fmat[i-1,2](v)..., f1(v))
 			end
 		end

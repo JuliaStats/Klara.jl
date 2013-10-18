@@ -39,8 +39,8 @@ function deriv1(ex::Expr, x0::Union(Float64, Vector{Float64}, Matrix{Float64})) 
 		gradn[i] = (l-l0)/DIFF_DELTA
 	end
 
-	assert(all(good_enough, zip([grad0], [gradn])),
-		"Gradient false for $ex at x=$x0, expected $(round(gradn,5)), got $(round(grad0,5))")
+	@assert all(good_enough, zip([grad0], [gradn]))
+		"Gradient false for $ex at x=$x0, expected $(round(gradn,5)), got $(round(grad0,5))"
 end
 
 
@@ -99,7 +99,7 @@ function runpattern(fsym, parnames, rules, combin)
 		for r in rules # r = rules[1]
 			if isa(r, Expr) && r.head == :(->)
 				pos = find(parnames .== r.args[1]) # find the arg the rules applies to 
-				assert(length(pos)>0, "arg of rule ($r.args[1]) not found among $parnames")
+				@assert length(pos)>0 "arg of rule ($r.args[1]) not found among $parnames"
 				vn = symbol("arg$(pos[1])")
 				eval(:( $vn = map($r, $vn)))
 			end
@@ -203,8 +203,8 @@ try
 	deriv1(:(logpdfBinomial(x, 0.5, 2)), [0.])
 	throw("no error !!")
 catch e
-	assert(e != "no error !!", 
-		"parser not throwing error when discrete distribution has a parameter dependant integer argument")
+	@assert e != "no error !!"
+		"parser not throwing error when discrete distribution has a parameter dependant integer argument"
 end
 
 ##  ref  testing

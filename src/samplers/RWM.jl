@@ -26,7 +26,7 @@ immutable RWM <: MCMCSampler
   tuner::Union(Nothing, RWMTuner)
 
   function RWM(x::Float64, t::Union(Nothing, RWMTuner))
-    assert(x>0, "scale should be > 0")
+    @assert x>0 "scale should be > 0"
     new(x, t)
   end
 end

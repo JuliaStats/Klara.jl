@@ -10,7 +10,7 @@ mean(c::MCMCChain, par::Real) = mean(c, par:par)
 # Compute acceptance or rejection rate of MCMCChain
 function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=false)
   rlen = lags.len
-  assert (lags[end] <= nrow(c.samples), "Range of acceptance rate not within post-burnin range of MCMC chain")
+  @assert lags[end] <= nrow(c.samples) "Range of acceptance rate not within post-burnin range of MCMC chain"
 
   if reject
     return (rlen-sum(c.diagnostics[lags, "accept"]))*100/rlen

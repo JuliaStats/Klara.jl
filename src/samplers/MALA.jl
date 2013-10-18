@@ -23,9 +23,9 @@ type EmpiricalMALATune
   rate::Float64
 
   function EmpiricalMALATune(driftStep::Float64, accepted::Int, proposed::Int, rate::Float64)
-    assert(driftStep > 0, "Leapfrog step size ($driftStep) should be > 0")
-    assert(0 <= accepted, "Number of accepted Monte Carlo steps ($accepted) should be non negative")
-    assert(0 <= proposed, "Number of proposed Monte Carlo steps ($proposed) should be non negative") 
+    @assert driftStep > 0 "Leapfrog step size ($driftStep) should be > 0"
+    @assert 0 <= accepted "Number of accepted Monte Carlo steps ($accepted) should be non negative"
+    @assert 0 <= proposed "Number of proposed Monte Carlo steps ($proposed) should be non negative" 
     new(driftStep, accepted, proposed)
   end
 end
@@ -52,7 +52,7 @@ immutable MALA <: MCMCSampler
   tuner::Union(Nothing, MCMCTuner)
   
   function MALA(s::Real, t::Union(Nothing, MCMCTuner))
-    assert(s>0, "MALA drift step should be > 0")
+    @assert s>0 "MALA drift step should be > 0"
     new(s, t)
   end
 end
@@ -80,7 +80,7 @@ function SamplerTask(model::MCMCModel, sampler::MALA, runner::MCMCRunner)
   # Initialization
   pars = copy(model.init)
   logTarget, grad = model.evalallg(pars)
-  assert(isfinite(logTarget), "Initial values out of model support, try other values")
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
 
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalMALATune(sampler.driftStep, 0, 0); end
 

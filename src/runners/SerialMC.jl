@@ -22,9 +22,9 @@ immutable SerialMC <: MCMCRunner
     thinning = r.step
     len = last(r)
 
-    assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
-    assert(len > burnin, "Total MCMC length ($len) should be > to burnin ($burnin)")  
-    assert(thinning >= 1, "Thinning ($thinning) should be >= 1") 
+    @assert burnin >= 0 "Burnin rounds ($burnin) should be >= 0"
+    @assert len > burnin "Total MCMC length ($len) should be > to burnin ($burnin)"
+    @assert thinning >= 1 "Thinning ($thinning) should be >= 1"
 
     new(burnin, thinning, len, r)
   end
@@ -89,7 +89,7 @@ function run_serialmc_exit(t::MCMCTask)
 end
 
 function resume_serialmc(t::MCMCTask; steps::Int=100)
-  assert(typeof(t.runner) == SerialMC,
-    "resume_serialmc can not be called on an MCMCTask whose runner is of type $(fieldtype(t, :runner))")
+  @assert typeof(t.runner) == SerialMC
+    "resume_serialmc can not be called on an MCMCTask whose runner is of type $(fieldtype(t, :runner))"
   run(t.model, t.sampler, SerialMC(steps=steps, thinning=t.runner.thinning))
 end

@@ -27,8 +27,8 @@ immutable SeqMC <: MCMCRunner
   trigger::Float64
 
   function SeqMC(steps::Int, burnin::Int, trigger::Float64)
-	  assert(burnin >= 0, "Burnin rounds ($burnin) should be >= 0")
-	  assert(steps > burnin, "Steps ($steps) should be > to burnin ($burnin)")
+	  @assert burnin >= 0 "Burnin rounds ($burnin) should be >= 0"
+	  @assert steps > burnin "Steps ($steps) should be > to burnin ($burnin)"
 
     new(steps, burnin, trigger)
   end
@@ -44,7 +44,7 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
   local burnin = targets[end].runner.burnin
   local trigger = targets[end].runner.trigger
 
-  assert(all( map(t->t.model.size, targets) .== tsize), "Models do not have the same parameter vector size")
+  @assert all(map(t->t.model.size, targets) .== tsize) "Models do not have the same parameter vector size"
 
 	tic() # start timer
 

@@ -32,8 +32,8 @@ immutable NUTS <: MCMCSampler
   tuner::Union(Nothing, NUTSTuner)
 
   function NUTS(i::Int, t::Union(Nothing, NUTSTuner))
-    assert(i>0, "max doublings should be > 0")
-    assert(i<20, "max doublings reasonably be < 20")
+    @assert i>0 "max doublings should be > 0"
+    @assert i<20 "max doublings reasonably be < 20"
     new(i,t)
   end
 end
@@ -66,7 +66,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
     local state0  # starting state of each loop
     local scale
 
- 	assert(hasgradient(model), "NUTS sampler requires model with gradient function")
+ 	@assert hasgradient(model) "NUTS sampler requires model with gradient function"
 
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset,

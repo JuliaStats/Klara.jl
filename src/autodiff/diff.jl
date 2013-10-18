@@ -178,7 +178,7 @@ end
 hint(v::Symbol) = vhint[v]
 hint(v) = v  # should be a value if not a Symbol or an Expression
 function hint(v::Expr)
-	assert(v.head == :ref, "[hint] unexpected variable $v")
+	@assert v.head == :ref "[hint] unexpected variable $v"
 	v.args[1] = :( vhint[$(Expr(:quote, v.args[1]))] )
 	eval(v)
 end

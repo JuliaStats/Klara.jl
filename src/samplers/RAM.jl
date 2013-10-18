@@ -24,8 +24,8 @@ immutable RAM <: MCMCSampler
   rate::Float64
 
   function RAM(x::Float64, r::Float64)
-    assert(x>0, "scale should be > 0")
-    assert(r > 0. && r < 1., "target acceptance rate ($r) should be between 0 and 1")
+    @assert x > 0 "scale should be > 0"
+    @assert r > 0. && r < 1. "target acceptance rate ($r) should be between 0 and 1"
     new(x, r)
   end
 end
