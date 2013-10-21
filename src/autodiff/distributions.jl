@@ -6,8 +6,6 @@
 #
 ##########################################################################################
 
-using Distributions
-
 ########## locally defined distributions #############
 # defined here because there is a speed gain over using Distributions.jl
 # TODO : file an issue in Distributions.jl

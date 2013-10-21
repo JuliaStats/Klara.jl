@@ -7,6 +7,7 @@
 module MCMC
 
 using DataFrames
+using Distributions
 using Stats
 
 import Base.*, Base.show
@@ -55,6 +56,7 @@ include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
 include("samplers/ERMLMC.jl") # Explicit Riemannian manifold Lagrangian Monte Carlo (ERMLMC)
+include("samplers/RMLMC.jl") # Semi-explicit Riemannian manifold Lagrangian Monte Carlo (RMLMC)
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain

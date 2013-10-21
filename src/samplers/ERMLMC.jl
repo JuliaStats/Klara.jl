@@ -110,9 +110,6 @@ function SamplerTask(model::MCMCModel, sampler::ERMLMC, runner::MCMCRunner)
 
     # Perform leapfrog steps
     nRandomLeaps = ceil(rand()*nLeaps)
-    timeStep = (randn() > 0.5 ? 1. : -1.)
-
-    nRandomLeaps = ceil(rand()*nLeaps)
 
     for j = 1:nRandomLeaps
       # Update velocity
