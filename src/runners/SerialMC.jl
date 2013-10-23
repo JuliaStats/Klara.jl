@@ -40,7 +40,7 @@ function run_serialmc(t::MCMCTask)
   # temporary array to store samples
   samples = fill(NaN, t.model.size, length(t.runner.r))
   gradients = fill(NaN, t.model.size, length(t.runner.r))
-  diags = DataFrame(step=collect(t.runner.r)) # initialize with column 'step'
+  diags = {"step" => collect(t.runner.r)}
 
   # sampling loop
   j = 1
@@ -55,11 +55,11 @@ function run_serialmc(t::MCMCTask)
       # save diagnostics
       for (k,v) in newprop.diagnostics
         # if diag name not seen before, create column
-        if !in(k, colnames(diags))
-          diags[string(k)] = DataArray(Array(typeof(v), nrow(diags)), falses(nrow(diags)) )
+        if !haskey(diags, k)
+          diags[k] = Array(typeof(v), length(diags["step"]))          
         end
         
-        diags[j, string(k)] = v
+        diags[k][j] = v
       end
 
       j += 1

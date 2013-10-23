@@ -113,13 +113,12 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 	end
 
 	# create Chain
-	MCMCChain(	(burnin+1):1:((steps-burnin)*npart),
-		        DataFrame(samples', cn),
-		        DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
-		        DataFrame(weigths=weights, 
-		        	      particle=rep([1:npart],(steps-burnin))),  
-		        targets,
-		        toq())
+	MCMCChain((burnin+1):1:((steps-burnin)*npart),
+	  DataFrame(samples', cn),
+		DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
+		{"weigths" => weights, "particle" => rep([1:npart],(steps-burnin))},  
+		targets,
+		toq())
 end
 
 # TODO: check that all elements of array contain MCMCTasks of the same type

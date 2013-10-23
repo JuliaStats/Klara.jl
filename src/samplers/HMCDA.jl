@@ -51,7 +51,7 @@ function initializeHMCDAStep(model::MCMCModel, sample::HMCSample)
   leapStep::Float64 = 1
 
   # Determine towards which direction leap step will move
-  s = leapFrog(sample, leapStep, model.evalallg)
+  s = leapfrog(sample, leapStep, model.evalallg)
   update!(s)
   p = exp(s.H-sample.H)
   a = 2*(p>0.5)-1
@@ -59,7 +59,7 @@ function initializeHMCDAStep(model::MCMCModel, sample::HMCSample)
   # Keep moving leap step in that direction until acceptprob crosses 0.5
   while p^a > 2^(-a)
     leapStep = leapStep*2^a
-    s = leapFrog(sample, leapStep, model.evalallg)
+    s = leapfrog(sample, leapStep, model.evalallg)
     update!(s)
     p = exp(s.H-sample.H)
   end
@@ -104,7 +104,7 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
 
     j = 1
     while j <= nLeaps && isfinite(state.logTarget)
-      state = leapFrog(state, leapStep, model.evalallg)
+      state = leapfrog(state, leapStep, model.evalallg)
       j += 1
     end
 

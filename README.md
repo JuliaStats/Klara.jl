@@ -115,7 +115,6 @@ mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 # Print samples and diagnostics
 head(mychain2.samples)
 head(mychain2.gradients)
-head(mychain2.diagnostics)
 
 # Get acceptance rate
 

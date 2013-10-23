@@ -13,19 +13,17 @@ function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=f
   @assert lags[end] <= nrow(c.samples) "Range of acceptance rate not within post-burnin range of MCMC chain"
 
   if reject
-    return (rlen-sum(c.diagnostics[lags, "accept"]))*100/rlen
+    return (rlen-sum(c.diagnostics["accept"][lags]))*100/rlen
   else
-    return sum(c.diagnostics[lags, "accept"])*100/rlen
+    return sum(c.diagnostics["accept"][lags])*100/rlen
   end
 end
 
 # TODO 1: Compute MCMC quantiles based on
 # Flegal J.M, Galin L.J, Neath R.C. Markov Chain Monte Carlo Estimation of Quantiles. arXiv, 2013
 # TODO 2: Include these MCMC estimates of quantiles in describe()
-# TODO 3: Improve describe() definition - it may be helpful to split MCMCChain to MCMCFrame and MCMCVector
-# TODO 4: After TODO 3, it will become possible to call var(MCMCVector) and include the output in describe()
 
-# describe() provides summary statistics for MCMCChain objects, similarly to dataframes' describe
+# describe() provides summary statistics for MCMCChain objects, similarly to dataframes' describe()
 describe(c::MCMCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCMCChain)

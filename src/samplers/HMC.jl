@@ -26,7 +26,7 @@ type EmpiricalHMCTune
 
   function EmpiricalHMCTune(nLeaps::Int, leapStep::Float64, accepted::Int, proposed::Int, rate::Float64)
     @assert nLeaps > 0 "Number of leapfrog steps ($nLeaps) should be > 0"
-    @assert leapStep > 0 "Leapfrog step size ($leapStep) should be > 0"
+    @assert leapStep > 0 "leapfrog step size ($leapStep) should be > 0"
     @assert 0 <= accepted "Number of accepted Monte Carlo steps ($accepted) should be non negative"
     @assert 0 <= proposed "Number of proposed Monte Carlo steps ($proposed) should be non negative" 
     new(nLeaps, leapStep, accepted, proposed)
@@ -53,20 +53,25 @@ reset!(tune::EmpiricalHMCTune) = ((tune.accepted, tune.proposed) = (0, 0))
 immutable HMC <: MCMCSampler
   nLeaps::Int
   leapStep::Float64
+  storeLeaps::Bool
   tuner::Union(Nothing, MCMCTuner)
 
-  function HMC(i::Int, s::Real, t::Union(Nothing, MCMCTuner))
-    @assert i>0 "inner steps should be > 0"
-    @assert s>0 "inner steps scaling should be > 0"
-    new(i,s,t)
+  function HMC(nLeaps::Int, leapStep::Real, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner))
+    @assert nLeaps>0 "inner steps should be > 0"
+    @assert leapStep>0 "inner steps scaling should be > 0"
+    new(nLeaps, leapStep, storeLeaps, tuner)
   end
 end
-HMC(i::Int=10, s::Float64=0.1                                      ) = HMC(i , s  , nothing)
-HMC(               s::Float64    , t::Union(Nothing, MCMCTuner)=nothing ) = HMC(10, s  , t)
-HMC(i::Int   ,                 t::MCMCTuner                         ) = HMC(i , 0.1, t)
-HMC(                               t::MCMCTuner                         ) = HMC(10, 0.1, t)
-# keyword args version
-HMC(;init::Int=10, scale::Float64=0.1, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(init, scale, tuner)
+HMC(tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, false, tuner)
+HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, false, tuner)
+HMC(nLeaps::Int, leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, leapStep, false, tuner)
+HMC(nLeaps::Int, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, storeLeaps, tuner)
+HMC(leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, leapStep, false, tuner)
+HMC(leapStep::Float64, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) =
+  HMC(10, leapStep, storeLeaps, tuner)
+HMC(storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, storeLeaps, tuner)
+HMC(;init::Int=10, scale::Float64=0.1, leaps::Bool=false, tuner::Union(Nothing, MCMCTuner)=nothing) =
+  HMC(init, scale, leaps, tuner)
 
 ###########################################################################
 #                  HMC task
@@ -85,7 +90,7 @@ HMCSample(pars::Vector{Float64}) = HMCSample(pars, Float64[], Float64[], NaN, Na
 calc!(s::HMCSample, ll::Function) = ((s.logTarget, s.grad) = ll(s.pars))
 update!(s::HMCSample) = (s.H = s.logTarget - dot(s.m, s.m)/2)
 
-function leapFrog(s::HMCSample, ve, ll::Function)
+function leapfrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
   n.m += n.grad * ve / 2.
   n.pars += ve * n.m
@@ -101,7 +106,8 @@ end
 function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
   local nLeaps, leapStep
-
+  local leapState
+  
   @assert hasgradient(model) "HMC sampler requires model with gradient function"
 
   # hook inside Task to allow remote resetting
@@ -132,24 +138,25 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
     update!(state0)
     state = state0
 
-    j=1
-    while j <= nLeaps && isfinite(state.logTarget)
-      state = leapFrog(state, leapStep, model.evalallg)
-      j +=1
+    if !sampler.storeLeaps
+      for j = 1:nLeaps
+        state = leapfrog(state, leapStep, model.evalallg)
+      end
+    else
+      leapState = [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]
     end
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
-      ms = MCMCSample(state.pars, state.logTarget, state.grad,
-                      state0.pars, state0.logTarget, state0.grad,
-                      {"accept" => true} )
+      diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapState})
+      ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
       produce(ms)
       state0 = state
       if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
-      ms = MCMCSample(state0.pars, state0.logTarget, state0.grad,
-                      state0.pars, state0.logTarget, state0.grad,
-                      {"accept" => false} )
+      diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapState})
+      ms = MCMCSample(state0.pars, state0.logTarget, state0.grad, state0.pars, state0.logTarget, state0.grad,
+        diagnostics)
       produce(ms)
     end
 

@@ -59,7 +59,6 @@ mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
 head(mychain2.samples)
 head(mychain2.gradients)
-head(mychain2.diagnostics)
 
 acceptance(mychain2)
 

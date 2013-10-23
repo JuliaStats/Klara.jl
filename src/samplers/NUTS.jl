@@ -49,7 +49,7 @@ NUTS(;maxdoublings::Int=5, tuner::Union(Nothing, NUTSTuner)=nothing) = NUTS(maxd
 ####  Helper functions and types for HMC sampling task
 uturn(s1::HMCSample, s2::HMCSample) = dot(s2.pars-s1.pars, s1.m) < 0. || dot(s2.pars-s1.pars, s2.m) < 0.
 
-function leapFrog(s::HMCSample, ve, ll::Function)
+function leapfrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
   n.m += n.grad * ve / 2.
   n.pars += ve * n.m
@@ -82,13 +82,13 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 	# find initial value for epsilon
 	epsilon = 1.
 	state0.m = randn(model.size) .* scale
-	state1 = leapFrog(state0, epsilon, model.evalallg)
+	state1 = leapfrog(state0, epsilon, model.evalallg)
 
 	ratio = exp(state1.H - state0.H)
 	a = 2*(ratio>0.5)-1.
 	while ratio^a > 2^-a
 		epsilon *= 2^a
-		state1 = leapFrog(state0, epsilon, model.evalallg)
+		state1 = leapfrog(state0, epsilon, model.evalallg)
 		ratio = exp(state1.H - state0.H)
 	end
 
@@ -101,7 +101,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 		const deltamax = 100
 
 		if j == 0
-			state1 = leapFrog(state, dir*epsilon, ll)
+			state1 = leapfrog(state, dir*epsilon, ll)
 			n1 = ( u_slice <= state1.H ) + 0 
 			s1 = u_slice < ( deltamax + state1.H )
 
