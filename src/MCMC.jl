@@ -99,6 +99,7 @@ include("runners/SerialTempMC.jl") # Serial Tempering Monte-Carlo runner
 include("runners/SeqMC.jl") # Sequential Monte-Carlo runner
 
 #############  MCMC output analysis and diagnostics    ########################
+include("stats/mean.jl") # MCMC mean estimators
 include("stats/var.jl") # MCMC variance estimators
 include("stats/ess.jl") # Effective sample size and integrated autocorrelation time functions
 include("stats/summary.jl") # Summary statistics for MCMCChain

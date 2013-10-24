@@ -1,11 +1,6 @@
-import Base.mean, DataFrames.describe
+import DataFrames.describe
 
-export mean, acceptance, describe
-
-# Mean of MCMCChain
-mean(c::MCMCChain, pars::Ranges=1:ncol(c.samples)) = Float64[mean(c.samples[:, i]) for i = pars]
-
-mean(c::MCMCChain, par::Real) = mean(c, par:par)
+export acceptance, describe
 
 # Compute acceptance or rejection rate of MCMCChain
 function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=false)

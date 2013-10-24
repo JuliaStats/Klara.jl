@@ -106,7 +106,7 @@ end
 function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
   local nLeaps, leapStep
-  local leapState
+  local leapState0, leapStates
   
   @assert hasgradient(model) "HMC sampler requires model with gradient function"
 
@@ -143,18 +143,19 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
         state = leapfrog(state, leapStep, model.evalallg)
       end
     else
-      leapState = [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]
+      leapState0 = state
+      leapStates = [leapState0, [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]]
     end
 
     # accept if new is good enough
     if rand() < exp(state.H - state0.H)
-      diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapState})
+      diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapStates})
       ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
       produce(ms)
       state0 = state
       if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
-      diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapState})
+      diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapStates})
       ms = MCMCSample(state0.pars, state0.logTarget, state0.grad, state0.pars, state0.logTarget, state0.grad,
         diagnostics)
       produce(ms)

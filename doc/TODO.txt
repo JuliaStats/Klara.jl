@@ -17,7 +17,7 @@
 11.06) Kernel Adaptive Metropolis-Hastings (KAM), known as MCMC Kameleon
 11.07) Orientational Bias Monte Carlo (OBMC)
 11.08) Split HMC (SHMC)
-11.09) Rao-Blackwellized HMC (RBHMC)
+11.09 - done) Rao-Blackwellized HMC (RBHMC)
 11.10 - done) Position-dependent MALA (PMALA)
 11.11) Subsample-Adapting Langevin Algorithm (SALA)
 11.12 - done) Explicit Riemannian Manifold Lagrangian Monte Carlo (eRMLMC)
