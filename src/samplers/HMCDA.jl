@@ -27,19 +27,20 @@ immutable HMCDA <: MCMCSampler
   shrinkage::Float64
   t0::Float64
   step::Float64
+  storeLeaps::Bool
 
-  function HMCDA(rate::Float64, len::Float64, shrinkage::Float64, t0::Float64, step::Float64)
+  function HMCDA(rate::Float64, len::Float64, shrinkage::Float64, t0::Float64, step::Float64, storeLeaps::Bool)
     @assert 0. < rate < 1. "Target acceptance rate ($rate) should be between 0 and 1"
     @assert len > 0 "len parameter of HMCDA sampler ($len) must be non-negative"
     @assert shrinkage > 0. "shrinkage parameter of HMCDA sampler ($shrinkage) must be positive"
     @assert t0 >= 0 "t0 parameter of HMCDA sampler ($t0) must be non-negative"
 
-    new(rate, len, shrinkage, t0, step)
+    new(rate, len, shrinkage, t0, step, storeLeaps)
   end
 end
 
-HMCDA(;rate::Float64=0.65, len::Float64=2., shrinkage::Float64=0.05, t0::Float64=10., step::Float64=0.75) =
-  HMCDA(rate, len, shrinkage, t0, step)
+HMCDA(;rate::Float64=0.65, len::Float64=2., shrinkage::Float64=0.05, t0::Float64=10., step::Float64=0.75, storeLeaps::Bool=false) =
+  HMCDA(rate, len, shrinkage, t0, step, storeLeaps)
 
 ###########################################################################
 #                  HMCDA task
@@ -73,6 +74,7 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
   local dualH
   local p, i
   local nLeaps, leapStep, dualLeapStep
+  local leapState0, leapStates
 
   @assert hasgradient(model) "HMCDA sampler requires model with gradient function"
 
@@ -92,8 +94,7 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
   dualH = 0.
 
   #  main loop
-  i = 1
-  while true
+for i in 1:Inf
     local j, state
 
     state0.m = randn(model.size)
@@ -102,24 +103,26 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
 
     nLeaps = max(1, round(sampler.len/leapStep))
 
-    j = 1
-    while j <= nLeaps && isfinite(state.logTarget)
-      state = leapfrog(state, leapStep, model.evalallg)
-      j += 1
+    if !sampler.storeLeaps
+      for j = 1:nLeaps
+        state = leapfrog(state, leapStep, model.evalallg)
+      end
+    else
+      leapState0 = state
+      leapStates = [leapState0, [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]]
     end
 
     # accept if new is good enough
     p = min(1, exp(state.H - state0.H))
     if rand() < p
-      ms = MCMCSample(state.pars, state.logTarget, state.grad,
-        state0.pars, state0.logTarget, state0.grad,
-        {"accept" => true})
+      diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapStates})
+      ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
       produce(ms)
       state0 = state
     else
-      ms = MCMCSample(state0.pars, state0.logTarget, state0.grad,
-        state0.pars, state0.logTarget, state0.grad,
-        {"accept" => false})
+      diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapStates})
+      ms = MCMCSample(state0.pars, state0.logTarget, state0.grad, state0.pars, state0.logTarget, state0.grad,
+        diagnostics)
       produce(ms)
     end
 
@@ -132,6 +135,5 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
     else
       leapStep = dualLeapStep
     end
-    i += 1 
   end
 end

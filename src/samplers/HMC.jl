@@ -123,8 +123,7 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalHMCTune(sampler.nLeaps, sampler.leapStep, 0, 0); end
 
   #  main loop
-  i = 1
-  while true
+for i in 1:Inf
     local j, state
 
     if isa(sampler.tuner, EmpMCTuner)
@@ -168,7 +167,5 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
         println("Burn-in teration $i of $(runner.burnin): ", round(100*tune.rate, 2), " % acceptance rate")
       end
     end
-
-    i += 1
   end
 end
