@@ -126,7 +126,7 @@ for i in 1:Inf
       produce(ms)
     end
 
-    if i <= runner.burnin
+    if i < runner.burnin
       eta = 1/(i+sampler.t0)
       dualH = (1-eta)*dualH+eta*(sampler.rate-p)
       leapStep = exp(mu - sqrt(i)*dualH/sampler.shrinkage)
