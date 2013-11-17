@@ -25,6 +25,11 @@ function mcvar_bm(x::AbstractVector; batchlen::Int=100)
   return batchlen*var(batchmeans)/nbsamples
 end
 
+mcvar_bm(x::AbstractMatrix, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
+  Float64[mcvar_bm(x[:, pars[i]]; batchlen=batchlen) for i = 1:pars.len]
+
+mcvar_bm(x::AbstractMatrix, par::Real; batchlen::Int=100) = mcvar_bm(x, par:par; batchlen=batchlen)
+
 mcvar_bm(c::MCMCChain, pars::Ranges=1:ncol(c.samples); batchlen::Int=100) =
   Float64[mcvar_bm(c.samples[:, pars[i]]; batchlen=batchlen) for i = 1:pars.len]
 
@@ -69,6 +74,11 @@ function mcvar_imse(x::AbstractVector; maxlag::Int=length(x)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
 
+mcvar_imse(x::AbstractMatrix, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+  Float64[mcvar_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+
+mcvar_imse(x::AbstractMatrix, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_imse(x, par:par; maxlag=maxlag)
+
 mcvar_imse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1) =
   Float64[mcvar_imse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
 
@@ -104,6 +114,11 @@ function mcvar_ipse(x::AbstractVector; maxlag::Int=length(x)-1)
   # Calculate the initial monotone sequence estimator
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
+
+mcvar_ipse(x::AbstractMatrix, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+  Float64[mcvar_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+
+mcvar_ipse(x::AbstractMatrix, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_ipse(x, par:par; maxlag=maxlag)
 
 mcvar_ipse(c::MCMCChain, pars::Ranges=1:ncol(c.samples); maxlag::Int=nrow(c.samples)-1) =
   Float64[mcvar_ipse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
