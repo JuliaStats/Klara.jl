@@ -91,6 +91,15 @@ end
 *{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::M, s::S, r::R) = spinTask(m, s, r)
 *{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::Array{M}, s::S, r::R) = map((me) -> spinTask(me, s, r), m)
 *{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::M, s::Array{S}, r::R) = map((se) -> spinTask(m, se, r), s)
+*{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::M, s::S, r::Array{R}) = map((re) -> spinTask(m, s, re), r)
+*{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::Array{M}, s::Array{S}, r::R) =
+  map((me, se) -> spinTask(me, se, r), m, s)
+*{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::Array{M}, s::S, r::Array{R}) =
+  map((me, re) -> spinTask(me, s, re), m, r)
+*{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::M, s::Array{S}, r::Array{R}) =
+  map((se, re) -> spinTask(m, se, re), s, r)
+*{M<:MCMCModel, S<:MCMCSampler, R<:MCMCRunner}(m::Array{M}, s::Array{S}, r::Array{R}) =
+  map((me, se, re) -> spinTask(me, se, re), m, s, r)
 
 #############  runners    ########################
 include("runners/runners.jl")
