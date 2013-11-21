@@ -19,7 +19,7 @@ function mean_rb_hmc(c::MCMCChain, par::Ranges=1:ncol(c.samples))
       w[i, j] = exp(c.diagnostics["leaps"][i][1].H-c.diagnostics["leaps"][i][j+1].H)
     end
   end
-  w = broadcast(/, w, sum(w, 2))
+  w = broadcast(*, 1/sum(w, 2), w)
 
   for i = 1:nsamples
     for j = 1:npars
