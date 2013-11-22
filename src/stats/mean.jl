@@ -28,11 +28,11 @@ function mean_rb_hmc(c::MCMCChain, par::Ranges=1:ncol(c.samples))
         s += w[i, k]*c.diagnostics["leaps"][i][k+1].pars[j]
       end
 
-      sums[i, j] = c.samples[i, j]+s
+      sums[i, j] = s
     end
   end
 
-  sum(sums, 1)/(nsamples*(nleaps+1))
+  (mean(sums, 1)+mean(matrix(c.samples), 1))/2
 end
 
 mean_rb_hmc(c::MCMCChain, par::Real) = mean_rb_hmc(c, par:par)
