@@ -2,7 +2,6 @@
 #    testing script for distributions and samplers
 #########################################################################
 
-using MCMC
 using Distributions # used to provide exact cdf of distributions for testing
 
 #########################################################################
@@ -38,7 +37,7 @@ function ksTest(ex::Expr)
 					"NUTS" => NUTS()}  # TODO : add other samplers
 		print("testing $k sampler on $ex   -")
 		srand(1)
-		res = model(mex, gradient=true, x=exactMean) * v * (1000:N) 
+		res = run(model(mex, gradient=true, x=exactMean), v, SerialMC((1000:N) ))
 		ksv = ksValue(res.samples["x"], distrib)
 		println(" KS measure = $ksv")
 		@assert ksv < KSTHRESHOLD "correct distrib hyp. rejected"
