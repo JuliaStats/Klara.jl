@@ -23,7 +23,7 @@ function ksValue(x, distrib)
 end
 
 function ksTest(ex::Expr) 
-	model = Expr(:block, :(x ~ $ex))
+	mex = Expr(:block, :(x ~ $ex))
 	distrib = Expr(:call, 
 					Expr(:., :Distributions, Expr(:quote, ex.args[1])), 
 					ex.args[2:end]...) 
@@ -33,13 +33,15 @@ function ksTest(ex::Expr)
 	exactStd = isfinite(exactStd) ? exactStd : 1.0
 
 	for (k,v) in {	"RWM" => RWM(exactStd),
-					"HMC" => HMC(2, exactStd/5)}  # TODO : add other samplers
+					"HMC" => HMC(2, exactStd/5),
+					"MALA" => MALA(exactStd),
+					"NUTS" => NUTS()}  # TODO : add other samplers
 		print("testing $k sampler on $ex   -")
 		srand(1)
-		res = MCMCLikModelG(model, x=exactMean) * v * (1000:N) 
+		res = model(mex, gradient=true, x=exactMean) * v * (1000:N) 
 		ksv = ksValue(res.samples["x"], distrib)
 		println(" KS measure = $ksv")
-		assert(ksv < KSTHRESHOLD, "correct distrib hyp. rejected")
+		@assert ksv < KSTHRESHOLD "correct distrib hyp. rejected"
 	end
 
 end

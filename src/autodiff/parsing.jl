@@ -114,8 +114,7 @@ function parseModel!(m::ParsingStruct, source::Expr)
 		return :($ACC_SYM = $ACC_SYM + $(Expr(:call, fn, ex.args[3].args[2:end]..., ex.args[2])))
 	end
 
-	assert(source.head==:block && length(source.args)>=1, 
-		"model should be a block with at least 1 statement")
+	@assert source.head==:block && length(source.args)>=1 "model should be a block with at least 1 statement"
 
 	m.source = explore(source)
 
@@ -141,8 +140,8 @@ function unfold!(m::ParsingStruct)
 	
 	function explore(ex::Exprequal) 
 		lhs = ex.args[1]
-		assert(typeof(lhs) == Symbol ||  (typeof(lhs) == Expr && lhs.head == :ref),
-			"[unfold] not a symbol on LHS of assigment $ex")
+		@assert typeof(lhs) == Symbol ||  (typeof(lhs) == Expr && lhs.head == :ref)
+			"[unfold] not a symbol on LHS of assigment $ex"
 
 		rhs = ex.args[2]
 		if isa(rhs, Symbol) || isa(rhs, Real)
@@ -163,7 +162,7 @@ function unfold!(m::ParsingStruct)
 		# if more than 2 arguments, +, sum and * are converted  to nested expressions
 		#  (easier for derivation)
 		# TODO : apply to other n-ary (n>2) operators ?
-		if contains([:+, :*, :sum], na[1]) 
+		if in(na[1], [:+, :*, :sum])
 			while length(args) > 2
 				a2 = pop!(args)
 				a1 = pop!(args)
@@ -202,7 +201,7 @@ function uniqueVars!(m::ParsingStruct)
 
         # second, rename lhs symbol if set before
         lhs = collect(getSymbols(el[idx].args[1]))[1]  # there should be only one
-        if contains(used, lhs) # if var already set once => create a new one
+        if in(lhs, used) # if var already set once => create a new one
             subst[lhs] = gensym("$lhs") # generate new name, add it to substitution list for following statements
             el[idx].args[1] = substSymbols(el[idx].args[1], subst)
         else # var set for the first time
@@ -245,10 +244,10 @@ function categorizeVars!(m::ParsingStruct)
         !isempty(intersect(lhs, m.accanc)) && union!(m.accanc, rhs)
     end
 
-    assert(contains(m.pardesc, m.finalacc), "Model parameters do not seem to influence model outcome")
-
+    @assert in(m.finalacc, m.pardesc) "Model parameters do not seem to influence model outcome"
+    
     local parset2 = setdiff(parset, m.accanc)
-    assert(isempty(parset2), "Model parameter(s) $(collect(parset2)) do not seem to influence model outcome")
+    @assert isempty(parset2) "Model parameter(s) $(collect(parset2)) do not seem to influence model outcome"
 
 end
 
@@ -274,14 +273,14 @@ function backwardSweep!(m::ParsingStruct)
 		rhs = ex.args[2]
 		if !isa(rhs,Symbol) && !isa(rhs,Expr) # some kind of number, nothing to do
 
-		elseif isa(rhs,Symbol) 
-			if contains(avars, rhs)
+		elseif isa(rhs,Symbol)
+			if in(rhs, avars)
 				vsym2 = symbol("$(DERIV_PREFIX)$rhs")
 				push!(m.dexprs, :( $vsym2 = $dsym2))
 			end
 
 		elseif isa(toExprH(rhs), Exprref)
-			if contains(avars, rhs.args[1])
+			if in(rhs.args[1], avars)
 				vsym2 = Expr(:ref, symbol("$(DERIV_PREFIX)$(rhs.args[1])"), rhs.args[2:end]...)
 				push!(m.dexprs, :( $vsym2 = $dsym2))
 			end
@@ -289,7 +288,7 @@ function backwardSweep!(m::ParsingStruct)
 		elseif isa(toExprH(rhs), Exprcall)  
 			for i in 2:length(rhs.args) 
 				vsym = rhs.args[i]
-				if isa(vsym, Symbol) && contains(avars, vsym)
+				if isa(vsym, Symbol) && in(vsym, avars)
 					m.dexprs = vcat(m.dexprs, derive(rhs, i-1, dsym))
 				end
 			end
@@ -300,20 +299,20 @@ function backwardSweep!(m::ParsingStruct)
 
 	avars = intersect(m.accanc, m.pardesc)
 	for ex2 in reverse(m.exprs)  # proceed backwards
-		assert(isa(ex2, Expr), "[backwardSweep] not an expression : $ex2")
+		@assert isa(ex2, Expr) "[backwardSweep] not an expression : $ex2"
 		explore(ex2)
 	end
 end
 
 ######## sets inital values from 'init' given as parameter  ##########
 function setInit!(m::ParsingStruct, init)
-    assert(length(init)>=1, "There should be at leat one parameter specified, none found")
+    @assert length(init)>=1 "There should be at leat one parameter specified, none found"
 
     for p in init  # p = collect(init)[1]
         par = p[1]  # param symbol defined here
         def = p[2]
 
-        assert(typeof(par) == Symbol, "[setInit] not a symbol in init param : $(par)")
+        @assert typeof(par) == Symbol "[setInit] not a symbol in init param : $(par)"
 
         if isa(def, Real)  #  single param declaration
             # push!(m.pars, MCMCParams(par, Integer[], m.bsize+1)) 

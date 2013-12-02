@@ -10,68 +10,63 @@
 
 export RWM
 
-println("Loading RMW(scale, tuner) sampler")
+println("Loading RWM(scale, tuner) sampler")
 
-#### RWM specific 'tuners'
+###########################################################################
+#                  RWM specific 'tuners'
+###########################################################################
 abstract RWMTuner <: MCMCTuner
 
-# TODO 1: define scale tuner
-immutable RWMEmpiricalTuner <: RWMTuner
-  rate::AcceptanceRate
+###########################################################################
+#                  RWM type
+###########################################################################
 
-  function RWMEmpiricalTuner(rate::AcceptanceRate)
-    new(rate) 	
-  end
-end	
-
-####  RWM sampler type  ####
 immutable RWM <: MCMCSampler
   scale::Float64
   tuner::Union(Nothing, RWMTuner)
 
   function RWM(x::Float64, t::Union(Nothing, RWMTuner))
-    assert(x>0, "scale should be > 0")
+    @assert x>0 "scale should be > 0"
     new(x, t)
   end
 end
 RWM() = RWM(1., nothing)
 RWM(x::Float64) = RWM(x, nothing)
-RWM(t::Union(Nothing, RWMTuner)) = RWM(1., t)
+RWM(t::RWMTuner) = RWM(1., t)
+RWM(;scale::Float64=1.0, tuner::Union(Nothing, RWMTuner)=nothing) = RWM(scale, tuner)
 
-# Sampling task launcher
-spinTask(model::MCMCModel, s::RWM) = MCMCTask(Task(() -> RWMTask(model, s.scale, s.tuner)), model)
+###########################################################################
+#                  RWM task
+###########################################################################
 
 # RWM sampling
-function RWMTask(model::MCMCModel, scale::Float64, tuner::Union(Nothing, RWMTuner))
+function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget
-    local proposed, accepted
+  local scale
 
-	#  Task reset function
-	function reset(resetPars::Vector{Float64})
-		pars = copy(resetPars)
-		logTarget = model.eval(pars)
-	end
 	# hook inside Task to allow remote resetting
-	task_local_storage(:reset, reset) 
+	task_local_storage(:reset, (resetPars::Vector{Float64}) -> (pars = copy(resetPars); logTarget = model.eval(pars))) 
 
 	# initialization
+	scale = model.scale .* sampler.scale  # rescale model scale by sampler scale
 	pars = copy(model.init)
 	logTarget = model.eval(pars)
-	assert(isfinite(logTarget), "Initial values out of model support, try other values")
-
+  @assert isfinite(logTarget) "Initial values out of model support, try other values"
+  
+	# main loop
 	while true
-		proposedPars = copy(pars)
-		# TODO 2: if tuner != nothing; tune the scale; end
-		proposedPars += randn(model.size) * scale
- 		proposedLogTarget = model.eval(proposedPars) 
+		proposedPars = pars + randn(model.size) .* scale
+		proposedLogTarget = model.eval(proposedPars) 
 
-        ratio = proposedLogTarget-logTarget
+	  ratio = proposedLogTarget-logTarget
 		if ratio > 0 || (ratio > log(rand()))
-        	produce(MCMCSample(proposedPars, proposedLogTarget, pars, logTarget))
-         	pars, logTarget = proposedPars, proposedLogTarget
-        else
-     		produce(MCMCSample(pars, logTarget, pars, logTarget))
-    	end
+			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
+	    produce(ms)
+	    pars, logTarget = proposedPars, proposedLogTarget
+	  else
+			ms = MCMCSample(pars, logTarget, pars, logTarget, {"accept" => false})
+      produce(ms)
+    end
 	end
 end
