@@ -2,11 +2,7 @@
 #    testing script for gradients
 #########################################################################
 
-using MCMC
-
-#########################################################################
-#       testing functions and definitions 
-#########################################################################
+#####       testing functions and definitions    ######
 
 ## variables of different dimension for testing
 v0ref = 2.
@@ -184,11 +180,11 @@ deriv1(:(v2ref[:,1:2]*x), [-3. 2 0 ; 1 1 -2])
 @mtest testpattern1 logpdfWeibull(sh,sc,x)    sh->sh<=0?0.1:sh  sc->sc<=0?0.1:sc  x->x<=0?0.1:x
 
 ## discrete distributions
-@mtest testpattern1 logpdfBernoulli(prob,x)   exceptLast prob->clamp(prob, 0.01, 0.99) x->(x>0)+0. 
+#@mtest testpattern1 logpdfBernoulli(prob,x)   exceptLast prob->clamp(prob, 0.01, 0.99) x->(x>0)+0. 
 # note for Bernoulli : having prob=1 or 0 is ok but will make the numeric differentiator fail => not tested
 
-@mtest testpattern1 logpdfPoisson(l,x)   exceptLast l->l<=0?0.1:l x->iround(abs(x)) 
-@mtest testpattern1 logpdfBinomial(n, prob,x)   exceptFirstAndLast prob->clamp(prob, 0.01, 0.99) x->iround(abs(x)) n->iround(abs(n)+10)
+# @mtest testpattern1 logpdfPoisson(l,x)   exceptLast l->l<=0?0.1:l x->iround(abs(x)) 
+# @mtest testpattern1 logpdfBinomial(n, prob,x)   exceptFirstAndLast prob->clamp(prob, 0.01, 0.99) x->iround(abs(x)) n->iround(abs(n)+10)
 
 
 #########################################################################
@@ -196,16 +192,16 @@ deriv1(:(v2ref[:,1:2]*x), [-3. 2 0 ; 1 1 -2])
 #########################################################################
 
 # Parsing should throw an error when model parameter is used as an integer variable
-try
-	deriv1(:(logpdfBernoulli(1, x)), [0.])
-	deriv1(:(logpdfPoisson(1, x)), [0.])
-	deriv1(:(logpdfBinomial(3, 0.5, x)), [0.])
-	deriv1(:(logpdfBinomial(x, 0.5, 2)), [0.])
-	throw("no error !!")
-catch e
-	@assert e != "no error !!"
-		"parser not throwing error when discrete distribution has a parameter dependant integer argument"
-end
+# try
+# 	deriv1(:(logpdfBernoulli(1, x)), [0.])
+# 	deriv1(:(logpdfPoisson(1, x)), [0.])
+# 	deriv1(:(logpdfBinomial(3, 0.5, x)), [0.])
+# 	deriv1(:(logpdfBinomial(x, 0.5, 2)), [0.])
+# 	throw("no error !!")
+# catch e
+# 	@assert e != "no error !!"
+# 		"parser not throwing error when discrete distribution has a parameter dependant integer argument"
+# end
 
 ##  ref  testing
 deriv1(:(x[2]),              v1ref)

@@ -57,6 +57,15 @@ type MCMCLikelihoodModel <: MCMCModel
 	end
 end
 
+function show(io::IO, res::MCMCLikelihoodModel)
+  print("LikelihoodModel, with $(length(res.pmap)) parameter(s)")
+  hasgradient(res) && print(", with gradient")
+  hastensor(res) && print("/tensor")
+  hasdtensor(res) && print("/dtensor")
+  println()
+end
+
+
 typealias MCMCLikModel MCMCLikelihoodModel
 
 # Model creation using expression parsing and autodiff

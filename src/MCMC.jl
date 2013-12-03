@@ -6,7 +6,7 @@
 
 module MCMC
 
-using DataFrames
+using DataFrames, DataArrays
 using Distributions
 using Stats
 

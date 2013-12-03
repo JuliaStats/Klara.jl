@@ -23,10 +23,11 @@ describe(c::MCMCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCMCChain)
   for i in 1:ncol(c.samples)
+
     col = c.samples[i]
     println(io, colnames(c.samples)[i])
 
-    if all(isna(col))
+    if all( isna(col) )
       println(col, " * All NA * ")
         return
     end
