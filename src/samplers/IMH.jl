@@ -51,7 +51,7 @@ function SamplerTask(model::MCMCModel, sampler::IMH, runner::MCMCRunner)
 		if ratio > 0 || (ratio > log(rand()))
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
 	    produce(ms)
-	    pars, logTarget, logCandidate = proposedPars, proposedLogTarget, proposedLogCandidate
+	    pars, logTarget, logCandidate = copy(proposedPars), copy(proposedLogTarget), copy(proposedLogCandidate)
 	  else
 			ms = MCMCSample(pars, logTarget, pars, logTarget, {"accept" => false})
       produce(ms)

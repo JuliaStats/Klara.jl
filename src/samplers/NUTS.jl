@@ -49,17 +49,6 @@ NUTS(;maxdoublings::Int=5, tuner::Union(Nothing, NUTSTuner)=nothing) = NUTS(maxd
 ####  Helper functions and types for HMC sampling task
 uturn(s1::HMCSample, s2::HMCSample) = dot(s2.pars-s1.pars, s1.m) < 0. || dot(s2.pars-s1.pars, s2.m) < 0.
 
-function leapfrog(s::HMCSample, ve, ll::Function)
-  n = deepcopy(s)  # make a full copy
-  n.m += n.grad * ve / 2.
-  n.pars += ve * n.m
-  calc!(n, ll)
-  n.m += n.grad * ve / 2.
-  update!(n)
-
-  n
-end
-
 ####  HMC task
 function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
     local epsilon, u_slice
@@ -84,12 +73,12 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 	state0.m = randn(model.size) .* scale
 	state1 = leapfrog(state0, epsilon, model.evalallg)
 
-	ratio = exp(state1.H - state0.H)
+	ratio = exp(state0.H-state1.H)
 	a = 2*(ratio>0.5)-1.
 	while ratio^a > 2^-a
 		epsilon *= 2^a
 		state1 = leapfrog(state0, epsilon, model.evalallg)
-		ratio = exp(state1.H - state0.H)
+		ratio = exp(state0.H-state1.H)
 	end
 
 	# buidtree function
@@ -102,10 +91,10 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 
 		if j == 0
 			state1 = leapfrog(state, dir*epsilon, ll)
-			n1 = ( u_slice <= state1.H ) + 0 
-			s1 = u_slice < ( deltamax + state1.H )
+			n1 = ( u_slice <= -state1.H ) + 0 
+			s1 = u_slice < ( deltamax-state1.H )
 
-			return state1, state1, state1, n1, s1, min(1., exp(state1.H - state0.H)), 1
+			return state1, state1, state1, n1, s1, min(1., exp(state0.H-state1.H)), 1
 		else
 			state_minus, state_plus, state1, n1, s1, alpha1, nalpha1 = buildTree(state, dir, j-1, ll)
 			if s1 
@@ -115,7 +104,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 	 				dummy, state_plus, state2, n2, s2, alpha2, nalpha2 = buildTree(state_plus, dir, j-1, ll)
 	 			end
 	 			if rand() <= n2/(n2+n1)
-	 				state1 = state2
+	 				state1 = deepcopy(state2)
 	 			end
 
 	 			alpha1 += alpha2
@@ -149,9 +138,11 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
  		state0.m = randn(model.size) .* scale
  		update!(state0)
 
- 		u_slice  = log(rand()) + state0.H # use log ( != paper) to avoid underflow
+ 		u_slice  = log(rand())-state0.H # use log ( != paper) to avoid underflow
  		
- 		state = state_minus = state_plus = state0
+ 		state = deepcopy(state0)
+ 		state_minus = deepcopy(state0)
+ 		state_plus = deepcopy(state0)
 
  		# inner loop
  		j, n = 0, 1
@@ -164,7 +155,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
  				dummy, state_plus, state1, n1, s1, alpha, nalpha = buildTree(state_plus, dir, j, model.evalallg)
  			end
  			if s1 && rand() < n1/n  # accept 
- 				state = state1
+ 				state = deepcopy(state1)
  			end
  			n += n1
  			j += 1
@@ -186,7 +177,7 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 		                {"epsilon" => epsilon, "ndoublings" => j} )
 		produce(ms)
 
-		state0 = state
+		state0 = deepcopy(state)
 	end
 
 end

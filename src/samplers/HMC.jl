@@ -88,14 +88,14 @@ end
 HMCSample(pars::Vector{Float64}) = HMCSample(pars, Float64[], Float64[], NaN, NaN)
 
 calc!(s::HMCSample, ll::Function) = ((s.logTarget, s.grad) = ll(s.pars))
-update!(s::HMCSample) = (s.H = s.logTarget - dot(s.m, s.m)/2)
+update!(s::HMCSample) = (s.H = -s.logTarget+0.5*dot(s.m, s.m))
 
 function leapfrog(s::HMCSample, ve, ll::Function)
   n = deepcopy(s)  # make a full copy
-  n.m += n.grad * ve / 2.
+  n.m += 0.5*n.grad*ve
   n.pars += ve * n.m
   calc!(n, ll)
-  n.m += n.grad * ve / 2.
+  n.m += 0.5*n.grad*ve
   update!(n)
 
   n
@@ -135,23 +135,27 @@ for i in 1:Inf
 
     state0.m = randn(model.size)
     update!(state0)
-    state = state0
+    state = deepcopy(state0)
 
     if !sampler.storeLeaps
       for j = 1:nLeaps
         state = leapfrog(state, leapStep, model.evalallg)
       end
     else
-      leapState0 = state
-      leapStates = [leapState0, [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]]
+      leapStates = Array(HMCSample, nLeaps+1)
+      leapStates[1] = deepcopy(state0)
+      for j = 2:nLeaps+1
+        state = leapfrog(state, leapStep, model.evalallg)
+        leapStates[j] = deepcopy(state)
+      end
     end
 
     # accept if new is good enough
-    if rand() < exp(state.H - state0.H)
+    if rand() < exp(state0.H-state.H)
       diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapStates})
       ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
       produce(ms)
-      state0 = state
+      state0 = deepcopy(state)
       if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
       diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapStates})

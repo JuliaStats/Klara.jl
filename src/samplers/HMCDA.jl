@@ -99,7 +99,7 @@ for i in 1:Inf
 
     state0.m = randn(model.size)
     update!(state0)
-    state = state0
+    state = deepcopy(state0)
 
     nLeaps = max(1, round(sampler.len/leapStep))
 
@@ -108,17 +108,21 @@ for i in 1:Inf
         state = leapfrog(state, leapStep, model.evalallg)
       end
     else
-      leapState0 = state
-      leapStates = [leapState0, [state = leapfrog(state, leapStep, model.evalallg) for j = 1:nLeaps]]
+      leapStates = Array(HMCSample, nLeaps+1)
+      leapStates[1] = deepcopy(state0)
+      for j = 2:nLeaps+1
+        state = leapfrog(state, leapStep, model.evalallg)
+        leapStates[j] = deepcopy(state)
+      end
     end
 
     # accept if new is good enough
-    p = min(1, exp(state.H - state0.H))
+    p = min(1, exp(state0.H-state.H))
     if rand() < p
       diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapStates})
       ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
       produce(ms)
-      state0 = state
+      state0 = deepcopy(state)
     else
       diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapStates})
       ms = MCMCSample(state0.pars, state0.logTarget, state0.grad, state0.pars, state0.logTarget, state0.grad,

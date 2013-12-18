@@ -19,20 +19,19 @@ function mean_rb_hmc(c::MCMCChain, par::Ranges=1:ncol(c.samples))
       w[i, j] = exp(c.diagnostics["leaps"][i][1].H-c.diagnostics["leaps"][i][j+1].H)
     end
   end
-  w = broadcast(*, 1/sum(w, 2), w)
 
   for i = 1:nsamples
     for j = 1:npars
-      s = 0
+      s = c.samples[i, j]
       for k = 1:nleaps
         s += w[i, k]*c.diagnostics["leaps"][i][k+1].pars[j]
       end
 
-      sums[i, j] = s
+      sums[i, j] = s/(nleaps+1)
     end
   end
 
-  (mean(sums, 1)+mean(matrix(c.samples), 1))/2
+  mean(sums, 1)
 end
 
 mean_rb_hmc(c::MCMCChain, par::Real) = mean_rb_hmc(c, par:par)
