@@ -93,7 +93,6 @@ function slice_sample(logdist::Function, initial::Array{Float64,1};
         end
         if iter > burnin
             history[iter-burnin, :] = state
-            #push!(history, copy(state))
         end
     end
     history
@@ -105,11 +104,11 @@ end
 
 function slice_sample(logdist::Function, initial::Float64; kwargs...)
     history = slice_sample(x-> logdist(x[1]), [initial]; kwargs...)
-    Float64[x[1] for x in history]
+    reshape(history, (size(history,1),))
 end
 
 function slice_sample(logdist::Function, initial::Float64, width::Float64; kwargs...)
     history = slice_sample(x-> logdist(x[1]), [initial]; widths=[width], kwargs...)
-    Float64[x[1] for x in history]
+    reshape(history, (size(history,1),))
 end
 
