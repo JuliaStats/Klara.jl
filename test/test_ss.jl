@@ -7,7 +7,7 @@
 #
 #Example output:
 #julia> include("test_ss.jl")
-#ls2 ess 2324.94, out of raw 99990 raw
+#ls2 ess 2324.94, out of raw 99990
 #ls2 mean 0.015439, std 2.994157, meanse 0.062097, z 0.248631
 #ls2 var 8.964974, varse 0.262998, z -0.133179
 

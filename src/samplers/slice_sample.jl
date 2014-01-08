@@ -1,22 +1,28 @@
 # Slice sampler (Neal 2003; MacKay 2003, sec. 29.7)
 #
 # A slice sampler is an adaptive step-size MCMC algorithm for continuous random
-# variables, that only requires an unnormalized density function as input.  It
-# is convenient because it often gives good results with very little tuning.
-# However, if it's possible to design a good step-size for Metropolis, that may
-# be more efficient.
+# variables, which only requires an unnormalized density function as input.  It
+# is a convenient alternative to Metropolis because it often gives good results
+# with very little tuning, and works in the case that different parts of the
+# distribution require different step sizes.  However, if the distribution's
+# widths don't vary too much, and there's a good initialization and proposal,
+# Metropolis may be more efficient.
+#
+# This slice sampler is univariate; for a multivariate problem it just updates
+# variables one at a time.  Thus it suffers when variables are correlated.
 #
 # REQUIRED
-#   logdist: log-density function of target distribution
-#   initial: initial state
-#   niter:   number of iterations (samples to return)
+#   logdist: Log-density function of target distribution
+#   initial: Initial state
+#   niter:   Number of iterations (samples to return)
 #
 # OPTIONAL
-#   widths: step sizes for expanding the slice (D-dim vector)
-#   burnin: set to >0 to run for 'burnin' iterations without recording values
-#   step_out: setting to true protects against the case if you pass in widths that are too small.
-#             if you are sure your widths are large enough, can set this to false.
-#   verbose: set to true for information at every iteration
+#   widths: Step sizes for initially expanding the slice (D-dim vector).
+#           There is little harm in making these very large.
+#   burnin: Set to >0 to run for 'burnin' iterations without recording values
+#   step_out: Protects against the case if you pass in widths that are too small.
+#             If you are sure your widths are large enough, can set this to false.
+#   verbose: Set to true for information at every iteration
 #
 # RETURNS a sampling history.  Pick the last one for an independent sample.
 #
