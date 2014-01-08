@@ -1,42 +1,40 @@
-# Multivariate-capable slice sampler (Neal 2003; MacKay 2003, sec. 29.7)
+# Slice sampler (Neal 2003; MacKay 2003, sec. 29.7)
+#
+# A slice sampler is an adaptive step-size MCMC algorithm for continuous random
+# variables, that only requires an unnormalized density function as input.  It
+# is convenient because it often gives good results with very little tuning.
+# However, if it's possible to design a good step-size for Metropolis, that may
+# be more efficient.
 #
 # REQUIRED
 #   logdist: log-density function of target distribution
 #   initial: initial state
+#   niter:   number of iterations (samples to return)
+#
 # OPTIONAL
 #   widths: step sizes for expanding the slice (D-dim vector)
-#   niter: number of iterations/samples to return (default 30, which is often
-#          more than enough enough so that the last sample is indep of the init)
 #   burnin: set to >0 to run for 'burnin' iterations without recording values
-#   step_out: set to false if you're having infinite loop trouble 
-#             (but that may indicate a bug in your density function)
-#   verbose: set to true for info at every iteration
+#   step_out: setting to true protects against the case if you pass in widths that are too small.
+#             if you are sure your widths are large enough, can set this to false.
+#   verbose: set to true for information at every iteration
 #
-# RETURNS a sampling history.  Pick its last one for an independent sample.
+# RETURNS a sampling history.  Pick the last one for an independent sample.
 #
-# EXAMPLES: take samples from N(3,1), starting from a crappy initializer. Mixes to a good place!
+# EXAMPLES: take samples from N(3,1), starting from a poor initializer. Mixes to a good place!
+# Get many samples:
+#   slice_sample(x-> -0.5(x-3)^2, 42.0, 30)
 # Get one sample:
-#   slice_sample(x-> -0.5(x-3)^2, 42.0)[end]
-# Get many samples, discarding first 10 as burnin:
-#   slice_sample(x-> -0.5(x-3)^2, 42.0; niter=100)[11:end]
-#
-# Can use the 'burnin' parameter to be slightly more efficient. Equivalent versions of the above:
-#   slice_sample(x-> -0.5(x-3)^2, 42.0; burnin=29, niter=1)[end]
-#   slice_sample(x-> -0.5(x-3)^2, 42.0; niter=90, burnin=10)
-# (TODO: burnin>0,niter=1 could be special-cased by storing no history at all, for another speedup.)
+#   slice_sample(x-> -0.5(x-3)^2, 42.0, 30)[end]
 #
 # There are two versions of this procedure: either 
 #     univariate:   initial \in R,   logdist: R -> R,   retval \in R^niter
 #     multivariate: initial \in R^D, logdist: R^D -> R, retval \in R^(niter x D)
 #
-# WHERE THIS IS FROM: This is a port of Iain Murray's
+# This is a port of Iain Murray's
 # http://homepages.inf.ed.ac.uk/imurray2/teaching/09mlss/slice_sample.m 
-# which in turn derives from MacKay.  Murray notes where he found bugs in
-# MacKay's pseudocode... good sign for correctness
 
 # (This code is the multivariate version; univariate interfaces are further below.)
-function slice_sample(logdist::Function, initial::Array{Float64,1}; 
-        niter::Integer = 30,
+function slice_sample(logdist::Function, initial::Array{Float64,1}, niter::Integer;
         widths::Array{Float64,1} = ones(length(initial)),
         step_out = true,
         burnin = 0,
@@ -53,10 +51,10 @@ function slice_sample(logdist::Function, initial::Array{Float64,1};
         if verbose
             @printf("Slice iter %d state %s log_Px %f\n",iter, join(map(x->@sprintf("%.5f",x),state)," "), log_Px)
         end
-        log_uprime = log(rand()) + log_Px
 
         # Sweep through axes
         for dd=1:D
+            log_uprime = log(rand()) + log_Px
             x_l  = copy(state)
             x_r  = copy(state)
             xprime = copy(state)
