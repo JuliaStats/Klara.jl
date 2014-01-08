@@ -49,10 +49,9 @@ if abs(zscore) > 3
     warn("log(s2) posterior mean estimate differs from truth by more than 3 MC-stderr. Chance of this should be <0.3%.")
 end
 
-# The z-scores seem too low here.  Is it wrong to substitute in ESS into the variance stderr equation?
-varse = var(ls2) / sqrt(2/(ess-1))
+varse = var(ls2) * sqrt(2/(ess-1))
 zscore = (var(ls2)-9) / varse
-@printf("ls2 var %f, varse %f, z %f\n", var(ls2), var(ls2)/varse, zscore)
+@printf("ls2 var %f, varse %f, z %f\n", var(ls2), varse, zscore)
 if abs(zscore) > 3
     warn("log(s2) posterior variance estimate differs from truth by more than 3 MC-stderr. Chance of this should be <0.3%.")
 end
