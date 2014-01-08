@@ -55,7 +55,7 @@ function slice_sample(logdist::Function, initial::Array{Float64,1}, niter::Integ
 
     for iter=1:(niter+burnin)
         if verbose
-            @printf("Slice iter %d state %s log_Px %f\n",iter, join(map(x->@sprintf("%.5f",x),state)," "), log_Px)
+            @printf("Slice iter %d state [%s] log_Px %f\n",iter, join(map(x->@sprintf("%.5f",x),state)," "), log_Px)
         end
 
         # Sweep through axes
@@ -106,13 +106,8 @@ end
 
 ## Univariate formulations
 
-function slice_sample(logdist::Function, initial::Float64; kwargs...)
-    history = slice_sample(x-> logdist(x[1]), [initial]; kwargs...)
-    reshape(history, (size(history,1),))
-end
-
-function slice_sample(logdist::Function, initial::Float64, width::Float64; kwargs...)
-    history = slice_sample(x-> logdist(x[1]), [initial]; widths=[width], kwargs...)
+function slice_sample(logdist::Function, initial::Float64, niter::Int; kwargs...)
+    history = slice_sample(x-> logdist(x[1]), [initial], niter; kwargs...)
     reshape(history, (size(history,1),))
 end
 
