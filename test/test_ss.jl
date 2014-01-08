@@ -41,7 +41,7 @@ ess = parsefloat(ess)
 # can just use ESS, quantile, etc. other calculations as implemented in
 # stats/*.jl
 
-@printf("ls2 ess %.2f, out of raw %d raw\n", ess, length(ls2))
+@printf("ls2 ess %.2f, out of raw %d\n", ess, length(ls2))
 
 zscore = mean(ls2) / (std(ls2)/sqrt(ess))
 @printf("ls2 mean %f, std %f, meanse %f, z %f\n", mean(ls2), std(ls2), std(ls2)/sqrt(ess), zscore)
