@@ -61,7 +61,7 @@ substSymbols(ex::Any, smap::Dict) =           ex
 ######### structure for parsing model  ##############
 type ParsingStruct
 	bsize::Int                # length of beta, the parameter vector
-	pars::Dict{Symbol, PDims} # parameters with their mapping to the beta real vector
+	pars::Dict                # parameters with their mapping to the beta real vector
 	init::Vector{Float64}     # initial values of beta
 	source::Expr              # model source, after first pass
 	exprs::Vector{Expr}       # vector of assigments that make the model
@@ -71,7 +71,7 @@ type ParsingStruct
 	pardesc::Set{Symbol}      # all the vars set in the model that depend on model parameters
 	accanc::Set{Symbol}       # all the vars (possibly external) that influence the accumulator
 end
-ParsingStruct() = ParsingStruct(0, Dict{Symbol, PDims}(), Float64[], :(), Expr[], Expr[], ACC_SYM, 
+ParsingStruct() = ParsingStruct(0, Dict(), Float64[], :(), Expr[], Expr[], ACC_SYM, 
 	Set{Symbol}(), Set{Symbol}(), Set{Symbol}())
 
 
@@ -316,21 +316,21 @@ function setInit!(m::ParsingStruct, init)
 
         if isa(def, Real)  #  single param declaration
             # push!(m.pars, MCMCParams(par, Integer[], m.bsize+1)) 
-            m.pars[par] = PDims(m.bsize+1, ())
+            m.pars[par] = (m.bsize+1, ())
             m.bsize += 1
             push!(m.init, def)
 
         elseif isa(def, Array) && ndims(def) == 1
             nb = size(def,1)
             # push!(m.pars, MCMCParams(par, Integer[nb], (m.bsize+1):(m.bsize+nb)))
-            m.pars[par] = PDims(m.bsize+1, (nb,))
+            m.pars[par] = (m.bsize+1, (nb,))
             m.bsize += nb
             m.init = [m.init, def...]
 
         elseif isa(def, Array) && ndims(def) == 2
             nb1, nb2 = size(def)
             # push!(m.pars, MCMCParams(par, Integer[nb1, nb2], (m.bsize+1):(m.bsize+nb1*nb2))) 
-            m.pars[par] = PDims(m.bsize+1, (nb1,nb2))
+            m.pars[par] = (m.bsize+1, (nb1,nb2))
             m.bsize += nb1*nb2
             m.init = [m.init, vec(def)...]
 
@@ -358,18 +358,19 @@ end
 function betaAssign(m::ParsingStruct)
 	assigns = Expr[]
 	for p in keys(m.pars)
-		v = m.pars[p]
+		vpos = m.pars[p][1]
+		vdim = m.pars[p][2]
 
-		if length(v.dims) == 0  # scalar
-			push!(assigns, :($p = $PARAM_SYM[ $(v.pos) ]) )
+		if length(vdim) == 0  # scalar
+			push!(assigns, :($p = $PARAM_SYM[ $(vpos) ]) )
 
-		elseif length(v.dims) == 1  # vector
-			r = v.pos:(v.pos+prod(v.dims)-1)
+		elseif length(vdim) == 1  # vector
+			r = vpos:(vpos+prod(vdim)-1)
 			push!(assigns, :($p = $PARAM_SYM[ $(Expr(:quote,r)) ]) )
 
 		else # matrix case  (needs a reshape)
-			r = v.pos:(v.pos+prod(v.dims)-1)
-			push!(assigns, :($p = reshape($PARAM_SYM[ $(Expr(:quote,r)) ], $(v.dims[1]), $(v.dims[2]))) )
+			r = vpos:(vpos+prod(vdim)-1)
+			push!(assigns, :($p = reshape($PARAM_SYM[ $(Expr(:quote,r)) ], $(vdim[1]), $(vdim[2]))) )
 		end
 	end			
 	assigns
@@ -488,15 +489,16 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 		gsym = dsym(PARAM_SYM)
 		push!(body, :( local $gsym = similar($PARAM_SYM)))
 		for p in keys(m.pars)
-			v = m.pars[p]
+			vpos = m.pars[p][1]
+			vdims = m.pars[p][2]
 
-			if length(v.dims) == 0  # scalar
-				push!(body, :( $gsym[ $(v.pos) ] = $(dsym(p)) ) )
-			elseif length(v.dims) == 1  # vector
-				r = v.pos:(v.pos+prod(v.dims)-1)
+			if length(vdims) == 0  # scalar
+				push!(body, :( $gsym[ $(vpos) ] = $(dsym(p)) ) )
+			elseif length(vdims) == 1  # vector
+				r = vpos:(vpos+prod(vdims)-1)
 				push!(body, :( $gsym[ $(Expr(:quote,r)) ] = $(dsym(p)) ) )
 			else # matrix case  (needs a reshape)
-				r = v.pos:(v.pos+prod(v.dims)-1)
+				r = vpos:(vpos+prod(vdims)-1)
 				push!(body, :( $gsym[ $(Expr(:quote,r)) ] = vec($(dsym(p))) ))
 			end
 		end
