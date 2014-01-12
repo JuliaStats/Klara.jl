@@ -17,7 +17,7 @@ KSTHRESHOLD = 10
 function ksValue(x, distrib) 
 	global xs = sort(x)
 	y = eval( :(cdf($distrib , xs)))
-	dn = max( abs([1:length(x)] / length(x) - y) ) 
+	dn = maximum( abs([1:length(x)] / length(x) - y) ) 
 	sqrt(length(x))*dn
 end
 

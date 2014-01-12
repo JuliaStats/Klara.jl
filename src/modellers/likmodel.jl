@@ -25,10 +25,10 @@ type MCMCLikelihoodModel <: MCMCModel
   	evalallg::FOrNothing 		# 2-tuple (log-lik, gradient vector) evaluation function
   	evalallt::FOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
   	evalalldt::FOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
-	pmap::PMap                     # map to/from parameter vector from/to user-friendly variables
-	size::Int                  # parameter vector size
-	init::Vector{Float64}          # parameter vector initial values
-	scale::Vector{Float64}         # scaling hint on parameters
+	pmap::Dict                  # map to/from parameter vector from/to user-friendly variables
+	size::Int                   # parameter vector size
+	init::Vector{Float64}       # parameter vector initial values
+	scale::Vector{Float64}      # scaling hint on parameters
 
 	MCMCLikelihoodModel(f::Function, 
 						g::FOrNothing, ag::FOrNothing,
@@ -36,7 +36,7 @@ type MCMCLikelihoodModel <: MCMCModel
 						dt::FOrNothing, adt::FOrNothing,
 						i::Vector{Float64}, 
 						sc::Vector{Float64}, 
-						pmap::PMap) = begin
+						pmap::Dict) = begin
 
 		s = size(i, 1)
 
@@ -106,7 +106,7 @@ function MCMCLikelihoodModel(	lik::Function;
 								alldtensor::FOrNothing = nothing,
 								init::ROrVector = [1.0], 
 								scale::ROrVector = 1.0,
-								pmap::Union(Nothing, PMap) = nothing) 
+								pmap::Union(Nothing, Dict) = nothing) 
 
 	# convert init to vector if needed
 	init = isa(init, Real) ? [init] : init
@@ -115,7 +115,7 @@ function MCMCLikelihoodModel(	lik::Function;
 	scale = isa(scale, Real) ? scale * ones(length(init)) : scale
 
 	# all parameters named "pars" by default
-	if pmap == nothing ; pmap = Dict([:pars], [PDims(1, size(init))]) ; end 
+	if pmap == nothing ; pmap = Dict([:pars], [(1, size(init))]) ; end 
 
 	# now build missing functions, if any
 	fmat = Array(FOrNothing, 3, 2)

@@ -32,9 +32,9 @@ function run_serialtempmc(tasks::Array{MCMCTask})
 	
 	local nmods = length(tasks)
 	local tsize = tasks[end].model.size
-  local steps = tasks[end].runner.steps
-  local burnin = tasks[end].runner.burnin
-  local swapPeriod = tasks[end].runner.swapPeriod
+	local steps = tasks[end].runner.steps
+	local burnin = tasks[end].runner.burnin
+	local swapPeriod = tasks[end].runner.swapPeriod
 
 	@assert all(map(t->t.model.size, tasks) .== tsize) "Models do not have the same parameter vector size"
 
@@ -44,7 +44,7 @@ function run_serialtempmc(tasks::Array{MCMCTask})
 	map(t -> consume(t.task), tasks)
 
 	# initialize MCMCChain result (one Chain only)
-  res = MCMCChain(1:1:2, DataFrame(tsize, steps-burnin), tasks[end])
+	res = MCMCChain(1:1:2, DataFrame(tsize, steps-burnin), tasks[end])
 
 	local logW = zeros(nmods)  # log of task weights that will be adapted
 	local at = 1  # pick starting task
