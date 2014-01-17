@@ -2,4 +2,4 @@ julia 0.2-
 DataArrays
 DataFrames
 Distributions
-Stats
+StatsBase
