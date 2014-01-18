@@ -12,7 +12,7 @@ using Base.LinAlg.BLAS
 # include("autodiff/Autodiff.jl")
 # using .Autodiff
 
-# Distributions extensions, TODO : ask for inclusion in Distributions package
+# Distributions extensions (vectorizations on distribution parameter)
 include("definitions/DistributionsExtensions.jl")
 
 # Add new derivation rules to Autodiff for LLAcc type

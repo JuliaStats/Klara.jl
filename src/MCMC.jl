@@ -8,8 +8,8 @@ module MCMC
 
 using DataFrames, DataArrays
 using Distributions
-# using StatsBase
-using Stats
+using StatsBase
+#using Stats
 
 import Base.*, Base.show
 export show, *

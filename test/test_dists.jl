@@ -78,7 +78,5 @@ ksTest(:(LogNormal(2, 0.1)))
 ksTest(:(Laplace(-1, 1)))
 ksTest(:(Laplace(5, 0.1)))
 
-
-
 # TODO : find a way to test discrete distributions : Bernoulli, Binomial, Poisson
 

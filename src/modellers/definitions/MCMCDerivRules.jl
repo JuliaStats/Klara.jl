@@ -103,7 +103,7 @@ end
 
 
 # Note : vectorization will not be easily possible for multi variate distribs (Dirichlet, Categorical)
-# TODO : add other continuous distribs ? : Pareto, Rayleigh, Logistic, Levy, Laplace, Dirichlet, FDist
+# TODO : add other continuous distribs ? : Pareto, Rayleigh, Logistic, Levy, Dirichlet, FDist
 # TODO : add other discrete distribs ? : NegativeBinomial, DiscreteUniform, HyperGeometric, Geometric, Categorical
 
 ## Bernoulli distribution (Note : no derivation on x parameter as it is an integer)

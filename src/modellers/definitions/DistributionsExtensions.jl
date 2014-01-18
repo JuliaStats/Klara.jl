@@ -15,7 +15,7 @@ for d in [:Bernoulli, :TDist, :Exponential, :Poisson]
 end
 
 # two parameter distributions
-import Distributions: Normal, Uniform, Weibull, Gamma, Cauchy, LogNormal, Binomial, Beta
+import Distributions: Normal, Uniform, Weibull, Gamma, Cauchy, LogNormal, Binomial, Beta, Laplace
 
 for d in [:Normal, :Uniform, :Weibull, :Gamma, :Cauchy, :LogNormal, :Binomial, :Beta, :Laplace]
 	@eval begin
