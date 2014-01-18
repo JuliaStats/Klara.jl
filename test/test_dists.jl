@@ -37,7 +37,7 @@ function ksTest(ex::Expr)
 					"NUTS" => NUTS()}  # TODO : add other samplers
 		print("testing $k sampler on $ex   -")
 		srand(1)
-		res = run(model(mex, gradient=true, x=exactMean), v, SerialMC((1000:N) ))
+		res = run(model(mex, gradient=true, x=exactMean), v, SerialMC( (1000:N) ))
 		ksv = ksValue(res.samples["x"], distrib)
 		println(" KS measure = $ksv")
 		@assert ksv < KSTHRESHOLD "correct distrib hyp. rejected"
@@ -74,6 +74,9 @@ ksTest(:(Exponential(0.2)))
 
 ksTest(:(LogNormal(-1, 1)))
 ksTest(:(LogNormal(2, 0.1)))
+
+ksTest(:(Laplace(-1, 1)))
+ksTest(:(Laplace(5, 0.1)))
 
 
 
