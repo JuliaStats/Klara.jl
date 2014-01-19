@@ -50,7 +50,7 @@ function mcvar_imse(x::AbstractVector; maxlag::Int=length(x)-1)
   g = Array(Float64, k+1)
 
   # Calculate empirical autocovariance
-  acv = acf(x, 0:maxlag, correlation=false)
+  acv = autocov(x, 0:maxlag)
 
   # Calculate \hat{G}_{n, m} from the autocovariances, see pp. 477 in Geyer
   for j = 0:k
@@ -100,7 +100,7 @@ function mcvar_ipse(x::AbstractVector; maxlag::Int=length(x)-1)
   m = k+1
 
   # Calculate empirical autocovariance
-  acv = acf(x, 0:maxlag, correlation=false)
+  acv = autocov(x, 0:maxlag)
 
   # Calculate \hat{G}_{n, m} from the autocovariances, see pp. 477 in Geyer
   for j = 0:k
