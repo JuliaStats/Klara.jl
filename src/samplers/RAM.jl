@@ -55,7 +55,8 @@ function SamplerTask(model::MCMCModel, sampler::RAM, runner::MCMCRunner)
 	S = Float64[ i==j ? scale[i] : 0. for i in 1:model.size, j in 1:model.size]
 		
 	# main loop
-	for i in 1:Inf
+  i = 1
+  while true
 		rvec = randn(model.size)
 		proposedPars = pars + S * rvec
 		proposedLogTarget = model.eval(proposedPars) 
@@ -76,5 +77,7 @@ function SamplerTask(model::MCMCModel, sampler::RAM, runner::MCMCRunner)
 		SS = (rvec * rvec') / dot(rvec, rvec) * eta * (min(1, exp(ratio)) - sampler.rate)
 		SS = S * (eye(model.size) + SS) * S'
 		S = chol(SS)'  #'
+
+    i += 1
   end
 end

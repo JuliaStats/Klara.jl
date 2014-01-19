@@ -131,7 +131,8 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 	### main loop
 	# using a 'for' loop instead of 'while true' for this sampler
 	#  because leapStep adaptation requires a sampling counter 
- 	for i in 1:Inf  
+  i = 1
+  while true  
  		local alpha, nalpha, n, s, j, n1, s1
  		local dummy, state_minus, state_plus, state, state1
 
@@ -178,6 +179,8 @@ function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)
 		produce(ms)
 
 		state0 = deepcopy(state)
+
+    i += 1
 	end
 
 end

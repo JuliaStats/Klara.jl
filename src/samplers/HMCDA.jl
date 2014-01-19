@@ -94,7 +94,8 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
   dualH = 0.
 
   #  main loop
-for i in 1:Inf
+  i = 1
+  while true
     local j, state
 
     state0.m = randn(model.size)
