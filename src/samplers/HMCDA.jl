@@ -140,5 +140,7 @@ function SamplerTask(model::MCMCModel, sampler::HMCDA, runner::MCMCRunner)
     else
       leapStep = dualLeapStep
     end
+
+    i += 1
   end
 end
