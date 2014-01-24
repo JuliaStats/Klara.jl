@@ -14,7 +14,7 @@ The core functionality of Julia's `MCMC` package includes:
 - ability to suspend/resume MCMC simulations flexibly by using Julia tasks,
 - user-friendly syntax for model specification,
 - use of automatic differentiation to generate the gradient function (higher order derivatives generation is under consideration),
-- integration with and use of functionality of DataFrames and Distributions packages,
+- integration with and use of functionality of `StatsBase` and `Distributions` packages,
 - summary statistics for MCMC, such as Monte Carlo standard error and variance, effective sample size (ESS),
 integrated autocorrelation time,
 - post-processing of MCMC output, such as variance reduction methods.
@@ -98,62 +98,49 @@ mychain1 = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
 #### Output summary and printing
 
 The output of the MCMC simulation is stored in a composite type called `MCMCChain` whose `samples` and `gradients`
-fields are dataframes containing the simulated chain and its gradient respectively. Being dataframes, these fields can
-be printed and manipulated using the relevant facilities of the `DataFrames` package. Furthermore, summary statistics
-specific to MCMC are provided via a range of functions as demonstrated below.
+fields are `Float64` matrices containing the simulated chain and its gradient respectively. It has been decided not
+to allow for missing values (`NaN`s) in the chains, and this is why the samples and gradients are not stored in
+dataframes. Summary statistics specific to MCMC are provided via a range of functions as demonstrated below.
 
 ```jl
-using DataFrames
-
 # Simulate a chain
-
 mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
 # To simulate using adaptive HMC with dual averaging, run for instance
 # mychain2 = run(mymodel2, HMCDA(len=.5), SerialMC(steps=10000, burnin=1000))
 
-# Print samples and diagnostics
-head(mychain2.samples)
-head(mychain2.gradients)
-
 # Get acceptance rate
 
 acceptance(mychain2)
-# 79.75555555555556
+# 79.71111111111111
 
 # Get a summary of the simulated chain (including min, max, mean, Monte Carlo standard error, effective sample size,
 # integrated autocorrelation time, number and percentage of NAs)
 
 describe(mychain2)
-# pars.1
-# Min        -2.71008842709661
-# Mean       0.018065833149137886
-# Max        2.9118531885857117
-# MC Error   9.267529957211366e-5
-# ESS        5333.527226085543
-# AC Time    1.687438653351622
-# NAs        0
-# NA%        0.0%
-# 
-# pars.2
-# Min        -2.5820182335271307
-# Mean       -0.00534093391434661
-# Max        2.659367922721943
-# MC Error   9.285780740766642e-5
-# ESS        5333.717273768112
-# AC Time    1.687378527591465
-# NAs        0
-# NA%        0.0%
-# 
-# pars.3
-# Min        -3.0370582727775197
-# Mean       -0.012687064590981605
-# Max        2.94691439248352
-# MC Error   9.176389696514437e-5
-# ESS        5334.081721827846
-# AC Time    1.6872632384259652
-# NAs        0
-# NA%        0.0%
+# Parameter 1
+# Min        -2.702053450254658
+# Mean       -0.004844156042892654
+# Max        2.6366675700705784
+# MC Error   0.010233364325201898
+# ESS        4788.588215405209
+# AC Time    1.8794683516628967
+#
+# Parameter 2
+# Min        -2.732643754425629
+# Mean       0.019254548075488556
+# Max        2.769387092134431
+# MC Error   0.009872555929239829
+# ESS        5082.161103140516
+# AC Time    1.770900177571793
+#
+# Parameter 3
+# Min        -2.556360774753306
+# Mean       0.0012603347174728646
+# Max        2.5119562145770202
+# MC Error   0.009844126904803768
+# ESS        5073.243993352178
+# AC Time    1.774012843023777
 
 # Get effective sample size
 
@@ -277,7 +264,7 @@ mean(mychain4)
 The output of the sequential Monte Carlo simulation can be plotted with any graphical package. Below is an example using the `Vega` package.
 
 ```jl
-using DataFrames, Vega
+using Vega
 
 # Plot models
 xx = linspace(-3,3,100) * ones(nmod)' 
@@ -286,7 +273,7 @@ g = ones(100) * [1:10]'
 plot(x = vec(xx), y = exp(vec(yy)), group= vec(g), kind = :line)
 
 # Plot a subset of raw samples
-ts = collect(1:10:nrow(mychain3.samples))
+ts = collect(1:10:size(mychain3.samples, 1))
 plot(x = ts, y = vector(mychain3.samples[ts, "x"]), kind = :scatter)
 
 # Plot weighted samples

@@ -44,7 +44,7 @@ function run_serialtempmc(tasks::Array{MCMCTask})
 	map(t -> consume(t.task), tasks)
 
 	# initialize MCMCChain result (one Chain only)
-	res = MCMCChain(1:1:2, DataFrame(tsize, steps-burnin), tasks[end])
+	res = MCMCChain(1:1:2, fill(NaN, tsize, steps-burnin), tasks[end])
 
 	local logW = zeros(nmods)  # log of task weights that will be adapted
 	local at = 1  # pick starting task

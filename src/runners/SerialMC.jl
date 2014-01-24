@@ -66,22 +66,8 @@ function run_serialmc(t::MCMCTask)
     end
   end
 
-  # generate column names for the samples DataFrame
-  cn = Array(ASCIIString, t.model.size)
-  for (k,v) in t.model.pmap
-      if length(v[2]) == 0 # scalar
-        cn[v[1]] = string(k)
-      elseif length(v[2]) == 1 # vector
-        cn[v[1]:(v[1]+prod(v[2])-1)] = ASCIIString[ "$k.$i" for i in 1:v[2][1] ]
-      elseif length(v[2]) == 2 # matrix
-        cn[v[1]:(v[1]+prod(v[2])-1)] = ASCIIString[ "$k.$i.$j" for i in 1:v[2][1], j in 1:v[2][2] ]
-      end
-  end
-
-
-
   # create Chain
-  MCMCChain(t.runner.r, DataFrame(samples', cn), DataFrame(gradients', cn), diags, t, toq())
+  MCMCChain(t.runner.r, samples', gradients', diags, t, toq())
 end
 
 function run_serialmc_exit(t::MCMCTask)

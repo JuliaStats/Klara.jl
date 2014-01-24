@@ -1,6 +1,6 @@
 ######### logistic regression on 1000 obs x 10 var  ###########
 
-using DataFrames, MCMC
+using MCMC
 
 # generate a random dataset
 srand(1)

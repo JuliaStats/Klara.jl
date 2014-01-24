@@ -1,11 +1,9 @@
-import DataFrames.describe
-
 export acceptance, describe
 
 # Compute acceptance or rejection rate of MCMCChain
-function acceptance(c::MCMCChain; lags::Ranges=1:nrow(c.samples), reject::Bool=false)
+function acceptance(c::MCMCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=false)
   rlen = lags.len
-  @assert lags[end] <= nrow(c.samples) "Range of acceptance rate not within post-burnin range of MCMC chain"
+  @assert lags[end] <= size(c.samples, 1) "Range of acceptance rate not within post-burnin range of MCMC chain"
 
   if reject
     return (rlen-sum(c.diagnostics["accept"][lags]))*100/rlen
@@ -18,37 +16,33 @@ end
 # Flegal J.M, Galin L.J, Neath R.C. Markov Chain Monte Carlo Estimation of Quantiles. arXiv, 2013
 # TODO 2: Include these MCMC estimates of quantiles in describe()
 
-# describe() provides summary statistics for MCMCChain objects, similarly to dataframes' describe()
+# describe() provides summary statistics for MCMCChain objects
 describe(c::MCMCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCMCChain)
-  for i in 1:ncol(c.samples)
+  nsamples, npars = size(c.samples)
+  for i in 1:npars
 
-    col = c.samples[i]
-    println(io, colnames(c.samples)[i])
+    col = c.samples[:, i]
+    println(io, "Parameter $i")
 
-    if all( isna(col) )
-      println(col, " * All NA * ")
-        return
+    if sum(isnan(col)) != 0
+      println(col, "Monte Carlo chain for parameter $i contains NaNs, which are not supported.")
+      return
     end
 
-    filtered = float(removeNA(col))
-    qs = quantile(filtered, [0, 1])
-    nrows = nrow(c.samples)
-    varimse = mcvar_imse(filtered)
-    variid = var(filtered)/nrows
+    qs = quantile(col, [0, 1])
+    varimse = mcvar_imse(col)
+    variid = var(col)/nsamples
     mcerror = sqrt(varimse)
-    ss = nrows*variid./varimse
+    ss = nsamples*variid./varimse
     act = varimse./variid
 
     statNames = ["Min", "Mean", "Max", "MC Error", "ESS", "AC Time"]
-    statVals = [qs[1], mean(filtered), qs[2], mcerror, ss, act]
+    statVals = [qs[1], mean(col), qs[2], mcerror, ss, act]
     for i = 1:6
         println(io, string(rpad(statNames[i], 10, " "), " ", string(statVals[i])))
     end
-    nas = sum(isna(col))
-    println(io, "NAs        $nas")
-    println(io, "NA%        $(round(nas*100/length(col), 2))%")
 
     println(io, )
   end

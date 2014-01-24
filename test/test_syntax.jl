@@ -56,9 +56,6 @@ mychain1 = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
 
 mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
-head(mychain2.samples)
-head(mychain2.gradients)
-
 acceptance(mychain2)
 
 describe(mychain2)

@@ -3,13 +3,13 @@ import Base.mean
 export mean, mean_rb
 
 # Mean of MCMCChain
-mean(c::MCMCChain, par::Ranges=1:ncol(c.samples)) = Float64[mean(c.samples[:, i]) for i = par]
+mean(c::MCMCChain, par::Ranges=1:size(c.samples, 2)) = Float64[mean(c.samples[:, i]) for i = par]
 
 mean(c::MCMCChain, par::Real) = mean(c, par:par)
 
 # Mean of MCMCChain using Rao-Blackwell samples
-function mean_rb_hmc(c::MCMCChain, par::Ranges=1:ncol(c.samples))
-  nsamples, npars, nleaps = nrow(c.samples), length(par), length(c.diagnostics["leaps"][1])-1
+function mean_rb_hmc(c::MCMCChain, par::Ranges=1:size(c.samples, 2))
+  nsamples, npars, nleaps = size(c.samples, 1), length(par), length(c.diagnostics["leaps"][1])-1
 
   w = Array(Float64, nsamples, nleaps)
   sums = Array(Float64, nsamples, npars)
@@ -36,7 +36,7 @@ end
 
 mean_rb_hmc(c::MCMCChain, par::Real) = mean_rb_hmc(c, par:par)
 
-function mean_rb(c::MCMCChain, p::Union(Real, Ranges)=1:ncol(c.samples), s::Symbol=:hmc)
+function mean_rb(c::MCMCChain, p::Union(Real, Ranges)=1:size(c.samples, 2), s::Symbol=:hmc)
   if s == :hmc
     mean_rb_hmc(c, p)
   end

@@ -100,22 +100,10 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 		end
 	end
 
-	# generate column names for the samples DataFrame
-	cn = Array(ASCIIString, targets[end].model.size)
-	for (k,v) in targets[end].model.pmap
-	    if length(v[2]) == 0 # scalar
-	      cn[v[1]] = string(k)
-	    elseif length(v[2]) == 1 # vector
-	      cn[v[1]:(v[1]+prod(v[2])-1)] = ASCIIString[ "$k.$i" for i in 1:v[2][1] ]
-	    elseif length(v[2]) == 2 # matrix
-	      cn[v[1]:(v[1]+prod(v[2])-1)] = ASCIIString[ "$k.$i.$j" for i in 1:v[2][1], j in 1:v[2][2] ]
-	    end
-	end
-
 	# create Chain
 	MCMCChain((burnin+1):1:((steps-burnin)*npart),
-	  DataFrame(samples', cn),
-		DataFrame(),  # TODO, store gradient here, needs to be passed by newprop
+	  samples',
+		nothing,
 		{"weigths" => weights, "particle" => rep([1:npart],(steps-burnin))},  
 		targets,
 		toq())

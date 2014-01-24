@@ -1,6 +1,6 @@
 ######### fitting an Ornstein–Uhlenbeck process  ###########
 
-using DataFrames, MCMC
+using MCMC
 
 # generate serie
 srand(1)

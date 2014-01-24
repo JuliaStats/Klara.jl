@@ -6,7 +6,6 @@
 
 module MCMC
 
-using DataFrames, DataArrays
 using Distributions
 using StatsBase
 
@@ -23,6 +22,10 @@ abstract MCMCSampler
 abstract MCMCTuner
 
 abstract MCMCRunner
+
+typealias FunctionOrNothing Union(Function, Nothing)
+typealias MatrixF64OrNothing Union(Matrix{Float64}, Nothing)
+typealias F64OrVectorF64 Union(Float64, Vector{Float64})
 
 ###########  Models  ##########
 include("modellers/mcmcmodels.jl")		
@@ -61,30 +64,33 @@ include("samplers/RMLMC.jl") # Semi-explicit Riemannian manifold Lagrangian Mont
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain
   range::Range{Int}
-  samples::DataFrame
-  gradients::DataFrame
+  samples::Matrix{Float64}
+  gradients::MatrixF64OrNothing
   diagnostics::Dict
   task::Union(MCMCTask, Array{MCMCTask})
   runTime::Float64
    
-  function MCMCChain(r::Range{Int}, s::DataFrame, g::DataFrame, d::Dict, t::Union(MCMCTask, Array{MCMCTask}),
-    rt::Float64)
-    if !isempty(g); @assert size(s) == size(g) "samples and gradients must have the same number of rows and columns"; end
+  function MCMCChain(r::Range{Int}, s::Matrix{Float64}, g::MatrixF64OrNothing, d::Dict,
+    t::Union(MCMCTask, Array{MCMCTask}), rt::Float64)
+    if g != nothing
+      @assert size(s) == size(g) "samples and gradients must have the same number of rows and columns"
+    end
     new(r, s, g, d, t, rt)
   end
 end
 
-MCMCChain(r::Range{Int}, s::DataFrame, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
-	MCMCChain(r, s, DataFrame(), d, t, rt)
-MCMCChain(r::Range{Int}, s::DataFrame, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
-	MCMCChain(r, s, DataFrame(), Dict(), t, rt)
-MCMCChain(r::Range{Int}, s::DataFrame, d::Dict, t::Union(MCMCTask, Array{MCMCTask})) = 
-	MCMCChain(r, s, DataFrame(), d, t, NaN)
-MCMCChain(r::Range{Int}, s::DataFrame, t::Union(MCMCTask, Array{MCMCTask})) = 
-	MCMCChain(r, s, DataFrame(), Dict(), t, NaN)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
+	MCMCChain(r, s, nothing, d, t, rt)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
+	MCMCChain(r, s, nothing, Dict(), t, rt)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask})) = 
+	MCMCChain(r, s, nothing, d, t, NaN)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask})) = 
+	MCMCChain(r, s, nothing, Dict(), t, NaN)
 
 function show(io::IO, res::MCMCChain)
-  println("$(ncol(res.samples)) parameters, $(nrow(res.samples)) samples (per parameter), $(round(res.runTime, 1)) sec.")
+  nsamples, npars = size(res.samples)
+  println("$npars parameters, $nsamples samples (per parameter), $(round(res.runTime, 1)) sec.")
 end
 
 #  Definition of * as a shortcut operator for (model, sampler, runner) combination

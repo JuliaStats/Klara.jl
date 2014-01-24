@@ -13,27 +13,24 @@ export MCMCLikModel
 
 println("Loading MCMCLikModel model")
 
-typealias FOrNothing 	Union(Nothing, Function)
-typealias ROrVector 	Union(Real, Vector{Float64})
-
 # The likelihood Model type
 type MCMCLikelihoodModel <: MCMCModel
 	eval::Function              # log-likelihood evaluation function
-	evalg::FOrNothing 			# gradient vector evaluation function
-	evalt::FOrNothing 			# tensor evaluation function
-	evaldt::FOrNothing 			# tensor derivative evaluation function
-  	evalallg::FOrNothing 		# 2-tuple (log-lik, gradient vector) evaluation function
-  	evalallt::FOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
-  	evalalldt::FOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
+	evalg::FunctionOrNothing 			# gradient vector evaluation function
+	evalt::FunctionOrNothing 			# tensor evaluation function
+	evaldt::FunctionOrNothing 			# tensor derivative evaluation function
+  	evalallg::FunctionOrNothing 		# 2-tuple (log-lik, gradient vector) evaluation function
+  	evalallt::FunctionOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
+  	evalalldt::FunctionOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
 	pmap::Dict                  # map to/from parameter vector from/to user-friendly variables
 	size::Int                   # parameter vector size
 	init::Vector{Float64}       # parameter vector initial values
 	scale::Vector{Float64}      # scaling hint on parameters
 
 	MCMCLikelihoodModel(f::Function, 
-						g::FOrNothing, ag::FOrNothing,
-						t::FOrNothing, at::FOrNothing,
-						dt::FOrNothing, adt::FOrNothing,
+						g::FunctionOrNothing, ag::FunctionOrNothing,
+						t::FunctionOrNothing, at::FunctionOrNothing,
+						dt::FunctionOrNothing, adt::FunctionOrNothing,
 						i::Vector{Float64}, 
 						sc::Vector{Float64}, 
 						pmap::Dict) = begin
@@ -73,7 +70,7 @@ function MCMCLikelihoodModel(	m::Expr;
 								gradient::Bool=false,
 								init=nothing,
 								pmap=nothing,
-								scale::ROrVector = 1.0,
+								scale::F64OrVectorF64 = 1.0,
 								args...)
 	# when using expressions, initial values are passed in keyword args
 	#  with one arg by parameter, therefore there is not need for an init arg
@@ -98,27 +95,27 @@ end
 
 # Model creation : with user supplied functions
 function MCMCLikelihoodModel(	lik::Function;
-								grad::FOrNothing = nothing, 
-								tensor::FOrNothing = nothing,
-								dtensor::FOrNothing = nothing,
-								allgrad::FOrNothing = nothing, 
-								alltensor::FOrNothing = nothing,
-								alldtensor::FOrNothing = nothing,
-								init::ROrVector = [1.0], 
-								scale::ROrVector = 1.0,
+								grad::FunctionOrNothing = nothing, 
+								tensor::FunctionOrNothing = nothing,
+								dtensor::FunctionOrNothing = nothing,
+								allgrad::FunctionOrNothing = nothing, 
+								alltensor::FunctionOrNothing = nothing,
+								alldtensor::FunctionOrNothing = nothing,
+								init::F64OrVectorF64 = [1.0], 
+								scale::F64OrVectorF64 = 1.0,
 								pmap::Union(Nothing, Dict) = nothing) 
 
 	# convert init to vector if needed
-	init = isa(init, Real) ? [init] : init
+	init = isa(init, Float64) ? [init] : init
 
 	# expand scale to parameter vector size if needed
-	scale = isa(scale, Real) ? scale * ones(length(init)) : scale
+	scale = isa(scale, Float64) ? scale * ones(length(init)) : scale
 
 	# all parameters named "pars" by default
 	if pmap == nothing ; pmap = Dict([:pars], [(1, size(init))]) ; end 
 
 	# now build missing functions, if any
-	fmat = Array(FOrNothing, 3, 2)
+	fmat = Array(FunctionOrNothing, 3, 2)
 	for (i, f1, f2) in [(1, grad, allgrad), 
 						(2, tensor, alltensor), 
 						(3, dtensor, alldtensor)]
