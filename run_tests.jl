@@ -1,9 +1,7 @@
 using Base.Test
 using MCMC
 
-my_tests = ["test/test_syntax.jl",
-            "test/test_diff.jl",
-            "test/test_dists.jl"]
+my_tests = ["test/test_hmc.jl"]
 
 println("Running tests:")
 
