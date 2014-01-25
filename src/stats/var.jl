@@ -1,16 +1,27 @@
 import Base.var, Base.std
 
 # mcvar and mcse stand for Monte Carlo variance and Monte Carlo error respectively
-export mcvar, var, mcse, std
+export mcvar, mcse
 
 # Variance of MCMCChain
-mcvar_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2)) =
-  Float64[var(c.samples[:, pars[i]]) for i = 1:pars.len]/size(c.samples, 1)
+mcvar_iid(x::Vector{Float64}) = var(x)/length(x)
+
+mcvar_iid(x::Matrix{Float64}, pars::Ranges=1:size(x, 2)) = Float64[mcvar_iid(x[:, pars[i]]) for i = 1:pars.len]
+
+mcvar_iid(x::Matrix{Float64}, par::Real) = mcvar_iid(x, par:par)
+
+mcvar_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2)) = mvcvar_iid(c.samples, pars)
 
 mcvar_iid(c::MCMCChain, par::Real) = mcvar_iid(c, par:par)
 
 # Standard deviation of MCMCChain
-msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2)) = sqrt(mcvar_iid(c, pars))
+msce_iid(x::Vector{Float64}) = sqrt(mcvar_iid(x))
+
+msce_iid(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2)) = Float64[mcse_iid(x[:, pars[i]]) for i = 1:pars.len]
+
+msce_iid(x::Matrix{Float64}, par::Real) = msce_iid(x, par:par)
+
+msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2)) = msce_iid(c.samples, pars)
 
 msce_iid(c::MCMCChain, par::Real) = msce_iid(c, par:par)
 
@@ -31,12 +42,20 @@ mcvar_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
 mcvar_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcvar_bm(x, par:par; batchlen=batchlen)
 
 mcvar_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
-  Float64[mcvar_bm(c.samples[:, pars[i]]; batchlen=batchlen) for i = 1:pars.len]
+  mcvar_bm(c.samples, pars; batchlen=batchlen)
 
 mcvar_bm(c::MCMCChain, par::Real; batchlen::Int=100) = mcvar_bm(c, par:par; batchlen=batchlen)
 
 # Monte Carlo standard error using batch means
-mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) = sqrt(mcvar_bm(c, pars; batchlen=batchlen))
+mcse_bm(x::Vector{Float64}; batchlen::Int=100) = sqrt(mcvar_bm(x; batchlen=batchlen))
+
+mcse_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) = 
+  Float64[mcse_bm(x[:, pars[i]]; batchlen=batchlen) for i = 1:pars.len]
+
+mcse_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcse_bm(x, par:par; batchlen=batchlen)
+
+mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
+  mcse_bm(c.samples, pars; batchlen=batchlen)
 
 mcse_bm(c::MCMCChain, par::Real; batchlen::Int=100) = mcse_bm(c, par:par; batchlen=batchlen)
 
@@ -80,13 +99,18 @@ mcvar_imse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)
 mcvar_imse(x::Matrix{Float64}, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_imse(x, par:par; maxlag=maxlag)
 
 mcvar_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  Float64[mcvar_imse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+  mcvar_imse(c.samples, pars; maxlag=maxlag)
 
 mcvar_imse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_imse(c, par:par; maxlag=maxlag)
 
 # Standard deviation using Geyer's IMSE
+mcse_imse(x::Vector{Float64}; maxlag::Int=size(c.samples, 1)-1) = sqrt(mcvar_imse(x; maxlag=maxlag))
+
+mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+  Float64[mcse_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+
 mcse_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  sqrt(var_imse(c, pars; maxlag=maxlag))
+  mcse_imse(c.samples, pars; maxlag=maxlag)
 
 mcse_imse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_imse(c, par:par; maxlag=maxlag)
 
@@ -121,46 +145,69 @@ mcvar_ipse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)
 mcvar_ipse(x::Matrix{Float64}, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_ipse(x, par:par; maxlag=maxlag)
 
 mcvar_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  Float64[mcvar_ipse(c.samples[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+  mcvar_ipse(c.samples, pars; maxlag=maxlag)
 
 mcvar_ipse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_ipse(c, par:par; maxlag=maxlag)
 
 # Standard deviation using Geyer's IMSE
+mcse_ipse(x::Vector{Float64}; maxlag::Int=size(c.samples, 1)-1) = sqrt(mcvar_ipse(x; maxlag=maxlag))
+
+mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+  Float64[mcse_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:pars.len]
+
 mcse_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  sqrt(mcvar_ipse(c, pars; maxlag=maxlag))
+  mcse_ipse(c.samples, pars; maxlag=maxlag)
 
 mcse_ipse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_ipse(c, par:par; maxlag=maxlag)
 
 # Wrapper function for computing MCMC variance using various approaches
 vtypes = (:bm, :iid, :imse, :ipse)
 
-function var(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
+function mcvar(x::Vector{Float64}; vtype::Symbol=:imse, args...)
   @assert in(vtype, vtypes) "Unknown variance type $vtype"
 
   if vtype == :bm
-    return mcvar_bm(c, pars; args...) 
+    return mcvar_bm(x; args...) 
   elseif vtype == :iid
-    return mcvar_iid(c, pars)   
+    return mcvar_iid(x)   
   elseif vtype == :imse
-    return mcvar_imse(c, pars; args...)
+    return mcvar_imse(x; args...)
   elseif vtype == :ipse
-    return mcvar_ipse(c, pars; args...)
+    return mcvar_ipse(x; args...)
   end
 end
 
-var(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = var(c, par:par; vtype=vtype, args...)
+mcvar(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
+  Float64[mcvar(x[:, pars[i]]; vtype=vtype, args...) for i = 1:pars.len]
+
+mcvar(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcvar(x, par:par; vtype=vtype, args...)
+
+mcvar(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
+  mcvar(c.samples, pars; vtype=vtype, args...)
+
+mcvar(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = mcvar(c, par:par; vtype=vtype, args...)
 
 # Wrapper function for computing Monte Carlo (standard) error using various approaches
-function std(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
-  @assert in(vtype, vtypes) "Unknown standard error type $vtype"
+function mcse(x::Vector{Float64}; vtype::Symbol=:imse, args...)
+  @assert in(vtype, vtypes) "Unknown stdiance type $vtype"
 
   if vtype == :bm
-    return mcse_bm(c, pars; args...)
+    return mcse_bm(x; args...) 
   elseif vtype == :iid
-    return mcse_iid(c, pars)
+    return mcse_iid(x)   
   elseif vtype == :imse
-    return mcse_imse(c, pars; args...)
+    return mcse_imse(x; args...)
   elseif vtype == :ipse
-    return mcse_ipse(c, pars; args...)   
+    return mcse_ipse(x; args...)
   end
 end
+
+mcse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
+  Float64[mcse(x[:, pars[i]]; vtype=vtype, args...) for i = 1:pars.len]
+
+mcse(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcse(x, par:par; vtype=vtype, args...)
+
+mcse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
+  mcse(c.samples, pars; vtype=vtype, args...)
+
+mcse(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = mcse(c, par:par; vtype=vtype, args...)
