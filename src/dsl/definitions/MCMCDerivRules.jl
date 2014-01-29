@@ -10,11 +10,11 @@ macro dlogpdfd(dist::Symbol, rule)
 	deriv_rule( sig, :d, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
-	rule2 = substSymbols(rule, {:x => :(x[i]), :ds => :(ds[i])})
+	rule2 = AutoDiff.substSymbols(rule, {:x => :(x[i]), :ds => :(ds[i])})
 	deriv_rule( sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
-	rule2 = substSymbols(rule, {:dd1 => :(dd1[i]), :dd2 => :(dd2[i]), :dd3 => :(dd3[i]), 
+	rule2 = AutoDiff.substSymbols(rule, {:dd1 => :(dd1[i]), :dd2 => :(dd2[i]), :dd3 => :(dd3[i]), 
 		:x => :(x[i]), :ds => :(ds[i]), :d => :(d[i]) })
 	deriv_rule(sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 end
@@ -24,11 +24,11 @@ macro dlogpdfx(dist::Symbol, rule)
 	deriv_rule( sig, :x, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
-	rule2 = substSymbols(rule, {:dx => :(dx[i]), :x => :(x[i]), :ds => :(ds[i])})
+	rule2 = AutoDiff.substSymbols(rule, {:dx => :(dx[i]), :x => :(x[i]), :ds => :(ds[i])})
 	deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
-	rule3 = substSymbols(rule2, {:d => :(d[i])})
+	rule3 = AutoDiff.substSymbols(rule2, {:d => :(d[i])})
 	deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule3 ; end))
 end
 
