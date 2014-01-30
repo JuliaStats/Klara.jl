@@ -2,7 +2,7 @@ using Base.Test
 using MCMC
 
 my_tests = ["test/test_syntax.jl",
-            "test/test_diff.jl",
+            "test/dsl/test_diff.jl",
             "test/test_dists.jl"]
 
 println("Running tests:")

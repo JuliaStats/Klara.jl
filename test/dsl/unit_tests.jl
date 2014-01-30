@@ -3,7 +3,8 @@
 using Base.Test
 
 module Sandbox 
-    include("modelparser.jl")
+	using Distributions
+    include("../src/dsl/modelparser.jl")
 end
 
 ## translate()
@@ -22,10 +23,11 @@ end
 	[:(A=reshape(__beta[1:6],2,3)), :(x=__beta[7]), :(z=__beta[8:10])]
 
 ## var2vec()
-@test Sandbox.var2vec(x=3.)                  == :([_dx])
-@test Sandbox.var2vec(z=[1., 2, 3])          == :([_dz])
-@test Sandbox.var2vec(A=[12. 45 0; 18 1 2])  == :([vec(_dA)])
-@test Sandbox.var2vec(z=[1., 2, 3], A=[12. 45 0; 18 1 2], x=3.) == :([_dz, vec(_dA), _dx])
+dp(v) = Sandbox.AutoDiff.dprefix(v)
+@test Sandbox.var2vec(x=3.)                  == :([$(dp(:x))])
+@test Sandbox.var2vec(z=[1., 2, 3])          == :([$(dp(:z))])
+@test Sandbox.var2vec(A=[12. 45 0; 18 1 2])  == :([vec($(Sandbox.AutoDiff.dprefix(:A)))])
+@test Sandbox.var2vec(z=[1., 2, 3], A=[12. 45 0; 18 1 2], x=3.) == :([$(dp(:z)), vec($(dp(:A))), $(dp(:x))])
 
 
 ## modelVars()

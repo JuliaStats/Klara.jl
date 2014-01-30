@@ -4,7 +4,6 @@
 #
 ##########################################################################
 
-
 #### translates ~ into regular syntax
 function translate(ex::Expr)
 	if ex.head == :block 
@@ -24,8 +23,10 @@ function translate(ex::Expr)
 
 		elseif isa(ex2, Expr) || isa(ex2, Symbol)   # ~ statement
 			return :( $ACC_SYM += logpdf( $(ex2), $(ex.args[2]) ) )
+
 		else
 			error("Syntax error in ($ex)")
+
 		end
 	else
 		return ex
@@ -33,7 +34,6 @@ function translate(ex::Expr)
 end
 translate(ex::Vector) = map(translate, ex)
 translate(ex::Any) = ex
-
 
 
 
@@ -63,21 +63,21 @@ end
 
 
 
-
-
 ### creates mapping statements from model parameter variables to Vector{Float64}
 function var2vec(;init...)
 	ex = {}
 	for (v,i) in init
 		sz = size(i)
 		if in(length(sz), [0,1]) # scalar or vector
-			push!(ex, dprefix(v))
+			push!(ex, AutoDiff.dprefix(v))
 		else # matrix case  (needs a reshape)
-			push!(ex, :( vec($(dprefix(v))) ) )
+			push!(ex, :( vec($(AutoDiff.dprefix(v))) ) )
 		end
 	end
 	Expr(:vcat, ex...)
 end
+
+
 
 ### returns parameter info : total size, vector <-> model parameter map, inital values vector
 function modelVars(;init...)

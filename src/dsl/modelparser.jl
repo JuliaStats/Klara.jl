@@ -48,11 +48,11 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 		                   # :( $ACC_SYM = $(Expr(:., ACC_SYM, Expr(:quote, :val)) ) )]... )
 		                   :( $rv = $(Expr(:., ACC_SYM, Expr(:quote, :val)) ) )]... )
 
-	resetvar()  # reset temporary variable numbering (for legibility, not strictly necessary)
+	AutoDiff.resetvar()  # reset temporary variable numbering (for legibility, not strictly necessary)
 
 	## build function expression
 	if gradient  # case with gradient
-		head, body, outsym = diff(model, rv; init...)
+		head, body, outsym = reversediff(model, rv; init...)
 
 		body = [ vec2var(;init...),  # assigments beta vector -> model parameter vars
 		         body.args,
@@ -70,7 +70,7 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 				          end)
 
 	else  # case without gradient
-		head, body, outsym = diff(model, rv, true; init...)
+		head, body, outsym = reversediff(model, rv, true; init...)
 
 		body = [ vec2var(;init...),  # assigments beta vector -> model parameter vars
 		         body.args,
