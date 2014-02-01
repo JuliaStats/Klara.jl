@@ -53,25 +53,20 @@ reset!(tune::EmpiricalHMCTune) = ((tune.accepted, tune.proposed) = (0, 0))
 immutable HMC <: MCMCSampler
   nLeaps::Int
   leapStep::Float64
-  storeLeaps::Bool
   tuner::Union(Nothing, MCMCTuner)
 
-  function HMC(nLeaps::Int, leapStep::Real, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner))
+  function HMC(nLeaps::Int, leapStep::Real, tuner::Union(Nothing, MCMCTuner))
     @assert nLeaps>0 "inner steps should be > 0"
     @assert leapStep>0 "inner steps scaling should be > 0"
-    new(nLeaps, leapStep, storeLeaps, tuner)
+    new(nLeaps, leapStep, tuner)
   end
 end
-HMC(tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, false, tuner)
-HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, false, tuner)
-HMC(nLeaps::Int, leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, leapStep, false, tuner)
-HMC(nLeaps::Int, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, storeLeaps, tuner)
-HMC(leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, leapStep, false, tuner)
-HMC(leapStep::Float64, storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) =
-  HMC(10, leapStep, storeLeaps, tuner)
-HMC(storeLeaps::Bool, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, storeLeaps, tuner)
-HMC(;init::Int=10, scale::Float64=0.1, leaps::Bool=false, tuner::Union(Nothing, MCMCTuner)=nothing) =
-  HMC(init, scale, leaps, tuner)
+HMC(tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, tuner)
+HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, tuner)
+HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, tuner)
+HMC(leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, leapStep, tuner)
+HMC(;init::Int=10, scale::Float64=0.1, tuner::Union(Nothing, MCMCTuner)=nothing) =
+  HMC(init, scale, tuner)
 
 ###########################################################################
 #                  HMC task
@@ -106,7 +101,6 @@ end
 function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
   local state0
   local nLeaps, leapStep
-  local leapState0, leapStates
   
   @assert hasgradient(model) "HMC sampler requires model with gradient function"
 
@@ -138,30 +132,20 @@ function SamplerTask(model::MCMCModel, sampler::HMC, runner::MCMCRunner)
     update!(state0)
     state = deepcopy(state0)
 
-    if !sampler.storeLeaps
-      for j = 1:nLeaps
-        state = leapfrog(state, leapStep, model.evalallg)
-      end
-    else
-      leapStates = Array(HMCSample, nLeaps+1)
-      leapStates[1] = deepcopy(state0)
-      for j = 2:nLeaps+1
-        state = leapfrog(state, leapStep, model.evalallg)
-        leapStates[j] = deepcopy(state)
-      end
+    for j = 1:nLeaps
+      state = leapfrog(state, leapStep, model.evalallg)
     end
 
     # accept if new is good enough
     if rand() < exp(state0.H-state.H)
-      diagnostics = (!sampler.storeLeaps ? {"accept" => true} : {"accept" => true, "leaps" => leapStates})
-      ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad, diagnostics)
+      ms = MCMCSample(state.pars, state.logTarget, state.grad, state0.pars, state0.logTarget, state0.grad,
+        {"accept" => true})
       produce(ms)
       state0 = deepcopy(state)
       if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
     else
-      diagnostics = (!sampler.storeLeaps ? {"accept" => false} : {"accept" => false, "leaps" => leapStates})
       ms = MCMCSample(state0.pars, state0.logTarget, state0.grad, state0.pars, state0.logTarget, state0.grad,
-        diagnostics)
+        {"accept" => false})
       produce(ms)
     end
 
