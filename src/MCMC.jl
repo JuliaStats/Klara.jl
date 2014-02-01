@@ -55,11 +55,8 @@ include("samplers/HMC.jl")    # Hamiltonian Monte-Carlo sampler
 include("samplers/HMCDA.jl")    # Adaptive Hamiltonian Monte-Carlo sampler with dual averaging
 include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
 include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
-# include("samplers/MMALA.jl")  # Manifold Metropolis adjusted Langevin algorithm sampler (deprecated)
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
-include("samplers/ERMLMC.jl") # Explicit Riemannian manifold Lagrangian Monte Carlo (ERMLMC)
-include("samplers/RMLMC.jl") # Semi-explicit Riemannian manifold Lagrangian Monte Carlo (RMLMC)
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain
