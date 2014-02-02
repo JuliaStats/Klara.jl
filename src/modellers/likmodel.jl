@@ -19,9 +19,9 @@ type MCMCLikelihoodModel <: MCMCModel
 	evalg::FunctionOrNothing 			# gradient vector evaluation function
 	evalt::FunctionOrNothing 			# tensor evaluation function
 	evaldt::FunctionOrNothing 			# tensor derivative evaluation function
-  	evalallg::FunctionOrNothing 		# 2-tuple (log-lik, gradient vector) evaluation function
-  	evalallt::FunctionOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
-  	evalalldt::FunctionOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
+  evalallg::FunctionOrNothing 		# 2-tuple (log-lik, gradient vector) evaluation function
+  evalallt::FunctionOrNothing 		# 3-tuple (log-lik, gradient vector, tensor) evaluation function
+  evalalldt::FunctionOrNothing 		# 4-tuple (log-lik, gradient vector, tensor, tensor derivative) evaluation function
 	pmap::Dict                  # map to/from parameter vector from/to user-friendly variables
 	size::Int                   # parameter vector size
 	init::Vector{Float64}       # parameter vector initial values
@@ -31,26 +31,36 @@ type MCMCLikelihoodModel <: MCMCModel
 						g::FunctionOrNothing, ag::FunctionOrNothing,
 						t::FunctionOrNothing, at::FunctionOrNothing,
 						dt::FunctionOrNothing, adt::FunctionOrNothing,
-						i::Vector{Float64}, 
+						init::Vector{Float64}, 
 						sc::Vector{Float64}, 
 						pmap::Dict) = begin
 
-		s = size(i, 1)
+		s = size(init, 1)
 
 		@assert ispartition(pmap, s) "param map is not a partition of parameter vector"
 		@assert size(sc,1) == s "scale parameter size ($(size(sc,1))) different from initial values ($s)"
 
+    fin = [f, g, ag, t, at, dt, adt]
+    fout = Array(FunctionOrNothing, 7)
+
 		# check that all functions can be called with a vector of Float64 as argument
-		for ff in [f, g, ag, t, at, dt, adt]
-			@assert ff==nothing || hasvectormethod(f) 
-					"one of the supplied functions cannot be called with Vector{Float64}"
-			#TODO : make error message print which function is problematic
+		for i = 1:7
+			if isgeneric(fin[i]) && !method_exists(fin[i], (Vector{Float64},))
+				if method_exists(fin[i], (Float64,))
+					fout[i] = x::Vector{Float64} -> fin[i](x[1])  
+				else
+				  error("one of the supplied functions cannot be called with Vector{Float64}")
+          #TODO : make error message print which function is problematic
+        end
+			else
+			    fout[i] = fin[i]
+			end
 		end
 
 		# check that initial values are in the support of likelihood function
-		@assert isfinite(f(i)) "Initial values out of model support, try other values"
+		@assert isfinite(fout[1](init)) "Initial values out of model support, try other values"
 
-		new(f, g, t, dt, ag, at, adt, pmap, s, i, sc)
+		new(fout[1], fout[2], fout[3], fout[4], fout[5], fout[6], fout[7], pmap, s, init, sc)
 	end
 end
 
@@ -139,3 +149,54 @@ function MCMCLikelihoodModel(	lik::Function;
 						init, scale, pmap)
 end
 
+# Model creation with multivariate Distribution as input
+
+function MCMCLikelihoodModel(d::MultivariateDistribution;
+  grad::FunctionOrNothing = nothing, 
+  tensor::FunctionOrNothing = nothing,
+  dtensor::FunctionOrNothing = nothing,
+  allgrad::FunctionOrNothing = nothing, 
+  alltensor::FunctionOrNothing = nothing,
+  alldtensor::FunctionOrNothing = nothing,
+	init::F64OrVectorF64 = [1.0], scale::F64OrVectorF64 = 1.0, pmap::Union(Nothing, Dict) = nothing)
+  @assert method_exists(logpdf, (typeof(d), Vector{Float64})) "logpdf function not defined for $d"
+
+  fout = Array(FunctionOrNothing, 2)
+  fout[1] = x::Vector{Float64} -> logpdf(d, x)
+
+  if grad == nothing
+  	if method_exists(gradloglik, (typeof(d), Vector{Float64}))
+  		fout[2] = x::Vector{Float64} -> gradloglik(d, x)
+  	end
+  end
+
+	MCMCLikelihoodModel(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
+    allgrad=allgrad, alltensor=alltensor, alldtensor=alldtensor,
+    init=init, scale=scale, pmap=pmap)
+end
+
+# Model creation with univariate Distribution as input
+
+function MCMCLikelihoodModel(d::UnivariateDistribution;
+  grad::FunctionOrNothing = nothing, 
+  tensor::FunctionOrNothing = nothing,
+  dtensor::FunctionOrNothing = nothing,
+  allgrad::FunctionOrNothing = nothing, 
+  alltensor::FunctionOrNothing = nothing,
+  alldtensor::FunctionOrNothing = nothing,
+	init::F64OrVectorF64 = [1.0], scale::F64OrVectorF64 = 1.0, pmap::Union(Nothing, Dict) = nothing)
+  @assert method_exists(logpdf, (typeof(d), Float64)) "logpdf function not defined for $d"
+
+  fout = Array(FunctionOrNothing, 2)
+  fout[1] = x::Vector{Float64} -> logpdf(d, x[1])
+
+  if grad == nothing
+  	if method_exists(gradloglik, (typeof(d), Float64))
+  		fout[2] = x::Vector{Float64} -> gradloglik(d, x[1])
+  	end
+  end
+
+	MCMCLikelihoodModel(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
+    allgrad=allgrad, alltensor=alltensor, alldtensor=alldtensor,
+    init=init, scale=scale, pmap=pmap)
+end
