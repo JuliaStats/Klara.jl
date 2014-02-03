@@ -60,7 +60,7 @@ type MCMCLikelihoodModel <: MCMCModel
 		# check that initial values are in the support of likelihood function
 		@assert isfinite(fout[1](init)) "Initial values out of model support, try other values"
 
-		new(fout[1], fout[2], fout[3], fout[4], fout[5], fout[6], fout[7], pmap, s, init, sc)
+    new(fout[1], fout[2], fout[4], fout[6], fout[3], fout[5], fout[7], pmap, s, init, sc)
 	end
 end
 
@@ -192,7 +192,7 @@ function MCMCLikelihoodModel(d::UnivariateDistribution;
 
   if grad == nothing
   	if method_exists(gradloglik, (typeof(d), Float64))
-  		fout[2] = x::Vector{Float64} -> gradloglik(d, x[1])
+  		fout[2] = x::Vector{Float64} -> [gradloglik(d, x[1])]
   	end
   end
 
