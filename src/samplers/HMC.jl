@@ -63,7 +63,7 @@ immutable HMC <: MCMCSampler
 end
 HMC(tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, 0.1, tuner)
 HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, tuner)
-HMC(nLeaps::Int, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(nLeaps, 0.1, tuner)
+HMC(nLeaps::Int, leapStep::Float64) = HMC(nLeaps, leapStep, nothing)
 HMC(leapStep::Float64, tuner::Union(Nothing, MCMCTuner)=nothing) = HMC(10, leapStep, tuner)
 HMC(;init::Int=10, scale::Float64=0.1, tuner::Union(Nothing, MCMCTuner)=nothing) =
   HMC(init, scale, tuner)
