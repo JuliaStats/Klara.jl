@@ -1,7 +1,8 @@
 using Base.Test
 using MCMC
 
-my_tests = ["test/test_hmc.jl"]
+my_tests = ["test/test_hmc.jl",
+  "test/test_empmctuner.jl"]
 
 println("Running tests:")
 
