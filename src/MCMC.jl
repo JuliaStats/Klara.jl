@@ -57,6 +57,7 @@ include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
 include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
+include("samplers/slice_sampler.jl")  # Slice sampler
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain

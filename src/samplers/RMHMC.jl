@@ -1,6 +1,5 @@
 ###########################################################################
 #  Riemannian manifold Hamiltonian Monte Carlo (RMHMC)
-#  The RMHMC sampler is work in progress (not running yet)
 #
 #  Reference: Girolami M, Calderhead B. Riemann Manifold Langevin and Hamiltonian Monte Carlo Methods. Journal of the
 #  Royal Statistical Society: Series B (Statistical Methodology), 2011, 73 (2), pp 123–214

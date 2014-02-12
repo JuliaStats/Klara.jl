@@ -1,146 +1,112 @@
-# Slice sampler (Neal 2003; MacKay 2003, sec. 29.7)
-#
-# A slice sampler is an adaptive step-size MCMC algorithm for continuous random
-# variables, which only requires an unnormalized density function as input.  It
-# is a convenient alternative to Metropolis because it often gives good results
-# with very little tuning, and works in the case that different parts of the
-# distribution require different step sizes.  However, if the distribution's
-# widths don't vary too much, and there's a good initialization and proposal,
-# Metropolis may be more efficient.
-#
-# This slice sampler is univariate; for a multivariate problem it just updates
-# variables one at a time.  Thus it suffers when variables are correlated.
-#
-# REQUIRED
-#   logdist: Log-density function of target distribution
-#   initial: Initial state
-#   niter:   Number of iterations (samples to return)
-#
-# OPTIONAL
-#   widths: Step sizes for initially expanding the slice (D-dim vector).
-#           There is little harm in making these very large.
-#   burnin: Set to >0 to run for 'burnin' iterations without recording values
-#   stepout: Protects against the case if you pass in widths that are too small.
-#             If you are sure your widths are large enough, can set this to false.
-#   verbose: Set to true for information at every iteration
-#
-# RETURNS a sampling history.  Pick the last one for an independent sample.
-#
-# EXAMPLES: take samples from N(3,1), starting from a poor initializer. Mixes to a good place!
-# Get many samples:
-#   slice_sampler(x-> -0.5(x-3)^2, 42.0, 30)
-# Get one sample:
-#   slice_sampler(x-> -0.5(x-3)^2, 42.0, 30)[end]
-#
-# There are two versions of this procedure: either 
-#     univariate:   initial \in R,   logdist: R -> R,   retval \in R^niter
-#     multivariate: initial \in R^D, logdist: R^D -> R, retval \in R^(niter x D)
-#
-# This is a port of Iain Murray's
-# http://homepages.inf.ed.ac.uk/imurray2/teaching/09mlss/slice_sampler.m 
-
-# (This code is the multivariate version; univariate interfaces are further below.)
 ###########################################################################
-#  Metropolis adjusted Langevin algorithm (MALA)
+#  Slice sampler (SliceSampler)
+#
+#  References:
+#    - Neal R.M. Slice Sampling. The Annals of Statistics, 2003, 31 (3), pp 705–1031
+#    - MacKay model.size. Information Theory, Inference, and Learning Algorithms. Cambridge University Press, 2003, section 29.7,
+#      pp 374-378
+#
+#  A slice sampler is an adaptive step-size MCMC algorithm for continuous random variables, which only requires an
+#  unnormalized density function as input.  It is a convenient alternative to Metropolis because it often gives good
+#  results with very little tuning, and works in the case that different parts of the distribution require different
+#  step sizes.  However, if the distribution's widths don't vary too much, and there's a good initialization and
+#  proposal, Metropolis may be more efficient. This slice sampler is univariate; for a multivariate problem it just
+#  updates variables one at a time.  Thus it suffers when variables are correlated.
 #
 #  Parameters :
-#    - driftStep : drift step size (for scaling the jumps)
-#    - tuner: for tuning the drift step size
+#    - widths: Step sizes for initially expanding the slice (model.size-dim vector).
+#    - stepout: Protects against the case of passing in small widths.
+#
+#  This is a port of Iain Murray's implementation, who kindly accepted to share his code at
+#  http://homepages.inf.ed.ac.uk/imurray2/teaching/09mlss/slice_sampler.m
 #
 ###########################################################################
 
 export SliceSampler
 
-println("Loading SliceSampler(widths, stepout, verbose)")
+println("Loading SliceSampler(widths, stepout)")
 
 ###########################################################################
 #                  SliceSampler type
 ###########################################################################
 
 immutable SliceSampler <: MCMCSampler
-  widths::Vector{Float64}
+  widths::Union(Vector{Float64}, Nothing)
   stepout::Bool
-  verbose::Bool
 
-  function SliceSampler(widths::Float64, stepout::Bool, verbose::Bool)
+  function SliceSampler(widths::Float64, stepout::Bool)
     # @assert x > 0 "widths should be > 0"
-    new(widths, stepout, verbose)
+    new(widths, stepout)
   end
 end
+SliceSampler() = SliceSampler(nothing, true)
+SliceSampler(widths::Union(Vector{Float64}, Nothing)) = SliceSampler(widths, true)
+SliceSampler(stepout::Bool) = SliceSampler(nothing, stepout)
+SliceSampler(; widths::Union(Vector{Float64}, Nothing)=nothing, stepout::Bool=true) = SliceSampler(widths, stepout)
 
-function slice_sampler(logdist::Function, initial::Array{Float64,1}, niter::Integer;
-        widths::Array{Float64,1} = ones(length(initial)),
-        stepout = true,
-        burnin = 0,
-        verbose = false)
-function slice_sampler(logdist::Function, initial::Array{Float64,1}, niter::Integer;
-        widths::Array{Float64,1} = ones(length(initial)),
-        stepout = true,
-        burnin = 0,
-        verbose = false)
-    D = length(initial)
-    @assert length(widths)==D
+###########################################################################
+#                  SliceSampler task
+###########################################################################
 
-    state::Vector{Float64} = copy(initial)
-    log_Px::Float64 = logdist(state)
+# SliceSampler sampling
+function SamplerTask(model::MCMCModel, sampler::SliceSampler, runner::MCMCRunner)
+  local state::Vector{Float64}, x_l::Vector{Float64}, x_r::Vector{Float64}, xprime::Vector{Float64}
+  local logTarget::Float64, log_uprime::Float64, r::Float64
+  local widths::Vector{Float64}
+  if sampler.widths == nothing
+    widths = ones(model.size)
+  else
+    @assert length(sampler.widths)==model.size "Length of step sizes in widths must be equal to model size"
+    widths = sampler.widths
+  end
+  
+  state = copy(model.init)
+  logTarget = model.eval(state)
 
-    history = zeros(niter,D)
+  i = 1
+  while true
+    for dd = 1:model.size
+      log_uprime = log(rand()) + logTarget
+      x_l  = copy(state)
+      x_r  = copy(state)
+      xprime = copy(state)
 
-    for iter=1:(niter+burnin)
-        if verbose
-            @printf("Slice iter %d state [%s] log_Px %f\n",iter, join(map(x->@sprintf("%.5f",x),state)," "), log_Px)
+      # Create a horizontal interval (x_l, x_r) enclosing xx
+      r = rand()
+      x_l[dd] = state[dd] - r*widths[dd]
+      x_r[dd] = state[dd] + (1-r)*widths[dd]
+      if stepout
+        while model.eval(x_l) > log_uprime
+          x_l[dd] -= widths[dd]
         end
+        while model.eval(x_r) > log_uprime
+          x_r[dd] += widths[dd]
+        end
+      end
 
-        # Sweep through axes
-        for dd=1:D
-            log_uprime = log(rand()) + log_Px
-            x_l  = copy(state)
-            x_r  = copy(state)
-            xprime = copy(state)
-            # Create a horizontal interval (x_l, x_r) enclosing xx
-            r = rand()
-            x_l[dd] = state[dd] - r*widths[dd]
-            x_r[dd] = state[dd] + (1-r)*widths[dd]
-            if stepout
-                while logdist(x_l) > log_uprime
-                    x_l[dd] -= widths[dd]
-                end
-                while logdist(x_r) > log_uprime
-                    x_r[dd] += widths[dd]
-                end
-            end
-            # Inner loop:
-            # Propose xprimes and shrink interval until good one is found.
-            while true
-                xprime[dd] = rand() * (x_r[dd] - x_l[dd]) + x_l[dd];
-                log_Px = logdist(xprime)
-                if log_Px > log_uprime
-                    break
-                else
-                    if (xprime[dd] > state[dd])
-                        x_r[dd] = xprime[dd];
-                    elseif (xprime[dd] < state[dd])
-                        x_l[dd] = xprime[dd];
-                    else
-                        @assert false "BUG, shrunk to current position and still not acceptable";
-                    end
-                end
-            end
-            state[dd] = xprime[dd]
+      # Inner loop: propose xprimes and shrink interval until good one is found
+      while true
+        xprime[dd] = rand() * (x_r[dd] - x_l[dd]) + x_l[dd];
+        logTarget = model.eval(xprime)
+        if logTarget > log_uprime
+          break
+        else
+          if (xprime[dd] > state[dd])
+            x_r[dd] = xprime[dd];
+          elseif (xprime[dd] < state[dd])
+            x_l[dd] = xprime[dd];
+          else
+            @assert false "BUG, shrunk to current position and still not acceptable";
+          end
         end
-        if iter > burnin
-            history[iter-burnin, :] = state
-        end
+      end
+
+      state[dd] = xprime[dd]
     end
-    history
+
+    ms = MCMCSample(state, logTarget, fill(NaN, model.size), NaN)
+    produce(ms)
+
+    i += 1
+  end
 end
-
-
-
-## Univariate formulations
-
-function slice_sampler(logdist::Function, initial::Float64, niter::Int; kwargs...)
-    history = slice_sampler(x-> logdist(x[1]), [initial], niter; kwargs...)
-    reshape(history, (size(history,1),))
-end
-
