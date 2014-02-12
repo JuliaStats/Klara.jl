@@ -20,7 +20,7 @@
 #   widths: Step sizes for initially expanding the slice (D-dim vector).
 #           There is little harm in making these very large.
 #   burnin: Set to >0 to run for 'burnin' iterations without recording values
-#   step_out: Protects against the case if you pass in widths that are too small.
+#   stepout: Protects against the case if you pass in widths that are too small.
 #             If you are sure your widths are large enough, can set this to false.
 #   verbose: Set to true for information at every iteration
 #
@@ -28,21 +28,54 @@
 #
 # EXAMPLES: take samples from N(3,1), starting from a poor initializer. Mixes to a good place!
 # Get many samples:
-#   slice_sample(x-> -0.5(x-3)^2, 42.0, 30)
+#   slice_sampler(x-> -0.5(x-3)^2, 42.0, 30)
 # Get one sample:
-#   slice_sample(x-> -0.5(x-3)^2, 42.0, 30)[end]
+#   slice_sampler(x-> -0.5(x-3)^2, 42.0, 30)[end]
 #
 # There are two versions of this procedure: either 
 #     univariate:   initial \in R,   logdist: R -> R,   retval \in R^niter
 #     multivariate: initial \in R^D, logdist: R^D -> R, retval \in R^(niter x D)
 #
 # This is a port of Iain Murray's
-# http://homepages.inf.ed.ac.uk/imurray2/teaching/09mlss/slice_sample.m 
+# http://homepages.inf.ed.ac.uk/imurray2/teaching/09mlss/slice_sampler.m 
 
 # (This code is the multivariate version; univariate interfaces are further below.)
-function slice_sample(logdist::Function, initial::Array{Float64,1}, niter::Integer;
+###########################################################################
+#  Metropolis adjusted Langevin algorithm (MALA)
+#
+#  Parameters :
+#    - driftStep : drift step size (for scaling the jumps)
+#    - tuner: for tuning the drift step size
+#
+###########################################################################
+
+export SliceSampler
+
+println("Loading SliceSampler(widths, stepout, verbose)")
+
+###########################################################################
+#                  SliceSampler type
+###########################################################################
+
+immutable SliceSampler <: MCMCSampler
+  widths::Vector{Float64}
+  stepout::Bool
+  verbose::Bool
+
+  function SliceSampler(widths::Float64, stepout::Bool, verbose::Bool)
+    # @assert x > 0 "widths should be > 0"
+    new(widths, stepout, verbose)
+  end
+end
+
+function slice_sampler(logdist::Function, initial::Array{Float64,1}, niter::Integer;
         widths::Array{Float64,1} = ones(length(initial)),
-        step_out = true,
+        stepout = true,
+        burnin = 0,
+        verbose = false)
+function slice_sampler(logdist::Function, initial::Array{Float64,1}, niter::Integer;
+        widths::Array{Float64,1} = ones(length(initial)),
+        stepout = true,
         burnin = 0,
         verbose = false)
     D = length(initial)
@@ -68,7 +101,7 @@ function slice_sample(logdist::Function, initial::Array{Float64,1}, niter::Integ
             r = rand()
             x_l[dd] = state[dd] - r*widths[dd]
             x_r[dd] = state[dd] + (1-r)*widths[dd]
-            if step_out
+            if stepout
                 while logdist(x_l) > log_uprime
                     x_l[dd] -= widths[dd]
                 end
@@ -106,8 +139,8 @@ end
 
 ## Univariate formulations
 
-function slice_sample(logdist::Function, initial::Float64, niter::Int; kwargs...)
-    history = slice_sample(x-> logdist(x[1]), [initial], niter; kwargs...)
+function slice_sampler(logdist::Function, initial::Float64, niter::Int; kwargs...)
+    history = slice_sampler(x-> logdist(x[1]), [initial], niter; kwargs...)
     reshape(history, (size(history,1),))
 end
 
