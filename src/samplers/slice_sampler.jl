@@ -34,7 +34,7 @@ immutable SliceSampler <: MCMCSampler
   widths::Union(Vector{Float64}, Nothing)
   stepout::Bool
 
-  function SliceSampler(widths::Float64, stepout::Bool)
+  function SliceSampler(widths::Union(Vector{Float64}, Nothing), stepout::Bool)
     # @assert x > 0 "widths should be > 0"
     new(widths, stepout)
   end
@@ -75,7 +75,7 @@ function SamplerTask(model::MCMCModel, sampler::SliceSampler, runner::MCMCRunner
       r = rand()
       x_l[dd] = state[dd] - r*widths[dd]
       x_r[dd] = state[dd] + (1-r)*widths[dd]
-      if stepout
+      if sampler.stepout
         while model.eval(x_l) > log_uprime
           x_l[dd] -= widths[dd]
         end
