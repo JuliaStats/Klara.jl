@@ -28,8 +28,8 @@ typealias MatrixF64OrNothing Union(Matrix{Float64}, Nothing)
 typealias F64OrVectorF64 Union(Float64, Vector{Float64})
 
 ###########  Models  ##########
-include("modellers/mcmcmodels.jl")		
-include("modellers/likmodel.jl")
+include("modellers/models.jl")		
+include("modellers/MCMCLikModel.jl")
 
 ###########  Autodiff  ##########
 include("autodiff/parsing.jl")     #  include model expression parsing function
@@ -57,7 +57,7 @@ include("samplers/NUTS.jl")   # No U-Turn Hamiltonian Monte-Carlo sampler
 include("samplers/SMMALA.jl") # Simplified manifold Metropolis adjusted Langevin algorithm sampler
 include("samplers/PMALA.jl")  # Position-dependent Metropolis adjusted Langevin algorithm sampler
 include("samplers/RMHMC.jl")  # Riemannian manifold Hamiltonian Monte Carlo sampler
-include("samplers/slice_sampler.jl")  # Slice sampler
+include("samplers/SliceSampler.jl")  # Slice sampler
 
 ### MCMCChain, the result of running a MCMCTask
 type MCMCChain
