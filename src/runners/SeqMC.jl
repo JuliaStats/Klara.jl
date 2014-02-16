@@ -104,7 +104,7 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 	MCMCChain((burnin+1):1:((steps-burnin)*npart),
 	  samples',
 		nothing,
-		{"weigths" => weights, "particle" => rep([1:npart],(steps-burnin))},  
+		{"weigths" => weights, "particle" => repeat([1:npart], outer=[steps-burnin])},
 		targets,
 		toq())
 end
