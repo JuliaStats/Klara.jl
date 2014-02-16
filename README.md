@@ -258,7 +258,7 @@ particles = [[randn()] for i in 1:1000]
 mychain3 = run(targets, particles=particles)
 
 # Resample with replacement using weights to approximate the real distribution
-mychain4 = wsample(mychain3.samples["x"], mychain3.diagnostics["weigths"], 1000)
+mychain4 = wsample(mychain3.samples, mychain3.diagnostics["weigths"], 1000)
 
 mean(mychain4)
 ```
