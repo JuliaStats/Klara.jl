@@ -2,6 +2,8 @@
 #    Helper functions for derivation tests
 #########################################################################
 
+# FIXME : remove calls to getSymbols and SubstSymbols
+
 ## error thresholds
 DIFF_DELTA = 1e-9
 ERROR_THRESHOLD = 2e-2
@@ -37,7 +39,7 @@ end
 ##  tests derivation on all parameters, for all combinations of arguments dimension
 macro test_combin(func::Expr, constraints...)
 	constraints = collect(constraints) 
-	parnames = collect(MCMC.AutoDiff.getSymbols(func))
+	parnames = collect(MCMC.ReverseDiffSource.getSymbols(func))
 	# println("parnames : $parnames")
 	# dump(constraints)
 	#  args to derive against
@@ -66,7 +68,7 @@ macro test_combin(func::Expr, constraints...)
 		end
 
 		# reject combination if one of rules fails
-		if all( [ eval( MCMC.AutoDiff.substSymbols(r, Dict(parnames, par))) for r in rules] )
+		if all( [ eval( MCMC.ReverseDiffSource.substSymbols(r, Dict(parnames, par))) for r in rules] )
 			# println("## combin = $(combin[ic,:])")
 			# apply transformations on args
 			for t in trans
@@ -80,7 +82,7 @@ macro test_combin(func::Expr, constraints...)
 			for p in dargs 
 				tpar = copy(par)
 				tpar[p .== parnames] = :x  # replace tested args with parameter symbol :x for deriv1 testing func
-				fex = MCMC.AutoDiff.substSymbols(func, Dict( parnames, tpar))
+				fex = MCMC.ReverseDiffSource.substSymbols(func, Dict( parnames, tpar))
 				# println("##+## $fex  $(Dict( parnames, tpar))")
 				x0 = eval(par[p .== parnames][1])  # set x0 for deriv 1
 				# println("##-## $fex  ##-##   $x0")

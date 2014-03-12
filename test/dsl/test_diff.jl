@@ -35,8 +35,9 @@ v2ref = [-1. 3 0 ; 0 5 -2]
 @test_combin    logpdf(LogNormal(lmu,lsc),x)   lsc->lsc<=0?0.1:lsc x->x<=0?0.1:x (size(lmu)==size(lsc)) && 
 								(ndims(lmu)==0 || size(x)==size(lmu))
 
+# FIXME, Laplace broken
 # @test_combin    logpdf(Laplace(loc,sc),x)   sc->sc<=0?0.1:sc (size(loc)==size(sc)) && 
-# 								(ndims(loc)==0 || size(x)==size(loc))
+#  								(ndims(loc)==0 || size(x)==size(loc))
 
 
 ## discrete distributions

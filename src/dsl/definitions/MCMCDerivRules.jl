@@ -35,7 +35,7 @@ end
 
 
 ####### derivation for Distribution types constructors
-declareType(Distribution, :Distribution)
+ReverseDiffSource.declareType(Distribution, :Distribution)
 
 for d in [:Bernoulli, :TDist, :Exponential, :Poisson]  
 	ReverseDiffSource.declareType(eval(d), d)

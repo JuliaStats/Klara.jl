@@ -10,7 +10,7 @@
 using Base.LinAlg.BLAS
 
 # require("ReverseDiffSource")
-reload("ReverseDiffSource.jl/src/ReverseDiffSource.jl")
+include("/home/fred/devl/ReverseDiffSource.jl/src/ReverseDiffSource.jl")
 
 # Distributions extensions (vectorizations on the distribution parameter)
 include("definitions/DistributionsExtensions.jl")
@@ -52,7 +52,9 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 
 	## build function expression
 	if gradient  # case with gradient
-		head, body, outsym = ReverseDiffSource.reversediff(model, rv; init...)
+		head, body, outsym = ReverseDiffSource.reversediff(model, 
+			                                               rv, false, MCMC; 
+			                                               init...)
 
 		body = [ vec2var(;init...),  # assigments beta vector -> model parameter vars
 		         body.args,
@@ -70,7 +72,9 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 				          end)
 
 	else  # case without gradient
-		head, body, outsym = ReverseDiffSource.reversediff(model, rv, true, MCMC; init...)
+		head, body, outsym = ReverseDiffSource.reversediff(model, 
+			                                               rv, true, MCMC; 
+			                                               init...)
 
 		body = [ vec2var(;init...),  # assigments beta vector -> model parameter vars
 		         body.args,
