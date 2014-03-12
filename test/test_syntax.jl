@@ -35,8 +35,6 @@ res = run(m, HMC(2,0.1), SerialMC(burnin=20))
 
 
 
-
-
 ### README examples 
 
 mymodel1 = model(v-> -dot(v,v), init=ones(3))

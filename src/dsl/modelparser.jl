@@ -8,7 +8,7 @@
 ##########################################################################
 
 using Base.LinAlg.BLAS
-using AutoDiff  # you may need to run Pkg.clone() to get this package 
+using ReverseDiffSource  # you may need to run Pkg.clone() to get this package 
 
 # Distributions extensions (vectorizations on the distribution parameter)
 include("definitions/DistributionsExtensions.jl")
@@ -47,8 +47,6 @@ function generateModelFunction(model::Expr; gradient=false, debug=false, init...
 		                   model.args, 
 		                   # :( $ACC_SYM = $(Expr(:., ACC_SYM, Expr(:quote, :val)) ) )]... )
 		                   :( $rv = $(Expr(:., ACC_SYM, Expr(:quote, :val)) ) )]... )
-
-	AutoDiff.resetvar()  # reset temporary variable numbering (for legibility, not strictly necessary)
 
 	## build function expression
 	if gradient  # case with gradient

@@ -35,8 +35,6 @@ end
 translate(ex::Vector) = map(translate, ex)
 translate(ex::Any) = ex
 
-
-
 ### creates mapping statements from Vector{Float64} to model parameter variables
 function vec2var(;init...)
 	ex = Expr[]
@@ -59,25 +57,20 @@ function vec2var(;init...)
 	ex
 end
 
-
-
-
-
 ### creates mapping statements from model parameter variables to Vector{Float64}
+# FIXME : using undocumented dprefix function of ReverseDiffSource (should be replaced)
 function var2vec(;init...)
 	ex = {}
 	for (v,i) in init
 		sz = size(i)
 		if in(length(sz), [0,1]) # scalar or vector
-			push!(ex, AutoDiff.dprefix(v))
+			push!(ex, ReverseDiffSource.dprefix(v))
 		else # matrix case  (needs a reshape)
-			push!(ex, :( vec($(AutoDiff.dprefix(v))) ) )
+			push!(ex, :( vec($(ReverseDiffSource.dprefix(v))) ) )
 		end
 	end
 	Expr(:vcat, ex...)
 end
-
-
 
 ### returns parameter info : total size, vector <-> model parameter map, inital values vector
 function modelVars(;init...)
