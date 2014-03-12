@@ -8,29 +8,29 @@
 # FIXME : using undocumented dprefix function of ReverseDiffSource (should be replaced)
 macro dlogpdfd(dist::Symbol, rule)
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::Real) )
-	deriv_rule( sig, :d, rule ) 
+	ReverseDiffSource.deriv_rule( sig, :d, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
 	rule2 = ReverseDiffSource.substSymbols(rule, {:x => :(x[i]), :ds => :(ds[i])})
-	deriv_rule( sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
+	ReverseDiffSource.deriv_rule( sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
 	rule2 = ReverseDiffSource.substSymbols(rule, {:dd1 => :(dd1[i]), :dd2 => :(dd2[i]), :dd3 => :(dd3[i]), 
 		:x => :(x[i]), :ds => :(ds[i]), :d => :(d[i]) })
-	deriv_rule(sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
+	ReverseDiffSource.deriv_rule(sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 end
 
 macro dlogpdfx(dist::Symbol, rule)
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::Real) )
-	deriv_rule( sig, :x, rule ) 
+	ReverseDiffSource.deriv_rule( sig, :x, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
 	rule2 = ReverseDiffSource.substSymbols(rule, {:dx => :(dx[i]), :x => :(x[i]), :ds => :(ds[i])})
-	deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule2 ; end))
+	ReverseDiffSource.deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
 	rule3 = ReverseDiffSource.substSymbols(rule2, {:d => :(d[i])})
-	deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule3 ; end))
+	ReverseDiffSource.deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule3 ; end))
 end
 
 
@@ -38,19 +38,19 @@ end
 declareType(Distribution, :Distribution)
 
 for d in [:Bernoulli, :TDist, :Exponential, :Poisson]  
-	declareType(eval(d), d)
+	ReverseDiffSource.declareType(eval(d), d)
 
-	deriv_rule(:( ($d)(p::Real) ), :p, :( dp = ds1 ))
-	deriv_rule(:( ($d)(p::AbstractArray) ), :p, :( copy!(dp, ds1) ))
+	ReverseDiffSource.deriv_rule(:( ($d)(p::Real) ), :p, :( dp = ds1 ))
+	ReverseDiffSource.deriv_rule(:( ($d)(p::AbstractArray) ), :p, :( copy!(dp, ds1) ))
 end
 
 for d in [ :Normal, :Uniform, :Weibull, :Gamma, :Cauchy, :LogNormal, :Binomial, :Beta, :Laplace]
-	declareType(eval(d), d)
+	ReverseDiffSource.declareType(eval(d), d)
 
-	deriv_rule(:( ($d)(p1::Real, p2::Real) ),   :p1, :( dp1 = ds1 ) )
-	deriv_rule(:( ($d)(p1::Real, p2::Real) ),   :p2, :( dp2 = ds2 ) )
-	deriv_rule(:( ($d)(p1::AbstractArray, p2::AbstractArray) ), :p1, :( copy!(dp1, ds1) ) )
-	deriv_rule(:( ($d)(p1::AbstractArray, p2::AbstractArray) ), :p2, :( copy!(dp2, ds2) ) )
+	ReverseDiffSource.deriv_rule(:( ($d)(p1::Real, p2::Real) ),   :p1, :( dp1 = ds1 ) )
+	ReverseDiffSource.deriv_rule(:( ($d)(p1::Real, p2::Real) ),   :p2, :( dp2 = ds2 ) )
+	ReverseDiffSource.deriv_rule(:( ($d)(p1::AbstractArray, p2::AbstractArray) ), :p1, :( copy!(dp1, ds1) ) )
+	ReverseDiffSource.deriv_rule(:( ($d)(p1::AbstractArray, p2::AbstractArray) ), :p2, :( copy!(dp2, ds2) ) )
 end
 
 #######   Normal distribution

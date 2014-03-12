@@ -19,13 +19,13 @@ end
 +(ll::LLAcc, x::Real)           = LLAcc(ll.val + x)
 +(ll::LLAcc, x::Array{Float64}) = LLAcc(ll.val + sum(x))
 
-declareType(LLAcc, :LLAcc) # declares new type to Autodiff
+ReverseDiffSource.declareType(MCMC.LLAcc, :LLAcc) # declares new type to Autodiff
 
 ####### derivation rules  ############
 # (note : only additions are possible with LLAcc type )
-@deriv_rule getfield(x::LLAcc, f      )      x     dx1 = ds
+ReverseDiffSource.@deriv_rule getfield(x::LLAcc, f      )      x     dx1 = ds
 
-@deriv_rule +(x::LLAcc, y      )             x     dx1 += ds1
-@deriv_rule +(x::LLAcc, y::Real)             y     dy += ds1
-@deriv_rule +(x::LLAcc, y::AbstractArray)    y     for i in 1:length(y) ; dy[i] += ds1 ; end
+ReverseDiffSource.@deriv_rule +(x::LLAcc, y      )             x     dx1 += ds1
+ReverseDiffSource.@deriv_rule +(x::LLAcc, y::Real)             y     dy += ds1
+ReverseDiffSource.@deriv_rule +(x::LLAcc, y::AbstractArray)    y     for i in 1:length(y) ; dy[i] += ds1 ; end
 
