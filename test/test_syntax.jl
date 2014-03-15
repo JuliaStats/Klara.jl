@@ -35,8 +35,6 @@ res = run(m, HMC(2,0.1), SerialMC(burnin=20))
 
 
 
-
-
 ### README examples 
 
 mymodel1 = model(v-> -dot(v,v), init=ones(3))
@@ -58,16 +56,16 @@ mychain2 = run(mymodel2, HMC(0.75), SerialMC(steps=10000, burnin=1000))
 
 acceptance(mychain2)
 
-describe(mychain2)
+# describe(mychain2)
 
 ess(mychain2)
 
 actime(mychain2)
 
-var(mychain2)
-var(mychain2, vtype=:iid)
-var(mychain2, vtype=:ipse)
-var(mychain2, vtype=:bm)
+# var(mychain2)
+# var(mychain2, vtype=:iid)
+# var(mychain2, vtype=:ipse)
+# var(mychain2, vtype=:bm)
 
 mychain1 = resume(mychain1, steps=10000)
 
@@ -96,5 +94,5 @@ particles = [[randn()] for i in 1:1000]
 
 mychain3 = run(targets, particles=particles)
 
-mychain4 = wsample(mychain3.samples["x"], mychain3.diagnostics["weigths"], 1000)
-mean(mychain4)
+# mychain4 = wsample(mychain3.samples, mychain3.diagnostics["weigths"], 1000)
+# mean(mychain4)

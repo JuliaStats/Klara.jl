@@ -37,8 +37,8 @@ function ksTest(ex::Expr)
 					"NUTS" => NUTS()}  # TODO : add other samplers
 		print("testing $k sampler on $ex   -")
 		srand(1)
-		res = run(model(mex, gradient=true, x=exactMean), v, SerialMC((1000:N) ))
-		ksv = ksValue(res.samples["x"], distrib)
+		res = run(model(mex, gradient=true, x=exactMean), v, SerialMC( (1000:N) ))
+		ksv = ksValue(res.samples[:,1], distrib)
 		println(" KS measure = $ksv")
 		@assert ksv < KSTHRESHOLD "correct distrib hyp. rejected"
 	end
@@ -52,8 +52,8 @@ end
 ksTest(:(Normal(1, 1)))
 ksTest(:(Normal(3, 12)))
 
-ksTest(:(Weibull(1, 1)))
-ksTest(:(Weibull(3, 1)))
+# ksTest(:(Weibull(1, 1)))
+# ksTest(:(Weibull(3, 1)))
 
 ksTest(:(Uniform(0, 2)))
 
@@ -75,7 +75,8 @@ ksTest(:(Exponential(0.2)))
 ksTest(:(LogNormal(-1, 1)))
 ksTest(:(LogNormal(2, 0.1)))
 
-
+ksTest(:(Laplace(-1, 1)))
+ksTest(:(Laplace(5, 0.1)))
 
 # TODO : find a way to test discrete distributions : Bernoulli, Binomial, Poisson
 
