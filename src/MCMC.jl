@@ -25,7 +25,7 @@ typealias MatrixF64OrNothing Union(Matrix{Float64}, Nothing)
 typealias F64OrVectorF64 Union(Float64, Vector{Float64})
 
 ###########  model DSL parsing and translation  ##########
-include("dsl/modelparser.jl")
+include("parsers/modelparser.jl")
 
 ###########  Models  ##########
 include("modellers/models.jl")    
