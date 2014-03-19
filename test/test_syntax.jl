@@ -2,7 +2,8 @@
 #    testing script for simple examples 
 #########################################################################
 
-using Distributions, DataFrames
+using Base.Test, MCMC
+using Distributions#, DataFrames
 
 # generate a random dataset
 srand(1)
@@ -10,7 +11,7 @@ n = 1000
 nbeta = 10 
 X = [ones(n) randn((n, nbeta-1))] 
 beta0 = randn((nbeta,))
-Y = rand(n) .< ( 1 ./ (1. + exp(X * beta0)))
+Y = rand(n) .< ( 1 ./ (1 .+ exp(X * beta0)))
 
 # define model
 ex = quote
