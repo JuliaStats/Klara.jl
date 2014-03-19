@@ -2,8 +2,8 @@ using Base.Test
 using MCMC
 
 my_tests = ["test/test_hmc.jl",
-            "test/test_empmctuner.jl"]
-			"test/test_syntax.jl",
+            "test/test_empmctuner.jl",
+            "test/test_syntax.jl",
             "test/dsl/test_diff.jl",
             "test/dsl/unit_tests.jl",
             "test/test_dists.jl"]
