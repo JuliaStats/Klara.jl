@@ -2,8 +2,9 @@
 #    testing script for simple examples 
 #########################################################################
 
-using Base.Test, MCMC
-using Distributions#, DataFrames
+using Base.Test
+using Distributions
+using MCMC
 
 # generate a random dataset
 srand(1)
