@@ -9,7 +9,7 @@ export model
 function ispartition(m::Dict, n::Int)
 	c = zeros(n)
 	for v in values(m)
-		c[v[1]:(v[1]+prod(v[2])-1)] += 1
+		c[v[1]:(v[1]+prod(v[2])-1)] .+= 1
 	end
 	all(c .== 1.)
 end
