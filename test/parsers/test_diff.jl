@@ -56,10 +56,10 @@ v2ref = [-1. 3 0 ; 0 5 -2]
 #   misc. tests
 #########################################################################
 
-@test_throws deriv1(:(logpdfBernoulli(1, x)), [0.])
-@test_throws deriv1(:(logpdfPoisson(1, x)), [1.])
-@test_throws deriv1(:(logpdfBinomial(3, 0.5, x)), [0.])
-@test_throws deriv1(:(logpdfBinomial(x, 0.5, 2)), [0.])
+@test_throws ErrorException deriv1(:(logpdf(Bernoulli(1), x)), [1.])
+@test_throws ErrorException deriv1(:(logpdf(Poisson(1), x)), [1.])
+@test_throws ErrorException deriv1(:(logpdf(Binomial(3, 0.5), x)), [0.])
+#@test_throws ErrorException deriv1(:(logpdf(Binomial(x, 0.5), 2)), [0.])
 
 ##  ref  testing
 deriv1(:(x[2]),              v1ref)

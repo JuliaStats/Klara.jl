@@ -100,9 +100,9 @@ function SamplerTask(model::MCMCModel, sampler::MALA, runner::MCMCRunner)
     proposedPars = parsMean + sqrt(driftStep) * randn(model.size)
     proposedLogTarget, proposedGrad = model.evalallg(proposedPars)
 
-    probNewGivenOld = sum(-(parsMean-proposedPars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    probNewGivenOld = sum(-(parsMean-proposedPars).^2 / (2*driftStep) .- log(2*pi*driftStep)/2)
     parsMean = proposedPars + (driftStep/2) * proposedGrad
-    probOldGivenNew = sum(-(parsMean-pars).^2/(2*driftStep)-log(2*pi*driftStep)/2)
+    probOldGivenNew = sum(-(parsMean-pars).^2/(2*driftStep) .- log(2*pi*driftStep)/2)
     
     ratio = proposedLogTarget + probOldGivenNew - logTarget - probNewGivenOld
     if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted

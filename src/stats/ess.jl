@@ -10,7 +10,7 @@ function ess(x::Vector{Float64}; vtype::Symbol=:imse, args...)
 end
 
 ess(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
-  Float64[ess(x[:, pars[i]]; vtype=vtype, args...) for i = 1:pars.len]
+  Float64[ess(x[:, pars[i]]; vtype=vtype, args...) for i = 1:length(pars)]
 
 ess(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = ess(x, par:par; vtype=vtype, args...)
 
@@ -27,7 +27,7 @@ function actime(x::Vector{Float64}; vtype::Symbol=:imse, args...)
 end
 
 actime(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
-  Float64[actime(x[:, pars[i]]; vtype=vtype, args...) for i = 1:pars.len]
+  Float64[actime(x[:, pars[i]]; vtype=vtype, args...) for i = 1:length(pars)]
 
 actime(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = actime(x, par:par; vtype=vtype, args...)
 

@@ -17,7 +17,7 @@ Y = rand(n) .< ( 1 ./ (1 .+ exp(X * beta0)))
 # define model
 ex = quote
 	vars ~ Normal(0, 1.0)  
-	prob = 1 / (1. + exp(X * vars)) 
+	prob = 1 ./ (1. .+ exp(X * vars)) 
 	Y ~ Bernoulli(prob)
 end
 
@@ -71,7 +71,7 @@ actime(mychain2)
 
 mychain1 = resume(mychain1, steps=10000)
 
-@test_throws run(mymodel3 * MALA(0.1) * SerialMC(1:1000))
+@test_throws ErrorException run(mymodel3 * MALA(0.1) * SerialMC(1:1000))
 
 run(mymodel4 * MALA(0.1) * SerialMC(1:1000))
 

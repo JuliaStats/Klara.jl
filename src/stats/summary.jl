@@ -2,7 +2,7 @@ export acceptance, describe
 
 # Compute acceptance or rejection rate of MCMCChain
 function acceptance(c::MCMCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=false)
-  rlen = lags.len
+  rlen = length(lags)
   @assert lags[end] <= size(c.samples, 1) "Range of acceptance rate not within post-burnin range of MCMC chain"
 
   if reject
