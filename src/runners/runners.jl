@@ -1,7 +1,7 @@
 import Base.run
 export run, resume, prun
 
-stop!(c::MCMCChain) = (c.task.task.done == false ? c.task.task.done = true : nothing)
+stop!(c::MCMCChain) = (!istaskdone(c.task.task) ? c.task.task.state = :done : nothing)
 
 # General run() function which invoke run function specific to Task.runner field
 function run(t::MCMCTask)

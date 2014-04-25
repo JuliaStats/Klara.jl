@@ -44,7 +44,7 @@ function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
   z = -grad/2
 
   zQuadratic[:, 1:npars] = z
-  zQuadratic[:, (npars+1):(2*npars)] = 2*z.*chain-1
+  zQuadratic[:, (npars+1):(2*npars)] = 2*z.*chain.-1
   for i = 1:(npars-1)
     for j = (i+1):npars
       zQuadratic[:, l] = chain[:, i].*z[:, j]+chain[:, j].*z[:, i]
