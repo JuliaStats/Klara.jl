@@ -47,38 +47,25 @@ ARS(g0::Function; lM::Float64 = 1.0, scale::Float64=1.0, tuner::Union(Nothing, A
 function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
 	local pars, proposedPars
 	local logTarget, proposedLogTarget, proposedLogCandidate
-  local scale, M, weight, mu, count
+  local scale, weight, mu
 
 	# hook inside Task to allow remote resetting
 	task_local_storage(:reset, (resetPars::Vector{Float64}) -> (pars = copy(resetPars); logTarget = model.eval(pars))) 
 
 	# initialization
 	scale = model.scale .* sampler.scale  # rescale model scale by sampler scale
-  println(sampler.lM)
 	pars = copy(model.init)
 	logTarget = model.eval(pars)
   @assert isfinite(logTarget) "Initial values out of model support, try other values"
   
 	# main loop
-  count = 0
 	while true
-    if count > 1
-		  proposedPars = pars + randn(model.size) .* scale
-      mu = log(rand())
-    else
-      if count == 0
-        proposedPars = [2.6]
-        mu = log(0.415198)
-      else
-        proposedPars = [-0.94]
-        mu = log(0.577230)
-      end
-      count += 1
-    end  
-		proposedLogTarget = model.eval(proposedPars) 
+	  proposedPars = pars + randn(model.size) .* scale
+    mu = log(rand())
+    proposedLogTarget = model.eval(proposedPars) 
 		proposedLogCandidate = sampler.g0(proposedPars) 
 	  weight = proposedLogTarget .- sampler.lM .- proposedLogCandidate
-    println([proposedPars exp(sampler.g0(proposedPars[1])) exp(weight) exp(mu)])
+    #println([proposedPars exp(sampler.g0(proposedPars[1])) exp(weight) exp(mu)])
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
 	    produce(ms)
