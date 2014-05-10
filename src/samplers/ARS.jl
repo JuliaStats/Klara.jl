@@ -9,6 +9,12 @@
 #
 ###########################################################################
 
+###########################################################################
+#
+# Based on Bolstad Computational Bayesian Statistics, section 2.1
+#
+###########################################################################
+
 export ARS
 
 println("Loading ARS(g0, scale, tuner) sampler")
@@ -66,6 +72,11 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
 		proposedLogCandidate = sampler.g0(proposedPars) 
 	  weight = proposedLogTarget .- sampler.lM .- proposedLogCandidate
     #println([proposedPars exp(sampler.g0(proposedPars[1])) exp(weight) exp(mu)])
+    
+    ###########################################################################
+    #        Not correct right now, MCMC stats accept rejected samples
+    ###########################################################################
+    
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
 	    produce(ms)
