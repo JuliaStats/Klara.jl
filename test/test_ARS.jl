@@ -19,5 +19,14 @@ mcmodel = model(log_g, init=1.)
 mcchain = run(mcmodel, ARS(log_g0, log_M), SerialMC(1000:10:10000))
 
 println("Acceptance rate: ", acceptance(mcchain))
-
 describe(mcchain)
+
+mcchain01 = deepcopy(mcchain)
+indx = find(mcchain.diagnostics["accept"])
+mcchain01.samples = mcchain.samples[indx,:]
+for (k, v) in mcchain.diagnostics
+  mcchain01.diagnostics[k] = mcchain.diagnostics[k][indx]
+end
+
+l = filter((el)->el==true, mcchain.diagnostics["accept"])
+describe(mcchain01)

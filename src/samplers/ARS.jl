@@ -17,7 +17,7 @@
 
 export ARS
 
-println("Loading ARS(g0, scale, tuner) sampler")
+println("Loading ARS(logCandidate, logCandidateScalingFactor, scale, tuner) sampler")
 
 ###########################################################################
 #                  ARS specific 'tuners'
@@ -29,21 +29,21 @@ abstract ARSTuner <: MCMCTuner
 ###########################################################################
 
 immutable ARS <: MCMCSampler
-  g0::Function
-  lM::Float64
+  logCandidate::Function
+  logCandidateScalingFactor::Float64
   scale::Float64
   tuner::Union(Nothing, ARSTuner)
 
-  function ARS(g0::Function, lM::Float64, x::Float64, t::Union(Nothing, ARSTuner))
-    @assert typeof(g0) == Function "Unscaled candidate g0 should be a function"
+  function ARS(logCandidate::Function, logCandidateScalingFactor::Float64, x::Float64, t::Union(Nothing, ARSTuner))
+    @assert typeof(logCandidate) == Function "Unscaled candidate logCandidate should be a function"
     @assert x>0 "scale should be > 0"
-    new(g0, lM, x, t)
+    new(logCandidate, logCandidateScalingFactor, x, t)
   end
 end
-ARS(g0::Function) = ARS(g0, 1., 1., nothing)
-ARS(g0::Function, lM::Float64) = ARS(g0, lM, 1.0, nothing)
-ARS(g0::Function, t::ARSTuner) = ARS(g0, 1., 1., t)
-ARS(g0::Function; lM::Float64 = 1.0, scale::Float64=1.0, tuner::Union(Nothing, ARSTuner)=nothing) = ARS(g0, M, scale, tuner)
+ARS(logCandidate::Function) = ARS(logCandidate, 1., 1., nothing)
+ARS(logCandidate::Function, logCandidateScalingFactor::Float64) = ARS(logCandidate, logCandidateScalingFactor, 1.0, nothing)
+ARS(logCandidate::Function, t::ARSTuner) = ARS(logCandidate, 1., 1., t)
+ARS(logCandidate::Function; logCandidateScalingFactor::Float64 = 1.0, scale::Float64=1.0, tuner::Union(Nothing, ARSTuner)=nothing) = ARS(logCandidate, M, scale, tuner)
 
 ###########################################################################
 #                  ARS task
@@ -69,20 +69,22 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
 	  proposedPars = pars + randn(model.size) .* scale
     mu = log(rand())
     proposedLogTarget = model.eval(proposedPars) 
-		proposedLogCandidate = sampler.g0(proposedPars) 
-	  weight = proposedLogTarget .- sampler.lM .- proposedLogCandidate
-    #println([proposedPars exp(sampler.g0(proposedPars[1])) exp(weight) exp(mu)])
+		proposedLogCandidate = sampler.logCandidate(proposedPars) 
+	  weight = proposedLogTarget .- sampler.logCandidateScalingFactor .- proposedLogCandidate
+    #println([proposedPars exp(sampler.logCandidate(proposedPars[1])) exp(weight) exp(mu)])
     
     ###########################################################################
     #        Not correct right now, MCMC stats accept rejected samples
     ###########################################################################
-    
+  
 		if weight > mu
-			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
+			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, 
+        {"accept" => true, "weight" => weight})
 	    produce(ms)
 	    pars, logTarget = copy(proposedPars), copy(proposedLogTarget)
 	  else
-			ms = MCMCSample(pars, logTarget, pars, logTarget, {"accept" => false})
+			ms = MCMCSample(pars, logTarget, pars, logTarget, 
+        {"accept" => false, "weight" => weight})
       produce(ms)
     end
 	end
