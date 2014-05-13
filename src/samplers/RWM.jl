@@ -52,7 +52,6 @@ function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 	scale = model.scale .* sampler.scale  # rescale model scale by sampler scale
 	pars = copy(model.init)
 	logTarget = model.eval(pars)
-  println([pars' logTarget "initial"])
   @assert isfinite(logTarget) "Initial values out of model support, try other values"
   
 	# main loop
@@ -64,12 +63,10 @@ function SamplerTask(model::MCMCModel, sampler::RWM, runner::MCMCRunner)
 		if ratio > 0 || (ratio > log(rand()))
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, {"accept" => true})
 	    produce(ms)
-      println([proposedPars' proposedLogTarget "true"])
 	    pars, logTarget = copy(proposedPars), copy(proposedLogTarget)
 	  else
 			ms = MCMCSample(pars, logTarget, pars, logTarget, {"accept" => false})
       produce(ms)
-      println([proposedPars' proposedLogTarget "false"])
     end
 	end
 end
