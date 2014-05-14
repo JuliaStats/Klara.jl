@@ -21,7 +21,14 @@ msce_iid(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2)) = Float64[mcse_i
 
 msce_iid(x::Matrix{Float64}, par::Real) = msce_iid(x, par:par)
 
-msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2)) = msce_iid(c.samples, pars)
+function msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2))
+  if c.useAllSamples
+    indx = 1:nsamples
+  else
+    indx = find(c.diagnostics["accept"])
+  end
+  msce_iid(c.samples[indx, :], pars)
+end
 
 msce_iid(c::MCMCChain, par::Real) = msce_iid(c, par:par)
 
@@ -54,8 +61,14 @@ mcse_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
 
 mcse_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcse_bm(x, par:par; batchlen=batchlen)
 
-mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
-  mcse_bm(c.samples, pars; batchlen=batchlen)
+function mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100)
+  if c.useAllSamples
+    indx = 1:nsamples
+  else
+    indx = find(c.diagnostics["accept"])
+  end
+  mcse_bm(c.samples[indx, :], pars; batchlen=batchlen)
+end
 
 mcse_bm(c::MCMCChain, par::Real; batchlen::Int=100) = mcse_bm(c, par:par; batchlen=batchlen)
 
@@ -109,8 +122,14 @@ mcse_imse(x::Vector{Float64}; maxlag::Int=size(c.samples, 1)-1) = sqrt(mcvar_ims
 mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   Float64[mcse_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
-mcse_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  mcse_imse(c.samples, pars; maxlag=maxlag)
+function mcse_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
+  if c.useAllSamples
+    indx = 1:nsamples
+  else
+    indx = find(c.diagnostics["accept"])
+  end
+  mcse_imse(c.samples[indx, :], pars; maxlag=maxlag)
+end
 
 mcse_imse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_imse(c, par:par; maxlag=maxlag)
 
@@ -155,8 +174,14 @@ mcse_ipse(x::Vector{Float64}; maxlag::Int=size(c.samples, 1)-1) = sqrt(mcvar_ips
 mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   Float64[mcse_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
-mcse_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
-  mcse_ipse(c.samples, pars; maxlag=maxlag)
+function mcse_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
+  if c.useAllSamples
+    indx = 1:nsamples
+  else
+    indx = find(c.diagnostics["accept"])
+  end
+  mcse_ipse(c.samples[indx, :], pars; maxlag=maxlag)
+end
 
 mcse_ipse(c::MCMCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_ipse(c, par:par; maxlag=maxlag)
 
@@ -207,7 +232,13 @@ mcse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...
 
 mcse(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcse(x, par:par; vtype=vtype, args...)
 
-mcse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
-  mcse(c.samples, pars; vtype=vtype, args...)
+function mcse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
+  if c.useAllSamples
+    indx = 1:nsamples
+  else
+    indx = find(c.diagnostics["accept"])
+  end
+  mcse(c.samples[indx, :], pars; vtype=vtype, args...)
+end
 
 mcse(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = mcse(c, par:par; vtype=vtype, args...)

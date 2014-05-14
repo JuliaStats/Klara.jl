@@ -69,7 +69,7 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
 	  proposedPars = pars + randn(model.size) .* scale
     mu = log(rand())
     proposedLogTarget = model.eval(proposedPars) 
-		proposedLogCandidate = sampler.logCandidate(proposedPars) 
+		proposedLogCandidate = sampler.logCandidate(proposedPars)
 	  weight = proposedLogTarget .- sampler.logCandidateScalingFactor .- proposedLogCandidate
     #println([proposedPars exp(sampler.logCandidate(proposedPars[1])) exp(weight) exp(mu)])
     
@@ -79,12 +79,12 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
   
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, 
-        {"accept" => true, "weight" => weight})
+        {"accept" => true, "weight" => weight, "useAllSamples" => false})
 	    produce(ms)
 	    pars, logTarget = copy(proposedPars), copy(proposedLogTarget)
 	  else
 			ms = MCMCSample(pars, logTarget, pars, logTarget, 
-        {"accept" => false, "weight" => weight})
+        {"accept" => false, "weight" => weight, "useAllSamples" => false})
       produce(ms)
     end
 	end

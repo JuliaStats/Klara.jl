@@ -63,24 +63,25 @@ type MCMCChain
   diagnostics::Dict
   task::Union(MCMCTask, Array{MCMCTask})
   runTime::Float64
+  useAllSamples::Bool         # Set to false to ignore rejected samples
    
   function MCMCChain(r::Range{Int}, s::Matrix{Float64}, g::MatrixF64OrNothing, d::Dict,
-    t::Union(MCMCTask, Array{MCMCTask}), rt::Float64)
+    t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true)
     if g != nothing
       @assert size(s) == size(g) "samples and gradients must have the same number of rows and columns"
     end
-    new(r, s, g, d, t, rt)
+    new(r, s, g, d, t, rt, useAllSamples)
   end
 end
 
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
-	MCMCChain(r, s, nothing, d, t, rt)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64) = 
-	MCMCChain(r, s, nothing, Dict(), t, rt)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask})) = 
-	MCMCChain(r, s, nothing, d, t, NaN)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask})) = 
-	MCMCChain(r, s, nothing, Dict(), t, NaN)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
+	MCMCChain(r, s, nothing, d, t, rt, useAllSamples)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
+	MCMCChain(r, s, nothing, Dict(), t, rt, useAllSamples)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
+	MCMCChain(r, s, nothing, d, t, NaN, useAllSamples)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
+	MCMCChain(r, s, nothing, Dict(), t, NaN, useAllSamples)
 
 function show(io::IO, res::MCMCChain)
   nsamples, npars = size(res.samples)
