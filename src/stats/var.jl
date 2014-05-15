@@ -23,7 +23,7 @@ msce_iid(x::Matrix{Float64}, par::Real) = msce_iid(x, par:par)
 
 function msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2))
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
@@ -63,7 +63,7 @@ mcse_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcse_bm(x, par:par; 
 
 function mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
@@ -124,7 +124,7 @@ mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=siz
 
 function mcse_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
@@ -176,7 +176,7 @@ mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=siz
 
 function mcse_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
@@ -234,7 +234,7 @@ mcse(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcse(x, par:
 
 function mcse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end

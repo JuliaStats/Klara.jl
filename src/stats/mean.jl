@@ -5,7 +5,7 @@ export mean
 # Mean of MCMCChain
 function mean(c::MCMCChain, par::Ranges=1:size(c.samples, 2))
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end

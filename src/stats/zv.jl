@@ -29,7 +29,7 @@ end
 
 function linearZv(c::MCMCChain)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
@@ -73,7 +73,7 @@ end
 
 function quadraticZv(c::MCMCChain)
   if c.useAllSamples
-    indx = 1:nsamples
+    indx = 1:size(c.samples, 1)
   else
     indx = find(c.diagnostics["accept"])
   end
