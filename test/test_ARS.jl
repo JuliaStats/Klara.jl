@@ -1,6 +1,8 @@
 using Distributions, MCMC, Optim
+using Base.Test
+srand(1)
 
-L = 2
+L = 1
 
 # Target distribution shape, unscaled
 g(x) = exp(-dot(x, x)/2)
@@ -28,10 +30,17 @@ log_M1 = log(M1)
 
 mcmodel = model(log_g, init=ones(L))
 
-mcchain = run(mcmodel, [ARS(log_g0, log_M0), ARS(log_g1, log_M1)], SerialMC(1000:10:10000))
+mcchain = run(mcmodel, [ARS(log_g0, log_M0), ARS(log_g1, log_M1)], SerialMC(1000:1:10000))
 
 println("Acceptance rate: ", acceptance(mcchain[1]))
 describe(mcchain[1])
 
 println("Acceptance rate: ", acceptance(mcchain[2]))
 describe(mcchain[2])
+
+w = hcat(mcchain[1].diagnostics["weight"]', mcchain[2].diagnostics["weight"]');
+theta = hcat(mcchain[1].samples, mcchain[2].samples);
+for i in 1:min(20, length(theta))
+  #println([theta[i] g(theta[i]) g0(theta[i]) g1(theta[i]) -h0(theta[i])/M0 -h1(theta[i])/M1 w[i]])
+  @test_approx_eq h0(theta[i])/M0 h1(theta[i])/M1
+end

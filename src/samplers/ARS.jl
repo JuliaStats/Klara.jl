@@ -66,25 +66,25 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
   
 	# main loop
 	while true
-	  proposedPars = pars + randn(model.size) .* scale
+  	proposedPars = pars + randn(model.size) .* scale
     mu = log(rand())
     proposedLogTarget = model.eval(proposedPars) 
 		proposedLogCandidate = sampler.logCandidate(proposedPars)
 	  weight = proposedLogTarget .- sampler.logCandidateScalingFactor .- proposedLogCandidate
-    #println([proposedPars exp(sampler.logCandidate(proposedPars[1])) exp(weight) exp(mu)])
-    
     ###########################################################################
     #        Not correct right now, MCMC stats accept rejected samples
     ###########################################################################
   
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, 
-        {"accept" => true, "weight" => weight, "useAllSamples" => false})
+        {"accept" => true, "weight" => exp(weight), "useAllSamples" => false,
+        "proposedTarget" => exp(proposedLogTarget), "proposedCandidate" => exp(proposedLogCandidate)})
 	    produce(ms)
 	    pars, logTarget = copy(proposedPars), copy(proposedLogTarget)
 	  else
 			ms = MCMCSample(pars, logTarget, pars, logTarget, 
-        {"accept" => false, "weight" => weight, "useAllSamples" => false})
+        {"accept" => false, "weight" => exp(weight), "useAllSamples" => false,
+        "proposedTarget" => exp(proposedLogTarget), "proposedCandidate" => exp(proposedLogCandidate)})
       produce(ms)
     end
 	end
