@@ -40,7 +40,7 @@ describe(mcchain[2])
 
 w = hcat(mcchain[1].diagnostics["weight"]', mcchain[2].diagnostics["weight"]');
 theta = hcat(mcchain[1].samples, mcchain[2].samples);
-for i in 1:min(20, length(theta))
+for i in sample(1:length(theta), 200)
   #println([theta[i] g(theta[i]) g0(theta[i]) g1(theta[i]) -h0(theta[i])/M0 -h1(theta[i])/M1 w[i]])
   @test_approx_eq h0(theta[i])/M0 h1(theta[i])/M1
 end
