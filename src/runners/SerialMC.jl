@@ -37,10 +37,11 @@ SerialMC(; steps::Int=100, burnin::Int=0, thinning::Int=1) = SerialMC((burnin+1)
 function run_serialmc(t::MCMCTask)
   tic() # start timer
 
-  # temporary array to store samples
-  samples = fill(NaN, t.model.size, length(t.runner.r))
-  gradients = fill(NaN, t.model.size, length(t.runner.r))
-  diags = {"step" => collect(t.runner.r)}
+  # array allocations to store results
+  samples        = fill(NaN, t.model.size, length(t.runner.r))
+  gradients      = fill(NaN, t.model.size, length(t.runner.r))
+  diags          = {"step" => collect(t.runner.r)}
+  logtargets     = fill(NaN, length(t.runner.r))
 
   # sampling loop
   j = 1
@@ -48,6 +49,8 @@ function run_serialmc(t::MCMCTask)
     newprop = consume(t.task)
     if in(i, t.runner.r)
       samples[:, j] = newprop.ppars
+      logtargets[j] = newprop.plogtarget
+
       if newprop.pgrads != nothing
         gradients[:, j] = newprop.pgrads
       end
@@ -67,7 +70,7 @@ function run_serialmc(t::MCMCTask)
   end
 
   # create Chain
-  MCMCChain(t.runner.r, samples', gradients', diags, t, toq())
+  MCMCChain(t.runner.r, samples', logtargets, gradients', diags, t, toq())
 end
 
 function run_serialmc_exit(t::MCMCTask)
