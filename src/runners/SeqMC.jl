@@ -52,12 +52,13 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 	map(t -> consume(t.task), targets)
 
 	# initialize samples and weights arrays
-	samples = fill(NaN, tsize, (steps-burnin)*npart) 
-	weights = fill(NaN, (steps-burnin)*npart)
+	samples    = fill(NaN, tsize, (steps-burnin)*npart) 
+	weights    = fill(NaN, (steps-burnin)*npart)
+	logtargets = fill(NaN, (steps-burnin)*npart)
 
 	local pars = deepcopy(particles)
-	local logW = zeros(npart)  # log of particle weights
-	local logtarget = zeros(npart) # loglik of previous target distrib
+	local logW = zeros(npart)         # log of particle weights
+	local logtarget = zeros(npart)    # loglik of previous target distrib
 
 	for i in 1:steps  # i = 1
 
@@ -88,25 +89,27 @@ function run_seqmc(targets::Array{MCMCTask}; particles::Vector{Vector{Float64}} 
 			end
 		end
 
-		println("iter $i, var $(var(exp(logW)))")
-		logtarget = zeros(npart)
-
 		if i > burnin # store betas of all particles in the result chain
 			pos = (i-burnin-1) * npart
 			for n in 1:npart  #  n = 1
 				samples[:, pos+n] = pars[n]
-				weights[pos+n] = exp(logW[n])
+				weights[pos+n]    = exp(logW[n])
+				logtargets[pos+n] = logtarget[n]
 			end
 		end
+
+		println("iter $i, var $(var(exp(logW)))")
+		logtarget = zeros(npart)
+
 	end
 
 	# create Chain
 	MCMCChain((burnin+1):1:((steps-burnin)*npart),
-	  samples',
-		nothing,
-		{"weigths" => weights, "particle" => repeat([1:npart], outer=[steps-burnin])},
-		targets,
-		toq())
+	          samples',
+	          logtargets,
+	          {"weigths" => weights, "particle" => repeat([1:npart], outer=[steps-burnin])},
+	          targets,
+	          toq())
 end
 
 # TODO: check that all elements of array contain MCMCTasks of the same type
