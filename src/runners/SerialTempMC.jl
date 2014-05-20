@@ -44,7 +44,10 @@ function run_serialtempmc(tasks::Array{MCMCTask})
 	map(t -> consume(t.task), tasks)
 
 	# initialize MCMCChain result (one Chain only)
-	res = MCMCChain(1:1:2, fill(NaN, tsize, steps-burnin), tasks[end])
+	res = MCMCChain(1:1:2, 
+	                fill(NaN, tsize, steps-burnin), 
+	                fill(NaN, steps-burnin), 
+	                tasks[end])
 
 	local logW = zeros(nmods)  # log of task weights that will be adapted
 	local at = 1  # pick starting task
@@ -69,12 +72,12 @@ function run_serialtempmc(tasks::Array{MCMCTask})
 		end
 
 		# TODO : add logW adaptation
-
 		ppars, logtarget, pars = s.ppars, s.logtarget, s.pars
 
 		if i > burnin # store ppars and the model we're on
 			pos = i-burnin 
 			res.samples[:, pos] = ppars
+			res.logtargets[pos] = logtarget
 			#res.misc[:mod][pos] = at
 		end
 	end

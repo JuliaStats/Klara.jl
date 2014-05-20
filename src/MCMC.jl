@@ -59,29 +59,44 @@ include("samplers/SliceSampler.jl")  # Slice sampler
 type MCMCChain
   range::Range{Int}
   samples::Matrix{Float64}
+  logtargets::Vector{Float64}
   gradients::MatrixF64OrNothing
   diagnostics::Dict
   task::Union(MCMCTask, Array{MCMCTask})
   runTime::Float64
   useAllSamples::Bool         # Set to false to ignore rejected samples
    
-  function MCMCChain(r::Range{Int}, s::Matrix{Float64}, g::MatrixF64OrNothing, d::Dict,
-    t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true)
+  function MCMCChain(r::Range{Int}, 
+                     s::Matrix{Float64}, 
+                     l::Vector{Float64}, 
+                     g::MatrixF64OrNothing, 
+                     d::Dict,
+                     t::Union(MCMCTask, Array{MCMCTask}),
+                     rt::Float64,
+                     useAllSamples::Bool=true)
+    @assert size(s,1) == size(l,1) "samples and logtargets do not have the same size"
     if g != nothing
       @assert size(s) == size(g) "samples and gradients must have the same number of rows and columns"
     end
-    new(r, s, g, d, t, rt, useAllSamples)
+    new(r, s, l, g, d, t, rt, useAllSamples)
   end
 end
 
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
-	MCMCChain(r, s, nothing, d, t, rt, useAllSamples)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
-	MCMCChain(r, s, nothing, Dict(), t, rt, useAllSamples)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, d::Dict, t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
-	MCMCChain(r, s, nothing, d, t, NaN, useAllSamples)
-MCMCChain(r::Range{Int}, s::Matrix{Float64}, t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
-	MCMCChain(r, s, nothing, Dict(), t, NaN, useAllSamples)
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, l::Vector{Float64}, 
+          d::Dict, t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
+	MCMCChain(r, s, l, nothing,      d, t,    rt)
+
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, l::Vector{Float64}, 
+          t::Union(MCMCTask, Array{MCMCTask}), rt::Float64, useAllSamples::Bool=true) = 
+	MCMCChain(r, s, l, nothing, Dict(), t,    rt)
+
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, l::Vector{Float64}, 
+          d::Dict, t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
+	MCMCChain(r, s, l, nothing,      d, t,   NaN)
+
+MCMCChain(r::Range{Int}, s::Matrix{Float64}, l::Vector{Float64}, 
+          t::Union(MCMCTask, Array{MCMCTask}), useAllSamples::Bool=true) = 
+	MCMCChain(r, s, l, nothing, Dict(), t,   NaN)
 
 function show(io::IO, res::MCMCChain)
   nsamples, npars = size(res.samples)
