@@ -21,10 +21,10 @@ describe(c::MCMCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCMCChain)
   nsamples, npars = size(c.samples)
-  if c.useAllSamples
-    indx = 1:nsamples
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:nsamples
   end
   for i in 1:npars
 

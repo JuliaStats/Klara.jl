@@ -22,10 +22,10 @@ msce_iid(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2)) = Float64[mcse_i
 msce_iid(x::Matrix{Float64}, par::Real) = msce_iid(x, par:par)
 
 function msce_iid(c::MCMCChain, pars::Ranges=1:size(c.samples, 2))
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   msce_iid(c.samples[indx, :], pars)
 end
@@ -62,10 +62,10 @@ mcse_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
 mcse_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcse_bm(x, par:par; batchlen=batchlen)
 
 function mcse_bm(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   mcse_bm(c.samples[indx, :], pars; batchlen=batchlen)
 end
@@ -123,10 +123,10 @@ mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=siz
   Float64[mcse_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
 function mcse_imse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   mcse_imse(c.samples[indx, :], pars; maxlag=maxlag)
 end
@@ -233,10 +233,10 @@ mcse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...
 mcse(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcse(x, par:par; vtype=vtype, args...)
 
 function mcse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   mcse(c.samples[indx, :], pars; vtype=vtype, args...)
 end

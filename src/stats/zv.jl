@@ -28,10 +28,10 @@ function linearZv(chain::Matrix{Float64}, grad::Matrix{Float64})
 end
 
 function linearZv(c::MCMCChain)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   linearZv(c.samples[indx, :], c.gradients[indx, :])
 end
@@ -72,10 +72,10 @@ function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
 end
 
 function quadraticZv(c::MCMCChain)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   quadraticZv(c.samples[indx, :], c.gradients[indx, :])
 end
