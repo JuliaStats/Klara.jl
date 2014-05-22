@@ -42,7 +42,6 @@ function run_serialmc(t::MCMCTask)
   gradients      = fill(NaN, t.model.size, length(t.runner.r))
   diags          = {"step" => collect(t.runner.r)}
   logtargets     = fill(NaN, length(t.runner.r))
-  useAllSamples = true
 
   # sampling loop
   j = 1
@@ -58,10 +57,6 @@ function run_serialmc(t::MCMCTask)
 
       # save diagnostics
       for (k,v) in newprop.diagnostics
-        if k == "useAllSamples"
-          useAllSamples = v
-          continue
-        end
         # if diag name not seen before, create column
         if !haskey(diags, k)
           diags[k] = Array(typeof(v), length(diags["step"]))          
@@ -75,7 +70,7 @@ function run_serialmc(t::MCMCTask)
   end
 
   # create Chain
-  MCMCChain(t.runner.r, samples', logtargets, gradients', diags, t, toq(), useAllSamples)
+  MCMCChain(t.runner.r, samples', logtargets, gradients', diags, t, toq())
 end
 
 function run_serialmc_exit(t::MCMCTask)

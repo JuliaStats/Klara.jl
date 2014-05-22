@@ -175,10 +175,10 @@ mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=siz
   Float64[mcse_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
 function mcse_ipse(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1)
-  if c.useAllSamples
-    indx = 1:size(c.samples, 1)
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
   end
   mcse_ipse(c.samples[indx, :], pars; maxlag=maxlag)
 end

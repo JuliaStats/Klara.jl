@@ -77,13 +77,13 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
   
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, 
-        {"accept" => true, "weight" => exp(weight), "useAllSamples" => false,
+        {"accept" => true, "weight" => exp(weight),
         "proposedTarget" => exp(proposedLogTarget), "proposedCandidate" => exp(proposedLogCandidate)})
 	    produce(ms)
 	    pars, logTarget = copy(proposedPars), copy(proposedLogTarget)
 	  else
 			ms = MCMCSample(pars, logTarget, pars, logTarget, 
-        {"accept" => false, "weight" => exp(weight), "useAllSamples" => false,
+        {"accept" => false, "weight" => exp(weight),
         "proposedTarget" => exp(proposedLogTarget), "proposedCandidate" => exp(proposedLogCandidate)})
       produce(ms)
     end

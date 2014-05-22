@@ -15,10 +15,10 @@ ess(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...)
 ess(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = ess(x, par:par; vtype=vtype, args...)
 
 function ess(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
-  if c.useAllSamples
-    indx = [i for i in 1:size(c.samples, 1)]
-  else
+  if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
+  else
+    indx = [i for i in 1:size(c.samples, 1)]
   end
   ess(c.samples[indx, :], pars; vtype=vtype, args...)
 end
