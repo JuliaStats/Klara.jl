@@ -40,5 +40,6 @@ describe(mcchain[2])
 
 println([M0 M1])
 println()
+
 w = hcat(mcchain[1].diagnostics["weight"]', mcchain[2].diagnostics["weight"]');
 theta = hcat(mcchain[1].samples, mcchain[2].samples);
