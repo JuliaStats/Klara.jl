@@ -18,7 +18,7 @@ function ess(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:ims
   if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
   else
-    indx = [i for i in 1:size(c.samples, 1)]
+    indx = 1:size(c.samples, 1)
   end
   ess(c.samples[indx, :], pars; vtype=vtype, args...)
 end
@@ -41,7 +41,7 @@ function actime(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:
   if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
   else
-    indx = [i for i in 1:size(c.samples, 1)]
+    indx = 1:size(c.samples, 1)
   end
   actime(c.samples[indx, :], pars; vtype=vtype, args...)
 end
