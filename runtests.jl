@@ -4,7 +4,8 @@ my_tests = ["test/test_hmc.jl",
             "test/parsers/test_diff.jl",
             "test/parsers/unit_tests.jl",
             "test/test_dists.jl",
-            "test/test_ARS.jl"]
+            "test/test_ARS1.jl",
+            "test/test_ARS2.jl"]
 
 println("Running tests:")
 
