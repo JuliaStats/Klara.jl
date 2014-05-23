@@ -19,7 +19,7 @@ M0 = -res0.f_minimum
 log_M0 = log(M0)
 
 # Candidate (starting) Distribution, use Normal(0, 2)
-g1(x) = pdf(Normal(0, 2), x)
+g1(x) = exp(sum(logpdf(Normal(0, 2), x)))
 log_g1(x) = sum(logpdf(Normal(0, 2), x))
 
 # Compute M1 such that candidate dominates target
@@ -38,5 +38,7 @@ describe(mcchain[1])
 println("Acceptance rate: ", acceptance(mcchain[2]))
 describe(mcchain[2])
 
+println([M0 M1])
+println()
 w = hcat(mcchain[1].diagnostics["weight"]', mcchain[2].diagnostics["weight"]');
 theta = hcat(mcchain[1].samples, mcchain[2].samples);

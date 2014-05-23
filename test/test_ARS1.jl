@@ -19,7 +19,7 @@ M0 = -res0.f_minimum
 log_M0 = log(M0)
 
 # Candidate (starting) Distribution, use Normal(0, 2)
-g1(x) = pdf(Normal(0, 2), x)
+g1(x) = exp(sum(logpdf(Normal(0, 2), x)))
 log_g1(x) = sum(logpdf(Normal(0, 2), x))
 
 # Compute M1 such that candidate dominates target
