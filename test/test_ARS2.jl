@@ -1,4 +1,4 @@
-using Distributions, MCMC, Optim
+using Distributions, PDMats, MCMC, Optim
 using Base.Test
 srand(1)
 
@@ -23,7 +23,7 @@ g1(x) = exp(sum(logpdf(Normal(0, 2), x)))
 log_g1(x) = sum(logpdf(Normal(0, 2), x))
 
 # Compute M1 such that candidate dominates target
-h1(x) = -g(x)/sum(g1(x))
+h1(x) = -g(x)/g1(x)
 res1 = optimize(h1, ones(L))
 M1 = -res1.f_minimum
 log_M1 = log(M1)
