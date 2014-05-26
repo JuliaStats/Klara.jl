@@ -1,45 +1,44 @@
 using Distributions, PDMats, MCMC, Optim
+#using TextPlots
 using Base.Test
-srand(1)
+#srand(1)
 
-L = 2
+m = [0.0, 2.0]
+sig = 0.4
+mu = [1.0, 1.0]
+sigma = 4
 
 # Target distribution shape, unscaled
-g(x) = exp(-dot(x, x)/2)
-log_g(x) = -dot(x, x)/2
+d = DiagNormal(m, PDiagMat(sig^2 * ones(2)))
+g(x) = exp(sum(logpdf(d, x)))
+log_g(x) = sum(logpdf(d, x))
 
-# Candidate (starting) density, use Normal(0, 2)
-g0(x) = 1/(sqrt(2*pi)*2)*exp(-dot(x, x)/8)
-log_g0(x) = -dot(x, x)/8-log(2 * sqrt(2*pi))
+# Candidate (starting) Distribution, use MvNormal([0, 0], [1 0; 0 1])
+d0 = DiagNormal(mu, PDiagMat(sigma^2 * ones(2)))
+g0(x) = exp(sum(logpdf(d0, x)))
+log_g0(x) = sum(logpdf(d0, x))
 
-# Compute M0 such that candidate dominates target
-h0(x) = -g(x)/g0(x)
-res0 = optimize(h0, ones(L))
-M0 = -res0.f_minimum
-log_M0 = log(M0)
-
-# Candidate (starting) Distribution, use Normal(0, 2)
-g1(x) = exp(sum(logpdf(Normal(0, 2), x)))
-log_g1(x) = sum(logpdf(Normal(0, 2), x))
+#=
+plot((x)->g([x, 2.0]), -5, 5)
+plot((x)->g0([x, 2.0]), -5, 5)
+plot((x)->g([0.0, x]), -5, 5)
+plot((x)->g0([0.0, x]), -5, 5)
+=#
 
 # Compute M1 such that candidate dominates target
-h1(x) = -g(x)/g1(x)
-res1 = optimize(h1, ones(L))
-M1 = -res1.f_minimum
-log_M1 = log(M1)
+h(x) = -g(x)/g0(x)
+res = optimize(h, ones(2))
+M = -res.f_minimum
+log_M = log(M)
 
-mcmodel = model(log_g, init=ones(L))
+mcmodel = model(log_g, init=ones(2))
 
-mcchain = run(mcmodel, [ARS(log_g0, log_M0), ARS(log_g1, log_M1)], SerialMC(1000:1:10000))
+mcchain = run(mcmodel, ARS(log_g0, log_M), SerialMC(1000:1:10000))
 
-println("Acceptance rate: ", acceptance(mcchain[1]))
-describe(mcchain[1])
-
-println("Acceptance rate: ", acceptance(mcchain[2]))
-describe(mcchain[2])
-
-println([M0 M1])
+println()
+println("M: ", M)
 println()
 
-w = hcat(mcchain[1].diagnostics["weight"]', mcchain[2].diagnostics["weight"]');
-theta = hcat(mcchain[1].samples, mcchain[2].samples);
+println("Acceptance rate g0: ", acceptance(mcchain))
+println()
+describe(mcchain)
