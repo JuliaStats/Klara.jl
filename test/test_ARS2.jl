@@ -1,5 +1,8 @@
-using Distributions, PDMats, MCMC, Optim
-#using TextPlots
+using Distributions, PDMats, MCMC
+
+# Using Optim, M would be ~ 106, acceptance rate ~ 12%
+#using Optim
+
 using Base.Test
 #srand(1)
 
@@ -13,22 +16,16 @@ d = DiagNormal(m, PDiagMat(sig^2 * ones(2)))
 g(x) = exp(sum(logpdf(d, x)))
 log_g(x) = sum(logpdf(d, x))
 
-# Candidate (starting) Distribution, use MvNormal([0, 0], [1 0; 0 1])
+# Candidate (starting) Distribution, use MvNormal([1, 1], [1 0; 0 1])
 d0 = DiagNormal(mu, PDiagMat(sigma^2 * ones(2)))
 g0(x) = exp(sum(logpdf(d0, x)))
 log_g0(x) = sum(logpdf(d0, x))
 
-#=
-plot((x)->g([x, 2.0]), -5, 5)
-plot((x)->g0([x, 2.0]), -5, 5)
-plot((x)->g([0.0, x]), -5, 5)
-plot((x)->g0([0.0, x]), -5, 5)
-=#
-
-# Compute M1 such that candidate dominates target
+# Compute M such that candidate dominates target
 h(x) = -g(x)/g0(x)
-res = optimize(h, ones(2))
-M = -res.f_minimum
+#res = optimize(h, ones(2))
+#M = -res.f_minimum
+M = 120.0
 log_M = log(M)
 
 mcmodel = model(log_g, init=ones(2))
