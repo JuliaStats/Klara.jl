@@ -165,8 +165,8 @@ function MCMCLikelihoodModel(d::MultivariateDistribution;
   fout[1] = x::Vector{Float64} -> logpdf(d, x)
 
   if grad == nothing
-  	if method_exists(gradloglik, (typeof(d), Vector{Float64}))
-  		fout[2] = x::Vector{Float64} -> gradloglik(d, x)
+  	if method_exists(gradlogpdf, (typeof(d), Vector{Float64}))
+  		fout[2] = x::Vector{Float64} -> gradlogpdf(d, x)
   	end
   end
 
@@ -191,8 +191,8 @@ function MCMCLikelihoodModel(d::UnivariateDistribution;
   fout[1] = x::Vector{Float64} -> logpdf(d, x[1])
 
   if grad == nothing
-  	if method_exists(gradloglik, (typeof(d), Float64))
-  		fout[2] = x::Vector{Float64} -> [gradloglik(d, x[1])]
+  	if method_exists(gradlogpdf, (typeof(d), Float64))
+  		fout[2] = x::Vector{Float64} -> [gradlogpdf(d, x[1])]
   	end
   end
 
