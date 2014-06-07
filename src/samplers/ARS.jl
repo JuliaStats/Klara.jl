@@ -3,7 +3,9 @@
 #  Acceptance Rejection Sampling (ARS)
 #
 #  Parameters:
-#    -g0: unscaled candidate
+#    -logCandidate: unscaled candidate
+#    -logCandidateScalingFactor: scale factor to ensure the scaled-up
+#        logCandidate covers target
 #    -scale: for scaling the jumps
 #    -tuner: for tuning the scale parameter
 #
@@ -11,7 +13,7 @@
 
 ###########################################################################
 #
-# Based on Bolstad Computational Bayesian Statistics, section 2.1
+# Based on Bolstad: Computational Bayesian Statistics, section 2.1
 #
 ###########################################################################
 
