@@ -1,11 +1,11 @@
-my_tests = ["test/test_hmc.jl",
-            "test/test_empmctuner.jl",
-            "test/test_syntax.jl",
-            "test/parsers/test_diff.jl",
-            "test/parsers/unit_tests.jl",
-            "test/test_dists.jl",
-            "test/test_ARS1.jl",
-            "test/test_ARS2.jl"]
+my_tests = ["test_hmc.jl",
+            "test_empmctuner.jl",
+            "test_syntax.jl",
+            "parsers/test_diff.jl",
+            "parsers/unit_tests.jl",
+            "test_dists.jl",
+            "test_ARS1.jl",
+            "test_ARS2.jl"]
 
 println("Running tests:")
 
