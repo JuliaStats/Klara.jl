@@ -27,7 +27,14 @@ function linearZv(chain::Matrix{Float64}, grad::Matrix{Float64})
   return chain, a
 end
 
-linearZv(c::MCMCChain) = linearZv(c.samples, c.gradients)
+function linearZv(c::MCMCChain)
+  if isa(c.task.sampler, ARS)
+    indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
+  end
+  linearZv(c.samples[indx, :], c.gradients[indx, :])
+end
 
 # Functions for calculating ZV-MCMC estimators using quadratic polynomial
 function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
@@ -64,4 +71,11 @@ function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
   return zvChain, a
 end
 
-quadraticZv(c::MCMCChain) = quadraticZv(c.samples, c.gradients)
+function quadraticZv(c::MCMCChain)
+  if isa(c.task.sampler, ARS)
+    indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
+  end
+  quadraticZv(c.samples[indx, :], c.gradients[indx, :])
+end

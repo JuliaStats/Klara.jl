@@ -14,8 +14,14 @@ ess(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...)
 
 ess(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = ess(x, par:par; vtype=vtype, args...)
 
-ess(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
-  ess(c.samples, pars; vtype=vtype, args...)
+function ess(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
+  if isa(c.task.sampler, ARS)
+    indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
+  end
+  ess(c.samples[indx, :], pars; vtype=vtype, args...)
+end
 
 ess(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = ess(c, par:par; vtype=vtype, args...)
 
@@ -31,7 +37,13 @@ actime(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args.
 
 actime(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = actime(x, par:par; vtype=vtype, args...)
 
-actime(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
-  actime(c.samples, pars; vtype=vtype, args...)
+function actime(c::MCMCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
+  if isa(c.task.sampler, ARS)
+    indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:size(c.samples, 1)
+  end
+  actime(c.samples[indx, :], pars; vtype=vtype, args...)
+end
 
 actime(c::MCMCChain, par::Real; vtype::Symbol=:imse, args...) = actime(c, par:par; vtype=vtype, args...)

@@ -21,9 +21,14 @@ describe(c::MCMCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCMCChain)
   nsamples, npars = size(c.samples)
+  if isa(c.task.sampler, ARS)
+    indx = find(c.diagnostics["accept"])
+  else
+    indx = 1:nsamples
+  end
   for i in 1:npars
 
-    col = c.samples[:, i]
+    col = c.samples[indx, i]
     println(io, "Parameter $i")
 
     if sum(isnan(col)) != 0
@@ -33,9 +38,9 @@ function describe(io, c::MCMCChain)
 
     qs = quantile(col, [0, 1])
     varimse = mcvar_imse(col)
-    variid = var(col)/nsamples
+    variid = var(col)/length(indx)
     mcerror = sqrt(varimse)
-    ss = nsamples*variid./varimse
+    ss = length(indx)*variid./varimse
     act = varimse./variid
 
     statNames = ["Min", "Mean", "Max", "MC Error", "ESS", "AC Time"]
