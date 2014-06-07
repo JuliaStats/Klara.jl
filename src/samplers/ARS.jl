@@ -43,7 +43,7 @@ end
 ARS(logCandidate::Function) = ARS(logCandidate, 1., 1., nothing)
 ARS(logCandidate::Function, logCandidateScalingFactor::Float64) = ARS(logCandidate, logCandidateScalingFactor, 1.0, nothing)
 ARS(logCandidate::Function, t::ARSTuner) = ARS(logCandidate, 1., 1., t)
-ARS(logCandidate::Function; logCandidateScalingFactor::Float64 = 1.0, scale::Float64=1.0, tuner::Union(Nothing, ARSTuner)=nothing) = ARS(logCandidate, M, scale, tuner)
+ARS(logCandidate::Function; logCandidateScalingFactor::Float64 = 1.0, scale::Float64=1.0, tuner::Union(Nothing, ARSTuner)=nothing) = ARS(logCandidate, logCandidateScalingFactor, scale, tuner)
 
 ###########################################################################
 #                  ARS task
@@ -71,10 +71,6 @@ function SamplerTask(model::MCMCModel, sampler::ARS, runner::MCMCRunner)
     proposedLogTarget = model.eval(proposedPars) 
 		proposedLogCandidate = sampler.logCandidate(proposedPars)
 	  weight = proposedLogTarget .- sampler.logCandidateScalingFactor .- proposedLogCandidate
-    ###########################################################################
-    #        Not correct right now, MCMC stats accept rejected samples
-    ###########################################################################
-  
 		if weight > mu
 			ms = MCMCSample(proposedPars, proposedLogTarget, pars, logTarget, 
         {"accept" => true})
