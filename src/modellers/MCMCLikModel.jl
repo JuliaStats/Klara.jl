@@ -65,11 +65,11 @@ type MCMCLikelihoodModel <: MCMCModel
 end
 
 function show(io::IO, res::MCMCLikelihoodModel)
-  print("LikelihoodModel, with $(length(res.pmap)) parameter(s)")
-  hasgradient(res) && print(", with gradient")
-  hastensor(res) && print("/tensor")
-  hasdtensor(res) && print("/dtensor")
-  println()
+  print(io, "LikelihoodModel, with $(length(res.pmap)) parameter(s)")
+  hasgradient(res) && print(io, ", with gradient")
+  hastensor(res) && print(io, "/tensor")
+  hasdtensor(res) && print(io, "/dtensor")
+  println(io)
 end
 
 
