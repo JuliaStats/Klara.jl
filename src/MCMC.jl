@@ -98,7 +98,7 @@ MCMCChain(r::Range{Int}, s::Matrix{Float64}, l::Vector{Float64},
 
 function show(io::IO, res::MCMCChain)
   nsamples, npars = size(res.samples)
-  println("$npars parameters, $nsamples samples (per parameter), $(round(res.runTime, 1)) sec.")
+  println(io, "$npars parameters, $nsamples samples (per parameter), $(round(res.runTime, 1)) sec.")
 end
 
 #  Definition of * as a shortcut operator for (model, sampler, runner) combination

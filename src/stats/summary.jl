@@ -19,7 +19,7 @@ end
 # describe() provides summary statistics for MCMCChain objects
 describe(c::MCMCChain) = describe(STDOUT, c)
 
-function describe(io, c::MCMCChain)
+function describe(io::IO, c::MCMCChain)
   nsamples, npars = size(c.samples)
   if isa(c.task.sampler, ARS)
     indx = find(c.diagnostics["accept"])
@@ -32,7 +32,7 @@ function describe(io, c::MCMCChain)
     println(io, "Parameter $i")
 
     if sum(isnan(col)) != 0
-      println(col, "Monte Carlo chain for parameter $i contains NaNs, which are not supported.")
+      println(io, "Monte Carlo chain for parameter $i contains NaNs, which are not supported.")
       return
     end
 
@@ -49,6 +49,6 @@ function describe(io, c::MCMCChain)
         println(io, string(rpad(statNames[i], 10, " "), " ", string(statVals[i])))
     end
 
-    println(io, )
+    println(io)
   end
 end
