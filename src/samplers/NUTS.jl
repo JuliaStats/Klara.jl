@@ -13,8 +13,6 @@
 
 export NUTS
 
-println("Loading NUTS(maxdoublings, tuner) sampler")
-
 
 ###########################################################################
 #                  NUTS specific 'tuners'
