@@ -14,8 +14,6 @@
 
 export RMHMC
 
-println("Loading RMHMC(nLeaps, leapStep, nNewton, tuner) sampler")
-
 ###########################################################################
 # RMHMC specific tuners
 ###########################################################################

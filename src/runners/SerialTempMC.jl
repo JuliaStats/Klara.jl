@@ -11,8 +11,6 @@
 
 export SerialTempMC
 
-println("Loading SerialTempMC(steps, burnin, swapPeriod) runner")
-
 immutable SerialTempMC <: MCMCRunner
   steps::Int
   burnin::Int

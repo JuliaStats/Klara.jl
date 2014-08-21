@@ -19,8 +19,6 @@
 
 export ARS
 
-println("Loading ARS(logCandidate, logCandidateScalingFactor, scale, tuner) sampler")
-
 ###########################################################################
 #                  ARS specific 'tuners'
 ###########################################################################

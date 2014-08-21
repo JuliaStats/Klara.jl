@@ -7,8 +7,6 @@
 
 export SerialMC
 
-println("Loading SerialMC(steps, burnin, thinning) runner")
-
 immutable SerialMC <: MCMCRunner
   burnin::Int
   thinning::Int
