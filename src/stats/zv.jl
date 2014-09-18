@@ -1,11 +1,9 @@
-# Functions for calculating zero variance (ZV) MCMC estimators, see
+# Functions for calculating zero variance (ZV) MC estimators, see
 # Mira A, Solgi R, Imparato D. Zero Variance Markov Chain Monte Carlo for Bayesian Estimators. Statistics and
 # Computing, 2013, 23 (5), pp 653-662
 
-export linearZv, quadraticZv
-
 # Functions for calculating ZV-MCMC estimators using linear polynomial
-function linearZv(chain::Matrix{Float64}, grad::Matrix{Float64})
+function linearzv(chain::Matrix{Float64}, grad::Matrix{Float64})
   npars = size(chain, 2)
 
   covAll = Array(Float64, npars+1, npars+1, npars)
@@ -27,17 +25,10 @@ function linearZv(chain::Matrix{Float64}, grad::Matrix{Float64})
   return chain, a
 end
 
-function linearZv(c::MCMCChain)
-  if isa(c.task.sampler, ARS)
-    indx = find(c.diagnostics["accept"])
-  else
-    indx = 1:size(c.samples, 1)
-  end
-  linearZv(c.samples[indx, :], c.gradients[indx, :])
-end
+linearzv(c::MCChain) = linearzv(c.samples, c.gradlogtargets)
 
 # Functions for calculating ZV-MCMC estimators using quadratic polynomial
-function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
+function quadraticzv(chain::Matrix{Float64}, grad::Matrix{Float64})
   nsamples, npars = size(chain)
   k = convert(Int, npars*(npars+3)/2)
   l = 2*npars+1
@@ -71,11 +62,4 @@ function quadraticZv(chain::Matrix{Float64}, grad::Matrix{Float64})
   return zvChain, a
 end
 
-function quadraticZv(c::MCMCChain)
-  if isa(c.task.sampler, ARS)
-    indx = find(c.diagnostics["accept"])
-  else
-    indx = 1:size(c.samples, 1)
-  end
-  quadraticZv(c.samples[indx, :], c.gradients[indx, :])
-end
+quadraticzv(c::MCChain) = quadraticzv(c.samples, c.gradlogtargets)

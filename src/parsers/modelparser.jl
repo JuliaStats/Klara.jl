@@ -7,21 +7,6 @@
 #
 ##########################################################################
 
-using Base.LinAlg.BLAS  # needed for some fast matrix operations
-using ReverseDiffSource
-
-# Distributions extensions (vectorizations on the distribution parameter)
-include("definitions/DistributionsExtensions.jl")
-
-# Add new derivation rules to Autodiff for LLAcc type
-include("definitions/AccumulatorDerivRules.jl")
-
-# Add new derivation rules to Autodiff for distributions
-include("definitions/MCMCDerivRules.jl")
-
-# misc. expression manipulation functions
-include("expr_funcs.jl")
-
 # naming conventions
 const ACC_SYM = :__acc       # name of accumulator variable
 const PARAM_SYM = :__beta    # name of parameter vector

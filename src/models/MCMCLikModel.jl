@@ -9,8 +9,6 @@
 #
 #################################################################
 
-export MCMCLikModel
-
 # The likelihood Model type
 type MCMCLikelihoodModel <: MCMCModel
 	eval::Function              # log-likelihood evaluation function

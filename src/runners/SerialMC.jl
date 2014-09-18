@@ -5,8 +5,6 @@
 #
 ###########################################################################
 
-export SerialMC
-
 immutable SerialMC <: MCMCRunner
   burnin::Int
   thinning::Int

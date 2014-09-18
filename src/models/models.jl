@@ -4,8 +4,6 @@
 #
 #################################################################
 
-export model
-
 function ispartition(m::Dict, n::Int)
 	c = zeros(n)
 	for v in values(m)

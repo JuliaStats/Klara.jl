@@ -1,5 +1,4 @@
-import Base.run
-export run, resume, prun
+# export run, resume, prun
 
 stop!(c::MCMCChain) = (!istaskdone(c.task.task) ? c.task.task.state = :done : nothing)
 
