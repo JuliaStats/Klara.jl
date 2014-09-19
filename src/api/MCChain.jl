@@ -27,6 +27,15 @@ MCChain(s::Matrix{Float64}, l::Vector{Float64}, r::Float64) = MCChain(s, l, Arra
 MCChain(s::Matrix{Float64}, l::Vector{Float64}) = MCChain(s, l, Array(Float64, 0, 0), Dict(), NaN)
 MCChain() = MCChain(Array(Float64, 0, 0), Float64[], Array(Float64, 0, 0), Dict(), NaN)
 
+function MCChain(npars::Int, nsamples::Int;
+  storegradlogtarget::Bool=false, diagnostics::Dict=Dict(), runtime::Float64=NaN)
+  if storegradlogtarget
+    MCChain(fill(NaN, npars, nsamples), fill(NaN, nsamples), fill(NaN, npars, nsamples), diagnostics, runtime)
+  else
+    MCChain(fill(NaN, npars, nsamples), fill(NaN, nsamples), Array(Float64, 0, 0), diagnostics, runtime)
+  end
+end
+
 function show(io::IO, c::MCChain)
   nsamples, npars = size(c.samples)
   println(io, "$npars parameters, $nsamples samples (per parameter), $(round(c.runtime, 1)) sec.")

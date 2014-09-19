@@ -36,6 +36,7 @@ export
   MCSystem,
   MCChain,
   HMC,
+  SerialMC,
   ### functions
   model,
   run,
@@ -74,8 +75,7 @@ include("samplers/HMC.jl")
 # include("samplers/SMMALA.jl")
 # include("samplers/RMHMC.jl")
 # include("samplers/PMALA.jl")
-# include("runners/runners.jl")
-# include("runners/SerialMC.jl")
+include("runners/SerialMC.jl")
 # include("runners/SerialTempMC.jl")
 # include("runners/SeqMC.jl")
 # include("tuners/VanillaMCTuner.jl")
