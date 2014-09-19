@@ -32,8 +32,9 @@ import Distributions:
 
 export
   ### types
-  MCChain,
   MCLikModel,
+  MCSystem,
+  MCChain,
   ### functions
   model,
   run,
@@ -48,8 +49,9 @@ export
   linearzv,
   quadraticzv
 
-include("api.jl")
-include("MCChain.jl")
+include("api/MCSystem.jl") # In an abstract sense, MCSystem consists of the user input
+include("api/MCChain.jl") # MCChain holds the output of a Monte Carlo simulation
+# include("api"/ui.jl) # This is a high level user interface consisting mostly of wrappers around MCSystem
 include("parsers/expr_funcs.jl")
 include("parsers/modelparser.jl")
 include("parsers/definitions/DistributionsExtensions.jl")

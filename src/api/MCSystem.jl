@@ -61,3 +61,16 @@ abstract MCStash{S<:MCSample}
 abstract MCTask
 
 abstract MCJob
+
+### Monte Carlo system gathers all the components that define a Monte Carlo simulation
+### It is in a sense as a complete specififcation of a Monte Carlo simulation based on user input
+### The user mainly interacts with the MCSystem type at a higher level via the package's interface
+### Users familiar with the package can also interact with the MCSystem type directly
+
+immutable MCSystem
+  model::MCModel
+  sampler::MCSampler
+  runner::MCRunner
+  tuner::MCTuner
+  job::MCJob
+end
