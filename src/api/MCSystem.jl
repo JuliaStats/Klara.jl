@@ -67,7 +67,7 @@ abstract MCJob
 ### The user mainly interacts with the MCSystem type at a higher level via the package's interface
 ### Users familiar with the package can also interact with the MCSystem type directly
 
-immutable MCSystem
+type MCSystem
   model::MCModel
   sampler::MCSampler
   runner::MCRunner

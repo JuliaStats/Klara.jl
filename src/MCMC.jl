@@ -35,6 +35,7 @@ export
   MCLikModel,
   MCSystem,
   MCChain,
+  HMC,
   ### functions
   model,
   run,
@@ -66,7 +67,7 @@ include("samplers/samples.jl")
 # include("samplers/MH.jl")
 # include("samplers/RAM.jl")
 # include("samplers/IMH.jl")
-# include("samplers/HMC.jl")
+include("samplers/HMC.jl")
 # include("samplers/HMCDA.jl")
 # include("samplers/NUTS.jl")
 # include("samplers/MALA.jl")
