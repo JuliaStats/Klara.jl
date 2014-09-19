@@ -19,6 +19,7 @@ immutable SerialMCBaseRunner <: SerialMCRunner
 end
 
 SerialMCBaseRunner(r::Range1{Int}, s::Bool=false) = SerialMCBaseRunner(first(r):1:last(r), s)
+
 SerialMCBaseRunner(; burnin::Int=0, thinning::Int=1, nsteps::Int=100, storegradlogtarget::Bool=false) =
   SerialMCBaseRunner((burnin+1):thinning:nsteps, storegradlogtarget)
 

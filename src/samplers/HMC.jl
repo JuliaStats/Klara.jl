@@ -31,8 +31,9 @@ type HMCSample <: MCSample{FirstOrder}
 end
 
 HMCSample(s::Vector{Float64}) = HMCSample(s, NaN, Float64[], Float64[], NaN)
-HMCSample(l::Int) = HMCSample(Array(Float64, l), NaN, Array(Float64, l), Array(Float64, l), NaN)
 HMCSample() = HMCSample(Float64[], NaN, Float64[], Float64[], NaN)
+
+HMCSample(l::Int) = HMCSample(Array(Float64, l), NaN, Array(Float64, l), Array(Float64, l), NaN)
 
 hamiltonian!(s::HMCSample) = (s.hamiltonian = -s.logtarget+0.5*dot(s.momentum, s.momentum))
 
@@ -57,8 +58,9 @@ type HMCStash <: MCStash{HMCSample}
   leapstep::Float64 # Leapfrog stepsize for the current Monte Carlo iteration (possibly tuned)
 end
 
-HMCStash(l::Int) = HMCStash(HMCSample(l), HMCSample(l), VanillaMCTune(), 0, 0, NaN)
 HMCStash() = HMCStash(HMCSample(), HMCSample(), VanillaMCTune(), 0, 0, NaN)
+
+HMCStash(l::Int) = HMCStash(HMCSample(l), HMCSample(l), VanillaMCTune(), 0, 0, NaN)
 
 ### Initialize HMC sampler
 
@@ -79,6 +81,19 @@ function initialize(model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTun
   stash.count = 1
 
   stash
+end
+
+function initialize_task(model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTuner)
+  stash::HMCStash = initialize(model, sampler, runner, tuner)
+
+  # Hook inside Task to allow remote resetting
+  task_local_storage(:reset,
+    (x::Vector{Float64}) ->
+    (stash.instate.current = HMCSample(copy(x)); gradlogtargetall!(stash.instate.current, model.evalallg))) 
+
+  while true
+    iterate!(stash, model, sampler, runner, tuner, produce)
+  end
 end
 
 ### Perform iteration for HMC sampler
