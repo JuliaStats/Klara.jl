@@ -1,8 +1,8 @@
-# Functions for calculating zero variance (ZV) MC estimators, see
-# Mira A, Solgi R, Imparato D. Zero Variance Markov Chain Monte Carlo for Bayesian Estimators. Statistics and
-# Computing, 2013, 23 (5), pp 653-662
+### Functions for calculating zero variance (ZV) MC estimators, see  Mira A, Solgi R, Imparato D. Zero Variance Markov
+### Chain Monte Carlo for Bayesian Estimators. Statistics and Computing, 2013, 23 (5), pp 653-662
 
-# Functions for calculating ZV-MCMC estimators using linear polynomial
+### Functions for calculating ZV-MC estimators using linear polynomial
+
 function linearzv(chain::Matrix{Float64}, grad::Matrix{Float64})
   npars = size(chain, 2)
 
@@ -27,7 +27,8 @@ end
 
 linearzv(c::MCChain) = linearzv(c.samples, c.gradlogtargets)
 
-# Functions for calculating ZV-MCMC estimators using quadratic polynomial
+### Functions for calculating ZV-MC estimators using quadratic polynomial
+
 function quadraticzv(chain::Matrix{Float64}, grad::Matrix{Float64})
   nsamples, npars = size(chain)
   k = convert(Int, npars*(npars+3)/2)

@@ -1,4 +1,5 @@
-# Effective sample size (ESS)
+### Effective sample size (ESS)
+
 actypes = (:bm, :imse, :ipse)
 
 function ess(x::Vector{Float64}; vtype::Symbol=:imse, args...)
@@ -17,7 +18,8 @@ ess(c::MCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...)
 
 ess(c::MCChain, par::Real; vtype::Symbol=:imse, args...) = ess(c, par:par; vtype=vtype, args...)
 
-# Integrated autocorrelation time
+### Integrated autocorrelation time
+
 function actime(x::Vector{Float64}; vtype::Symbol=:imse, args...)
   @assert in(vtype, actypes) "Unknown actime type $vtype"
 

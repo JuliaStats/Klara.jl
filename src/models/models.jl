@@ -1,6 +1,6 @@
 #################################################################
 #
-#    Definition of MCMCModel types 
+#    Definition of MCModel types 
 #
 #################################################################
 
@@ -13,9 +13,9 @@ function ispartition(m::Dict, n::Int)
 end
 
 #### misc functions common to all models  ####
-hasgradient{M<:MCMCModel}(m::M) = m.evalg != nothing
-hastensor{M<:MCMCModel}(m::M) = m.evalt != nothing
-hasdtensor{M<:MCMCModel}(m::M) = m.evaldt != nothing
+hasgradient{M<:MCModel}(m::M) = m.evalg != nothing
+hastensor{M<:MCModel}(m::M) = m.evalt != nothing
+hasdtensor{M<:MCModel}(m::M) = m.evaldt != nothing
 
 #### User-facing model creation function  ####
 

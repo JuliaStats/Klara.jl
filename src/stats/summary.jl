@@ -1,4 +1,5 @@
-# Compute acceptance or rejection rate of MCChain
+### Compute acceptance or rejection rate of MCChain
+
 function acceptance(c::MCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=false)
   rlen = length(lags)
   @assert lags[end] <= size(c.samples, 1) "Range of acceptance rate not within post-burnin range of MCmc chain"
@@ -10,7 +11,8 @@ function acceptance(c::MCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=
   end
 end
 
-# describe() provides summary statistics for MCChain objects
+### describe() provides summary statistics for MCChain objects
+
 describe(c::MCChain) = describe(STDOUT, c)
 
 function describe(io, c::MCChain)

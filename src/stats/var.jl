@@ -1,6 +1,7 @@
 ### mcvar and mcse stand for Monte Carlo variance and Monte Carlo error respectively
 
-# Variance of MCChain
+### Monte Carlo variance (erroneously) assuming IID samples
+
 mcvar_iid(x::Vector{Float64}) = var(x)/length(x)
 
 mcvar_iid(x::Matrix{Float64}, pars::Ranges=1:size(x, 2)) = Float64[mcvar_iid(x[:, pars[i]]) for i = 1:length(pars)]
@@ -11,7 +12,8 @@ mcvar_iid(c::MCChain, pars::Ranges=1:size(c.samples, 2)) = mvcvar_iid(c.samples,
 
 mcvar_iid(c::MCChain, par::Real) = mcvar_iid(c, par:par)
 
-# Standard deviation of MCChain
+### Monte Carlo standard error (erroneously) assuming IID samples
+
 msce_iid(x::Vector{Float64}) = sqrt(mcvar_iid(x))
 
 msce_iid(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2)) = Float64[mcse_iid(x[:, pars[i]]) for i = 1:length(pars)]
@@ -22,9 +24,9 @@ msce_iid(c::MCChain, pars::Ranges=1:size(c.samples, 2)) = msce_iid(c.samples, pa
 
 msce_iid(c::MCChain, par::Real) = msce_iid(c, par:par)
 
-# Function for estimating Monte Carlo error using batch means, see for instance
-# Flegal J.M, Jones, G.L. Batch Means and Spectral Variance Estimators in Markov chain Monte Carlo. Annals of
-# Statistics, 2010, 38 (2), pp 1034-1070
+### Function for estimating Monte Carlo variance using batch means, see for instance Flegal J.M, Jones, G.L. Batch Means
+### and Spectral Variance Estimators in Markov chain Monte Carlo. Annals of Statistics, 2010, 38 (2), pp 1034-1070
+
 function mcvar_bm(x::Vector{Float64}; batchlen::Int=100)
   nbatches = div(length(x), batchlen)  
   @assert nbatches > 1 "Choose batch size such that the number of batches is greather than one"
@@ -43,7 +45,8 @@ mcvar_bm(c::MCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
 
 mcvar_bm(c::MCChain, par::Real; batchlen::Int=100) = mcvar_bm(c, par:par; batchlen=batchlen)
 
-# Monte Carlo standard error using batch means
+### Monte Carlo standard error using batch means
+
 mcse_bm(x::Vector{Float64}; batchlen::Int=100) = sqrt(mcvar_bm(x; batchlen=batchlen))
 
 mcse_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) = 
@@ -56,8 +59,9 @@ mcse_bm(c::MCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
 
 mcse_bm(c::MCChain, par::Real; batchlen::Int=100) = mcse_bm(c, par:par; batchlen=batchlen)
 
-# Function for estimating the variance of a single MCMC chain using the initial monotone sequence estimator (IMSE), see
-# Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
+### Function for estimating the variance of a single MC chain using the initial monotone sequence estimator (IMSE), see
+### Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
+
 function mcvar_imse(x::Vector{Float64}; maxlag::Int=length(x)-1)
   k = convert(Int, floor((maxlag-1)/2))
   m = k+1
@@ -100,7 +104,8 @@ mcvar_imse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.sam
 
 mcvar_imse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_imse(c, par:par; maxlag=maxlag)
 
-# Standard deviation using Geyer's IMSE
+### Monte Carlo standard error using Geyer's IMSE
+
 mcse_imse(x::Vector{Float64}; maxlag::Int=length(x)-1) = sqrt(mcvar_imse(x; maxlag=maxlag))
 
 mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
@@ -111,8 +116,9 @@ mcse_imse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samp
 
 mcse_imse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_imse(c, par:par; maxlag=maxlag)
 
-# Function for estimating the variance of a single MCMC chain using the initial positive sequence estimator (IPSE), see
-# Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
+### Function for estimating the variance of a single MC chain using the initial positive sequence estimator (IPSE), see
+### Geyer C.J. Practical Markov Chain Monte Carlo. Statistical Science, 1992, 7 (4), pp 473-483
+
 function mcvar_ipse(x::Vector{Float64}; maxlag::Int=length(x)-1)
   k = convert(Int, floor((maxlag-1)/2))
   
@@ -146,7 +152,8 @@ mcvar_ipse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.sam
 
 mcvar_ipse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_ipse(c, par:par; maxlag=maxlag)
 
-# Standard deviation using Geyer's IMSE
+### Monte Carlo standard error using Geyer's IMSE
+
 mcse_ipse(x::Vector{Float64}; maxlag::Int=size(c.samples, 1)-1) = sqrt(mcvar_ipse(x; maxlag=maxlag))
 
 mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
@@ -157,7 +164,8 @@ mcse_ipse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samp
 
 mcse_ipse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_ipse(c, par:par; maxlag=maxlag)
 
-# Wrapper function for computing MCMC variance using various approaches
+### Wrapper function for computing MC variance using various approaches
+
 vtypes = (:bm, :iid, :imse, :ipse)
 
 function mcvar(x::Vector{Float64}; vtype::Symbol=:imse, args...)
@@ -184,7 +192,8 @@ mcvar(c::MCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args..
 
 mcvar(c::MCChain, par::Real; vtype::Symbol=:imse, args...) = mcvar(c, par:par; vtype=vtype, args...)
 
-# Wrapper function for computing Monte Carlo (standard) error using various approaches
+### Wrapper function for computing Monte Carlo (standard) error using various approaches
+
 function mcse(x::Vector{Float64}; vtype::Symbol=:imse, args...)
   @assert in(vtype, vtypes) "Unknown stdiance type $vtype"
 
