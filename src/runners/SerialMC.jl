@@ -37,11 +37,11 @@ function run(model::MCModel, sampler::MCSampler, runner::SerialMC, tuner::MCTune
   for j in 1:runner.nsteps
     mcstate = job.receive()
     if in(j, runner.r)
-      mcchain.samples[:, i] = mcstate.successive.sample
+      mcchain.samples[i, :] = mcstate.successive.sample
       mcchain.logtargets[i] = mcstate.successive.logtarget
 
       if runner.storegradlogtarget
-        mcchain.gradlogtargets[:, i] = mcstate.successive.gradlogtarget
+        mcchain.gradlogtargets[i, :] = mcstate.successive.gradlogtarget
       end
 
       # Save diagnostics

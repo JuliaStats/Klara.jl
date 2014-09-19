@@ -30,9 +30,9 @@ MCChain() = MCChain(Array(Float64, 0, 0), Float64[], Array(Float64, 0, 0), Dict(
 function MCChain(npars::Int, nsamples::Int;
   storegradlogtarget::Bool=false, diagnostics::Dict=Dict(), runtime::Float64=NaN)
   if storegradlogtarget
-    MCChain(fill(NaN, npars, nsamples), fill(NaN, nsamples), fill(NaN, npars, nsamples), diagnostics, runtime)
+    MCChain(fill(NaN, nsamples, npars), fill(NaN, nsamples), fill(NaN, nsamples, npars), diagnostics, runtime)
   else
-    MCChain(fill(NaN, npars, nsamples), fill(NaN, nsamples), Array(Float64, 0, 0), diagnostics, runtime)
+    MCChain(fill(NaN, nsamples, npars), fill(NaN, nsamples), Array(Float64, 0, 0), diagnostics, runtime)
   end
 end
 
