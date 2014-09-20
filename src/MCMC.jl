@@ -37,6 +37,8 @@ export
   MCChain,
   HMC,
   SerialMC,
+  VanillaMCTuner,
+  EmpiricalMCTuner,
   PlainMCJob,
   TaskMCJob,
   ### functions
@@ -80,8 +82,8 @@ include("samplers/HMC.jl")
 include("runners/SerialMC.jl")
 # include("runners/SerialTempMC.jl")
 # include("runners/SeqMC.jl")
-# include("tuners/VanillaMCTuner.jl")
-# include("tuners/EmpiricalMCTuner.jl")
+include("tuners/VanillaMCTuner.jl")
+include("tuners/EmpiricalMCTuner.jl")
 include("jobs/PlainMCJob.jl")
 include("jobs/TaskMCJob.jl")
 include("stats/filtering.jl")

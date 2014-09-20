@@ -58,8 +58,6 @@ abstract MCStash{S<:MCSample}
 
 ### Monte Carlo Jobs (ex plain job, job using tasks and MPI jobs)
 
-abstract MCTask
-
 abstract MCJob
 
 ### Monte Carlo system gathers all the components that define a Monte Carlo simulation
