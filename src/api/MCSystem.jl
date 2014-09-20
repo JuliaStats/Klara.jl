@@ -1,3 +1,6 @@
+typealias FunctionOrNothing Union(Function, Nothing)
+typealias F64OrVectorF64 Union(Float64, Vector{Float64})
+
 abstract MCModel
 
 ### Sampler types hold the components that fully specify a Monte Carlo sampler
@@ -10,7 +13,7 @@ abstract HMCSampler <: MCSampler # Family of Hamiltonian Monte Carlo samplers
 abstract LMCSampler <: MCSampler # Family of Langevin Monte Carlo samplers
 
 ### Runner types indicate what type of simulation will be run (ex serial or sequential Monte Carlo)
-### Their fields fully specify the simulatin details (ex total number or number of burn-in iterations)
+### Their fields fully specify the simulation details (ex total number or number of burn-in iterations)
 
 abstract ParallelismLevel
 type Serial <: ParallelismLevel end
@@ -55,12 +58,13 @@ MCState{S<:MCSample}(p::S, c::S) = MCState(p, c, Dict())
 
 abstract MCStash{S<:MCSample}
 
-### Monte Carlo Jobs (ex plain job, job using tasks and MPI jobs)
+### Monte Carlo Jobs (ex plain jobs, jobs using tasks or MPI jobs)
 
 abstract MCJob
 
-### Monte Carlo system gathers all the components that define a Monte Carlo simulation
-### It is in a sense as a complete specififcation of a Monte Carlo simulation based on user input
+### MCSystem gathers all the components that define a Monte Carlo simulation
+### It is in a sense as a complete specification of a Monte Carlo simulation based on user input
+### At the same time, MCSystem stores vital internal components (ex MCSystem.job.task for task-based jobs)
 ### The user mainly interacts with the MCSystem type at a higher level via the package's interface
 ### Users familiar with the package can also interact with the MCSystem type directly
 

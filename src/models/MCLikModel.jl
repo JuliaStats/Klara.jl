@@ -9,9 +9,6 @@
 #
 #################################################################
 
-typealias FunctionOrNothing Union(Function, Nothing)
-typealias F64OrVectorF64 Union(Float64, Vector{Float64})
-
 # The likelihood Model type
 type MCLikelihoodModel <: MCModel
 	eval::Function              # log-likelihood evaluation function
