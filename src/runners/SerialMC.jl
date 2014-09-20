@@ -25,7 +25,8 @@ SerialMCBaseRunner(; burnin::Int=0, thinning::Int=1, nsteps::Int=100, storegradl
 
 typealias SerialMC SerialMCBaseRunner
 
-function run(model::MCModel, sampler::MCSampler, runner::SerialMC, tuner::MCTuner, job::MCJob=PlainMCJob())
+function run(model::MCModel, sampler::MCSampler, runner::SerialMC, tuner::MCTuner,
+  job::MCJob=PlainMCJob(model, sampler, runner, tuner))
   tic()
 
   # Pre-allocation for storing results

@@ -33,7 +33,7 @@ end
 HMCSample(s::Vector{Float64}) = HMCSample(s, NaN, Float64[], Float64[], NaN)
 HMCSample() = HMCSample(Float64[], NaN, Float64[], Float64[], NaN)
 
-HMCSample(l::Int) = HMCSample(Array(Float64, l), NaN, Array(Float64, l), Array(Float64, l), NaN)
+HMCSample(l::Int) = HMCSample(fill(NaN, l), NaN, fill(NaN, l), fill(NaN, l), NaN)
 
 hamiltonian!(s::HMCSample) = (s.hamiltonian = -s.logtarget+0.5*dot(s.momentum, s.momentum))
 
@@ -50,8 +50,8 @@ end
 ### HMCBaseStash type holds the internal state ("local variables") of the HMC sampler
 
 type HMCStash <: MCStash{HMCSample}
-  instate::HMCSample # Monte Carlo state used internally by the sampler
-  outstate::HMCSample # Monte Carlo state outputted by the sampler
+  instate::MCState{HMCSample} # Monte Carlo state used internally by the sampler
+  outstate::MCState{HMCSample} # Monte Carlo state outputted by the sampler
   tune::MCTune
   count::Int # Current number of iterations
   nleaps::Int # Number of leapfrog steps for the current Monte Carlo iteration (possibly tuned)
@@ -60,7 +60,8 @@ end
 
 HMCStash() = HMCStash(HMCSample(), HMCSample(), VanillaMCTune(), 0, 0, NaN)
 
-HMCStash(l::Int) = HMCStash(HMCSample(l), HMCSample(l), VanillaMCTune(), 0, 0, NaN)
+HMCStash(l::Int) =
+  HMCStash(MCState(HMCSample(l), HMCSample(l)), MCState(HMCSample(l), HMCSample(l)), VanillaMCTune(), 0, 0, NaN)
 
 ### Initialize HMC sampler
 
@@ -118,7 +119,7 @@ function iterate!(stash::HMCStash, model::MCModel, sampler::HMC, runner::MCRunne
   end
 
   if rand() < exp(stash.instate.current.hamiltonian-stash.instate.successive.hamiltonian)
-    stash.outstate = MCState{HMCSample}(stash.instate.successive, stash.instate.current, {"accept" => true})
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if isa(tuner, VanillaMCTuner) && tuner.verbose
@@ -127,19 +128,19 @@ function iterate!(stash::HMCStash, model::MCModel, sampler::HMC, runner::MCRunne
       stash.tune.accepted += 1     
     end
   else
-    stash.outstate = MCState{HMCSample}(stash.instate.current, stash.instate.current, {"accept" => false})
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
   end
 
   if isa(tuner, VanillaMCTuner) && tuner.verbose && stash.count <= runner.burnin && mod(stash.count, tuner.period) == 0
     rate!(stash.tune)
-    @sprintf("Burnin iteration %7d of %7d: %6.2f %% acceptance rate",
-      stash.count, runner.burnin, round(100*stash.tune.rate, 2))
+    println("Burnin iteration $(stash.count) of $(runner.burnin): ", round(100*stash.tune.rate, 2),
+      " % acceptance rate")
   elseif isa(tuner, EmpiricalMCTuner) && stash.count <= runner.burnin && mod(stash.count, tuner.period) == 0
     adapt!(stash.tune, tuner)
     reset!(stash.tune)
     if tuner.verbose
-      @sprintf("Burnin iteration %7d of %7d: %6.2f %% acceptance rate",
-        stash.count, runner.burnin, round(100*stash.tune.rate, 2))
+      println("Burnin iteration $(stash.count) of $(runner.burnin): ", round(100*stash.tune.rate, 2),
+        " % acceptance rate")
     end
   end
 

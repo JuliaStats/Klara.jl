@@ -7,5 +7,7 @@ end
 
 PlainMCJob() = PlainMCJob(identity, ()->())
 
-PlainMCJob(model::MCModel, sampler::HMCSampler, runner::SerialMC, tuner::MCTuner) =
-  PlainMCJob(identity, ()->iterate!(initialize(model, sampler, runner, tuner), model, sampler, runner, tuner, identity))
+function PlainMCJob(model::MCModel, sampler::HMCSampler, runner::SerialMC, tuner::MCTuner)
+  stash::HMCStash = initialize(model, sampler, runner, tuner)
+  PlainMCJob(identity, ()->iterate!(stash, model, sampler, runner, tuner, identity))
+end
