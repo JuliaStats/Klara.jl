@@ -91,6 +91,6 @@ include("stats/var.jl")
 include("stats/ess.jl")
 include("stats/summary.jl")
 include("stats/zv.jl")
-include("api/ui.jl") # This is a high level user interface
+include("ui.jl") # This is a high level user interface
 
 end
