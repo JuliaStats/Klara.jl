@@ -30,5 +30,14 @@ run(system::MCSystem) = run(system.model, system.sampler, system.runner, system.
 
 function HMC(f::Function, g::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, nleaps::Int=10, leapstep::Float64=0.1, thinning::Int=1)
-  run(model(f, grad=g, init=init), HMC(nleaps, leapstep), SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps))
+  mcmodel::MCLikModel = model(f, grad=g, init=init)
+  mcsampler::HMC = HMC(nleaps, leapstep)
+  mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
+  mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
+
+  for i = 1:nchains
+    mcsamples[:, :, i] = run(mcmodel, mcsampler, mcrunner).samples
+  end
+
+  mcsamples
 end
