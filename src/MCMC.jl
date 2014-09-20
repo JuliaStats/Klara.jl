@@ -57,7 +57,6 @@ export
 
 include("api/MCSystem.jl") # In an abstract sense, MCSystem consists of the user input
 include("api/MCChain.jl") # MCChain holds the output of a Monte Carlo simulation
-# include("api"/ui.jl) # This is a high level user interface consisting mostly of wrappers around MCSystem
 include("parsers/expr_funcs.jl")
 include("parsers/modelparser.jl")
 include("parsers/definitions/DistributionsExtensions.jl")
@@ -92,5 +91,6 @@ include("stats/var.jl")
 include("stats/ess.jl")
 include("stats/summary.jl")
 include("stats/zv.jl")
+include("api/ui.jl") # This is a high level user interface
 
 end
