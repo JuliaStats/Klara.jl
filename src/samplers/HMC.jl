@@ -1,24 +1,22 @@
-### The HMCBaseSampler holds the fields that fully define a HMC sampler
+### HMC holds the fields that fully define a HMC sampler
 ### These fields represent the initial user-defined state of the sampler
 ### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
 
-immutable HMCBaseSampler <: HMCSampler
+immutable HMC <: HMCSampler
   nleaps::Int # Number of leapfrog steps
   leapstep::Float64 # Leapfrog stepsize
 
-  function HMCBaseSampler(nl::Int, l::Float64)
+  function HMC(nl::Int, l::Float64)
     @assert nl > 0 "Number of leapfrog steps is not positive."
     @assert l > 0 "Leapfrog stepsize is not positive."
     new(nl, l)
   end
 end
 
-HMCBaseSampler(nl::Int) = HMCBaseSampler(nl, 0.1)
-HMCBaseSampler(l::Float64) = HMCBaseSampler(10, l)
+HMC(nl::Int) = HMC(nl, 0.1)
+HMC(l::Float64) = HMC(10, l)
 
-HMCBaseSampler(; nleaps::Int=10, leapstep::Float64=0.1) = HMCBaseSampler(nleaps, leapstep)
-
-typealias HMC HMCBaseSampler
+HMC(; nleaps::Int=10, leapstep::Float64=0.1) = HMC(nleaps, leapstep)
 
 ### Sample type for HMC
 
@@ -47,9 +45,9 @@ function leapfrog(s::HMCSample, f::Function, leapstep::Float64)
   lsample
 end
 
-### HMCBaseStash type holds the internal state ("local variables") of the HMC sampler
+### HMCStash type holds the internal state ("local variables") of the HMC sampler
 
-type HMCStash <: MCStash{HMC, HMCSample}
+type HMCStash <: MCStash{HMCSample}
   instate::MCState{HMCSample} # Monte Carlo state used internally by the sampler
   outstate::MCState{HMCSample} # Monte Carlo state outputted by the sampler
   tune::MCTune
@@ -58,25 +56,25 @@ type HMCStash <: MCStash{HMC, HMCSample}
   leapstep::Float64 # Leapfrog stepsize for the current Monte Carlo iteration (possibly tuned)
 end
 
-HMCStash() = HMCStash(HMCSample(), HMCSample(), VanillaMCTune(), 0, 0, NaN)
+HMCStash() = HMCStash(MCState(HMCSample(), HMCSample()), MCState(HMCSample(), HMCSample()), VanillaMCTune(), 0, 0, NaN)
 
-HMCStash(l::Int) =
-  HMCStash(MCState(HMCSample(l), HMCSample(l)), MCState(HMCSample(l), HMCSample(l)), VanillaMCTune(), 0, 0, NaN)
+HMCStash(l::Int, t::MCTune=VanillaMCTune()) =
+  HMCStash(MCState(HMCSample(l), HMCSample(l)), MCState(HMCSample(l), HMCSample(l)), t, 0, 0, NaN)
 
 ### Initialize HMC sampler
 
-function initialize(model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTuner)
-  @assert hasgradient(model) "HMC sampler requires model with gradient function."
-  stash::HMCStash = HMCStash(model.size)
+function initialize(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
+  @assert hasgradient(m) "HMC sampler requires model with gradient function."
+  stash::HMCStash = HMCStash(m.size)
 
-  stash.instate.current = HMCSample(copy(model.init))
-  gradlogtargetall!(stash.instate.current, model.evalallg)
+  stash.instate.current = HMCSample(copy(m.init))
+  gradlogtargetall!(stash.instate.current, m.evalallg)
   @assert isfinite(stash.instate.current.logtarget) "Initial values out of model support."
 
-  if isa(tuner, VanillaMCTuner)
+  if isa(t, VanillaMCTuner)
     stash.tune = VanillaMCTune()
-  elseif isa(tuner, EmpiricalMCTuner)
-    stash.tune = EmpiricalHMCTune(sampler.leapstep, sampler.nleaps)
+  elseif isa(t, EmpiricalMCTuner)
+    stash.tune = EmpiricalHMCTune(s.leapstep, s.nleaps)
   end
 
   stash.count = 1
@@ -84,63 +82,61 @@ function initialize(model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTun
   stash
 end
 
-function initialize_task(model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTuner)
-  stash::HMCStash = initialize(model, sampler, runner, tuner)
+function initialize_task(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
+  stash::HMCStash = initialize(m, s, r, t)
 
   # Hook inside Task to allow remote resetting
   task_local_storage(:reset,
     (x::Vector{Float64}) ->
-    (stash.instate.current = HMCSample(copy(x)); gradlogtargetall!(stash.instate.current, model.evalallg))) 
+    (stash.instate.current = HMCSample(copy(x)); gradlogtargetall!(stash.instate.current, m.evalallg))) 
 
   while true
-    iterate!(stash, model, sampler, runner, tuner, produce)
+    iterate!(stash, m, s, r, t, produce)
   end
 end
 
 ### Perform iteration for HMC sampler
 
-function iterate!(stash::HMCStash, model::MCModel, sampler::HMC, runner::MCRunner, tuner::MCTuner, send::Function)
-  if isa(tuner, VanillaMCTuner)
-    stash.nleaps, stash.leapstep = sampler.nleaps, sampler.leapstep
-    if tuner.verbose
+function iterate!(stash::HMCStash, m::MCModel, s::HMC, r::MCRunner, t::MCTuner, send::Function)
+  if isa(t, VanillaMCTuner)
+    stash.nleaps, stash.leapstep = s.nleaps, s.leapstep
+    if t.verbose
       stash.tune.proposed += 1
     end
-  elseif isa(tuner, EmpiricalMCTuner)
+  elseif isa(t, EmpiricalMCTuner)
     stash.nleaps, stash.leapstep = stash.tune.nsteps, stash.tune.step
     stash.tune.proposed += 1
   end
 
-  stash.instate.current.momentum = randn(model.size)
+  stash.instate.current.momentum = randn(m.size)
   hamiltonian!(stash.instate.current)
   stash.instate.successive = deepcopy(stash.instate.current)
 
   for j = 1:stash.nleaps
-    stash.instate.successive = leapfrog(stash.instate.successive, model.evalallg, stash.leapstep)
+    stash.instate.successive = leapfrog(stash.instate.successive, m.evalallg, stash.leapstep)
   end
 
   if rand() < exp(stash.instate.current.hamiltonian-stash.instate.successive.hamiltonian)
     stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
 
-    if isa(tuner, VanillaMCTuner) && tuner.verbose
+    if isa(t, VanillaMCTuner) && t.verbose
       stash.tune.accepted += 1 
-    elseif isa(tuner, EmpiricalMCTuner)
+    elseif isa(t, EmpiricalMCTuner)
       stash.tune.accepted += 1     
     end
   else
     stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
   end
 
-  if isa(tuner, VanillaMCTuner) && tuner.verbose && stash.count <= runner.burnin && mod(stash.count, tuner.period) == 0
+  if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
     rate!(stash.tune)
-    println("Burnin iteration $(stash.count) of $(runner.burnin): ", round(100*stash.tune.rate, 2),
-      " % acceptance rate")
-  elseif isa(tuner, EmpiricalMCTuner) && stash.count <= runner.burnin && mod(stash.count, tuner.period) == 0
-    adapt!(stash.tune, tuner)
+    println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+  elseif isa(t, EmpiricalMCTuner) && stash.count <= r.burnin && mod(stash.count, t.period) == 0
+    adapt!(stash.tune, t)
     reset!(stash.tune)
-    if tuner.verbose
-      println("Burnin iteration $(stash.count) of $(runner.burnin): ", round(100*stash.tune.rate, 2),
-        " % acceptance rate")
+    if t.verbose
+      println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
     end
   end
 

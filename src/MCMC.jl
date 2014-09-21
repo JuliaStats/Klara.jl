@@ -37,8 +37,6 @@ export
   MCChain,
   HMC,
   MALA,
-  SMMALA,
-  PMALA,
   SerialMC,
   VanillaMCTuner,
   EmpiricalMCTuner,

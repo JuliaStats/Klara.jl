@@ -6,10 +6,10 @@ type TaskMCJob <: MCJob
   task::Task
 end
 
-TaskMCJob(task::Task) = TaskMCJob(produce, ()->consume(task), task)
+TaskMCJob(t::Task) = TaskMCJob(produce, ()->consume(t), t)
 TaskMCJob() = TaskMCJob(produce, ()->(), Task(()->()))
 
-function TaskMCJob(model::MCModel, sampler::HMCSampler, runner::SerialMC, tuner::MCTuner)
-  task::Task = Task(()->initialize_task(model, sampler, runner, tuner))
-  TaskMCJob(produce, ()->consume(task), task)
+function TaskMCJob(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner)
+  mctask::Task = Task(()->initialize_task(m, s, r, t))
+  TaskMCJob(produce, ()->consume(mctask), mctask)
 end

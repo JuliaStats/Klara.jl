@@ -1,4 +1,4 @@
-### Serial "ordinary" Monte Carlo runner
+### Serial "ordinary" Monte Carlo r
 
 immutable SerialMCBaseRunner <: SerialMCRunner
   burnin::Int
@@ -25,22 +25,22 @@ SerialMCBaseRunner(; burnin::Int=0, thinning::Int=1, nsteps::Int=100, storegradl
 
 typealias SerialMC SerialMCBaseRunner
 
-function run(model::MCModel, sampler::MCSampler, runner::SerialMC, tuner::MCTuner, job::MCJob)
+function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner, job::MCJob)
   tic()
 
   # Pre-allocation for storing results
-  mcchain::MCChain = MCChain(model.size, length(runner.r); storegradlogtarget=runner.storegradlogtarget)
-  ds = {"step" => collect(runner.r)}
+  mcchain::MCChain = MCChain(m.size, length(r.r); storegradlogtarget=r.storegradlogtarget)
+  ds = {"step" => collect(r.r)}
 
   # Sampling loop
   i::Int = 1
-  for j in 1:runner.nsteps
+  for j in 1:r.nsteps
     mcstate = job.receive()
-    if in(j, runner.r)
+    if in(j, r.r)
       mcchain.samples[i, :] = mcstate.successive.sample
       mcchain.logtargets[i] = mcstate.successive.logtarget
 
-      if runner.storegradlogtarget
+      if r.storegradlogtarget
         mcchain.gradlogtargets[i, :] = mcstate.successive.gradlogtarget
       end
 
