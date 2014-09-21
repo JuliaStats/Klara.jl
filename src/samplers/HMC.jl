@@ -49,7 +49,7 @@ end
 
 ### HMCBaseStash type holds the internal state ("local variables") of the HMC sampler
 
-type HMCStash <: MCStash{HMCSample}
+type HMCStash <: MCStash{HMC, HMCSample}
   instate::MCState{HMCSample} # Monte Carlo state used internally by the sampler
   outstate::MCState{HMCSample} # Monte Carlo state outputted by the sampler
   tune::MCTune

@@ -36,6 +36,9 @@ export
   MCSystem,
   MCChain,
   HMC,
+  MALA,
+  SMMALA,
+  PMALA,
   SerialMC,
   VanillaMCTuner,
   EmpiricalMCTuner,
@@ -65,7 +68,6 @@ include("parsers/definitions/MCMCDerivRules.jl")
 include("parsers/expr_funcs.jl")
 include("models/MCLikModel.jl")
 include("models/models.jl")
-include("samplers/samples.jl")
 # include("samplers/ARS.jl")
 # include("samplers/SliceSampler.jl")
 # include("samplers/MH.jl")
@@ -74,7 +76,7 @@ include("samplers/samples.jl")
 include("samplers/HMC.jl")
 # include("samplers/HMCDA.jl")
 # include("samplers/NUTS.jl")
-# include("samplers/MALA.jl")
+include("samplers/MALA.jl")
 # include("samplers/SMMALA.jl")
 # include("samplers/RMHMC.jl")
 # include("samplers/PMALA.jl")
