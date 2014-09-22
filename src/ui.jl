@@ -27,6 +27,28 @@ run(s::MCSystem) = run(s.model, s.sampler, s.runner, s.tuner, s.job)
 ### ii) It provides a shorter syntax by creating the unerlying model, sampler and runner types under the hook
 ### iii) It fits better the mindset of some users
 
+function MH(f::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
+  nchains::Int=1,
+  thinning::Int=1,
+  logproposal::FunctionOrNothing=nothing,
+  randproposal::FunctionOrNothing=(x::Vector{Float64} -> rand(IsoNormal(x, 1.))))
+  mcmodel::MCLikModel = model(f, init=init)
+  mcsampler::MH
+  if logproposal==nothing
+    mcsampler = MH(randproposal)
+  else
+    mcsampler = MH(logproposal, randproposal)
+  end
+  mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
+  mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
+
+  for i = 1:nchains
+    mcsamples[:, :, i] = run(mcmodel, mcsampler, mcrunner).samples
+  end
+
+  mcsamples
+end
+
 function HMC(f::Function, g::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, thinning::Int=1, nleaps::Int=10, leapstep::Float64=0.1)
   mcmodel::MCLikModel = model(f, grad=g, init=init)

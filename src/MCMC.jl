@@ -35,6 +35,7 @@ export
   MCLikModel,
   MCSystem,
   MCChain,
+  MH,
   HMC,
   MALA,
   SerialMC,
@@ -68,7 +69,7 @@ include("models/MCLikModel.jl")
 include("models/models.jl")
 # include("samplers/ARS.jl")
 # include("samplers/SliceSampler.jl")
-# include("samplers/MH.jl")
+include("samplers/MH.jl")
 # include("samplers/RAM.jl")
 # include("samplers/IMH.jl")
 include("samplers/HMC.jl")

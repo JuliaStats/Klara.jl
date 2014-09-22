@@ -1,19 +1,17 @@
-### The MALASampler holds the fields that fully define a MALA sampler
+### MALA holds the fields that fully define a MALA sampler
 ### These fields represent the initial user-defined state of the sampler
 ### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
 
-immutable MALASampler <: LMCSampler
+immutable MALA <: LMCSampler
   driftstep::Float64
 
-  function MALASampler(ds::Float64)
+  function MALA(ds::Float64)
     @assert ds > 0 "Drift step is not positive."
     new(ds)
   end
 end
 
-MALASampler(; driftstep::Float64=1.) = MALASampler(driftstep)
-
-typealias MALA MALASampler
+MALA(; driftstep::Float64=1.) = MALA(driftstep)
 
 ### MALAStash type holds the internal state ("local variables") of the MALA sampler
 
@@ -29,8 +27,9 @@ type MALAStash <: MCStash{MCGradSample}
   poldgivennew::Float64
 end
 
-MALAStash() = MALAStash(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()),
-  VanillaMCTune(), 0, NaN, Float64[], NaN, NaN, NaN)
+MALAStash() =
+  MALAStash(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()), VanillaMCTune(), 0, NaN,
+  Float64[], NaN, NaN, NaN)
 
 MALAStash(l::Int, t::MCTune=VanillaMCTune()) =
   MALAStash(MCState(MCGradSample(l), MCGradSample(l)), MCState(MCGradSample(l), MCGradSample(l)), t, 0, NaN,
