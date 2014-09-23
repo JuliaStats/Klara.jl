@@ -48,7 +48,7 @@ function initialize(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   if isa(t, VanillaMCTuner)
     stash.tune = VanillaMCTune()
   elseif isa(t, EmpiricalMCTuner)
-    stash.tune = EmpiricalHMCTune(s.leapstep, s.nleaps)
+    stash.tune = EmpiricalMCTune(s.driftstep)
   end
 
   stash.count = 1
@@ -62,7 +62,7 @@ function initialize_task(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
   task_local_storage(:reset,
     (x::Vector{Float64}) ->
-    (stash.instate.current = HMCSample(copy(x)); gradlogtargetall!(stash.instate.current, m.evalallg))) 
+    (stash.instate.current = MCGradSample(copy(x)); gradlogtargetall!(stash.instate.current, m.evalallg))) 
 
   while true
     iterate!(stash, m, s, r, t, produce)

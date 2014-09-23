@@ -38,6 +38,7 @@ export
   MH,
   HMC,
   MALA,
+  SMMALA,
   SerialMC,
   VanillaMCTuner,
   EmpiricalMCTuner,
@@ -76,7 +77,7 @@ include("samplers/HMC.jl")
 # include("samplers/HMCDA.jl")
 # include("samplers/NUTS.jl")
 include("samplers/MALA.jl")
-# include("samplers/SMMALA.jl")
+include("samplers/SMMALA.jl")
 # include("samplers/RMHMC.jl")
 # include("samplers/PMALA.jl")
 include("runners/SerialMC.jl")

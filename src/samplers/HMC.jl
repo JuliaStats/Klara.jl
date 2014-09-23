@@ -74,7 +74,7 @@ function initialize(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
   if isa(t, VanillaMCTuner)
     stash.tune = VanillaMCTune()
   elseif isa(t, EmpiricalMCTuner)
-    stash.tune = EmpiricalHMCTune(s.leapstep, s.nleaps)
+    stash.tune = EmpiricalMCTune(s.leapstep, s.nleaps)
   end
 
   stash.count = 1

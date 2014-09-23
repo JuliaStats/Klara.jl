@@ -4,7 +4,7 @@ immutable EmpiricalMCTuner <: MCTuner
   targetrate::Float64 # Target acceptance rate
   period::Int # Adaptation period, which determines when to attempt tuning
   adaptnsteps::Bool # Determine whether to adapt the number of steps along with stepsize
-  maxnsteps::Int # Maximum number of steps allowed (for ex maximum number of leapfrog or drift steps)
+  maxnsteps::Int # Maximum number of steps allowed (for ex maximum number of leapfrog steps)
   targetlen::Float64 # Target length (this can be thought of as adaptation step size times number of steps)
   verbose::Bool # Specify whether the tuner will be in verbose or silent mode
 
@@ -12,7 +12,9 @@ immutable EmpiricalMCTuner <: MCTuner
     verbose::Bool)
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1."
     @assert period > 0 "Adaptation period should be positive."
-    @assert adaptnsteps == true && maxnsteps > 0 "Maximum number of steps should be positive."
+    if adaptnsteps
+      @assert maxnsteps > 0 "Maximum number of steps should be positive."
+    end
     new(targetrate, period, maxnsteps, targetlen, verbose)
   end
 end
@@ -25,7 +27,7 @@ EmpiricalMCTuner(targetrate::Float64; period::Int=100, adaptnsteps::Bool=true, m
 
 type EmpiricalMCTune <: MCTune
   step::Float64 # Stepsize of current Monte Carlo iteration (for ex leapfrog or drift stepsize)
-  nsteps::Int # Number of steps of current Monte Carlo iteration (for ex number of leapfrog or drift steps)
+  nsteps::Int # Number of steps of current Monte Carlo iteration (for ex number of leapfrog steps)
   accepted::Int # Number of accepted Monte Carlo samples within current tuner period
   proposed::Int # Number of proposed Monte Carlo samples within current tuner period
   rate::Float64 # Acceptance rate over current tuner period
@@ -42,6 +44,7 @@ end
 EmpiricalMCTune(step::Float64, nsteps::Int, accepted::Int, proposed::Int) =
   EmpiricalMCTune(step::Float64, nsteps::Int, accepted::Int, proposed::Int, NaN)
 EmpiricalMCTune(step::Float64, nsteps::Int) = EmpiricalMCTune(step::Float64, nsteps::Int, 0, 0, NaN)
+EmpiricalMCTune(step::Float64) = EmpiricalMCTune(step::Float64, 10, 0, 0, NaN)
 
 reset!(tune::EmpiricalMCTune) = ((tune.accepted, tune.proposed) = (0, 0))
 
@@ -50,7 +53,7 @@ count!(tune::EmpiricalMCTune) = (tune.accepted += 1)
 function adapt!(tune::EmpiricalMCTune, tuner::EmpiricalMCTuner)
   tune.rate = tune.accepted/tune.proposed
   tune.step *= (1/(1+exp(-11*(tune.rate-tuner.targetrate)))+0.5)
-  if adaptnsteps
+  if tuner.adaptnsteps
     tune.nsteps = min(tuner.maxnsteps, ceil(tuner.targetlen/tune.step))
   end
 end
