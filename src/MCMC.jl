@@ -35,6 +35,7 @@ export
   MCLikModel,
   MCSystem,
   MCChain,
+  SliceSampler,
   MH,
   HMC,
   MALA,
@@ -69,7 +70,7 @@ include("parsers/expr_funcs.jl")
 include("models/MCLikModel.jl")
 include("models/models.jl")
 # include("samplers/ARS.jl")
-# include("samplers/SliceSampler.jl")
+include("samplers/SliceSampler.jl")
 include("samplers/MH.jl")
 # include("samplers/RAM.jl")
 # include("samplers/IMH.jl")
