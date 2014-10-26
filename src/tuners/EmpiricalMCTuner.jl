@@ -12,10 +12,9 @@ immutable EmpiricalMCTuner <: MCTuner
     verbose::Bool)
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1."
     @assert period > 0 "Adaptation period should be positive."
-    if adaptnsteps
-      @assert maxnsteps > 0 "Maximum number of steps should be positive."
-    end
-    new(targetrate, period, maxnsteps, targetlen, verbose)
+    @assert maxnsteps > 0 "Maximum number of steps should be positive."
+    @assert targetlen > 0 "Target length should be positive."
+    new(targetrate, period, adaptnsteps, maxnsteps, targetlen, verbose)
   end
 end
 

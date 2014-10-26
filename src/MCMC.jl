@@ -4,7 +4,6 @@ using Base.LinAlg.BLAS
 using Distributions
 using ReverseDiffSource
 
-# import Base.*
 import Base:
   show,
   run,
