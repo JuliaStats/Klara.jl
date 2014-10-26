@@ -2,6 +2,7 @@ module MCMC
 
 using Base.LinAlg.BLAS
 using Distributions
+using StatsBase
 using ReverseDiffSource
 
 import Base:

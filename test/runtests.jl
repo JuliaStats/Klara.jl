@@ -1,9 +1,4 @@
-my_tests = ["test_hmc.jl",
-            "test_empmctuner.jl",
-            "test_syntax.jl",
-            "parsers/test_diff.jl",
-            "parsers/unit_tests.jl",
-            "test_dists.jl",
+my_tests = ["test_empmctuner.jl",
             "test_ARS1.jl",
             "test_ARS2.jl"]
 
