@@ -29,7 +29,7 @@ type SMMALAStash <: MCStash{MCTensorSample}
   successive_invtensor::Matrix{Float64}
   current_termone::Vector{Float64}
   successive_termone::Vector{Float64}
-  cholinvtensor::Triangular
+  cholinvtensor
 end
 
 SMMALAStash() =

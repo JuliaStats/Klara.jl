@@ -15,7 +15,7 @@ mcmodel = model(v->-dot(v,v), grad=v->-2v, tensor=v->-2*ones(npars), dtensor=v->
   init=ones(npars))
 
 for mctuner in mctuners
-  mcsamplers = [HMC(0.75), MALA(0.75)]#, SMMALA(0.75)]
+  mcsamplers = [HMC(0.75), MALA(0.75)]
 
   for mcsampler in mcsamplers
     mcchain = run(mcmodel, mcsampler, SerialMC(nsteps=5000, burnin=1000), mctuner)
