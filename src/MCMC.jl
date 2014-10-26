@@ -38,6 +38,7 @@ export
   ARS,
   SliceSampler,
   MH,
+  RAM,
   HMC,
   MALA,
   SMMALA,
@@ -73,7 +74,7 @@ include("models/models.jl")
 include("samplers/ARS.jl")
 include("samplers/SliceSampler.jl")
 include("samplers/MH.jl")
-# include("samplers/RAM.jl")
+include("samplers/RAM.jl")
 # include("samplers/IMH.jl")
 include("samplers/HMC.jl")
 # include("samplers/HMCDA.jl")

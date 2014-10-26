@@ -7,7 +7,7 @@ immutable ARS <: MCSampler
 
   function ARS(l::Function, ps::Float64, js::Float64)
     @assert typeof(l) == Function "logproposal should be a function."
-    @assert js > 0 "jumpscale is not positive."
+    @assert js > 0 "Scale factor for adapting the jump size is not positive."
     new(l, ps, js)
   end
 end
@@ -80,7 +80,6 @@ function iterate!(stash::ARSStash, m::MCModel, s::ARS, r::MCRunner, t::MCTuner, 
   stash.logproposal = s.logproposal(stash.instate.successive.sample)
 
   stash.weight = stash.instate.successive.logtarget.-s.proposalscale.-stash.logproposal
-
   if stash.weight > log(rand())
     stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
