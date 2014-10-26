@@ -21,6 +21,8 @@ end
 
 run(s::MCSystem) = run(s.model, s.sampler, s.runner, s.tuner, s.job)
 
+run(s::Vector{MCSystem}) = map(run, s)
+
 ### A third form of interface is via the function wrappers provided below
 ### This third interface fulfills the following purposes:
 ### i) It acts as a simplified interface to facilitate interaction with other packages

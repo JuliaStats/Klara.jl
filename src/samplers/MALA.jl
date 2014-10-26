@@ -1,4 +1,4 @@
-### MALA holds the fields that fully define a MALA sampler
+### MALA holds the fields of the MALA sampler
 ### These fields represent the initial user-defined state of the sampler
 ### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
 

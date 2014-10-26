@@ -1,4 +1,4 @@
-### HMC holds the fields that fully define a HMC sampler
+### HMC holds the fields of the HMC sampler
 ### These fields represent the initial user-defined state of the sampler
 ### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
 

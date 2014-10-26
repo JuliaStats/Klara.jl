@@ -1,4 +1,4 @@
-### Slice sampler
+### SliceSampler holds the fields of the slice sampler
 
 immutable SliceSampler <: MCSampler
   widths::Vector{Float64} # Step sizes for initially expanding the slice
@@ -17,7 +17,7 @@ SliceSampler(stepout::Bool) = SliceSampler(Float64[], stepout)
 
 SliceSampler(; widths::Vector{Float64}=Float64[], stepout::Bool=true) = SliceSampler(widths, stepout)
 
-### SliceSamplerStash type holds the internal state ("local variables") of the MALA sampler
+### SliceSamplerStash type holds the internal state ("local variables") of the slice sampler
 
 type SliceSamplerStash <: MCStash{MCBaseSample}
   state::MCState{MCBaseSample} # Monte Carlo state used internally by the sampler
