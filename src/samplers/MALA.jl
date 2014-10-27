@@ -1,124 +1,126 @@
-###########################################################################
-#  Metropolis adjusted Langevin algorithm (MALA)
-#
-#  Parameters :
-#    - driftStep : drift step size (for scaling the jumps)
-#    - tuner: for tuning the drift step size
-#
-###########################################################################
+### MALA holds the fields of the MALA sampler
+### These fields represent the initial user-defined state of the sampler
+### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
 
-export MALA
+immutable MALA <: LMCSampler
+  driftstep::Float64
 
-###########################################################################
-# MALA specific 'tuners'
-###########################################################################
-abstract MALATuner <: MCMCTuner
-
-type EmpiricalMALATune
-  driftStep::Float64
-  accepted::Int
-  proposed::Int
-  rate::Float64
-
-  function EmpiricalMALATune(driftStep::Float64, accepted::Int, proposed::Int, rate::Float64)
-    @assert driftStep > 0 "Leapfrog step size ($driftStep) should be > 0"
-    @assert 0 <= accepted "Number of accepted Monte Carlo steps ($accepted) should be non negative"
-    @assert 0 <= proposed "Number of proposed Monte Carlo steps ($proposed) should be non negative" 
-    new(driftStep, accepted, proposed)
+  function MALA(ds::Float64)
+    @assert ds > 0 "Drift step is not positive."
+    new(ds)
   end
 end
 
-EmpiricalMALATune(driftStep::Float64, accepted::Int, proposed::Int) =
-  EmpiricalMALATune(driftStep::Float64, accepted::Int, proposed::Int, NaN)
+MALA(; driftstep::Float64=1.) = MALA(driftstep)
 
-function adapt!(tune::EmpiricalMALATune, tuner::EmpMCTuner)
-  tune.rate = tune.accepted/tune.proposed      
-  tune.driftStep *= (1/(1+exp(-11*(tune.rate-tuner.targetRate)))+0.5)
+### MALAStash type holds the internal state ("local variables") of the MALA sampler
+
+type MALAStash <: MCStash{MCGradSample}
+  instate::MCState{MCGradSample} # Monte Carlo state used internally by the sampler
+  outstate::MCState{MCGradSample} # Monte Carlo state outputted by the sampler
+  tune::MCTune
+  count::Int # Current number of iterations
+  driftstep::Float64 # Drift stepsize for the current Monte Carlo iteration (possibly tuned)
+  smean::Vector{Float64}
+  ratio::Float64
+  pnewgivenold::Float64
+  poldgivennew::Float64
 end
 
-count!(tune::EmpiricalMALATune) = (tune.accepted += 1)
+MALAStash() =
+  MALAStash(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()), VanillaMCTune(), 0, NaN,
+  Float64[], NaN, NaN, NaN)
 
-reset!(tune::EmpiricalMALATune) = ((tune.accepted, tune.proposed) = (0, 0))
+MALAStash(l::Int, t::MCTune=VanillaMCTune()) =
+  MALAStash(MCState(MCGradSample(l), MCGradSample(l)), MCState(MCGradSample(l), MCGradSample(l)), t, 0, NaN,
+    fill(NaN, l), NaN, NaN, NaN)
 
-###########################################################################
-#  MALA type
-###########################################################################
+### Initialize MALA sampler
 
-# The MALA sampler type
-immutable MALA <: MCMCSampler
-  driftStep::Float64
-  tuner::Union(Nothing, MCMCTuner)
-  
-  function MALA(s::Real, t::Union(Nothing, MCMCTuner))
-    @assert s>0 "MALA drift step should be > 0"
-    new(s, t)
+function initialize(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
+  @assert hasgradient(m) "MALA sampler requires model with gradient function."
+  stash::MALAStash = MALAStash(m.size)
+
+  stash.instate.current = MCGradSample(copy(m.init))
+  gradlogtargetall!(stash.instate.current, m.evalallg)
+  @assert isfinite(stash.instate.current.logtarget) "Initial values out of model support."
+
+  if isa(t, VanillaMCTuner)
+    stash.tune = VanillaMCTune()
+  elseif isa(t, EmpiricalMCTuner)
+    stash.tune = EmpiricalMCTune(s.driftstep)
   end
+
+  stash.count = 1
+
+  stash
 end
 
-MALA(s::Float64=1.0) = MALA(s, nothing)
-MALA(s::MCMCTuner) = MALA(1.0, t)
-MALA(;scale::Float64=1.0, tuner::Union(Nothing, MCMCTuner)=nothing) = MALA(scale, tuner)
+function reset!(stash::MALAStash, x::Vector{Float64})
+  stash.instate.current = MCGradSample(copy(x))
+  gradlogtargetall!(stash.instate.current, m.evalallg)
+end
 
-# MALA sampling
-function SamplerTask(model::MCMCModel, sampler::MALA, runner::MCMCRunner)
-  local pars, proposedPars, parsMean
-  local logTarget, proposedLogTarget
-  local grad, proposedGrad
-  local probNewGivenOld, probOldGivenNew
-  local driftStep
+function initialize_task(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
+  stash::MALAStash = initialize(m, s, r, t)
 
-  @assert hasgradient(model) "MALA sampler requires model with gradient function"
+  # Hook inside Task to allow remote resetting
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x)) 
 
-  #  Task reset function
-  function reset(resetPars::Vector{Float64})
-    pars = copy(resetPars)
-    logTarget, grad = model.evalallg(pars)
-  end
-  # hook inside Task to allow remote resetting
-  task_local_storage(:reset, reset) 
-  
-  # Initialization
-  pars = copy(model.init)
-  logTarget, grad = model.evalallg(pars)
-  @assert isfinite(logTarget) "Initial values out of model support, try other values"
-
-  if isa(sampler.tuner, EmpMCTuner); tune = EmpiricalMALATune(sampler.driftStep, 0, 0); end
-
-  i = 1
   while true
-    if isa(sampler.tuner, EmpMCTuner)
-      tune.proposed += 1
-      driftStep = tune.driftStep
-    else
-      driftStep = sampler.driftStep
-    end
-
-    parsMean = pars + (driftStep/2.) * grad
-
-    proposedPars = parsMean + sqrt(driftStep) * randn(model.size)
-    proposedLogTarget, proposedGrad = model.evalallg(proposedPars)
-
-    probNewGivenOld = sum(-(parsMean-proposedPars).^2 / (2*driftStep) .- log(2*pi*driftStep)/2)
-    parsMean = proposedPars + (driftStep/2) * proposedGrad
-    probOldGivenNew = sum(-(parsMean-pars).^2/(2*driftStep) .- log(2*pi*driftStep)/2)
-    
-    ratio = proposedLogTarget + probOldGivenNew - logTarget - probNewGivenOld
-    if ratio > 0 || (ratio > log(rand()))  # i.e. if accepted
-      produce(MCMCSample(proposedPars, proposedLogTarget, proposedGrad, pars, logTarget, grad, {"accept" => true}))
-      pars, logTarget, grad = copy(proposedPars), copy(proposedLogTarget), copy(proposedGrad)
-      if isa(sampler.tuner, EmpMCTuner); tune.accepted += 1; end
-    else
-      produce(MCMCSample(pars, logTarget, grad, pars, logTarget, grad, {"accept" => false}))
-    end
-
-    if isa(sampler.tuner, EmpMCTuner) && i<= runner.burnin && mod(i, sampler.tuner.adaptStep) == 0
-      adapt!(tune, sampler.tuner)
-      reset!(tune)
-      if sampler.tuner.verbose
-        println("Burn-in teration $i of $(runner.burnin): ", round(100*tune.rate, 2), " % acceptance rate")
-      end
-    end
-
-    i += 1
+    iterate!(stash, m, s, r, t, produce)
   end
+end
+
+### Perform iteration for MALA sampler
+
+function iterate!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner, send::Function)
+  if isa(t, VanillaMCTuner)
+    stash.driftstep = s.driftstep
+    if t.verbose
+      stash.tune.proposed += 1
+    end
+  elseif isa(t, EmpiricalMCTuner)
+    stash.driftstep = stash.tune.step
+    stash.tune.proposed += 1
+  end
+
+  stash.smean = stash.instate.current.sample+(stash.driftstep/2.)*stash.instate.current.gradlogtarget
+  stash.instate.successive = MCGradSample(stash.smean+sqrt(stash.driftstep)*randn(m.size))
+  gradlogtargetall!(stash.instate.successive, m.evalallg)
+  stash.pnewgivenold =
+    sum(-(stash.smean-stash.instate.successive.sample).^2/(2*stash.driftstep).-log(2*pi*stash.driftstep)/2)
+
+  stash.smean = stash.instate.successive.sample+(stash.driftstep/2)*stash.instate.successive.gradlogtarget
+  stash.poldgivennew =
+    sum(-(stash.smean-stash.instate.current.sample).^2/(2*stash.driftstep).-log(2*pi*stash.driftstep)/2)
+    
+  stash.ratio = stash.instate.successive.logtarget+stash.poldgivennew-stash.instate.current.logtarget-stash.pnewgivenold
+  if stash.ratio > 0 || (stash.ratio > log(rand()))
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
+    stash.instate.current = deepcopy(stash.instate.successive)
+
+    if isa(t, VanillaMCTuner) && t.verbose
+      stash.tune.accepted += 1 
+    elseif isa(t, EmpiricalMCTuner)
+      stash.tune.accepted += 1     
+    end
+  else
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+  end
+
+  if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
+    rate!(stash.tune)
+    println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+  elseif isa(t, EmpiricalMCTuner) && stash.count <= r.burnin && mod(stash.count, t.period) == 0
+    adapt!(stash.tune, t)
+    reset!(stash.tune)
+    if t.verbose
+      println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+    end
+  end
+
+  stash.count += 1
+
+  send(stash.outstate)
 end

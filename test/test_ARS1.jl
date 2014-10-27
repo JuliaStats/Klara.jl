@@ -38,7 +38,7 @@ log_M1 = log(M1)
 
 mcmodel = model(log_g, init=ones(L))
 
-mcchain = run(mcmodel, [ARS(log_g0, log_M0), ARS(log_g1, log_M1)], SerialMC(1000:1:10000))
+mcchain = run(MCSystem(fill(mcmodel, 2), [ARS(log_g0, log_M0), ARS(log_g1, log_M1)], fill(SerialMC(1000:1:10000), 2)))
 
 println()
 println("M: ", [M0 M1])

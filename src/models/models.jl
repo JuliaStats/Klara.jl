@@ -1,10 +1,8 @@
 #################################################################
 #
-#    Definition of MCMCModel types 
+#    Definition of MCModel types 
 #
 #################################################################
-
-export model
 
 function ispartition(m::Dict, n::Int)
 	c = zeros(n)
@@ -15,9 +13,9 @@ function ispartition(m::Dict, n::Int)
 end
 
 #### misc functions common to all models  ####
-hasgradient{M<:MCMCModel}(m::M) = m.evalg != nothing
-hastensor{M<:MCMCModel}(m::M) = m.evalt != nothing
-hasdtensor{M<:MCMCModel}(m::M) = m.evaldt != nothing
+hasgradient{M<:MCModel}(m::M) = m.evalg != nothing
+hastensor{M<:MCModel}(m::M) = m.evalt != nothing
+hasdtensor{M<:MCModel}(m::M) = m.evaldt != nothing
 
 #### User-facing model creation function  ####
 
@@ -25,7 +23,7 @@ hasdtensor{M<:MCMCModel}(m::M) = m.evaldt != nothing
 # Left as is in case other kind of models come up
 function model(f::Union(Function, Distribution, Expr); mtype="likelihood", args...)
 	if mtype == "likelihood"
-		return MCMCLikelihoodModel(f; args...)
+		return MCLikModel(f; args...)
 	elseif mtype == "whatever"
 	else
 	end

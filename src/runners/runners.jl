@@ -1,68 +1,60 @@
-import Base.run
-export run, resume, prun
+immutable SerialMCBaseRunner <: SerialMCRunner
+  burnin::Int
+  thinning::Int
+  nsteps::Int
+  r::Range{Int}
+  storegradlogtarget::Bool # Indicates whether to save the gradient of the log-target in the cases it is available
 
-stop!(c::MCMCChain) = (!istaskdone(c.task.task) ? c.task.task.state = :done : nothing)
-
-# General run() function which invoke run function specific to Task.runner field
-function run(t::MCMCTask)
-  if isa(t.runner, SerialMC)
-    run_serialmc(t)
+  function SerialMCBaseRunner(r::Range{Int}, s::Bool=false)
+    burnin = first(r)-1
+    thinning = r.step
+    nsteps = last(r)
+    @assert burnin >= 0 "Number of burn-in iterations should be non-negative."
+    @assert thinning >= 1 "Thinning should be >= 1."
+    @assert nsteps > burnin "Total number of MCMC iterations should be greater than number of burn-in iterations."
+    new(burnin, thinning, nsteps, r, s)
   end
 end
 
-# Chain continuation alternate
-run(c::MCMCChain) = run(c.task)
+SerialMCBaseRunner(r::Range1{Int}, s::Bool=false) = SerialMCBaseRunner(first(r):1:last(r), s)
+SerialMCBaseRunner(; burnin::Int=0, thinning::Int=1, nsteps::Int=100, storegradlogtarget::Bool=false) =
+  SerialMCBaseRunner((burnin+1):thinning:nsteps, storegradlogtarget)
 
-# vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
-function run(t::Array{MCMCTask}; args...)
-  lastrunner = t[end].runner
-  @assert all(map(t->isa(t.runner, typeof(lastrunner)), t)) "Runners do not have the same runner type"
+typealias SerialMC SerialMCBaseRunner
 
-  if isa(lastrunner, SerialMC)
-    res = Array(MCMCChain, size(t))
-    for i = 1:length(t)
-      res[i] = run(t[i])
-    end 
-    res
-  elseif isa(lastrunner, SerialTempMC)
-    run_serialtempmc(t)
-  else isa(lastrunner, SeqMC)
-    run_seqmc(t; args...)    
+function run(model::MCModel, sampler::MCSampler, runner::SerialMC, tuner::MCTuner, job::MCJob=PlainMCJob())
+  tic()
+
+  # Pre-allocation for storing results
+  mcchain::MCChain = MCChain(model.size, length(runner.r); storegradlogtarget=runner.storegradlogtarget)
+  ds = {"step" => collect(runner.r)}
+
+  # Sampling loop
+  i::Int = 1
+  for j in 1:runner.nsteps
+    mcstate = job.receive()
+    if in(j, runner.r)
+      mcchain.samples[:, i] = mcstate.successive.sample
+      mcchain.logtargets[i] = mcstate.successive.logtarget
+
+      if runner.storegradlogtarget
+        mcchain.gradlogtargets[:, i] = mcstate.successive.gradlogtarget
+      end
+
+      # Save diagnostics
+      for (k,v) in mcstate.diagnostics
+        # If diagnostics name not seen before, create column
+        if !haskey(ds, k)
+          ds[k] = Array(typeof(v), length(ds["step"]))          
+        end
+        
+        ds[k][i] = v
+      end
+
+      i += 1
+    end
   end
-end
 
-# parallel vectorized version of 'run' for arrays of MCMCTasks or MCMCChains
-function prun(t::Array{MCMCTask}; args...)
-  lastrunner = t[end].runner
-  @assert all(map(t->isa(t.runner, typeof(lastrunner)), t)) "Runners do not have the same runner type"
-
-  if isa(lastrunner, SerialMC)
-    pmap(run_serialmc_exit, t)   
-  end
-end
-
-# Alternate version with model, sampler and runner passed separately
-run{M<:MCMCModel, S<:MCMCSampler}(m::Union(M, Vector{M}), s::Union(S, Vector{S}), r::MCMCRunner) = run(m*s*r)
-
-# Functions for resuming MCMCTasks as well as arrays of MCMCTasks
-function resume(t::MCMCTask; steps::Int=100)
-  if isa(t.runner, SerialMC)
-    resume_serialmc(t, steps=steps)
-  end
-end
-
-resume(c::MCMCChain; steps::Int=100) = resume(c.task, steps=steps)
-
-function resume(t::Array{MCMCTask}; steps::Int=100, args...)
-  if isa(t[end].runner, SerialMC)
-    res = Array(MCMCChain, size(t))
-      for i = 1:length(t)
-        res[i] = resume(t[i], steps=steps)
-      end 
-    res
-  elseif isa(t[end].runner, SerialTempMC)
-    resume_serialtempmc(t, steps=steps)
-  else isa(t[end].runner, SeqMC)
-    resume_seqmc(t; steps=steps, args...)    
-  end
+  mcchain.diagnostics, mcchain.runtime = ds, toq()
+  mcchain
 end

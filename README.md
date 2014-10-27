@@ -3,6 +3,11 @@
 [![Build Status](https://travis-ci.org/JuliaStats/MCMC.jl.png)](https://travis-ci.org/JuliaStats/MCMC.jl)
 [![MCMC](http://pkg.julialang.org/badges/MCMC_release.svg)](http://pkg.julialang.org/?pkg=MCMC&ver=release)
 
+*The MCMC package has just gone through a major upgrade. For this reason, some aspects of the packages haven't been
+fully ported yet. Furthermore, the README package is not entirely up-to-date. The porting of the remaining code and
+the documentation will be completely ready in a few days' time. All the basic functionality of the package is already
+available as far as serial simulations are concerned.*
+
 The Julia `MCMC` package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
 Carlo (MCMC) methods. While the package's framework aims at being extensible to accommodate user-specific models and
 sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
@@ -93,9 +98,9 @@ mychain = run(mymodel1, RWM(0.1), SerialMC(steps=1000, burnin=100, thinning=5))
 # As before, but expressed alternatively by using a range
 mychain = run(mymodel1, RWM(0.1), SerialMC(101:5:1000))
 
-### Syntax 2 (calling run() function on the product model * sampler * range)
+### Syntax 2 (simply pass the logtarget, initial parameter values, number of steps and burnin to the sampler)
 
-mychain1 = run(mymodel1 * RWM(0.1) * SerialMC(101:5:1000))
+mychain1 = RAM(v-> -dot(v,v), ones(3), 1000, 101; thinning=5)
 ```
 
 #### Output summary and printing

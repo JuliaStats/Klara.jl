@@ -1,9 +1,8 @@
-export acceptance, describe
+### Compute acceptance or rejection rate of MCChain
 
-# Compute acceptance or rejection rate of MCMCChain
-function acceptance(c::MCMCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=false)
+function acceptance(c::MCChain; lags::Ranges=1:size(c.samples, 1), reject::Bool=false)
   rlen = length(lags)
-  @assert lags[end] <= size(c.samples, 1) "Range of acceptance rate not within post-burnin range of MCMC chain"
+  @assert lags[end] <= size(c.samples, 1) "Range of acceptance rate not within post-burnin range of MCmc chain"
 
   if reject
     return (rlen-sum(c.diagnostics["accept"][lags]))*100/rlen
@@ -12,35 +11,27 @@ function acceptance(c::MCMCChain; lags::Ranges=1:size(c.samples, 1), reject::Boo
   end
 end
 
-# TODO 1: Compute MCMC quantiles based on
-# Flegal J.M, Galin L.J, Neath R.C. Markov Chain Monte Carlo Estimation of Quantiles. arXiv, 2013
-# TODO 2: Include these MCMC estimates of quantiles in describe()
+### describe() provides summary statistics for MCChain objects
 
-# describe() provides summary statistics for MCMCChain objects
-describe(c::MCMCChain) = describe(STDOUT, c)
+describe(c::MCChain) = describe(STDOUT, c)
 
-function describe(io::IO, c::MCMCChain)
+function describe(io, c::MCChain)
   nsamples, npars = size(c.samples)
-  if isa(c.task.sampler, ARS)
-    indx = find(c.diagnostics["accept"])
-  else
-    indx = 1:nsamples
-  end
   for i in 1:npars
 
-    col = c.samples[indx, i]
+    col = c.samples[:, i]
     println(io, "Parameter $i")
 
     if sum(isnan(col)) != 0
-      println(io, "Monte Carlo chain for parameter $i contains NaNs, which are not supported.")
+      println(col, "Monte Carlo chain for parameter $i contains NaNs, which are not supported.")
       return
     end
 
     qs = quantile(col, [0, 1])
     varimse = mcvar_imse(col)
-    variid = var(col)/length(indx)
+    variid = var(col)/nsamples
     mcerror = sqrt(varimse)
-    ss = length(indx)*variid./varimse
+    ss = nsamples*variid./varimse
     act = varimse./variid
 
     statNames = ["Min", "Mean", "Max", "MC Error", "ESS", "AC Time"]
@@ -49,6 +40,6 @@ function describe(io::IO, c::MCMCChain)
         println(io, string(rpad(statNames[i], 10, " "), " ", string(statVals[i])))
     end
 
-    println(io)
+    println(io, )
   end
 end
