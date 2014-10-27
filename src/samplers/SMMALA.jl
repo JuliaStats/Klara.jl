@@ -67,13 +67,16 @@ function initialize(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   stash
 end
 
+function reset!(stash::SMMALAStash, x::Vector{Float64})
+  stash.instate.current = MCTensorSample(copy(x))
+  tensorlogtargetall!(stash.instate.current, m.evalallt)
+end
+
 function initialize_task(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   stash::SMMALAStash = initialize(m, s, r, t)
 
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset,
-    (x::Vector{Float64}) ->
-    (stash.instate.current = MCTensorSample(copy(x)); tensorlogtargetall!(stash.instate.current, m.evalallt))) 
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
 
   while true
     iterate!(stash, m, s, r, t, produce)

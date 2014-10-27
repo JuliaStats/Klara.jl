@@ -55,13 +55,16 @@ function initialize(m::MCModel, s::ARS, r::MCRunner, t::MCTuner)
   stash
 end
 
+function reset!(stash::ARSStash, x::Vector{Float64})
+  stash.instate.current = MCBaseSample(copy(x))
+  logtarget!(stash.instate.current, m.eval)
+end
+
 function initialize_task(m::MCModel, s::ARS, r::MCRunner, t::MCTuner)
   stash::ARSStash = initialize(m, s, r, t)
 
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset,
-    (x::Vector{Float64}) ->
-    (stash.instate.current = MCBaseSample(copy(x)); logtarget!(stash.instate.current, m.eval))) 
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
 
   while true
     iterate!(stash, m, s, r, t, produce)

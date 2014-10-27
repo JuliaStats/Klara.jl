@@ -3,13 +3,14 @@
 type TaskMCJob <: MCJob
   send::Function
   receive::Function
+  reset::Function
   task::Task
 end
 
-TaskMCJob(t::Task) = TaskMCJob(produce, ()->consume(t), t)
-TaskMCJob() = TaskMCJob(produce, ()->(), Task(()->()))
+TaskMCJob(t::Task) = TaskMCJob(produce, ()->consume(t), ()->(), t)
+TaskMCJob() = TaskMCJob(produce, ()->(), ()->(), Task(()->()))
 
 function TaskMCJob(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner)
   mctask::Task = Task(()->initialize_task(m, s, r, t))
-  TaskMCJob(produce, ()->consume(mctask), mctask)
+  TaskMCJob(produce, ()->consume(mctask), (x::Vector{Float64})->reset(mctask, x), mctask)
 end

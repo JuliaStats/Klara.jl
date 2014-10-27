@@ -56,13 +56,16 @@ function initialize(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   stash
 end
 
+function reset!(stash::MALAStash, x::Vector{Float64})
+  stash.instate.current = MCGradSample(copy(x))
+  gradlogtargetall!(stash.instate.current, m.evalallg)
+end
+
 function initialize_task(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   stash::MALAStash = initialize(m, s, r, t)
 
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset,
-    (x::Vector{Float64}) ->
-    (stash.instate.current = MCGradSample(copy(x)); gradlogtargetall!(stash.instate.current, m.evalallg))) 
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x)) 
 
   while true
     iterate!(stash, m, s, r, t, produce)
