@@ -1,4 +1,4 @@
-### Serial "ordinary" Monte Carlo r
+### Serial "ordinary" Monte Carlo runner
 
 immutable SerialMCBaseRunner <: SerialMCRunner
   burnin::Int
