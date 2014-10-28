@@ -62,9 +62,7 @@ function reset!(stash::SliceSamplerStash, x::Vector{Float64})
   logtarget!(stash.state.successive, m.eval)
 end
 
-function initialize_task(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
-  stash::SliceSamplerStash = initialize(m, s, r, t)
-
+function initialize_task!(stash::SliceSamplerStash, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
   task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
 

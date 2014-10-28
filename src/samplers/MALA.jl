@@ -61,9 +61,7 @@ function reset!(stash::MALAStash, x::Vector{Float64})
   gradlogtargetall!(stash.instate.current, m.evalallg)
 end
 
-function initialize_task(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
-  stash::MALAStash = initialize(m, s, r, t)
-
+function initialize_task!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
   task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x)) 
 

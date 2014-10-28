@@ -125,24 +125,3 @@ abstract MCStash{S<:MCSample}
 ### Monte Carlo Jobs (ex plain jobs, jobs using tasks or MPI jobs)
 
 abstract MCJob
-
-### MCSystem gathers all the components that define a Monte Carlo simulation
-### It is in a sense a complete specification of a Monte Carlo simulation based on user input
-### At the same time, MCSystem stores vital internal components (ex MCSystem.job.task for task-based jobs)
-### The user mainly interacts with the MCSystem type at a higher level via the package's interface
-### Users familiar with the package can also interact with the MCSystem type directly
-
-type MCSystem
-  model::MCModel
-  sampler::MCSampler
-  runner::MCRunner
-  tuner::MCTuner
-  job::MCJob
-end
-
-# Convenience constructors for setting up a vector of Monte Carlo simulations
-
-MCSystem(m::MCModel, s::MCSampler, r::MCRunner, t::MCTuner=VanillaMCTuner()) = MCSystem(m, s, r, t)
-MCSystem{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{R}, t::Vector{T}) =
-  map(MCSystem, m, s, r, t)
-MCSystem{M<:MCModel, S<:MCSampler, R<:MCRunner}(m::Vector{M}, s::Vector{S}, r::Vector{R}) = map(MCSystem, m, s, r)

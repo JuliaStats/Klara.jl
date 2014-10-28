@@ -72,9 +72,7 @@ function reset!(stash::SMMALAStash, x::Vector{Float64})
   tensorlogtargetall!(stash.instate.current, m.evalallt)
 end
 
-function initialize_task(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
-  stash::SMMALAStash = initialize(m, s, r, t)
-
+function initialize_task!(stash::SMMALAStash, m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
   task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
 

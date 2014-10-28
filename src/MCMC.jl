@@ -33,7 +33,6 @@ import Distributions:
 export
   ### types
   MCLikModel,
-  MCSystem,
   MCChain,
   ARS,
   SliceSampler,
@@ -45,6 +44,7 @@ export
   SerialMC,
   VanillaMCTuner,
   EmpiricalMCTuner,
+  MCJob,
   PlainMCJob,
   TaskMCJob,
   ### functions
@@ -62,8 +62,8 @@ export
   linearzv,
   quadraticzv
 
-include("api/MCSystem.jl") # In an abstract sense, MCSystem consists of the user input
-include("api/MCChain.jl") # MCChain holds the output of a Monte Carlo simulation
+include("api/input.jl")
+include("api/output.jl")
 include("parsers/expr_funcs.jl")
 include("parsers/modelparser.jl")
 include("parsers/definitions/DistributionsExtensions.jl")
