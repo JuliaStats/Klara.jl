@@ -30,7 +30,7 @@ function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner, job::MCJob)
 
   # Pre-allocation for storing results
   mcchain::MCChain = MCChain(m.size, length(r.r); storegradlogtarget=r.storegradlogtarget)
-  ds = {"step" => collect(r.r)}
+  ds = Dict{Any, Any}{"step" => collect(r.r)}
 
   # Sampling loop
   i::Int = 1

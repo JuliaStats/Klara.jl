@@ -86,7 +86,7 @@ function iterate!(stash::RAMStash, m::MCModel, s::RAM, r::MCRunner, t::MCTuner, 
   stash.ratio = stash.instate.successive.logtarget-stash.instate.current.logtarget
   if stash.ratio > 0 || (stash.ratio > log(rand()))
     stash.outstate = MCState(stash.instate.successive, stash.instate.current,
-    {"accept" => true, "scale" => trace(stash.S)})
+    Dict{Any, Any}{"accept" => true, "scale" => trace(stash.S)})
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if t.verbose
@@ -94,7 +94,7 @@ function iterate!(stash::RAMStash, m::MCModel, s::RAM, r::MCRunner, t::MCTuner, 
     end
   else
     stash.outstate = MCState(stash.instate.current, stash.instate.current,
-    {"accept" => false, "scale" => trace(stash.S)})
+    Dict{Any, Any}{"accept" => false, "scale" => trace(stash.S)})
   end
 
   if t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0

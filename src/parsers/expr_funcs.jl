@@ -83,7 +83,7 @@ end
 ### creates mapping statements from model parameter variables to Vector{Float64}
 # FIXME : using undocumented dprefix function of ReverseDiffSource (should be replaced)
 function var2vec(;init...)
-	ex = {}
+	ex = []
 	for (v,i) in init
 		sz = size(i)
 		if in(length(sz), [0,1]) # scalar or vector

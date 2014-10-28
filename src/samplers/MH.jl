@@ -91,14 +91,14 @@ function iterate!(stash::MHStash, m::MCModel, s::MH, r::MCRunner, t::MCTuner, se
       -s.logproposal(stash.instate.current.sample, stash.instate.successive.sample)
   end
   if stash.ratio > 0 || (stash.ratio > log(rand()))
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}{"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if t.verbose
       stash.tune.accepted += 1
     end      
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}{"accept" => false})
   end
 
   if t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0

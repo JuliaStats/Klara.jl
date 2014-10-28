@@ -123,7 +123,7 @@ function iterate!(stash::SMMALAStash, m::MCModel, s::SMMALA, r::MCRunner, t::MCT
   stash.ratio = stash.instate.successive.logtarget+stash.poldgivennew-stash.instate.current.logtarget-stash.pnewgivenold
 
   if stash.ratio > 0 || (stash.ratio > log(rand()))
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}{"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
     stash.current_invtensor, stash.current_termone = copy(stash.successive_invtensor), copy(stash.successive_termone)
       
@@ -133,7 +133,7 @@ function iterate!(stash::SMMALAStash, m::MCModel, s::SMMALA, r::MCRunner, t::MCT
       stash.tune.accepted += 1     
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}{"accept" => false})
   end
 
   if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
