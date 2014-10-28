@@ -29,18 +29,18 @@ type SMMALAStash <: MCStash{MCTensorSample}
   successive_invtensor::Matrix{Float64}
   current_termone::Vector{Float64}
   successive_termone::Vector{Float64}
-  cholinvtensor
+  cholinvtensor::Matrix{Float64}
 end
 
 SMMALAStash() =
   SMMALAStash(MCState(MCTensorSample(), MCTensorSample()), MCState(MCTensorSample(), MCTensorSample()), VanillaMCTune(),
   0, NaN, Float64[], NaN, NaN, NaN, Array(Float64, 0, 0), Array(Float64, 0, 0), Float64[], Float64[],
-  Triangular(Array(Float64, 0, 0), :U))
+  Array(Float64, 0, 0))
 
 SMMALAStash(l::Int, t::MCTune=VanillaMCTune()) =
   SMMALAStash(MCState(MCTensorSample(l), MCTensorSample(l)), MCState(MCTensorSample(l), MCTensorSample(l)), t, 0, NaN,
     fill(NaN, l), NaN, NaN, NaN, fill(NaN, l, l), fill(NaN, l, l), fill(NaN, l), fill(NaN, l),
-    Triangular(fill(NaN, l, l), :U))
+    Array(Float64, 0, 0))
 
 ### Initialize SMMALA sampler
 
