@@ -1,23 +1,10 @@
-function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), job::Symbol=:plain)
-  if job == :plain
-    run(m, s, r, t, PlainMCJob(m, s, r, t))
-  elseif job == :task
-    run(m, s, r, t, TaskMCJob(m, s, r, t))
-  end
-end
-
 ### The MCSystem is not useful only as an alternative interface
 ### It gathers all the low and high level components that fully specify a Monte Carlo simulation
 ### A particular instance which demonstrates the usefulness of MCSystem is the case of storing the Monte Carlo task
 ### Storing the task of a task-based job in MCSystem.job.task allows resuming a Monte Carlo simulation
 
-function MCSystem(m::MCModel, s::MCSampler, r::MCRunner, t::MCTuner=VanillaMCTuner(), job::Symbol=:plain)
-  if job == :plain
-    MCSystem(m, s, r, t, PlainMCJob(m, s, r, t))
-  elseif job == :task
-    MCSystem(m, s, r, t, TaskMCJob(m, s, r, t))
-  end
-end
+MCSystem(m::MCModel, s::MCSampler, r::MCRunner, t::MCTuner=VanillaMCTuner(), job::Symbol=:task) =
+  MCSystem(m, s, r, t, initialize_mcjob(m, s, r, t, job))
 
 run(s::MCSystem) = run(s.model, s.sampler, s.runner, s.tuner, s.job)
 

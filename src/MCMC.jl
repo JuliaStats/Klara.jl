@@ -50,6 +50,7 @@ export
   ### functions
   model,
   run,
+  resume,
   select,
   mean,
   mcvar,
@@ -90,6 +91,7 @@ include("tuners/VanillaMCTuner.jl")
 include("tuners/EmpiricalMCTuner.jl")
 include("jobs/PlainMCJob.jl")
 include("jobs/TaskMCJob.jl")
+include("jobs/jobs.jl")
 include("stats/filtering.jl")
 include("stats/mean.jl")
 include("stats/var.jl")

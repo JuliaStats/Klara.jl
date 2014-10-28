@@ -61,3 +61,22 @@ function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner, job::MCJob)
   mcchain.diagnostics, mcchain.runtime = ds, toq()
   mcchain
 end
+
+run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), job::Symbol=:task) =
+  run(m, s, r, t, initialize_mcjob(m, s, r, t, job))
+
+function resume!(c::MCChain, m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner, job::MCJob; nsteps::Int=100)
+  m.init = vec(c.samples[end, :])
+  mcrunner::SerialMC = SerialMC(burnin=0, thinning=r.thinning, nsteps=nsteps, storegradlogtarget=r.storegradlogtarget)
+  mcjob::MCJob = initialize_mcjob(m, s, mcrunner, t, job)
+  run(m, s, mcrunner, t, mcjob)
+end
+
+resume!(c::MCChain, s::MCSystem; nsteps::Int=100) =
+  resume!(c, s.model, s.sampler, s.runner, s.tuner, s.job; nsteps=nsteps)
+
+resume(c::MCChain, m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner, job::MCJob; nsteps::Int=100) =
+  resume!(c, deepcopy(m), s, r, t, job; nsteps=nsteps)
+
+resume(c::MCChain, s::MCSystem; nsteps::Int=100) =
+  resume!(c, deepcopy(s.model), s.sampler, s.runner, s.tuner, s.job; nsteps=nsteps)
