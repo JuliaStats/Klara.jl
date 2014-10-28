@@ -84,14 +84,14 @@ function iterate!(stash::ARSStash, m::MCModel, s::ARS, r::MCRunner, t::MCTuner, 
 
   stash.weight = stash.instate.successive.logtarget.-s.proposalscale.-stash.logproposal
   if stash.weight > log(rand())
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}{"accept" => true})
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}("accept" => true))
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if t.verbose
       stash.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}{"accept" => false})
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}("accept" => false))
   end
 
   if t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0

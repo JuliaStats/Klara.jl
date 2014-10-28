@@ -118,7 +118,7 @@ function MCLikelihoodModel(	lik::Function;
 	scale = isa(scale, Float64) ? scale * ones(length(init)) : scale
 
 	# all parameters named "pars" by default
-	if pmap == nothing ; pmap = Dict([:pars], [(1, size(init))]) ; end 
+	if pmap == nothing ; pmap = Dict(zip([:pars], [(1, size(init))])) ; end 
 
 	# now build missing functions, if any
 	fmat = Array(FunctionOrNothing, 3, 2)
