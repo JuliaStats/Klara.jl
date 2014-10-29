@@ -44,7 +44,7 @@ SMMALAStash(l::Int, t::MCTune=VanillaMCTune()) =
 
 ### Initialize SMMALA sampler
 
-function initialize(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   @assert hasgradient(m) "SMMALA sampler requires model with gradient function."
   @assert hastensor(m) "SMMALA sampler requires model with tensor function."
   stash::SMMALAStash = SMMALAStash(m.size)

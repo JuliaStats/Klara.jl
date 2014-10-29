@@ -37,7 +37,7 @@ MALAStash(l::Int, t::MCTune=VanillaMCTune()) =
 
 ### Initialize MALA sampler
 
-function initialize(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   @assert hasgradient(m) "MALA sampler requires model with gradient function."
   stash::MALAStash = MALAStash(m.size)
 

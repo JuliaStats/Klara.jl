@@ -15,7 +15,7 @@ type TaskMCJob <: MCJob
   function TaskMCJob(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner)
     job::TaskMCJob = new()
     job.model, job.sampler, job.runner, job.tuner = m, s, r, t
-    job.stash = initialize(m, s, r, t)
+    job.stash = initialize_stash(m, s, r, t)
     job.task = Task(()->initialize_task!(job.stash, m, s, r, t))
     job.send = produce
     job.receive = ()->consume(job.task)

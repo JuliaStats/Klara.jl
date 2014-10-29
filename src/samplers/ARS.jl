@@ -39,7 +39,7 @@ ARSStash(l::Int) =
 
 ### Initialize Metropolis-Hastings sampler
 
-function initialize(m::MCModel, s::ARS, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::ARS, r::MCRunner, t::MCTuner)
   stash::ARSStash = ARSStash(m.size)
 
   stash.instate.current = MCBaseSample(copy(m.init))

@@ -38,7 +38,7 @@ SliceSamplerStash(l::Int) =
 
 ### Initialize slice sampler
 
-function initialize(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   stash::SliceSamplerStash = SliceSamplerStash(m.size)
 
   stash.state.successive = MCBaseSample(copy(m.init))

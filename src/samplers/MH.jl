@@ -42,7 +42,7 @@ MHStash(l::Int, t::MCTune=VanillaMCTune()) =
 
 ### Initialize Metropolis-Hastings sampler
 
-function initialize(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
   stash::MHStash = MHStash(m.size)
 
   stash.instate.current = MCBaseSample(copy(m.init))

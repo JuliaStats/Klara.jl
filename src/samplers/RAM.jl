@@ -40,7 +40,7 @@ RAMStash(l::Int) =
 
 ### Initialize RAM sampler
 
-function initialize(m::MCModel, s::RAM, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::RAM, r::MCRunner, t::MCTuner)
   stash::RAMStash = RAMStash(m.size)
 
   stash.instate.current = MCBaseSample(copy(m.init))

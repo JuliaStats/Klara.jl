@@ -63,7 +63,7 @@ HMCStash(l::Int, t::MCTune=VanillaMCTune()) =
 
 ### Initialize HMC sampler
 
-function initialize(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
+function initialize_stash(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
   @assert hasgradient(m) "HMC sampler requires model with gradient function."
   stash::HMCStash = HMCStash(m.size)
 

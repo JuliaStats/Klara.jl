@@ -14,7 +14,7 @@ type PlainMCJob <: MCJob
   function PlainMCJob(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner)
     job::PlainMCJob = new()
     job.model, job.sampler, job.runner, job.tuner = m, s, r, t
-    job.stash = initialize(m, s, r, t)
+    job.stash = initialize_stash(m, s, r, t)
     job.send = identity
     job.receive = ()->iterate!(job.stash, m, s, r, t, identity)
     job.reset = (x::Vector{Float64})->reset!(job.stash, x)
