@@ -37,7 +37,7 @@ function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(),
   # Sampling loop
   i::Int = 1
   for j in 1:r.nsteps
-    mcstate = mcjob.receive()
+    mcstate = mcjob.receive(1)
     if in(j, r.r)
       mcchain.samples[i, :] = mcstate.successive.sample
       mcchain.logtargets[i] = mcstate.successive.logtarget
