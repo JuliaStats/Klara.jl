@@ -64,13 +64,13 @@ function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(),
   mcchain
 end
 
-function resume!(m::MCModel, c::MCChain, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), j::Symbol=:task;
+function resume!(m::MCModel, s::MCSampler, r::SerialMC, c::MCChain, t::MCTuner=VanillaMCTuner(), j::Symbol=:task;
   nsteps::Int=100)
   m.init = vec(c.samples[end, :])
   mcrunner::SerialMC = SerialMC(burnin=0, thinning=r.thinning, nsteps=nsteps, storegradlogtarget=r.storegradlogtarget)
   run(m, s, mcrunner, t, j)
 end
 
-resume(m::MCModel, c::MCChain, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), j::Symbol=:task;
+resume(m::MCModel, s::MCSampler, r::SerialMC, c::MCChain, t::MCTuner=VanillaMCTuner(), j::Symbol=:task;
   nsteps::Int=100) =
-  resume!(deepcopy(m), c, s, r, t, j; nsteps=nsteps)
+  resume!(deepcopy(m), s, r, c, t, j; nsteps=nsteps)

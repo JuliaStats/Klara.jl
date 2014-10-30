@@ -42,12 +42,12 @@ run{J<:MCJob}(j::Vector{J}) = map(run, j)
 
 function resume!(j::MCJob, c::MCChain; nsteps::Int=100)
   if isa(j.runner, SerialMC)  
-    resume!(j.model[1], c, j.sampler[1], j.runner, j.tuner[1], j.jtype; nsteps=nsteps)
+    resume!(j.model[1], j.sampler[1], j.runner, c, j.tuner[1], j.jtype; nsteps=nsteps)
   end
 end
 
 function resume(j::MCJob, c::MCChain; nsteps::Int=100)
   if isa(j.runner, SerialMC)
-    resume!(deepcopy(j.model)[1], c, j.sampler[1], j.runner, j.tuner[1], j.jtype; nsteps=nsteps)
+    resume!(deepcopy(j.model)[1], j.sampler[1], j.runner, c, j.tuner[1], j.jtype; nsteps=nsteps)
   end
 end

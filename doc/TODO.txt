@@ -1,29 +1,16 @@
-01) AutoDiff-related changes:
-  01.01) Place autodiff in the standalone AutoDiff package
-  01.02) Extend autodiff capabilities for MCMC samplers that need higher order derivatives
-02) Doc-related changes:
- 02.01) Update README file to reflect current state of MCMC package
- 02.02) Write a user-guide in latex
-03) Create a unified model interface across JuliaStats, which will then be used in MCMC
-04) Write up travis test suite
-05) Unify slice sampler with MCMC's code style
-06) Consider using copy!() instead of copy() in samplers
-07) Make algebraic changes in samplers to speed them up
-08) Use BUGS approach based on graphical models to define Gibbs-based algorithms
-09) Add some of the following samplers:
-  09.01) Adaptive Metropolis (AM) by H. Haario, E. Saksman, and J. Tamminen
-  09.02) Adaptive Optimal Scaling Metropolis Hastings (AOSMH) by P. H. Garthwaite, Y. Fan, S. A. Sisson
-  09.03) Hit-And-Run Metropolis (HARM), see LaplacesDemon R package
-  09.04) Componentwise Hit-And-Run Metropolis (CHARM), see LaplacesDemon R package
-  09.05) Kernel Adaptive Metropolis-Hastings (KAM), known as MCMC Kameleon
-  09.06) Orientational Bias Monte Carlo (OBMC)
-  09.07) Split HMC (SHMC)
-  09.08) Subsample-Adapting Langevin Algorithm (SALA)
-10) Design and implement parallel population MCMC capable of running on cluster workers
-11) EM (expectation-maximization) algorithm
-12) Rejection sampling
-13) Importance sampling
-14) MCMC for hierarchical models (constrained Monte Carlo)
-15) Simulated annealing
-16) Approximate Bayesian Computation (ABC) methods
-17) Implement MCMC summary statistics and MCMC convergence diagnostics that require spectral computations
+01) Write up readthedocs package documentation (and then point README to the new documentation)
+02) Write up travis test suite (this partly depends on (06) below)
+03) Organize examples directory (and possibly migrate some examples to the documentation)
+04) Add data dictionary field in model types
+05) Output improvements
+  05.01) Add merge method for merging MCChain's (useful for resuming jobs)
+  05.02) Consider adding save function field in job types to abstract the way output is stored in MCChain
+  05.03) Consider optionally writing output in files (useful with population MCMC to reduce memory requirements)
+06) Implement MCMC summary statistics and MCMC convergence diagnostics that require spectral computations
+07) Iterate with spencerlyon2 and fredo-dedup in order to set up Gibbs sampling
+08) Implement parallel population MCMC
+09) MCMC for hierarchical models (constrained Monte Carlo)
+10) Extend autodiff capabilities for MCMC samplers that need higher order derivatives
+11) Performance considerations
+  11.01) Consider using copy!() instead of copy() in samplers
+  11.02) Make algebraic changes in samplers to speed them up
