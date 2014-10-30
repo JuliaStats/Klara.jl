@@ -1,8 +1,5 @@
 ### TaskMCJob type is used for Monte Carlo jobs based on coroutines (tasks)
 
-# The runner field is not of Vector{MCRunner} type because the coded (and perhaps all existing) serial and sequential
-# Monte Carlo algorithms presume common burnin, thinning and total number of steps between the simulated chains. If it
-# is ever needed to have chain-specific runners, then the runner field can be turned to a vector of runners.
 type TaskMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
   model::Vector{M}
   sampler::Vector{S}
