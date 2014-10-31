@@ -45,7 +45,6 @@ export
   VanillaMCTuner,
   EmpiricalMCTuner,
   MCJob,
-  Job, # Job is a patch function (albeit camel notation). It will be replaced by MCJob once Julia v0.4 is released
   PlainMCJob,
   TaskMCJob,
   ### functions

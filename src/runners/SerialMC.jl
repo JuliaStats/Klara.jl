@@ -28,7 +28,7 @@ typealias SerialMC SerialMCBaseRunner
 function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), job::Symbol=:task)
   tic()
 
-  mcjob = Job(m, s, r; tuner=t, job=job)
+  mcjob = MCJob(m, s, r; tuner=t, job=job)
 
   # Pre-allocation for storing results
   mcchain::MCChain = MCChain(m.size, length(r.r); storegradlogtarget=r.storegradlogtarget)
