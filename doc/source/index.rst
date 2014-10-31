@@ -3,8 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to MCMC.jl's documentation!
-===================================
+MCMC.jl Package Documentation
+==============================
+
+The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
+implements:
+
+* serial and sequential Monte Carlo methods,
+* imperative model specification,
+* a range of Monte Carlo samplers,
+* summary statistics for MCMC and MCMC diagnostic tools,
+* output managemement and output post-processing,
+* various job managers for controlling the flow of simulations,
+* resuming Monte Carlo simulations,
+* Monte Carlo sampling with the help of automatic differentiation.
 
 Contents:
 
@@ -20,4 +32,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

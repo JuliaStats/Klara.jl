@@ -8,24 +8,19 @@ fully ported yet. Furthermore, the README package is not entirely up-to-date. Th
 the documentation will be completely ready in a few days' time. All the basic functionality of the package is already
 available as far as serial simulations are concerned.*
 
-The Julia `MCMC` package provides a generic engine for implementing Bayesian statistical models using Markov Chain Monte
-Carlo (MCMC) methods. While the package's framework aims at being extensible to accommodate user-specific models and
-sampling algorithms, it ships with a wide selection of built-in MCMC samplers. It further offers output analysis and
-MCMC diagnostic tools. 
+The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
+implements:
 
-_This package is built on the prior work that went into the `GeometricMCMC` and `SimpleMCMC` packages._
+* serial and sequential Monte Carlo methods,
+* imperative model specification,
+* a range of Monte Carlo samplers,
+* summary statistics for MCMC and MCMC diagnostic tools,
+* output managemement and output post-processing,
+* various job managers for controlling the flow of simulations,
+* resuming Monte Carlo simulations,
+* Monte Carlo sampling with the help of automatic differentiation.
 
-## Features
-
-The core functionality of Julia's `MCMC` package includes:
-- various MCMC samplers, up-to-date with contemporary advances in MCMC methodology,
-- ability to suspend/resume MCMC simulations flexibly by using Julia tasks,
-- user-friendly syntax for model specification,
-- use of automatic differentiation to generate the gradient function (higher order derivatives generation is under consideration),
-- integration with and use of functionality of `StatsBase` and `Distributions` packages,
-- summary statistics for MCMC, such as Monte Carlo standard error and variance, effective sample size (ESS),
-integrated autocorrelation time,
-- post-processing of MCMC output, such as variance reduction methods.
+See the [package documentation](http://mcmcjl.readthedocs.org/en/latest/) (WIP) for more details.
 
 ## Main Components of MCMC Chains in Julia
 
