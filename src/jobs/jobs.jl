@@ -1,6 +1,6 @@
 ### Constructors for setting up a Monte Carlo job
 
-function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t::T, j::Symbol)
+function Job{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t::T, j::Symbol)
   mcjob::MCJob
   if j == :plain
     mcjob = PlainMCJob(m, s, r, t)
@@ -12,21 +12,21 @@ function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t:
   mcjob
 end
 
-MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC; tuner::T=VanillaMCTuner(), job::Symbol=:task) =
-  MCJob(m, s, r, tuner, job)
+Job{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC; tuner::T=VanillaMCTuner(), job::Symbol=:task) =
+  Job(m, s, r, tuner, job)
 
 ### Constructors for setting up a vector of Monte Carlo jobs
 
-function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC}, t::Vector{T},
+function Job{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC}, t::Vector{T},
   j::Vector{Symbol})
   @assert length(m) == length(s) == length(r) == length(t) == length(j)
     "Number of models, samplers, runners, tuners and job types not equal."
-  map(MCJob, m, s, r, t, j)
+  map(Job, m, s, r, t, j)
 end
 
-MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC};
+Job{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC};
   tuners::Vector{T}=fill(VanillaMCTuner(), length(m)), jobs::Vector{Symbol}=fill(:task, length(m))) =
-  map(MCJob, m, s, r, tuners, jobs)
+  map(Job, m, s, r, tuners, jobs)
 
 ### Functions for running jobs
 
