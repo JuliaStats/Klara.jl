@@ -3,9 +3,9 @@
 function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t::T, j::Symbol)
   mcjob::MCJob
   if j == :plain
-    mcjob = PlainMCJob{M, S, SerialMC, T}(m, s, r, t)
+    mcjob = PlainMCJob(m, s, r, t)
   elseif j == :task
-    mcjob = TaskMCJob{M, S, SerialMC, T}(m, s, r, t)
+    mcjob = TaskMCJob(m, s, r, t)
   else
     error("Only :plain and :task jobs are available.")
   end

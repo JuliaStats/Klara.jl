@@ -29,11 +29,5 @@ type PlainMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
   end
 end
 
-PlainMCJob{M<:MCModel, S<:SerialMC, R<:MCRunner, T<:MCTuner}(m::M, s::S, r::R, t::T) =
-  PlainMCJob{M, S, R, T}([m], [s], [r], [t])
-
-convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{PlainMCJob{M, S, R, T}}, m::Vector{M}, s::Vector{S},
-  r::Vector{R}, t::Vector{T}) = PlainMCJob{M, S, R, T}(m, s, r, t)
-
-convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{PlainMCJob{M, S, R, T}}, m::M, s::S, r::R, t::T) = 
+PlainMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(m::M, s::S, r::R, t::T) =
   PlainMCJob{M, S, R, T}([m], [s], [r], [t])

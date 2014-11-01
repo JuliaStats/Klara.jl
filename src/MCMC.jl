@@ -6,7 +6,6 @@ using StatsBase
 using ReverseDiffSource
 
 import Base:
-  convert,
   show,
   run,
   select,
