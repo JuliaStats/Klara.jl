@@ -31,11 +31,5 @@ type TaskMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
   end
 end
 
-TaskMCJob{M<:MCModel, S<:SerialMC, R<:MCRunner, T<:MCTuner}(m::M, s::S, r::R, t::T) =
-  TaskMCJob{M, S, R, T}([m], [s], [r], [t])
-
-convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{TaskMCJob{M, S, R, T}}, m::Vector{M}, s::Vector{S},
-  r::Vector{R}, t::Vector{T}) = TaskMCJob{M, S, R, T}(m, s, r, t)
-
-convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{TaskMCJob{M, S, R, T}}, m::M, s::S, r::R, t::T) = 
+TaskMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(m::M, s::S, r::R, t::T) =
   TaskMCJob{M, S, R, T}([m], [s], [r], [t])

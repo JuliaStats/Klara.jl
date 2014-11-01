@@ -4,7 +4,7 @@
 #
 #   (Basic MCMC model type based on evaluating the log-target)
 #
-#   Examples of other possible models: MCMCHierarchicalModel, 
+#   Examples of other possible models: MCMCHierarchicalModel,
 #      MCMCGPModel, MCMCKernelModel
 #
 #################################################################
@@ -23,12 +23,12 @@ type MCLikelihoodModel <: MCModel
 	init::Vector{Float64}       # parameter vector initial values
 	scale::Vector{Float64}      # scaling hint on parameters
 
-	MCLikelihoodModel(f::Function, 
+	MCLikelihoodModel(f::Function,
 						g::FunctionOrNothing, ag::FunctionOrNothing,
 						t::FunctionOrNothing, at::FunctionOrNothing,
 						dt::FunctionOrNothing, adt::FunctionOrNothing,
-						init::Vector{Float64}, 
-						sc::Vector{Float64}, 
+						init::Vector{Float64},
+						sc::Vector{Float64},
 						pmap::Dict) = begin
 
 		s = size(init, 1)
@@ -43,7 +43,7 @@ type MCLikelihoodModel <: MCModel
 		for i = 1:7
 			if isgeneric(fin[i]) && !method_exists(fin[i], (Vector{Float64},))
 				if method_exists(fin[i], (Float64,))
-					fout[i] = x::Vector{Float64} -> fin[i](x[1])  
+					fout[i] = x::Vector{Float64} -> fin[i](x[1])
 				else
 				  error("one of the supplied functions cannot be called with Vector{Float64}")
           #TODO : make error message print which function is problematic
@@ -72,7 +72,7 @@ end
 typealias MCLikModel MCLikelihoodModel
 
 # Model creation using expression parsing and autodiff
-function MCLikelihoodModel(	m::Expr; 
+function MCLikelihoodModel(	m::Expr;
 								gradient::Bool=false,
 								init=nothing,
 								pmap=nothing,
@@ -101,15 +101,15 @@ end
 
 # Model creation : with user supplied functions
 function MCLikelihoodModel(	lik::Function;
-								grad::FunctionOrNothing = nothing, 
+								grad::FunctionOrNothing = nothing,
 								tensor::FunctionOrNothing = nothing,
 								dtensor::FunctionOrNothing = nothing,
-								allgrad::FunctionOrNothing = nothing, 
+								allgrad::FunctionOrNothing = nothing,
 								alltensor::FunctionOrNothing = nothing,
 								alldtensor::FunctionOrNothing = nothing,
-								init::F64OrVectorF64 = [1.0], 
+								init::F64OrVectorF64 = [1.0],
 								scale::F64OrVectorF64 = 1.0,
-								pmap::Union(Nothing, Dict) = nothing) 
+								pmap::Union(Nothing, Dict) = nothing)
 
 	# convert init to vector if needed
 	init = isa(init, Float64) ? [init] : init
@@ -118,16 +118,16 @@ function MCLikelihoodModel(	lik::Function;
 	scale = isa(scale, Float64) ? scale * ones(length(init)) : scale
 
 	# all parameters named "pars" by default
-	if pmap == nothing ; pmap = Dict(zip([:pars], [(1, size(init))])) ; end 
+	if pmap == nothing ; pmap = Dict([:pars], [(1, size(init))]) ; end
 
 	# now build missing functions, if any
 	fmat = Array(FunctionOrNothing, 3, 2)
-	for (i, f1, f2) in [(1, grad, allgrad), 
-						(2, tensor, alltensor), 
+	for (i, f1, f2) in [(1, grad, allgrad),
+						(2, tensor, alltensor),
 						(3, dtensor, alldtensor)]
 		fmat[i,:] = [f1 f2]
 		if f1==nothing && f2!=nothing # only the tuple version is supplied
-			fmat[i,1] = (v) -> f2(v)[end] 
+			fmat[i,1] = (v) -> f2(v)[end]
 		elseif f1!=nothing && f2==nothing # only the single version is supplied
 			if i == 1
 				fmat[i,2] = (v) -> (lik(v), f1(v))
@@ -138,7 +138,7 @@ function MCLikelihoodModel(	lik::Function;
 		end
 	end
 
-	MCLikelihoodModel(lik, 
+	MCLikelihoodModel(lik,
 						fmat[1,1], fmat[1,2],
 						fmat[2,1], fmat[2,2],
 						fmat[3,1], fmat[3,2],
@@ -148,10 +148,10 @@ end
 # Model creation with multivariate Distribution as input
 
 function MCLikelihoodModel(d::MultivariateDistribution;
-  grad::FunctionOrNothing = nothing, 
+  grad::FunctionOrNothing = nothing,
   tensor::FunctionOrNothing = nothing,
   dtensor::FunctionOrNothing = nothing,
-  allgrad::FunctionOrNothing = nothing, 
+  allgrad::FunctionOrNothing = nothing,
   alltensor::FunctionOrNothing = nothing,
   alldtensor::FunctionOrNothing = nothing,
 	init::F64OrVectorF64 = [1.0], scale::F64OrVectorF64 = 1.0, pmap::Union(Nothing, Dict) = nothing)
@@ -174,10 +174,10 @@ end
 # Model creation with univariate Distribution as input
 
 function MCLikelihoodModel(d::UnivariateDistribution;
-  grad::FunctionOrNothing = nothing, 
+  grad::FunctionOrNothing = nothing,
   tensor::FunctionOrNothing = nothing,
   dtensor::FunctionOrNothing = nothing,
-  allgrad::FunctionOrNothing = nothing, 
+  allgrad::FunctionOrNothing = nothing,
   alltensor::FunctionOrNothing = nothing,
   alldtensor::FunctionOrNothing = nothing,
 	init::F64OrVectorF64 = [1.0], scale::F64OrVectorF64 = 1.0, pmap::Union(Nothing, Dict) = nothing)

@@ -63,7 +63,7 @@ end
 
 function initialize_task!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x)) 
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
 
   while true
     iterate!(stash, m, s, r, t, produce)
@@ -92,19 +92,19 @@ function iterate!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner
   stash.smean = stash.instate.successive.sample+(stash.driftstep/2)*stash.instate.successive.gradlogtarget
   stash.poldgivennew =
     sum(-(stash.smean-stash.instate.current.sample).^2/(2*stash.driftstep).-log(2*pi*stash.driftstep)/2)
-    
+
   stash.ratio = stash.instate.successive.logtarget+stash.poldgivennew-stash.instate.current.logtarget-stash.pnewgivenold
   if stash.ratio > 0 || (stash.ratio > log(rand()))
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}("accept" => true))
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      stash.tune.accepted += 1 
+      stash.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      stash.tune.accepted += 1     
+      stash.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}("accept" => false))
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
   end
 
   if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0

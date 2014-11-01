@@ -1,12 +1,12 @@
 ##########################################################################
 #
-#    Misc expression manipulation function 
+#    Misc expression manipulation function
 #
 ##########################################################################
 
 #### translates ~ into regular syntax
 function translate(ex::Expr)
-	if ex.head == :block 
+	if ex.head == :block
 		return Expr(:block, translate(ex.args)...)
 
 	#  handles ~ for julia 0.2
@@ -19,7 +19,7 @@ function translate(ex::Expr)
 		if isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :+   #  ~+  (right censoring) statement
 			return :( $ACC_SYM += logccdf( $(ex2.args[2]), $(ex.args[2]) ) )
 
-		elseif isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :-  #  ~-  (left censoring) statement			
+		elseif isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :-  #  ~-  (left censoring) statement
 			return :( $ACC_SYM += logcdf( $(ex2.args[2]), $(ex.args[2]) ) )
 
 		elseif isa(ex2, Expr) || isa(ex2, Symbol)   # ~ statement
@@ -40,7 +40,7 @@ function translate(ex::Expr)
 		if isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :+   #  ~+  (right censoring) statement
 			return :( $ACC_SYM += logccdf( $(ex2.args[2]), $(ex.args[2]) ) )
 
-		elseif isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :-  #  ~-  (left censoring) statement			
+		elseif isa(ex2, Expr) && length(ex2.args)==2 && ex2.args[1] == :-  #  ~-  (left censoring) statement
 			return :( $ACC_SYM += logcdf( $(ex2.args[2]), $(ex.args[2]) ) )
 
 		elseif isa(ex2, Expr) || isa(ex2, Symbol)   # ~ statement
@@ -83,7 +83,7 @@ end
 ### creates mapping statements from model parameter variables to Vector{Float64}
 # FIXME : using undocumented dprefix function of ReverseDiffSource (should be replaced)
 function var2vec(;init...)
-	ex = []
+	ex = {}
 	for (v,i) in init
 		sz = size(i)
 		if in(length(sz), [0,1]) # scalar or vector

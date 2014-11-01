@@ -28,11 +28,11 @@ typealias SerialMC SerialMCBaseRunner
 function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(), job::Symbol=:task)
   tic()
 
-  mcjob = MCJob(m, s, r; tuner=t, job=job)
+  mcjob = set_mcjob(m, s, r; tuner=t, job=job)
 
   # Pre-allocation for storing results
   mcchain::MCChain = MCChain(m.size, length(r.r); storegradlogtarget=r.storegradlogtarget)
-  ds = Dict{Any, Any}("step" => collect(r.r))
+  ds = {"step" => collect(r.r)}
 
   # Sampling loop
   i::Int = 1
@@ -50,9 +50,9 @@ function run(m::MCModel, s::MCSampler, r::SerialMC, t::MCTuner=VanillaMCTuner(),
       for (k,v) in mcstate.diagnostics
         # If diagnostics name not seen before, create column
         if !haskey(ds, k)
-          ds[k] = Array(typeof(v), length(ds["step"]))          
+          ds[k] = Array(typeof(v), length(ds["step"]))
         end
-        
+
         ds[k][i] = v
       end
 

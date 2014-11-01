@@ -6,7 +6,6 @@ using StatsBase
 using ReverseDiffSource
 
 import Base:
-  convert,
   show,
   run,
   select,
@@ -45,11 +44,11 @@ export
   SerialMC,
   VanillaMCTuner,
   EmpiricalMCTuner,
-  MCJob,
   PlainMCJob,
   TaskMCJob,
   ### functions
   model,
+  set_mcjob,
   run,
   resume,
   select,

@@ -118,16 +118,16 @@ function iterate!(stash::HMCStash, m::MCModel, s::HMC, r::MCRunner, t::MCTuner, 
   end
 
   if rand() < exp(stash.instate.current.hamiltonian-stash.instate.successive.hamiltonian)
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, Dict{Any, Any}("accept" => true))
+    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
     stash.instate.current = deepcopy(stash.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      stash.tune.accepted += 1 
+      stash.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      stash.tune.accepted += 1     
+      stash.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, Dict{Any, Any}("accept" => false))
+    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
   end
 
   if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
