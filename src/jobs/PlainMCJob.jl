@@ -3,30 +3,37 @@
 type PlainMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
   model::Vector{M}
   sampler::Vector{S}
-  runner::R
+  runner::Vector{R}
   tuner::Vector{T}
   stash::Vector{MCStash}
   send::Function
   receive::Function
   reset::Function
-  jtype::Symbol
+  jobtype::Symbol
+  dim::Int
 
-  function PlainMCJob(m::Vector{M}, s::Vector{S}, r::R, t::Vector{T})
-    nchains = length(m)
-    @assert nchains == length(s) == length(t) "Number of models, samplers and tuners not equal."
-
+  function PlainMCJob(m::Vector{M}, s::Vector{S}, r::Vector{R}, t::Vector{T})
     job::PlainMCJob = new()
+    
+    job.dim = length(m)
+    @assert job.dim == length(s) == length(r) == length(t) "Number of models, samplers, runners and tuners not equal."
 
     job.model, job.sampler, job.runner, job.tuner = m, s, r, t
-    job.stash = MCStash[initialize_stash(m[i], s[i], r, t[i]) for i = 1:nchains]
+    job.stash = MCStash[initialize_stash(m[i], s[i], r[i], t[i]) for i = 1:job.dim]
     job.send = identity
-    job.receive = (i::Int)->iterate!(job.stash[i], m[i], s[i], r, t[i], identity)
+    job.receive = (i::Int)->iterate!(job.stash[i], m[i], s[i], r[i], t[i], identity)
     job.reset = (i::Int, x::Vector{Float64})->reset!(job.stash[i], x)
-    job.jtype = :plain
+    job.jobtype = :plain
 
     job
   end
 end
 
-PlainMCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t::T) =
-  PlainMCJob{M, S, SerialMC, T}([m], [s], r, [t])
+PlainMCJob{M<:MCModel, S<:SerialMC, R<:MCRunner, T<:MCTuner}(m::M, s::S, r::R, t::T) =
+  PlainMCJob{M, S, R, T}([m], [s], [r], [t])
+
+convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{PlainMCJob{M, S, R, T}}, m::Vector{M}, s::Vector{S},
+  r::Vector{R}, t::Vector{T}) = PlainMCJob{M, S, R, T}(m, s, r, t)
+
+convert{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner}(::Type{PlainMCJob{M, S, R, T}}, m::M, s::S, r::R, t::T) = 
+  PlainMCJob{M, S, R, T}([m], [s], [r], [t])
