@@ -1,4 +1,5 @@
-## Julia MCMC
+MCMC.jl
+==============================
 
 [![Build Status](https://travis-ci.org/JuliaStats/MCMC.jl.png)](https://travis-ci.org/JuliaStats/MCMC.jl)
 [![MCMC](http://pkg.julialang.org/badges/MCMC_release.svg)](http://pkg.julialang.org/?pkg=MCMC&ver=release)
@@ -8,19 +9,36 @@ fully ported yet. Furthermore, the README package is not entirely up-to-date. Th
 the documentation will be completely ready in a few days' time. All the basic functionality of the package is already
 available as far as serial simulations are concerned.*
 
+
+Features
+------------------------------
+
 The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
 implements:
 
-* serial and sequential Monte Carlo methods,
 * imperative model specification,
 * a range of Monte Carlo samplers,
-* summary statistics for MCMC and MCMC diagnostic tools,
-* output managemement and output post-processing,
+* serial and sequential Monte Carlo methods,
+* tuning of the samplers' parameters,
 * various job managers for controlling the flow of simulations,
+* descriptive statistics for MCMC and MCMC diagnostic tools,
+* output managemement,
 * resuming Monte Carlo simulations,
 * Monte Carlo sampling with the help of automatic differentiation.
 
+
+Outline
+------------------------------
+
+*Jobs* are the central input entities for handling MCMC simulations. A job is first instantiated to delineate the MCMC
+configuration. The main defining components of a job are the *model*, *sampler* and *runner*. Once set up, the job can
+be run or resumed.
+
+*Chains* form the building block for managing the output of MCMC simulations. Jobs return chains. Descriptive
+statistics, MCMC diagnostics and output processing can be performed on chains.
+
 See the [package documentation](http://mcmcjl.readthedocs.org/en/latest/) (WIP) for more details.
+
 
 ## Main Components of MCMC Chains in Julia
 

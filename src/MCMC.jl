@@ -92,12 +92,14 @@ include("tuners/EmpiricalMCTuner.jl")
 include("jobs/PlainMCJob.jl")
 include("jobs/TaskMCJob.jl")
 include("jobs/jobs.jl")
-include("stats/filtering.jl")
 include("stats/mean.jl")
 include("stats/var.jl")
-include("stats/ess.jl")
-include("stats/summary.jl")
 include("stats/zv.jl")
-include("ui.jl") # This is a high level user interface
+include("diagnostics/ess.jl")
+include("diagnostics/actime.jl")
+include("diagnostics/summary.jl")
+include("output/filter.jl")
+# include("output/merge.jl")
+include("ui/minimal.jl")
 
 end
