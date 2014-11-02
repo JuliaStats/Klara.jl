@@ -98,7 +98,8 @@ include("stats/zv.jl")
 include("diagnostics/ess.jl")
 include("diagnostics/actime.jl")
 include("diagnostics/summary.jl")
-include("output/filter.jl")
+# Output management: filter, merge, extract, read and write chains, convert btwn chains, arrays and dataframes
+# include("output/filter.jl")
 # include("output/merge.jl")
 include("ui/minimal.jl")
 
