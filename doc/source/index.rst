@@ -5,11 +5,11 @@
 
 
 MCMC.jl Package Documentation
-==============================
+==========================================================================================
 
 
 Features
-------------------------------
+------------------------------------------------------------------------------------------
 
 The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
 implements:
@@ -26,7 +26,7 @@ implements:
 
 
 Outline
-------------------------------
+------------------------------------------------------------------------------------------
 
 *Jobs* are the central input entities for handling MCMC simulations. A job is first instantiated to delineate the MCMC
 configuration. The main defining components of a job are the *model*, *sampler* and *runner*. Once set up, the job can
@@ -35,17 +35,28 @@ be run or resumed.
 *Chains* form the building block for managing the output of MCMC simulations. Jobs return chains. Descriptive
 statistics, MCMC diagnostics and output processing can be performed on chains.
 
+More elaborate usage information is provided in the following sections.
+
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
    
+   models
+   samplers
+   runners
+   tuners
+   jobs
+   chains
+   output_analysis
+   output_management
    minimal_interface
+   examples
 
 
 Indices and tables
-==================
+==========================================================================================
 
 * :ref:`genindex`
 * :ref:`modindex`
