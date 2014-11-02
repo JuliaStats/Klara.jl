@@ -14,3 +14,4 @@
 11) Performance considerations
   11.01) Consider using copy!() instead of copy() in samplers
   11.02) Make algebraic changes in samplers to speed them up
+12) Craft a package log
