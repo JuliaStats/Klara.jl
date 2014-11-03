@@ -10,7 +10,7 @@
 #################################################################
 
 # The likelihood Model type
-type MCLikelihoodModel <: MCModel
+type MCLikelihood <: MCModel
 	eval::Function              # log-likelihood evaluation function
 	evalg::FunctionOrNothing 			# gradient vector evaluation function
 	evalt::FunctionOrNothing 			# tensor evaluation function
@@ -23,7 +23,7 @@ type MCLikelihoodModel <: MCModel
 	init::Vector{Float64}       # parameter vector initial values
 	scale::Vector{Float64}      # scaling hint on parameters
 
-	MCLikelihoodModel(f::Function, 
+	MCLikelihood(f::Function, 
 						g::FunctionOrNothing, ag::FunctionOrNothing,
 						t::FunctionOrNothing, at::FunctionOrNothing,
 						dt::FunctionOrNothing, adt::FunctionOrNothing,
@@ -60,7 +60,7 @@ type MCLikelihoodModel <: MCModel
 	end
 end
 
-function show(io::IO, res::MCLikelihoodModel)
+function show(io::IO, res::MCLikelihood)
   print(io, "LikelihoodModel, with $(length(res.pmap)) parameter(s)")
   hasgradient(res) && print(io, ", with gradient")
   hastensor(res) && print(io, "/tensor")
@@ -68,11 +68,8 @@ function show(io::IO, res::MCLikelihoodModel)
   println(io)
 end
 
-
-typealias MCLikModel MCLikelihoodModel
-
 # Model creation using expression parsing and autodiff
-function MCLikelihoodModel(	m::Expr; 
+function MCLikelihood(	m::Expr; 
 								gradient::Bool=false,
 								init=nothing,
 								pmap=nothing,
@@ -95,12 +92,12 @@ function MCLikelihoodModel(	m::Expr;
 		g = nothing
 	end
 
-	MCLikelihoodModel(f, allgrad=g, init=i, pmap=p, scale=scale)
+	MCLikelihood(f, allgrad=g, init=i, pmap=p, scale=scale)
 end
 
 
 # Model creation : with user supplied functions
-function MCLikelihoodModel(	lik::Function;
+function MCLikelihood(	lik::Function;
 								grad::FunctionOrNothing = nothing, 
 								tensor::FunctionOrNothing = nothing,
 								dtensor::FunctionOrNothing = nothing,
@@ -138,7 +135,7 @@ function MCLikelihoodModel(	lik::Function;
 		end
 	end
 
-	MCLikelihoodModel(lik, 
+	MCLikelihood(lik, 
 						fmat[1,1], fmat[1,2],
 						fmat[2,1], fmat[2,2],
 						fmat[3,1], fmat[3,2],
@@ -147,7 +144,7 @@ end
 
 # Model creation with multivariate Distribution as input
 
-function MCLikelihoodModel(d::MultivariateDistribution;
+function MCLikelihood(d::MultivariateDistribution;
   grad::FunctionOrNothing = nothing, 
   tensor::FunctionOrNothing = nothing,
   dtensor::FunctionOrNothing = nothing,
@@ -166,14 +163,14 @@ function MCLikelihoodModel(d::MultivariateDistribution;
   	end
   end
 
-	MCLikelihoodModel(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
+	MCLikelihood(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
     allgrad=allgrad, alltensor=alltensor, alldtensor=alldtensor,
     init=init, scale=scale, pmap=pmap)
 end
 
 # Model creation with univariate Distribution as input
 
-function MCLikelihoodModel(d::UnivariateDistribution;
+function MCLikelihood(d::UnivariateDistribution;
   grad::FunctionOrNothing = nothing, 
   tensor::FunctionOrNothing = nothing,
   dtensor::FunctionOrNothing = nothing,
@@ -192,7 +189,7 @@ function MCLikelihoodModel(d::UnivariateDistribution;
   	end
   end
 
-	MCLikelihoodModel(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
+	MCLikelihood(fout[1]; grad=fout[2], tensor=tensor, dtensor=dtensor,
     allgrad=allgrad, alltensor=alltensor, alldtensor=alldtensor,
     init=init, scale=scale, pmap=pmap)
 end

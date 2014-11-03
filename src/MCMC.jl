@@ -32,7 +32,7 @@ import Distributions:
 
 export
   ### types
-  MCLikModel,
+  MCLikelihood,
   MCChain,
   ARS,
   SliceSampler,
@@ -70,7 +70,7 @@ include("parsers/definitions/DistributionsExtensions.jl")
 include("parsers/definitions/AccumulatorDerivRules.jl")
 include("parsers/definitions/MCMCDerivRules.jl")
 include("parsers/expr_funcs.jl")
-include("models/MCLikModel.jl")
+include("models/MCLikelihood.jl")
 include("models/models.jl")
 include("samplers/ARS.jl")
 include("samplers/SliceSampler.jl")
