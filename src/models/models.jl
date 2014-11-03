@@ -23,7 +23,7 @@ hasdtensor{M<:MCModel}(m::M) = m.evaldt != nothing
 # Left as is in case other kind of models come up
 function model(f::Union(Function, Distribution, Expr); mtype="likelihood", args...)
 	if mtype == "likelihood"
-		return MCLikModel(f; args...)
+		return MCLikelihood(f; args...)
 	elseif mtype == "whatever"
 	else
 	end

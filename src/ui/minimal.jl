@@ -7,7 +7,7 @@
 function ARS(f::Function, init::Vector{Float64}, nsteps::Int, burnin::Int,
   logproposal::Function, proposalscale::Float64, jumpscale::Float64;
   nchains::Int=1, thinning::Int=1)
-  mcmodel::MCLikModel = model(f, init=init)
+  mcmodel::MCLikelihood = model(f, init=init)
   mcsampler::ARS = ARS(logproposal, proposalscale, jumpscale)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
@@ -21,7 +21,7 @@ end
 
 function SliceSampler(f::Function, init::Vector{Float64}, nsteps::Int, burnin::Int, widths::Vector{Float64};
   nchains::Int=1, thinning::Int=1, stepout::Bool=true)
-  mcmodel::MCLikModel = model(f, init=init)
+  mcmodel::MCLikelihood = model(f, init=init)
   mcsampler::SliceSampler = SliceSampler(widths, stepout)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
@@ -38,7 +38,7 @@ function MH(f::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   thinning::Int=1,
   logproposal::FunctionOrNothing=nothing,
   randproposal::FunctionOrNothing=(x::Vector{Float64} -> rand(IsoNormal(x, 1.))))
-  mcmodel::MCLikModel = model(f, init=init)
+  mcmodel::MCLikelihood = model(f, init=init)
   mcsampler::MH
   if logproposal==nothing
     mcsampler = MH(randproposal)
@@ -57,7 +57,7 @@ end
 
 function RAM(f::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, thinning::Int=1, jumpscale::Float64=1., targetrate::Float64=0.234)
-  mcmodel::MCLikModel = model(f, init=init)
+  mcmodel::MCLikelihood = model(f, init=init)
   mcsampler::RAM = RAM(jumpscale, targetrate)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
@@ -71,7 +71,7 @@ end
 
 function HMC(f::Function, g::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, thinning::Int=1, nleaps::Int=10, leapstep::Float64=0.1)
-  mcmodel::MCLikModel = model(f, grad=g, init=init)
+  mcmodel::MCLikelihood = model(f, grad=g, init=init)
   mcsampler::HMC = HMC(nleaps, leapstep)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
@@ -85,7 +85,7 @@ end
 
 function MALA(f::Function, g::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, thinning::Int=1, driftstep::Float64=1.)
-  mcmodel::MCLikModel = model(f, grad=g, init=init)
+  mcmodel::MCLikelihood = model(f, grad=g, init=init)
   mcsampler::MALA = MALA(driftstep=driftstep)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
@@ -99,7 +99,7 @@ end
 
 function SMMALA(f::Function, g::Function, h::Function, init::Vector{Float64}, nsteps::Int, burnin::Int;
   nchains::Int=1, thinning::Int=1, driftstep::Float64=1.)
-  mcmodel::MCLikModel = model(f, grad=g, tensor=h, init=init)
+  mcmodel::MCLikelihood = model(f, grad=g, tensor=h, init=init)
   mcsampler::SMMALA = SMMALA(driftstep=driftstep)
   mcrunner::SerialMC = SerialMC(burnin=burnin, thinning=thinning, nsteps=nsteps)
   mcsamples::Array{Float64, 3} = Array(Float64, length(mcrunner.r), length(init), nchains)
