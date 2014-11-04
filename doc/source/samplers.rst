@@ -37,7 +37,7 @@ third order derivatives correspond to the ``model()`` keyword arguments ``grad``
 
 .. _ars:
 
-Acceptance-Rejection Sampler (ARS)
+ARS
 ------------------------------------------------------------------------------------------
 
 The *acceptance-rejection method*, also known as *rejection sampling*, was introduced by :cite:`neu:var` . For a more
@@ -55,7 +55,7 @@ is also called the *envelope*. Rejection sampling allows to sample from
 indirectly by sampling instead from the instrumental proposal
 :math:`g(x)`.
 
-The table below provides the fields of ``ARS``.
+The acceptance-rejection sampler is represented by the ``ARS`` type in Julia, whose fields are provided below:
 
 +---------------+--------------+---------+---------+---------------+
 | ARS field     | Field type   | Required/optional | Default value |
@@ -84,59 +84,77 @@ Below is a demonstration of how the ``ARS`` constructor can be invoked:
 
 .. _slice_sampler:
 
-Slice Sampler (SliceSampler)
+SliceSampler
 ------------------------------------------------------------------------------------------
+
+Slice sampler, to appear soon.
 
 
 .. _mh:
 
-Metropolis-Hastings (MH)
+MH
 ------------------------------------------------------------------------------------------
+
+Metropolis-Hastings, to appear soon.
 
 
 .. _ram:
 
-Robust Adaptive Metropolis (RAM)
+RAM
 ------------------------------------------------------------------------------------------
+
+Robust adaptive Metropolis, to appear soon.
 
 
 .. _hmc:
 
-Hamiltonian Monte Carlo (HMC)
+HMC
 ------------------------------------------------------------------------------------------
+
+Hamiltonian Monte Carlo, to appear soon.
 
 
 .. _hmcda:
 
-Adaptive Hamiltonian Monte Carlo with Dual averaging (HMCDA)
+HMCDA
 ------------------------------------------------------------------------------------------
+
+Adaptive Hamiltonian Monte Carlo with dual averaging, to appear soon.
 
 
 .. _nuts:
 
-No-U-Turn Sampler (NUTS)
+NUTS
 ------------------------------------------------------------------------------------------
+No-U-turn sampler, to appear soon.
 
 
 .. _mala:
 
-Metropolis-Adjusted Langevin Algorithm (MALA)
+MALA
 ------------------------------------------------------------------------------------------
+Metropolis-adjusted Langevin algorithm, to appear soon.
 
 
 .. _smmala:
 
-Simplified Manifold Metropolis-Adjusted Langevin Algorithm (SMMALA)
+SMMALA
 ------------------------------------------------------------------------------------------
+
+Simplified manifold Metropolis-adjusted Langevin algorithm, to appear soon.
 
 
 .. _rmhmc:
 
-Riemannian Manifold Hamiltonian Monte Carlo (RMHMC)
+RMHMC
 ------------------------------------------------------------------------------------------
+
+Riemannian manifold Hamiltonian Monte Carlo, to appear soon.
 
 
 .. _pmala:
 
-Position-Dependent Metropolis adjusted Langevin algorithm (PMALA)
+PMALA
 ------------------------------------------------------------------------------------------
+
+Position-dependent Metropolis adjusted Langevin algorithm, to appear soon.

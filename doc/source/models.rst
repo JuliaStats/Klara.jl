@@ -25,7 +25,7 @@ Model Specification by Explicitly Defining the Log-Target Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One way of setting the model is to provide the log-target as a function. As a working example, suppose that ineterest is
-in sampling from the 3-dimensional standard Normal
+in sampling from the 3-dimensional standard normal
 :math:`\mathbb{N}(\mathbf{0},\mathbf{I})`.
 The function
 :math:`f:\mathbb{R}^3\rightarrow\mathbb{R}`,
