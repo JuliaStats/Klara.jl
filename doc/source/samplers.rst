@@ -1,9 +1,9 @@
 Samplers
 ==========================================================================================
 
-This section discusses the Monte Carlo samplers implemented by the *MCMC* package. Each sampler is an immutable type.
-The type's fields correspond to the defining attributes of the sampler. Knowledge of the samplers is assumed. The
-interested user is referred to relevant literature for more background information.
+This section discusses the package's Monte Carlo samplers assuming MCMC knowledge on the user's part.
+The interested user is referred to relevant literature for more background information.
+Each sampler is an immutable type. The types' fields correspond to the samplers' defining attributes.
 
 The table below summarizes up to which order of log-target derivatives are required by each sampler. First, second and
 third order derivatives correspond to the ``model()`` keyword arguments ``grad``, ``tensor`` and ``dtensor``.
@@ -69,7 +69,7 @@ The acceptance-rejection sampler is represented by the ``ARS`` type in Julia, wh
 
 ``logproposal`` refers to the log-proposal
 :math:`g(x)`.
-``proposalscale`` is a scale factor to ensure the scaled-up logproposal covers target.
+``proposalscale`` is a scale factor used for ensuring that the scaled-up proposal covers the target.
 ``jumpscale`` is a scale factor for adapting the jump size.
 
 Below is a demonstration of how the ``ARS`` constructor can be invoked:
