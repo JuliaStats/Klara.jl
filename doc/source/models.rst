@@ -14,7 +14,7 @@ At the present time, the ``model()`` function acts as the interface for model sp
 Likelihood Model
 ------------------------------------------------------------------------------------------
 
-A likelihood model is defined by its log-target and its parameters' initial values. The log-target is a possibly
+A *likelihood model* is defined by its log-target and its parameters' initial values. The log-target is a possibly
 unnormalized density, which is aimed at approximating the log-likelihood or, in a Bayesian context, the log-posterior. Some samplers additionally require the gradient, metric tensor and tensor derivatives of the log-target.
 Such extra information is either provided by the user or is attained via automatic differentiation.
 
@@ -27,11 +27,13 @@ Model Specification by Explicitly Defining the Log-Target Function
 One way of setting the model is to provide the log-target as a function. As a working example, suppose that ineterest is
 in sampling from the 3-dimensional standard Normal
 :math:`\mathbb{N}(\mathbf{0},\mathbf{I})`.
-The function :math:`f:\mathbb{R}^3\rightarrow\mathbb{R}`,
+The function
+:math:`f:\mathbb{R}^3\rightarrow\mathbb{R}`,
 :math:`f(\mathbf{x})=-\mathbf{x}\cdot\mathbf{x}`,
 is selected as the unnormalized log-target, with its values being the inner product of its input. The initial parameter
 values are set to be
-:math:`x=\left[1,1,1\right]^T`. Any of the following invocations instantiate the desired model:
+:math:`x=\left[1,1,1\right]^T`.
+Any of the following invocations instantiate the desired model:
 
 .. code-block:: julia
   :linenos:

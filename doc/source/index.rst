@@ -53,7 +53,8 @@ Contents:
    output_management
    minimal_interface
    examples
-
+   references
+   
 
 Indices and tables
 ==========================================================================================
