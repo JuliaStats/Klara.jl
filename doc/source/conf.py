@@ -31,6 +31,8 @@ import os
 extensions = [
     'sphinx.ext.mathjax',
     'sphinxcontrib.bibtex',
+    'juliadoc.julia',
+    'juliadoc.jlhelp'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
