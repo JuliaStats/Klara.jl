@@ -87,7 +87,7 @@ Below is a demonstration of how the ``ARS`` constructor can be invoked:
 SliceSampler
 ------------------------------------------------------------------------------------------
 
-Slice sampler, to appear soon.
+The seeds for discovering slice sampling were planted mainly in the works of :cite:`edw:sok:gen,dam:wak:wal:gib`.
 
 
 .. _mh:
