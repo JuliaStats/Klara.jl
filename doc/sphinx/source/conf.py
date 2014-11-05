@@ -203,14 +203,26 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
-'preamble': '\usepackage{amsmath, amssymb}\n'
+#'preamble': '\usepackage{amsfonts, amsmath, amssymb, newunicodechar}\n\newunicodechar{}{\checkmark}'
+'utf8extra': r'''
+  \usepackage{amsfonts}
+  \usepackage{amsmath}
+  \usepackage{amssymb}
+  \usepackage{pifont}
+
+  \newcommand{\cmark}{\ding{51}}%
+  \newcommand{\xmark}{\ding{55}}
+
+  \DeclareUnicodeCharacter{2713}{\cmark}
+  \DeclareUnicodeCharacter{2717}{\xmark}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'MCMCjl.tex', u'MCMC.jl Documentation',
+  ('user_guide/index', 'JuliaMCMCUserGuide.tex', u'MCMC.jl User Guide',
    u'JuliaStats Team', 'manual'),
 ]
 

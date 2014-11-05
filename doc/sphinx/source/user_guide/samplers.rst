@@ -1,5 +1,5 @@
 Samplers
-==========================================================================================
+------------------------------------------------------------------------------------------
 
 This section discusses the package's Monte Carlo samplers assuming MCMC knowledge on the user's part.
 The interested user is referred to relevant literature for more background information.
@@ -38,7 +38,7 @@ third order derivatives correspond to the ``model()`` keyword arguments ``grad``
 .. _ars:
 
 ARS
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The *acceptance-rejection method*, also known as *rejection sampling*, was introduced by :cite:`neu:var` . For a more
 recent treatment see for example :cite:`rob:cas:mon,bol:und`. Suppose that it is diffcult to attain samples from a
@@ -85,7 +85,7 @@ Below is a demonstration of how the ``ARS`` constructor can be invoked:
 .. _slice_sampler:
 
 SliceSampler
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The seeds for discovering slice sampling were planted mainly in the works of :cite:`edw:sok:gen,dam:wak:wal:gib`.
 
@@ -93,7 +93,7 @@ The seeds for discovering slice sampling were planted mainly in the works of :ci
 .. _mh:
 
 MH
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Metropolis-Hastings, to appear soon.
 
@@ -101,7 +101,7 @@ Metropolis-Hastings, to appear soon.
 .. _ram:
 
 RAM
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Robust adaptive Metropolis, to appear soon.
 
@@ -109,7 +109,7 @@ Robust adaptive Metropolis, to appear soon.
 .. _hmc:
 
 HMC
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hamiltonian Monte Carlo, to appear soon.
 
@@ -117,7 +117,7 @@ Hamiltonian Monte Carlo, to appear soon.
 .. _hmcda:
 
 HMCDA
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adaptive Hamiltonian Monte Carlo with dual averaging, to appear soon.
 
@@ -125,21 +125,23 @@ Adaptive Hamiltonian Monte Carlo with dual averaging, to appear soon.
 .. _nuts:
 
 NUTS
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 No-U-turn sampler, to appear soon.
 
 
 .. _mala:
 
 MALA
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Metropolis-adjusted Langevin algorithm, to appear soon.
 
 
 .. _smmala:
 
 SMMALA
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Simplified manifold Metropolis-adjusted Langevin algorithm, to appear soon.
 
@@ -147,7 +149,7 @@ Simplified manifold Metropolis-adjusted Langevin algorithm, to appear soon.
 .. _rmhmc:
 
 RMHMC
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Riemannian manifold Hamiltonian Monte Carlo, to appear soon.
 
@@ -155,6 +157,6 @@ Riemannian manifold Hamiltonian Monte Carlo, to appear soon.
 .. _pmala:
 
 PMALA
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Position-dependent Metropolis adjusted Langevin algorithm, to appear soon.

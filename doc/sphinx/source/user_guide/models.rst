@@ -1,5 +1,5 @@
 Models
-==========================================================================================
+------------------------------------------------------------------------------------------
 
 The model component of a job refers in principle to a model on which MCMC inference is performed. Likelihood-based
 modelling is currently supported. The package's roadmap plans to provide graph-based model specification in collaboration
@@ -12,7 +12,7 @@ At the present time, the ``model()`` function acts as the interface for model sp
 .. _likelihood_model:
 
 Likelihood Model
-------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A *likelihood model* is defined by its log-target and its parameters' initial values. The log-target is a possibly
 unnormalized density, which is aimed at approximating the log-likelihood or, in a Bayesian context, the log-posterior. Some samplers additionally require the gradient, metric tensor and tensor derivatives of the log-target.
@@ -22,7 +22,7 @@ The likelihood model is specified via the ``MCLikelihood()`` constructor or the 
 
 
 Model Specification by Explicitly Defining the Log-Target Function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One way of setting the model is to provide the log-target as a function. As a working example, suppose that ineterest is
 in sampling from the 3-dimensional standard normal
@@ -89,7 +89,7 @@ manually provided.
 
 
 Model Specification by Explicitly Defining the Log-Target Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instead of providing it as a function, the log-target can be defined as a distribution. For example, this is how the
 log-target is set to be a standard normal distribution:
@@ -108,7 +108,7 @@ the same.
 
 
 Model Specification via Expression Parsing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A third way of specifying the model is via expression parsing. The model is described with the help of the package's
 expression-based syntax and the resulting expression is passed to ``model()`` as an argument. The following example of

@@ -1,6 +1,10 @@
-References
+:orphan:
+
+
+MCMC.jl User Guide
 ==========================================================================================
 
-.. bibliography:: xrefs.bib
-  :style: plain
-  :cited:
+.. toctree::
+   :maxdepth: 2
+   
+   user_guide/index
