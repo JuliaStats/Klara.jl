@@ -203,6 +203,7 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
+'preamble': '\usepackage{amsmath, amssymb}\n'
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
