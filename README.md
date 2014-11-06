@@ -3,7 +3,7 @@ MCMC.jl
 
 [![Build Status](https://travis-ci.org/JuliaStats/MCMC.jl.png)](https://travis-ci.org/JuliaStats/MCMC.jl)
 [![MCMC](http://pkg.julialang.org/badges/MCMC_release.svg)](http://pkg.julialang.org/?pkg=MCMC&ver=release)
-[![Docs](https://readthedocs.org/projects/mcmcjl/badge/?version=latest)](http://http://mcmcjl.readthedocs.org/en/latest/)
+[![Docs](https://readthedocs.org/projects/mcmcjl/badge/?version=latest)](http://mcmcjl.readthedocs.org/en/latest/)
 
 *The MCMC package has just gone through a major upgrade. For this reason, some aspects of the packages haven't been
 fully ported yet. Furthermore, the README package is not entirely up-to-date. The porting of the remaining code and
@@ -43,5 +43,5 @@ statistics, MCMC diagnostics and output processing can be performed on chains.
 Documentation
 ------------------------------
 
-* [User Guide](http://mcmcjl.readthedocs.org/en/latest/#user-guide) ([PDF](https://readthedocs.org/projects/mcmcjl/downloads/pdf/latest/))
+* [User Guide](http://mcmcjl.readthedocs.org/en/latest/) ([PDF](https://readthedocs.org/projects/mcmcjl/downloads/pdf/latest/))
 * Cheat Sheet (to appear soon)

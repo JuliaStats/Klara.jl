@@ -31,4 +31,4 @@ User Guide
    user_guide/output_management
    user_guide/minimal_interface
    user_guide/examples
-   user_guide/xrefs_html
+   user_guide/xrefs
