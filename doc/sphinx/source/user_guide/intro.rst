@@ -1,12 +1,17 @@
+.. _introduction:
+
 Introduction
 ------------------------------------------------------------------------------------------
 
+The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
+
+
+.. _features:
 
 Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
-implements:
+Briefly, *MCMC* implements:
 
 * imperative model specification,
 * a range of Monte Carlo samplers,
@@ -18,6 +23,8 @@ implements:
 * resuming Monte Carlo simulations,
 * Monte Carlo sampling with the help of automatic differentiation.
 
+
+.. _outline:
 
 Outline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

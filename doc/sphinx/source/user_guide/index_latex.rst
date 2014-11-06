@@ -1,5 +1,4 @@
-.. _user_guide_index:
-
+.. _user_guide_index_latex:
 
 User Guide
 ==========================================================================================
@@ -18,4 +17,4 @@ User Guide
    output_management
    minimal_interface
    examples
-   xrefs
+   xrefs_latex

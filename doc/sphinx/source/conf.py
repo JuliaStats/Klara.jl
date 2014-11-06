@@ -47,7 +47,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'index_html'
 
 # General information about the project.
 project = u'MCMC.jl'
@@ -222,8 +222,12 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('user_guide/index', 'JuliaMCMCUserGuide.tex', u'MCMC.jl User Guide',
-   u'JuliaStats Team', 'manual'),
+  ('user_guide/index_latex',
+    'JuliaMCMCUserGuide.tex',
+    u'MCMC.jl User Guide',
+    u'JuliaStats Team',
+    'manual'
+  ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -252,8 +256,12 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mcmcjl', u'MCMC.jl Documentation',
-     [u'JuliaStats Team'], 1)
+    ('index_html',
+      'mcmcjl', 
+      u'MCMC.jl Documentation',
+      [u'JuliaStats Team'],
+      1
+    )
 ]
 
 # If true, show URL addresses after external links.
@@ -266,9 +274,14 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'MCMCjl', u'MCMC.jl Documentation',
-   u'JuliaStats Team', 'MCMCjl', 'One line description of project.',
-   'Miscellaneous'),
+  ('index_html',
+    'MCMCjl', 
+    u'MCMC.jl Documentation',
+    u'JuliaStats Team', 
+    'MCMCjl', 
+    'One line description of project.',
+    'Miscellaneous'
+  ),
 ]
 
 # Documents to append as an appendix to all manuals.

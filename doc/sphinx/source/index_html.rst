@@ -4,14 +4,16 @@
    contain the root `toctree` directive.
 
 
+.. _package_documentation:
+
 MCMC.jl Package Documentation
 ==========================================================================================
 
-* Cheat Sheet (to appear soon)
 * :ref:`user_guide`
+* Cheat Sheet (to appear soon)
 
 
-.. _user_guide:
+.. _user_guide_index_html:
 
 User Guide
 ==========================================================================================
@@ -29,4 +31,4 @@ User Guide
    user_guide/output_management
    user_guide/minimal_interface
    user_guide/examples
-   user_guide/xrefs
+   user_guide/xrefs_html

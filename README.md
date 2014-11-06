@@ -3,18 +3,20 @@ MCMC.jl
 
 [![Build Status](https://travis-ci.org/JuliaStats/MCMC.jl.png)](https://travis-ci.org/JuliaStats/MCMC.jl)
 [![MCMC](http://pkg.julialang.org/badges/MCMC_release.svg)](http://pkg.julialang.org/?pkg=MCMC&ver=release)
+[![Docs](https://readthedocs.org/projects/mcmcjl/badge/?version=latest)](http://http://mcmcjl.readthedocs.org/en/latest/)
 
 *The MCMC package has just gone through a major upgrade. For this reason, some aspects of the packages haven't been
 fully ported yet. Furthermore, the README package is not entirely up-to-date. The porting of the remaining code and
 the documentation will be completely ready in a few days' time. All the basic functionality of the package is already
 available as far as serial simulations are concerned.*
 
+The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
+
 
 Features
 ------------------------------
 
-The Julia *MCMC* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference. Briefly, *MCMC*
-implements:
+Briefly, *MCMC* implements:
 
 * imperative model specification,
 * a range of Monte Carlo samplers,
@@ -37,4 +39,9 @@ be run or resumed.
 *Chains* form the building block for managing the output of MCMC simulations. Jobs return chains. Descriptive
 statistics, MCMC diagnostics and output processing can be performed on chains.
 
-See the [package documentation](http://mcmcjl.readthedocs.org/en/latest/) (WIP) for more details.
+
+Documentation
+------------------------------
+
+* [User Guide](http://mcmcjl.readthedocs.org/en/latest/#user-guide) ([PDF](https://readthedocs.org/projects/mcmcjl/downloads/pdf/latest/))
+* Cheat Sheet (to appear soon)
