@@ -9,7 +9,7 @@
 MCMC.jl Package Documentation
 ==========================================================================================
 
-* :ref:`user_guide`
+* :ref:`user_guide_index_html`
 * Cheat Sheet (to appear soon)
 
 
