@@ -93,8 +93,8 @@ The seeds for discovering *slice sampling* were planted mainly in the works of :
 while :cite:`nea:sli` offers a more contemporary exposition. A slice sampling method facilitates sampling from a
 possibly unnormalized density by sampling uniformly from the region under the density's graph. In fact, the method
 entails alternating between two uniform sampling steps, one in the horizontal *slice* direction from a subset of the
-density's domain and one in the vertical direction from the density's corresponding pre-image. Since the domains of the
-two involved uniforms are set adaptively for each iteration of the algorithm, slice sampling does not require much
+density's domain and one in the vertical direction from the density's corresponding pre-image. Since the support for the
+two involved uniforms is set adaptively for each iteration of the algorithm, slice sampling does not require much
 tuning. For this reason, it is a more automated alternative to Gibbs or Metropolis sampling. On the other hand, slice
 sampling works for univariate continuous variables. In the multivariate case, it updates one variable at a time, which
 is not so helpful if the variables are correlated.
