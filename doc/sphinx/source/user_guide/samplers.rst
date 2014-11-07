@@ -89,7 +89,37 @@ Below is a demonstration of how the ``ARS`` constructor can be invoked:
 SliceSampler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The seeds for discovering slice sampling were planted mainly in the works of :cite:`edw:sok:gen,dam:wak:wal:gib`.
+The seeds for discovering *slice sampling* were planted mainly in the works of :cite:`edw:sok:gen,dam:wak:wal:gib`,
+while :cite:`nea:sli` offers a more contemporary exposition. A slice sampling method facilitates sampling from a
+possibly unnormalized density by sampling uniformly from the region under the density's graph. In fact, the method
+entails alternating between two uniform sampling steps, one in the horizontal *slice* direction from a subset of the
+density's domain and one in the vertical direction from the density's corresponding pre-image. Since the domains of the
+two involved uniforms are set adaptively for each iteration of the algorithm, slice sampling does not require much
+tuning. For this reason, it is a more automated alternative to Gibbs or Metropolis sampling. On the other hand, slice
+sampling works for univariate continuous variables. In the multivariate case, it updates one variable at a time, which
+is not so helpful if the variables are correlated.
+
+The fields of ``SliceSampler`` are the following:
+
++--------------------+-----------------+---------+---------+---------------+
+| SliceSampler field | Field type      | Required/optional | Default value |
++====================+=================+=========+=========+===============+
+| widths             | Vector{Float64} | Optional          | Float64[]     |
++--------------------+-----------------+---------+---------+---------------+
+| stepout            | Bool            | Optional          | true          |
++--------------------+-----------------+---------+---------+---------------+
+
+``widths`` provides step-sizes for initially expanding the slice, while ``stepout`` protects against the case of
+passing in small widths when set to ``true``.
+
+Below is a demonstration of how ``SliceSampler`` can be called:
+
+.. code-block:: julia
+  :linenos:
+
+  SliceSampler()
+
+  SliceSampler(widths=[1.5, 1.1], stepout=false)
 
 
 .. _mh:
