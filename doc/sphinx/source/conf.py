@@ -14,6 +14,8 @@
 
 import sys
 import os
+import juliadoc
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -30,6 +32,9 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.mathjax',
+    'sphinxcontrib.bibtex',
+    'juliadoc.julia',
+    'juliadoc.jlhelp'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -100,7 +105,11 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+# html_theme = 'default'
+primary_domain = 'jl'
+highlight_language = 'julia'
+
+# html_theme = 'julia'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -109,6 +118,8 @@ html_theme = 'default'
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
+html_theme_path = [juliadoc.get_theme_dir(), sphinx_rtd_theme.get_html_theme_path()]
+html_sidebars = juliadoc.default_sidebars()
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -192,14 +203,31 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
+#'preamble': '\usepackage{amsfonts, amsmath, amssymb, newunicodechar}\n\newunicodechar{}{\checkmark}'
+'utf8extra': r'''
+  \usepackage{amsfonts}
+  \usepackage{amsmath}
+  \usepackage{amssymb}
+  \usepackage{pifont}
+
+  \newcommand{\cmark}{\ding{51}}%
+  \newcommand{\xmark}{\ding{55}}
+
+  \DeclareUnicodeCharacter{2713}{\cmark}
+  \DeclareUnicodeCharacter{2717}{\xmark}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'MCMCjl.tex', u'MCMC.jl Documentation',
-   u'JuliaStats Team', 'manual'),
+  ('user_guide/index_latex',
+    'JuliaMCMCUserGuide.tex',
+    u'MCMC.jl User Guide',
+    u'JuliaStats Team',
+    'manual'
+  ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -228,8 +256,12 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mcmcjl', u'MCMC.jl Documentation',
-     [u'JuliaStats Team'], 1)
+    ('index',
+      'mcmcjl', 
+      u'MCMC.jl Documentation',
+      [u'JuliaStats Team'],
+      1
+    )
 ]
 
 # If true, show URL addresses after external links.
@@ -242,9 +274,14 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'MCMCjl', u'MCMC.jl Documentation',
-   u'JuliaStats Team', 'MCMCjl', 'One line description of project.',
-   'Miscellaneous'),
+  ('index',
+    'MCMCjl', 
+    u'MCMC.jl Documentation',
+    u'JuliaStats Team', 
+    'MCMCjl', 
+    'One line description of project.',
+    'Miscellaneous'
+  ),
 ]
 
 # Documents to append as an appendix to all manuals.
