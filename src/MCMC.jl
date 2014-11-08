@@ -62,8 +62,10 @@ export
   linearzv,
   quadraticzv
 
-include("api/input.jl")
-include("api/output.jl")
+include("api/api.jl")
+include("api/samples.jl")
+include("api/states.jl")
+include("api/chains.jl")
 include("parsers/expr_funcs.jl")
 include("parsers/modelparser.jl")
 include("parsers/definitions/DistributionsExtensions.jl")
