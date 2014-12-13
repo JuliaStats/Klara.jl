@@ -1,4 +1,4 @@
-using Distributions, PDMats, MCMC
+using Distributions, PDMats, Lora
 
 # Using Optim, M would be ~ 106, acceptance rate ~ 12%
 #using Optim

@@ -1,4 +1,4 @@
-using Distributions, MCMC
+using Distributions, Lora
 
 # Using Optim, M0 and M1 would be ~ 5.01, acceptance rate ~ 60%
 #using Optim
