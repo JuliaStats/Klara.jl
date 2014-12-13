@@ -1,4 +1,4 @@
-using MCMC
+using Lora
 
 println("    Testing basic EmpiricalMCTuner constructors...")
 

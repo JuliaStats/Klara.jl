@@ -3,7 +3,7 @@
 # This samples the funnel distribution, then tests that inference is correct.
 #
 
-using MCMC
+using Lora
 
 #log  ~ N(0, 3), x_i ~ N(0, ), i=1,2,...,model.size
 

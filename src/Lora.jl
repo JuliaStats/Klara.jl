@@ -1,4 +1,4 @@
-module MCMC
+module Lora
 
 using Base.LinAlg.BLAS
 using Distributions
