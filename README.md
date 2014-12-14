@@ -46,5 +46,5 @@ statistics, MCMC diagnostics and output processing can be performed on chains.
 Documentation
 ------------------------------
 
-* [User Guide](http://mcmcjl.readthedocs.org/en/latest/) ([PDF](https://readthedocs.org/projects/mcmcjl/downloads/pdf/latest/))
+* [User Guide](http://lorajl.readthedocs.org/en/latest/) ([PDF](https://readthedocs.org/projects/lorajl/downloads/pdf/latest/))
 * Cheat Sheet (to appear soon)
