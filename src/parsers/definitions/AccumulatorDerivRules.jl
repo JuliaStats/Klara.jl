@@ -19,7 +19,7 @@ end
 +(ll::LLAcc, x::Real)           = LLAcc(ll.val + x)
 +(ll::LLAcc, x::Array{Float64}) = LLAcc(ll.val + sum(x))
 
-ReverseDiffSource.declareType(MCMC.LLAcc, :LLAcc) # declares new type to Autodiff
+ReverseDiffSource.declareType(Lora.LLAcc, :LLAcc) # declares new type to Autodiff
 
 ####### derivation rules  ############
 # (note : only additions are possible with LLAcc type )
