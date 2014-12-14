@@ -40,7 +40,7 @@ Any of the following invocations instantiate the desired model:
 .. code-block:: julia
   :linenos:
 
-  using MCMC
+  using Lora
 
   # Using a predefined function
   f(x) = -dot(x, x)
@@ -99,7 +99,7 @@ log-target is set to be a standard normal distribution:
 .. code-block:: julia
   :linenos:
   
-  using Distributions, MCMC
+  using Distributions, Lora
 
   mcmodel = model(Normal(), init=ones(3))
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# MCMC.jl documentation build configuration file, created by
+# Lora.jl documentation build configuration file, created by
 # sphinx-quickstart on Wed Oct 29 10:51:54 2014.
 #
 # This file is execfile()d with the current directory set to its
@@ -50,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'MCMC.jl'
+project = u'Lora.jl'
 copyright = u'2014, JuliaStats Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -189,7 +189,7 @@ html_static_path = ['.static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'MCMCjldoc'
+htmlhelp_basename = 'Lorajldoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -223,8 +223,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('user_guide/index_latex',
-    'JuliaMCMCUserGuide.tex',
-    u'MCMC.jl User Guide',
+    'JuliaLoraUserGuide.tex',
+    u'Lora.jl User Guide',
     u'JuliaStats Team',
     'manual'
   ),
@@ -258,7 +258,7 @@ latex_documents = [
 man_pages = [
     ('index',
       'mcmcjl', 
-      u'MCMC.jl Documentation',
+      u'Lora.jl Documentation',
       [u'JuliaStats Team'],
       1
     )
@@ -275,10 +275,10 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index',
-    'MCMCjl', 
-    u'MCMC.jl Documentation',
+    'Lorajl', 
+    u'Lora.jl Documentation',
     u'JuliaStats Team', 
-    'MCMCjl', 
+    'Lorajl', 
     'One line description of project.',
     'Miscellaneous'
   ),
