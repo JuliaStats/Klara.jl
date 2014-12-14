@@ -12,6 +12,6 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("MCMC"))`); Pkg.pin("MCMC"); Pkg.resolve()'
-  - julia -e 'using MCMC; @assert isdefined(:MCMC); @assert typeof(MCMC) === Module'
-  - julia -e 'Pkg.test("MCMC")'
+  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Lora"))`); Pkg.pin("Lora"); Pkg.resolve()'
+  - julia -e 'using Lora; @assert isdefined(:Lora); @assert typeof(Lora) === Module'
+  - julia -e 'Pkg.test("Lora")'
