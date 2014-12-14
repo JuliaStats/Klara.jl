@@ -2,7 +2,7 @@ Lora.jl
 ==============================
 
 [![Build Status](https://travis-ci.org/JuliaStats/Lora.jl.png)](https://travis-ci.org/JuliaStats/Lora.jl)
-[![MCMC](http://pkg.julialang.org/badges/LORA_release.svg)](http://pkg.julialang.org/?pkg=LORA&ver=release)
+[![MCMC](http://pkg.julialang.org/badges/Lora_release.svg)](http://pkg.julialang.org/?pkg=Lora&ver=release)
 [![Docs](https://readthedocs.org/projects/lorajl/badge/?version=latest)](http://lorajl.readthedocs.org/en/latest/)
 
 *MCMC* has moved to *Lora*. Development in *Lora* will continue. *MCMC* is a placeholder for the future merge of
