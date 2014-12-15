@@ -1,0 +1,12 @@
+While todo.txt provides a general list of improvements in the longer run, roadmap.txt prescribes a coherent sequence of
+action points for the near future:
+
+1) Port all remaining functionality from older MCMC.jl to Lora.jl
+2) Finish readthedocs for ported functionality
+3) Redesign model specification using factor graphs
+4) Refactor implementation of chains to facilitate the implementation of a Gibbs sampler
+5) Implement a generic Gibbs sampler on the basis of the new factor graph-based model
+6) Extend readthedocs
+7) Define a wider selection of MCMC diagnostics
+8) Extend readthedocs
+9) Write a coherent test suite for all the above
