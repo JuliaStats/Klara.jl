@@ -17,9 +17,9 @@ SliceSampler(stepout::Bool) = SliceSampler(Float64[], stepout)
 
 SliceSampler(; widths::Vector{Float64}=Float64[], stepout::Bool=true) = SliceSampler(widths, stepout)
 
-### SliceSamplerStash type holds the internal state ("local variables") of the slice sampler
+### SliceSamplerHeap type holds the internal state ("local variables") of the slice sampler
 
-type SliceSamplerStash <: MCStash{MCBaseSample}
+type SliceSamplerHeap <: MCHeap{MCBaseSample}
   state::MCState{MCBaseSample} # Monte Carlo state used internally by the sampler
   count::Int # Current number of iterations
   widths::Vector{Float64} # Step sizes for expanding the slice for the current Monte Carlo iteration 
@@ -30,90 +30,90 @@ type SliceSamplerStash <: MCStash{MCBaseSample}
   runiform::Float64
 end
 
-SliceSamplerStash() =
-  SliceSamplerStash(MCState(MCBaseSample(), MCBaseSample()), 0, Float64[], Float64[], Float64[], Float64[], NaN, NaN)
+SliceSamplerHeap() =
+  SliceSamplerHeap(MCState(MCBaseSample(), MCBaseSample()), 0, Float64[], Float64[], Float64[], Float64[], NaN, NaN)
 
-SliceSamplerStash(l::Int) =
-  SliceSamplerStash(MCState(MCBaseSample(l), MCBaseSample(l)), 0, fill(NaN, l), fill(NaN, l), fill(NaN, l), fill(NaN, l), NaN, NaN)
+SliceSamplerHeap(l::Int) =
+  SliceSamplerHeap(MCState(MCBaseSample(l), MCBaseSample(l)), 0, fill(NaN, l), fill(NaN, l), fill(NaN, l), fill(NaN, l), NaN, NaN)
 
 ### Initialize slice sampler
 
-function initialize_stash(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
-  stash::SliceSamplerStash = SliceSamplerStash(m.size)
+function initialize_heap(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
+  heap::SliceSamplerHeap = SliceSamplerHeap(m.size)
 
-  stash.state.successive = MCBaseSample(copy(m.init))
-  logtarget!(stash.state.successive, m.eval)
-  @assert isfinite(stash.state.successive.logtarget) "Initial values out of model support."
+  heap.state.successive = MCBaseSample(copy(m.init))
+  logtarget!(heap.state.successive, m.eval)
+  @assert isfinite(heap.state.successive.logtarget) "Initial values out of model support."
 
   if length(s.widths) == 0
-    stash.widths = ones(m.size)
+    heap.widths = ones(m.size)
   else
     @assert length(s.widths) == m.size "Length of step sizes in widths must be equal to model size."
-    stash.widths = s.widths
+    heap.widths = s.widths
   end
 
-  stash.count = 1
+  heap.count = 1
 
-  stash
+  heap
 end
 
-function reset!(stash::SliceSamplerStash, x::Vector{Float64})
-  stash.state.successive = MCBaseSample(copy(x))
-  logtarget!(stash.state.successive, m.eval)
+function reset!(heap::SliceSamplerHeap, x::Vector{Float64})
+  heap.state.successive = MCBaseSample(copy(x))
+  logtarget!(heap.state.successive, m.eval)
 end
 
-function initialize_task!(stash::SliceSamplerStash, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
+function initialize_task!(heap::SliceSamplerHeap, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
 
   while true
-    iterate!(stash, m, s, r, t, produce)
+    iterate!(heap, m, s, r, t, produce)
   end
 end
 
 ### Perform iteration for slice sampler
 
-function iterate!(stash::SliceSamplerStash, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner, send::Function)
+function iterate!(heap::SliceSamplerHeap, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner, send::Function)
   for j = 1:m.size
-    stash.loguprime = log(rand())+stash.state.successive.logtarget
-    stash.xl = copy(stash.state.successive.sample)
-    stash.xr = copy(stash.state.successive.sample)
-    stash.xprime = copy(stash.state.successive.sample)
+    heap.loguprime = log(rand())+heap.state.successive.logtarget
+    heap.xl = copy(heap.state.successive.sample)
+    heap.xr = copy(heap.state.successive.sample)
+    heap.xprime = copy(heap.state.successive.sample)
 
-    # Create a horizontal interval (stash.xl, stash.xr) enclosing xx
-    stash.runiform = rand()
-    stash.xl[j] = stash.state.successive.sample[j]-stash.runiform*stash.widths[j]
-    stash.xr[j] = stash.state.successive.sample[j]+(1-stash.runiform)*stash.widths[j]
+    # Create a horizontal interval (heap.xl, heap.xr) enclosing xx
+    heap.runiform = rand()
+    heap.xl[j] = heap.state.successive.sample[j]-heap.runiform*heap.widths[j]
+    heap.xr[j] = heap.state.successive.sample[j]+(1-heap.runiform)*heap.widths[j]
     if s.stepout
-      while m.eval(stash.xl) > stash.loguprime
-        stash.xl[j] -= stash.widths[j]
+      while m.eval(heap.xl) > heap.loguprime
+        heap.xl[j] -= heap.widths[j]
       end
-      while m.eval(stash.xr) > stash.loguprime
-        stash.xr[j] += stash.widths[j]
+      while m.eval(heap.xr) > heap.loguprime
+        heap.xr[j] += heap.widths[j]
       end
     end
 
     # Inner loop: propose xprimes and shrink interval until good one is found
     while true
-      stash.xprime[j] = rand()*(stash.xr[j]-stash.xl[j])+stash.xl[j]
-      stash.state.successive.logtarget = m.eval(stash.xprime)
-      if stash.state.successive.logtarget > stash.loguprime
+      heap.xprime[j] = rand()*(heap.xr[j]-heap.xl[j])+heap.xl[j]
+      heap.state.successive.logtarget = m.eval(heap.xprime)
+      if heap.state.successive.logtarget > heap.loguprime
         break
       else
-        if (stash.xprime[j] > stash.state.successive.sample[j])
-          stash.xr[j] = stash.xprime[j]
-        elseif (stash.xprime[j] < stash.state.successive.sample[j])
-          stash.xl[j] = stash.xprime[j]
+        if (heap.xprime[j] > heap.state.successive.sample[j])
+          heap.xr[j] = heap.xprime[j]
+        elseif (heap.xprime[j] < heap.state.successive.sample[j])
+          heap.xl[j] = heap.xprime[j]
         else
           @assert false "Shrunk to current position and still not acceptable."
         end
       end
     end
 
-    stash.state.successive.sample[j] = stash.xprime[j]
+    heap.state.successive.sample[j] = heap.xprime[j]
   end
 
-  stash.count += 1
+  heap.count += 1
 
-  send(MCState(stash.state.successive, MCBaseSample(), Dict()))
+  send(MCState(heap.state.successive, MCBaseSample(), Dict()))
 end

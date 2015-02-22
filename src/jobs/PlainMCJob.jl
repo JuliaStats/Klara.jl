@@ -5,7 +5,7 @@ type PlainMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
   sampler::Vector{S}
   runner::Vector{R}
   tuner::Vector{T}
-  stash::Vector{MCStash}
+  heap::Vector{MCHeap}
   send::Function
   receive::Function
   reset::Function
@@ -19,10 +19,10 @@ type PlainMCJob{M<:MCModel, S<:MCSampler, R<:MCRunner, T<:MCTuner} <: MCJob
     @assert job.dim == length(s) == length(r) == length(t) "Number of models, samplers, runners and tuners not equal."
 
     job.model, job.sampler, job.runner, job.tuner = m, s, r, t
-    job.stash = MCStash[initialize_stash(m[i], s[i], r[i], t[i]) for i = 1:job.dim]
+    job.heap = MCHeap[initialize_heap(m[i], s[i], r[i], t[i]) for i = 1:job.dim]
     job.send = identity
-    job.receive = (i::Int)->iterate!(job.stash[i], m[i], s[i], r[i], t[i], identity)
-    job.reset = (i::Int, x::Vector{Float64})->reset!(job.stash[i], x)
+    job.receive = (i::Int)->iterate!(job.heap[i], m[i], s[i], r[i], t[i], identity)
+    job.reset = (i::Int, x::Vector{Float64})->reset!(job.heap[i], x)
     job.jobtype = :plain
 
     job
