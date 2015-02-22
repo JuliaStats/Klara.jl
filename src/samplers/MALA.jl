@@ -1,6 +1,6 @@
 ### MALA holds the fields of the MALA sampler
 ### These fields represent the initial user-defined state of the sampler
-### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
+### These sampler fields are copied to the corresponding heap type fields, where the latter can be tuned
 
 immutable MALA <: LMCSampler
   driftstep::Float64
@@ -13,9 +13,9 @@ end
 
 MALA(; driftstep::Float64=1.) = MALA(driftstep)
 
-### MALAStash type holds the internal state ("local variables") of the MALA sampler
+### MALAHeap type holds the internal state ("local variables") of the MALA sampler
 
-type MALAStash <: MCStash{MCGradSample}
+type MALAHeap <: MCHeap{MCGradSample}
   instate::MCState{MCGradSample} # Monte Carlo state used internally by the sampler
   outstate::MCState{MCGradSample} # Monte Carlo state outputted by the sampler
   tune::MCTune
@@ -27,98 +27,98 @@ type MALAStash <: MCStash{MCGradSample}
   poldgivennew::Float64
 end
 
-MALAStash() =
-  MALAStash(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()), VanillaMCTune(), 0, NaN,
+MALAHeap() =
+  MALAHeap(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()), VanillaMCTune(), 0, NaN,
   Float64[], NaN, NaN, NaN)
 
-MALAStash(l::Int, t::MCTune=VanillaMCTune()) =
-  MALAStash(MCState(MCGradSample(l), MCGradSample(l)), MCState(MCGradSample(l), MCGradSample(l)), t, 0, NaN,
+MALAHeap(l::Int, t::MCTune=VanillaMCTune()) =
+  MALAHeap(MCState(MCGradSample(l), MCGradSample(l)), MCState(MCGradSample(l), MCGradSample(l)), t, 0, NaN,
     fill(NaN, l), NaN, NaN, NaN)
 
 ### Initialize MALA sampler
 
-function initialize_stash(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
+function initialize_heap(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   @assert hasgradient(m) "MALA sampler requires model with gradient function."
-  stash::MALAStash = MALAStash(m.size)
+  heap::MALAHeap = MALAHeap(m.size)
 
-  stash.instate.current = MCGradSample(copy(m.init))
-  gradlogtargetall!(stash.instate.current, m.evalallg)
-  @assert isfinite(stash.instate.current.logtarget) "Initial values out of model support."
+  heap.instate.current = MCGradSample(copy(m.init))
+  gradlogtargetall!(heap.instate.current, m.evalallg)
+  @assert isfinite(heap.instate.current.logtarget) "Initial values out of model support."
 
   if isa(t, VanillaMCTuner)
-    stash.tune = VanillaMCTune()
+    heap.tune = VanillaMCTune()
   elseif isa(t, EmpiricalMCTuner)
-    stash.tune = EmpiricalMCTune(s.driftstep)
+    heap.tune = EmpiricalMCTune(s.driftstep)
   end
 
-  stash.count = 1
+  heap.count = 1
 
-  stash
+  heap
 end
 
-function reset!(stash::MALAStash, x::Vector{Float64})
-  stash.instate.current = MCGradSample(copy(x))
-  gradlogtargetall!(stash.instate.current, m.evalallg)
+function reset!(heap::MALAHeap, x::Vector{Float64})
+  heap.instate.current = MCGradSample(copy(x))
+  gradlogtargetall!(heap.instate.current, m.evalallg)
 end
 
-function initialize_task!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
+function initialize_task!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
 
   while true
-    iterate!(stash, m, s, r, t, produce)
+    iterate!(heap, m, s, r, t, produce)
   end
 end
 
 ### Perform iteration for MALA sampler
 
-function iterate!(stash::MALAStash, m::MCModel, s::MALA, r::MCRunner, t::MCTuner, send::Function)
+function iterate!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner, send::Function)
   if isa(t, VanillaMCTuner)
-    stash.driftstep = s.driftstep
+    heap.driftstep = s.driftstep
     if t.verbose
-      stash.tune.proposed += 1
+      heap.tune.proposed += 1
     end
   elseif isa(t, EmpiricalMCTuner)
-    stash.driftstep = stash.tune.step
-    stash.tune.proposed += 1
+    heap.driftstep = heap.tune.step
+    heap.tune.proposed += 1
   end
 
-  stash.smean = stash.instate.current.sample+(stash.driftstep/2.)*stash.instate.current.gradlogtarget
-  stash.instate.successive = MCGradSample(stash.smean+sqrt(stash.driftstep)*randn(m.size))
-  gradlogtargetall!(stash.instate.successive, m.evalallg)
-  stash.pnewgivenold =
-    sum(-(stash.smean-stash.instate.successive.sample).^2/(2*stash.driftstep).-log(2*pi*stash.driftstep)/2)
+  heap.smean = heap.instate.current.sample+(heap.driftstep/2.)*heap.instate.current.gradlogtarget
+  heap.instate.successive = MCGradSample(heap.smean+sqrt(heap.driftstep)*randn(m.size))
+  gradlogtargetall!(heap.instate.successive, m.evalallg)
+  heap.pnewgivenold =
+    sum(-(heap.smean-heap.instate.successive.sample).^2/(2*heap.driftstep).-log(2*pi*heap.driftstep)/2)
 
-  stash.smean = stash.instate.successive.sample+(stash.driftstep/2)*stash.instate.successive.gradlogtarget
-  stash.poldgivennew =
-    sum(-(stash.smean-stash.instate.current.sample).^2/(2*stash.driftstep).-log(2*pi*stash.driftstep)/2)
+  heap.smean = heap.instate.successive.sample+(heap.driftstep/2)*heap.instate.successive.gradlogtarget
+  heap.poldgivennew =
+    sum(-(heap.smean-heap.instate.current.sample).^2/(2*heap.driftstep).-log(2*pi*heap.driftstep)/2)
 
-  stash.ratio = stash.instate.successive.logtarget+stash.poldgivennew-stash.instate.current.logtarget-stash.pnewgivenold
-  if stash.ratio > 0 || (stash.ratio > log(rand()))
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
-    stash.instate.current = deepcopy(stash.instate.successive)
+  heap.ratio = heap.instate.successive.logtarget+heap.poldgivennew-heap.instate.current.logtarget-heap.pnewgivenold
+  if heap.ratio > 0 || (heap.ratio > log(rand()))
+    heap.outstate = MCState(heap.instate.successive, heap.instate.current, {"accept" => true})
+    heap.instate.current = deepcopy(heap.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      stash.tune.accepted += 1
+      heap.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      stash.tune.accepted += 1
+      heap.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+    heap.outstate = MCState(heap.instate.current, heap.instate.current, {"accept" => false})
   end
 
-  if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
-    rate!(stash.tune)
-    println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
-  elseif isa(t, EmpiricalMCTuner) && stash.count <= r.burnin && mod(stash.count, t.period) == 0
-    adapt!(stash.tune, t)
-    reset!(stash.tune)
+  if isa(t, VanillaMCTuner) && t.verbose && heap.count <= r.burnin && mod(heap.count, t.period) == 0
+    rate!(heap.tune)
+    println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
+  elseif isa(t, EmpiricalMCTuner) && heap.count <= r.burnin && mod(heap.count, t.period) == 0
+    adapt!(heap.tune, t)
+    reset!(heap.tune)
     if t.verbose
-      println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+      println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
     end
   end
 
-  stash.count += 1
+  heap.count += 1
 
-  send(stash.outstate)
+  send(heap.outstate)
 end

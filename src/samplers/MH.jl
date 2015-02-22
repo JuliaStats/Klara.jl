@@ -24,9 +24,9 @@ MH(σ::Vector{Float64}) = MH(x::Vector{Float64} -> rand(MvNormal(σ)))
 MH(σ::Float64) = MH(x::Vector{Float64} -> rand( MvNormal(length(x), σ)))
 MH() = MH(x::Vector{Float64} -> rand(MvNormal(length(x), 1.0)))
 
-### MHStash type holds the internal state ("local variables") of the MH sampler
+### MHHeap type holds the internal state ("local variables") of the MH sampler
 
-type MHStash <: MCStash{MCBaseSample}
+type MHHeap <: MCHeap{MCBaseSample}
   instate::MCState{MCBaseSample} # Monte Carlo state used internally by the sampler
   outstate::MCState{MCBaseSample} # Monte Carlo state outputted by the sampler
   tune::MCTune
@@ -34,78 +34,78 @@ type MHStash <: MCStash{MCBaseSample}
   ratio::Float64
 end
 
-MHStash() =
-  MHStash(MCState(MCBaseSample(), MCBaseSample()), MCState(MCBaseSample(), MCBaseSample()), VanillaMCTune(), 0, NaN)
+MHHeap() =
+  MHHeap(MCState(MCBaseSample(), MCBaseSample()), MCState(MCBaseSample(), MCBaseSample()), VanillaMCTune(), 0, NaN)
 
-MHStash(l::Int, t::MCTune=VanillaMCTune()) =
-  MHStash(MCState(MCBaseSample(l), MCBaseSample(l)), MCState(MCBaseSample(l), MCBaseSample(l)), t, 0, NaN)
+MHHeap(l::Int, t::MCTune=VanillaMCTune()) =
+  MHHeap(MCState(MCBaseSample(l), MCBaseSample(l)), MCState(MCBaseSample(l), MCBaseSample(l)), t, 0, NaN)
 
 ### Initialize Metropolis-Hastings sampler
 
-function initialize_stash(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
-  stash::MHStash = MHStash(m.size)
+function initialize_heap(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
+  heap::MHHeap = MHHeap(m.size)
 
-  stash.instate.current = MCBaseSample(copy(m.init))
-  logtarget!(stash.instate.current, m.eval)
-  @assert isfinite(stash.instate.current.logtarget) "Initial values out of model support."
+  heap.instate.current = MCBaseSample(copy(m.init))
+  logtarget!(heap.instate.current, m.eval)
+  @assert isfinite(heap.instate.current.logtarget) "Initial values out of model support."
 
-  stash.tune = VanillaMCTune()
+  heap.tune = VanillaMCTune()
 
-  stash.count = 1
+  heap.count = 1
 
-  stash
+  heap
 end
 
-function reset!(stash::MHStash, x::Vector{Float64})
-  stash.instate.current = MCBaseSample(copy(x))
-  logtarget!(stash.instate.current, m.eval)
+function reset!(heap::MHHeap, x::Vector{Float64})
+  heap.instate.current = MCBaseSample(copy(x))
+  logtarget!(heap.instate.current, m.eval)
 end
 
-function initialize_task!(stash::MHStash, m::MCModel, s::MH, r::MCRunner, t::MCTuner)
+function initialize_task!(heap::MHHeap, m::MCModel, s::MH, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
 
   while true
-    iterate!(stash, m, s, r, t, produce)
+    iterate!(heap, m, s, r, t, produce)
   end
 end
 
 ### Perform iteration for Metropolis-Hastings sampler
 
-function iterate!(stash::MHStash, m::MCModel, s::MH, r::MCRunner, t::MCTuner, send::Function)
+function iterate!(heap::MHHeap, m::MCModel, s::MH, r::MCRunner, t::MCTuner, send::Function)
   if t.verbose
-    stash.tune.proposed += 1
+    heap.tune.proposed += 1
   end
 
-  stash.instate.successive = MCBaseSample(s.randproposal(stash.instate.current.sample))
-  logtarget!(stash.instate.successive, m.eval)
+  heap.instate.successive = MCBaseSample(s.randproposal(heap.instate.current.sample))
+  logtarget!(heap.instate.successive, m.eval)
 
   if s.symmetric
-    stash.ratio = stash.instate.successive.logtarget-stash.instate.current.logtarget
+    heap.ratio = heap.instate.successive.logtarget-heap.instate.current.logtarget
   else
-    stash.ratio = (stash.instate.successive.logtarget
-      +s.logproposal(stash.instate.successive.sample, stash.instate.current.sample)
-      -stash.instate.current.logtarget
-      -s.logproposal(stash.instate.current.sample, stash.instate.successive.sample)
+    heap.ratio = (heap.instate.successive.logtarget
+      +s.logproposal(heap.instate.successive.sample, heap.instate.current.sample)
+      -heap.instate.current.logtarget
+      -s.logproposal(heap.instate.current.sample, heap.instate.successive.sample)
     )
   end
-  if stash.ratio > 0 || (stash.ratio > log(rand()))
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
-    stash.instate.current = deepcopy(stash.instate.successive)
+  if heap.ratio > 0 || (heap.ratio > log(rand()))
+    heap.outstate = MCState(heap.instate.successive, heap.instate.current, {"accept" => true})
+    heap.instate.current = deepcopy(heap.instate.successive)
 
     if t.verbose
-      stash.tune.accepted += 1
+      heap.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+    heap.outstate = MCState(heap.instate.current, heap.instate.current, {"accept" => false})
   end
 
-  if t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
-    rate!(stash.tune)
-    println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+  if t.verbose && heap.count <= r.burnin && mod(heap.count, t.period) == 0
+    rate!(heap.tune)
+    println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
   end
 
-  stash.count += 1
+  heap.count += 1
 
-  send(stash.outstate)
+  send(heap.outstate)
 end

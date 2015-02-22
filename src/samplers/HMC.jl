@@ -1,6 +1,6 @@
 ### HMC holds the fields of the HMC sampler
 ### These fields represent the initial user-defined state of the sampler
-### These sampler fields are copied to the corresponding stash type fields, where the latter can be tuned
+### These sampler fields are copied to the corresponding heap type fields, where the latter can be tuned
 
 immutable HMC <: HMCSampler
   nleaps::Int # Number of leapfrog steps
@@ -45,9 +45,9 @@ function leapfrog(s::HMCSample, f::Function, leapstep::Float64)
   lsample
 end
 
-### HMCStash type holds the internal state ("local variables") of the HMC sampler
+### HMCHeap type holds the internal state ("local variables") of the HMC sampler
 
-type HMCStash <: MCStash{HMCSample}
+type HMCHeap <: MCHeap{HMCSample}
   instate::MCState{HMCSample} # Monte Carlo state used internally by the sampler
   outstate::MCState{HMCSample} # Monte Carlo state outputted by the sampler
   tune::MCTune
@@ -56,92 +56,92 @@ type HMCStash <: MCStash{HMCSample}
   leapstep::Float64 # Leapfrog stepsize for the current Monte Carlo iteration (possibly tuned)
 end
 
-HMCStash() = HMCStash(MCState(HMCSample(), HMCSample()), MCState(HMCSample(), HMCSample()), VanillaMCTune(), 0, 0, NaN)
+HMCHeap() = HMCHeap(MCState(HMCSample(), HMCSample()), MCState(HMCSample(), HMCSample()), VanillaMCTune(), 0, 0, NaN)
 
-HMCStash(l::Int, t::MCTune=VanillaMCTune()) =
-  HMCStash(MCState(HMCSample(l), HMCSample(l)), MCState(HMCSample(l), HMCSample(l)), t, 0, 0, NaN)
+HMCHeap(l::Int, t::MCTune=VanillaMCTune()) =
+  HMCHeap(MCState(HMCSample(l), HMCSample(l)), MCState(HMCSample(l), HMCSample(l)), t, 0, 0, NaN)
 
 ### Initialize HMC sampler
 
-function initialize_stash(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
+function initialize_heap(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
   @assert hasgradient(m) "HMC sampler requires model with gradient function."
-  stash::HMCStash = HMCStash(m.size)
+  heap::HMCHeap = HMCHeap(m.size)
 
-  stash.instate.current = HMCSample(copy(m.init))
-  gradlogtargetall!(stash.instate.current, m.evalallg)
-  @assert isfinite(stash.instate.current.logtarget) "Initial values out of model support."
+  heap.instate.current = HMCSample(copy(m.init))
+  gradlogtargetall!(heap.instate.current, m.evalallg)
+  @assert isfinite(heap.instate.current.logtarget) "Initial values out of model support."
 
   if isa(t, VanillaMCTuner)
-    stash.tune = VanillaMCTune()
+    heap.tune = VanillaMCTune()
   elseif isa(t, EmpiricalMCTuner)
-    stash.tune = EmpiricalMCTune(s.leapstep, s.nleaps)
+    heap.tune = EmpiricalMCTune(s.leapstep, s.nleaps)
   end
 
-  stash.count = 1
+  heap.count = 1
 
-  stash
+  heap
 end
 
-function reset!(stash::HMCStash, x::Vector{Float64})
-  stash.instate.current = HMCSample(copy(x))
-  gradlogtargetall!(stash.instate.current, m.evalallg)
+function reset!(heap::HMCHeap, x::Vector{Float64})
+  heap.instate.current = HMCSample(copy(x))
+  gradlogtargetall!(heap.instate.current, m.evalallg)
 end
 
-function initialize_task!(stash::HMCStash, m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
+function initialize_task!(heap::HMCHeap, m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(stash, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
 
   while true
-    iterate!(stash, m, s, r, t, produce)
+    iterate!(heap, m, s, r, t, produce)
   end
 end
 
 ### Perform iteration for HMC sampler
 
-function iterate!(stash::HMCStash, m::MCModel, s::HMC, r::MCRunner, t::MCTuner, send::Function)
+function iterate!(heap::HMCHeap, m::MCModel, s::HMC, r::MCRunner, t::MCTuner, send::Function)
   if isa(t, VanillaMCTuner)
-    stash.nleaps, stash.leapstep = s.nleaps, s.leapstep
+    heap.nleaps, heap.leapstep = s.nleaps, s.leapstep
     if t.verbose
-      stash.tune.proposed += 1
+      heap.tune.proposed += 1
     end
   elseif isa(t, EmpiricalMCTuner)
-    stash.nleaps, stash.leapstep = stash.tune.nsteps, stash.tune.step
-    stash.tune.proposed += 1
+    heap.nleaps, heap.leapstep = heap.tune.nsteps, heap.tune.step
+    heap.tune.proposed += 1
   end
 
-  stash.instate.current.momentum = randn(m.size)
-  hamiltonian!(stash.instate.current)
-  stash.instate.successive = deepcopy(stash.instate.current)
+  heap.instate.current.momentum = randn(m.size)
+  hamiltonian!(heap.instate.current)
+  heap.instate.successive = deepcopy(heap.instate.current)
 
-  for j = 1:stash.nleaps
-    stash.instate.successive = leapfrog(stash.instate.successive, m.evalallg, stash.leapstep)
+  for j = 1:heap.nleaps
+    heap.instate.successive = leapfrog(heap.instate.successive, m.evalallg, heap.leapstep)
   end
 
-  if rand() < exp(stash.instate.current.hamiltonian-stash.instate.successive.hamiltonian)
-    stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
-    stash.instate.current = deepcopy(stash.instate.successive)
+  if rand() < exp(heap.instate.current.hamiltonian-heap.instate.successive.hamiltonian)
+    heap.outstate = MCState(heap.instate.successive, heap.instate.current, {"accept" => true})
+    heap.instate.current = deepcopy(heap.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      stash.tune.accepted += 1
+      heap.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      stash.tune.accepted += 1
+      heap.tune.accepted += 1
     end
   else
-    stash.outstate = MCState(stash.instate.current, stash.instate.current, {"accept" => false})
+    heap.outstate = MCState(heap.instate.current, heap.instate.current, {"accept" => false})
   end
 
-  if isa(t, VanillaMCTuner) && t.verbose && stash.count <= r.burnin && mod(stash.count, t.period) == 0
-    rate!(stash.tune)
-    println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
-  elseif isa(t, EmpiricalMCTuner) && stash.count <= r.burnin && mod(stash.count, t.period) == 0
-    adapt!(stash.tune, t)
-    reset!(stash.tune)
+  if isa(t, VanillaMCTuner) && t.verbose && heap.count <= r.burnin && mod(heap.count, t.period) == 0
+    rate!(heap.tune)
+    println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
+  elseif isa(t, EmpiricalMCTuner) && heap.count <= r.burnin && mod(heap.count, t.period) == 0
+    adapt!(heap.tune, t)
+    reset!(heap.tune)
     if t.verbose
-      println("Burnin iteration $(stash.count) of $(r.burnin): ", round(100*stash.tune.rate, 2), " % acceptance rate")
+      println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
     end
   end
 
-  stash.count += 1
+  heap.count += 1
 
-  send(stash.outstate)
+  send(heap.outstate)
 end

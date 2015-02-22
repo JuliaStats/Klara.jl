@@ -43,10 +43,10 @@ abstract MCTuner
 
 abstract MCTune
 
-### Stash types hold the temporary components used by a Monte Carlo sampler during its run
-### This means that stash types represent the internal state ("local variables") of a Monte Carlo sampler
+### Heap types hold the temporary components used by a Monte Carlo sampler during its run
+### This means that heap types represent the internal state ("local variables") of a Monte Carlo sampler
 
-abstract MCStash{S<:MCSample}
+abstract MCHeap{S<:MCSample}
 
 ### Monte Carlo Jobs (ex plain jobs, jobs using tasks or MPI jobs)
 
