@@ -83,10 +83,11 @@ function iterate!(stash::MHStash, m::MCModel, s::MH, r::MCRunner, t::MCTuner, se
   if s.symmetric
     stash.ratio = stash.instate.successive.logtarget-stash.instate.current.logtarget
   else
-    stash.ratio = stash.instate.successive.logtarget
+    stash.ratio = (stash.instate.successive.logtarget
       +s.logproposal(stash.instate.successive.sample, stash.instate.current.sample)
       -stash.instate.current.logtarget
       -s.logproposal(stash.instate.current.sample, stash.instate.successive.sample)
+    )
   end
   if stash.ratio > 0 || (stash.ratio > log(rand()))
     stash.outstate = MCState(stash.instate.successive, stash.instate.current, {"accept" => true})
