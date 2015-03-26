@@ -56,7 +56,7 @@ function initialize_heap(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::MHHeap, x::Vector{Float64})
+function reset!(heap::MHHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = MCBaseSample(copy(x))
   logtarget!(heap.instate.current, m.eval)
 end
@@ -95,7 +95,7 @@ function iterate!(heap::MHHeap, m::MCModel, s::MH, r::MCRunner, t::MCTuner, send
 
     if t.verbose
       heap.tune.accepted += 1
-    end      
+    end
   else
     heap.outstate = MCState(heap.instate.current, heap.instate.current, Dict{Any, Any}("accept" => false))
   end

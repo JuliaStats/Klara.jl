@@ -55,7 +55,7 @@ function initialize_heap(m::MCModel, s::ARS, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::ARSHeap, x::Vector{Float64})
+function reset!(heap::ARSHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = MCBaseSample(copy(x))
   logtarget!(heap.instate.current, m.eval)
 end

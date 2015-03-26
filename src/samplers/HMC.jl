@@ -82,7 +82,7 @@ function initialize_heap(m::MCModel, s::HMC, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::HMCHeap, x::Vector{Float64})
+function reset!(heap::HMCHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = HMCSample(copy(x))
   gradlogtargetall!(heap.instate.current, m.evalallg)
 end
@@ -122,9 +122,9 @@ function iterate!(heap::HMCHeap, m::MCModel, s::HMC, r::MCRunner, t::MCTuner, se
     heap.instate.current = deepcopy(heap.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      heap.tune.accepted += 1 
+      heap.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      heap.tune.accepted += 1     
+      heap.tune.accepted += 1
     end
   else
     heap.outstate = MCState(heap.instate.current, heap.instate.current, Dict{Any, Any}("accept" => false))

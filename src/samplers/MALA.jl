@@ -56,14 +56,14 @@ function initialize_heap(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::MALAHeap, x::Vector{Float64})
+function reset!(heap::MALAHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = MCGradSample(copy(x))
   gradlogtargetall!(heap.instate.current, m.evalallg)
 end
 
 function initialize_task!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x)) 
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
 
   while true
     iterate!(heap, m, s, r, t, produce)
@@ -92,16 +92,16 @@ function iterate!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner, 
   heap.smean = heap.instate.successive.sample+(heap.driftstep/2)*heap.instate.successive.gradlogtarget
   heap.poldgivennew =
     sum(-(heap.smean-heap.instate.current.sample).^2/(2*heap.driftstep).-log(2*pi*heap.driftstep)/2)
-    
+
   heap.ratio = heap.instate.successive.logtarget+heap.poldgivennew-heap.instate.current.logtarget-heap.pnewgivenold
   if heap.ratio > 0 || (heap.ratio > log(rand()))
     heap.outstate = MCState(heap.instate.successive, heap.instate.current, Dict{Any, Any}("accept" => true))
     heap.instate.current = deepcopy(heap.instate.successive)
 
     if isa(t, VanillaMCTuner) && t.verbose
-      heap.tune.accepted += 1 
+      heap.tune.accepted += 1
     elseif isa(t, EmpiricalMCTuner)
-      heap.tune.accepted += 1     
+      heap.tune.accepted += 1
     end
   else
     heap.outstate = MCState(heap.instate.current, heap.instate.current, Dict{Any, Any}("accept" => false))
