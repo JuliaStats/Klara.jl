@@ -64,7 +64,7 @@ end
 
 function initialize_task!(heap::SliceSamplerHeap, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
 
   while true
     iterate!(heap, m, s, r, t, produce)
