@@ -22,7 +22,7 @@ SliceSampler(; widths::Vector{Float64}=Float64[], stepout::Bool=true) = SliceSam
 type SliceSamplerHeap <: MCHeap{MCBaseSample}
   state::MCState{MCBaseSample} # Monte Carlo state used internally by the sampler
   count::Int # Current number of iterations
-  widths::Vector{Float64} # Step sizes for expanding the slice for the current Monte Carlo iteration 
+  widths::Vector{Float64} # Step sizes for expanding the slice for the current Monte Carlo iteration
   xl::Vector{Float64}
   xr::Vector{Float64}
   xprime::Vector{Float64}
@@ -57,14 +57,14 @@ function initialize_heap(m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::SliceSamplerHeap, x::Vector{Float64})
+function reset!(heap::SliceSamplerHeap, x::Vector{Float64}, m::MCModel)
   heap.state.successive = MCBaseSample(copy(x))
   logtarget!(heap.state.successive, m.eval)
 end
 
 function initialize_task!(heap::SliceSamplerHeap, m::MCModel, s::SliceSampler, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
 
   while true
     iterate!(heap, m, s, r, t, produce)

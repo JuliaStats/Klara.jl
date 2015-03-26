@@ -56,14 +56,14 @@ function initialize_heap(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::MALAHeap, x::Vector{Float64})
+function reset!(heap::MALAHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = MCGradSample(copy(x))
   gradlogtargetall!(heap.instate.current, m.evalallg)
 end
 
 function initialize_task!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
 
   while true
     iterate!(heap, m, s, r, t, produce)

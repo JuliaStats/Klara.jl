@@ -67,14 +67,14 @@ function initialize_heap(m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   heap
 end
 
-function reset!(heap::SMMALAHeap, x::Vector{Float64})
+function reset!(heap::SMMALAHeap, x::Vector{Float64}, m::MCModel)
   heap.instate.current = MCTensorSample(copy(x))
   tensorlogtargetall!(heap.instate.current, m.evalallt)
 end
 
 function initialize_task!(heap::SMMALAHeap, m::MCModel, s::SMMALA, r::MCRunner, t::MCTuner)
   # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x))
+  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
 
   while true
     iterate!(heap, m, s, r, t, produce)
