@@ -45,7 +45,7 @@ NUTS(;maxdoublings::Int=5, tuner::Union(Nothing, NUTSTuner)=nothing) = NUTS(maxd
 ###########################################################################
 
 ####  Helper functions and types for HMC sampling task
-uturn(s1::HMCSample, s2::HMCSample) = dot(s2.pars-s1.pars, s1.m) < 0. || dot(s2.pars-s1.pars, s2.m) < 0.
+uturn(s1::HMCSample, s2::HMCSample) = Base.dot(s2.pars-s1.pars, s1.m) < 0. || Base.dot(s2.pars-s1.pars, s2.m) < 0.
 
 ####  HMC task
 function SamplerTask(model::MCMCModel, sampler::NUTS, runner::MCMCRunner)

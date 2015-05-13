@@ -33,7 +33,7 @@ HMCSample() = HMCSample(Float64[], NaN, Float64[], Float64[], NaN)
 
 HMCSample(l::Int) = HMCSample(fill(NaN, l), NaN, fill(NaN, l), fill(NaN, l), NaN)
 
-hamiltonian!(s::HMCSample) = (s.hamiltonian = -s.logtarget+0.5*dot(s.momentum, s.momentum))
+hamiltonian!(s::HMCSample) = (s.hamiltonian = -s.logtarget+0.5*Base.dot(s.momentum, s.momentum))
 
 function leapfrog(s::HMCSample, f::Function, leapstep::Float64)
   lsample = deepcopy(s)

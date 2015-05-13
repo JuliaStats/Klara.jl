@@ -103,7 +103,7 @@ function iterate!(heap::RAMHeap, m::MCModel, s::RAM, r::MCRunner, t::MCTuner, se
   heap.eta = min(1, m.size*heap.count^(-2/3))
 
   heap.SS =
-    (heap.rnormal*heap.rnormal')/dot(heap.rnormal, heap.rnormal)*heap.eta*(min(1, exp(heap.ratio))-s.targetrate)
+    (heap.rnormal*heap.rnormal')/Base.dot(heap.rnormal, heap.rnormal)*heap.eta*(min(1, exp(heap.ratio))-s.targetrate)
   heap.SS = heap.S*(eye(m.size)+heap.SS)*heap.S'
   heap.S = chol(heap.SS)'
 
