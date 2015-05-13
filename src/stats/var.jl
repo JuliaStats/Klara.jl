@@ -4,11 +4,11 @@
 
 mcvar_iid(x::Vector{Float64}) = var(x)/length(x)
 
-mcvar_iid(x::Matrix{Float64}, pars::Ranges=1:size(x, 2)) = Float64[mcvar_iid(x[:, pars[i]]) for i = 1:length(pars)]
+mcvar_iid(x::Matrix{Float64}, pars::Range=1:size(x, 2)) = Float64[mcvar_iid(x[:, pars[i]]) for i = 1:length(pars)]
 
 mcvar_iid(x::Matrix{Float64}, par::Real) = mcvar_iid(x, par:par)
 
-mcvar_iid(c::MCChain, pars::Ranges=1:size(c.samples, 2)) = mvcvar_iid(c.samples, pars)
+mcvar_iid(c::MCChain, pars::Range=1:size(c.samples, 2)) = mvcvar_iid(c.samples, pars)
 
 mcvar_iid(c::MCChain, par::Real) = mcvar_iid(c, par:par)
 
@@ -16,11 +16,11 @@ mcvar_iid(c::MCChain, par::Real) = mcvar_iid(c, par:par)
 
 msce_iid(x::Vector{Float64}) = sqrt(mcvar_iid(x))
 
-msce_iid(x::Matrix{Float64}, pars::Ranges=1:size(x, 2)) = Float64[mcse_iid(x[:, pars[i]]) for i = 1:length(pars)]
+msce_iid(x::Matrix{Float64}, pars::Range=1:size(x, 2)) = Float64[mcse_iid(x[:, pars[i]]) for i = 1:length(pars)]
 
 msce_iid(x::Matrix{Float64}, par::Real) = msce_iid(x, par:par)
 
-msce_iid(c::MCChain, pars::Ranges=1:size(c.samples, 2)) = msce_iid(c.samples, pars)
+msce_iid(c::MCChain, pars::Range=1:size(c.samples, 2)) = msce_iid(c.samples, pars)
 
 msce_iid(c::MCChain, par::Real) = msce_iid(c, par:par)
 
@@ -35,12 +35,12 @@ function mcvar_bm(x::Vector{Float64}; batchlen::Int=100)
   return batchlen*var(batchmeans)/nbsamples
 end
 
-mcvar_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
+mcvar_bm(x::Matrix{Float64}, pars::Range=1:size(x, 2); batchlen::Int=100) =
   Float64[mcvar_bm(x[:, pars[i]]; batchlen=batchlen) for i = 1:length(pars)]
 
 mcvar_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcvar_bm(x, par:par; batchlen=batchlen)
 
-mcvar_bm(c::MCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
+mcvar_bm(c::MCChain, pars::Range=1:size(c.samples, 2); batchlen::Int=100) =
   mcvar_bm(c.samples, pars; batchlen=batchlen)
 
 mcvar_bm(c::MCChain, par::Real; batchlen::Int=100) = mcvar_bm(c, par:par; batchlen=batchlen)
@@ -49,12 +49,12 @@ mcvar_bm(c::MCChain, par::Real; batchlen::Int=100) = mcvar_bm(c, par:par; batchl
 
 mcse_bm(x::Vector{Float64}; batchlen::Int=100) = sqrt(mcvar_bm(x; batchlen=batchlen))
 
-mcse_bm(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); batchlen::Int=100) =
+mcse_bm(x::Matrix{Float64}, pars::Range=1:size(x, 2); batchlen::Int=100) =
   Float64[mcse_bm(x[:, pars[i]]; batchlen=batchlen) for i = 1:length(pars)]
 
 mcse_bm(x::Matrix{Float64}, par::Real; batchlen::Int=100) = mcse_bm(x, par:par; batchlen=batchlen)
 
-mcse_bm(c::MCChain, pars::Ranges=1:size(c.samples, 2); batchlen::Int=100) =
+mcse_bm(c::MCChain, pars::Range=1:size(c.samples, 2); batchlen::Int=100) =
   mcse_bm(c.samples, pars; batchlen=batchlen)
 
 mcse_bm(c::MCChain, par::Real; batchlen::Int=100) = mcse_bm(c, par:par; batchlen=batchlen)
@@ -94,12 +94,12 @@ function mcvar_imse(x::Vector{Float64}; maxlag::Int=length(x)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
 
-mcvar_imse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+mcvar_imse(x::Matrix{Float64}, pars::Range=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
   Float64[mcvar_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
 mcvar_imse(x::Matrix{Float64}, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_imse(x, par:par; maxlag=maxlag)
 
-mcvar_imse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+mcvar_imse(c::MCChain, pars::Range=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   mcvar_imse(c.samples, pars; maxlag=maxlag)
 
 mcvar_imse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_imse(c, par:par; maxlag=maxlag)
@@ -108,10 +108,10 @@ mcvar_imse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_imse
 
 mcse_imse(x::Vector{Float64}; maxlag::Int=length(x)-1) = sqrt(mcvar_imse(x; maxlag=maxlag))
 
-mcse_imse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+mcse_imse(x::Matrix{Float64}, pars::Range=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
   Float64[mcse_imse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
-mcse_imse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+mcse_imse(c::MCChain, pars::Range=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   mcse_imse(c.samples, pars; maxlag=maxlag)
 
 mcse_imse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_imse(c, par:par; maxlag=maxlag)
@@ -142,12 +142,12 @@ function mcvar_ipse(x::Vector{Float64}; maxlag::Int=length(x)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(x)
 end
 
-mcvar_ipse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+mcvar_ipse(x::Matrix{Float64}, pars::Range=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
   Float64[mcvar_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
 mcvar_ipse(x::Matrix{Float64}, par::Real; maxlag::Int=size(x, 1)-1) = mcvar_ipse(x, par:par; maxlag=maxlag)
 
-mcvar_ipse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+mcvar_ipse(c::MCChain, pars::Range=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   mcvar_ipse(c.samples, pars; maxlag=maxlag)
 
 mcvar_ipse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_ipse(c, par:par; maxlag=maxlag)
@@ -156,10 +156,10 @@ mcvar_ipse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcvar_ipse
 
 mcse_ipse(x::Vector{Float64}; maxlag::Int=length(x)-1) = sqrt(mcvar_ipse(x; maxlag=maxlag))
 
-mcse_ipse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
+mcse_ipse(x::Matrix{Float64}, pars::Range=1:size(x, 2); maxlag::Int=size(x, 1)-1) =
   Float64[mcse_ipse(x[:, pars[i]]; maxlag=maxlag) for i = 1:length(pars)]
 
-mcse_ipse(c::MCChain, pars::Ranges=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
+mcse_ipse(c::MCChain, pars::Range=1:size(c.samples, 2); maxlag::Int=size(c.samples, 1)-1) =
   mcse_ipse(c.samples, pars; maxlag=maxlag)
 
 mcse_ipse(c::MCChain, par::Real; maxlag::Int=size(c.samples, 1)-1) = mcse_ipse(c, par:par; maxlag=maxlag)
@@ -182,12 +182,12 @@ function mcvar(x::Vector{Float64}; vtype::Symbol=:imse, args...)
   end
 end
 
-mcvar(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
+mcvar(x::Matrix{Float64}, pars::Range=1:size(x, 2); vtype::Symbol=:imse, args...) =
   Float64[mcvar(x[:, pars[i]]; vtype=vtype, args...) for i = 1:length(pars)]
 
 mcvar(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcvar(x, par:par; vtype=vtype, args...)
 
-mcvar(c::MCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
+mcvar(c::MCChain, pars::Range=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
   mcvar(c.samples, pars; vtype=vtype, args...)
 
 mcvar(c::MCChain, par::Real; vtype::Symbol=:imse, args...) = mcvar(c, par:par; vtype=vtype, args...)
@@ -208,12 +208,12 @@ function mcse(x::Vector{Float64}; vtype::Symbol=:imse, args...)
   end
 end
 
-mcse(x::Matrix{Float64}, pars::Ranges=1:size(x, 2); vtype::Symbol=:imse, args...) =
+mcse(x::Matrix{Float64}, pars::Range=1:size(x, 2); vtype::Symbol=:imse, args...) =
   Float64[mcse(x[:, pars[i]]; vtype=vtype, args...) for i = 1:length(pars)]
 
 mcse(x::Matrix{Float64}, par::Real; vtype::Symbol=:imse, args...) = mcse(x, par:par; vtype=vtype, args...)
 
-mcse(c::MCChain, pars::Ranges=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
+mcse(c::MCChain, pars::Range=1:size(c.samples, 2); vtype::Symbol=:imse, args...) =
   mcse(c.samples, pars; vtype=vtype, args...)
 
 mcse(c::MCChain, par::Real; vtype::Symbol=:imse, args...) = mcse(c, par:par; vtype=vtype, args...)

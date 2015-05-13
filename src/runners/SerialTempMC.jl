@@ -23,7 +23,7 @@ immutable SerialTemperingMCRunner <: SerialMCRunner
   end
 end
 
-SerialTemperingMCRunner(r::Range1{Int}, p::Int) = SerialTemperingMCRunner(first(r):1:last(r), p)
+SerialTemperingMCRunner(r::UnitRange{Int}, p::Int) = SerialTemperingMCRunner(first(r):1:last(r), p)
 
 SerialTemperingMCRunner(; burnin::Int=0, thinning::Int=1, nsteps::Int=100, swapperiod::Int=5) =
   SerialTemperingMCRunner((burnin+1):thinning:nsteps, swapperiod)
