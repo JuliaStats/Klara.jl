@@ -1,3 +1,7 @@
+branches:
+  except:
+  - new_dsl_julia03
+  - new_dsl
 language: cpp
 compiler:
   - clang
