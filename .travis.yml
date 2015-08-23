@@ -1,7 +1,6 @@
 branches:
   except:
-  - new_dsl_julia03
-  - new_dsl
+  - 0.5.0
 language: cpp
 compiler:
   - clang
