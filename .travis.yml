@@ -1,20 +1,14 @@
-branches:
-  except:
-  - 0.5.0
-language: cpp
-compiler:
-  - clang
+language: julia
+os:
+    - linux
+    - osx
+julia:
+    - release
+    - nightly
 notifications:
-  email: false
-env:
-  matrix:
-    - JULIAVERSION="julianightlies" 
-before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia -y
+    email: false
+sudo: false
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Lora"))`); Pkg.pin("Lora"); Pkg.resolve()'
-  - julia -e 'using Lora; @assert isdefined(:Lora); @assert typeof(Lora) === Module'
-  - julia -e 'Pkg.test("Lora")'
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.clone(pwd())'
+    - julia -e 'Pkg.test("Lora", coverage=true)'
