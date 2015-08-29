@@ -1,7 +1,7 @@
 Lora.jl
 ==============================
 
-[![Build Status](https://travis-ci.org/JuliaStats/Lora.jl.png)](https://travis-ci.org/JuliaStats/Lora.jl)
+[![Build Status](https://travis-ci.org/JuliaStats/Lora.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Lora.jl)
 [![MCMC](http://pkg.julialang.org/badges/Lora_release.svg)](http://pkg.julialang.org/?pkg=Lora&ver=release)
 [![Docs](https://readthedocs.org/projects/lorajl/badge/?version=latest)](http://lorajl.readthedocs.org/en/latest/)
 
