@@ -20,6 +20,7 @@ MH(l::Function, r::Function) = MH(false, l, r) # Metropolis-Hastings sampler (as
 MH(r::Function) = MH(true, nothing, r) # Metropolis sampler (symmetric proposal)
 
 # Random-walk Metropolis, i.e. Metropolis with a normal proposal density
+MH(σ::Matrix{Float64}) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
 MH(σ::Vector{Float64}) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
 MH(σ::Float64) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
 MH() = MH(x::Vector{Float64} -> rand(MvNormal(x, 1.0)))
