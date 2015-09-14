@@ -14,7 +14,7 @@ function funnel_loglik(x::Vector{Float64})
     -0.5*((x[1]-0.0)^2/9.0 + dot(x[2:end], x[2:end])/s2 + nx*log(s2))
 end
 
-mcmodel = model(funnel_loglik, init=[10, zeros(4)])
+mcmodel = model(funnel_loglik, init=[10, zeros(4);])
 mcsampler = SliceSampler()
 mcrunner = SerialMC(nsteps=100000, burnin=10000)
 mcchain = run(mcmodel, mcsampler, mcrunner)

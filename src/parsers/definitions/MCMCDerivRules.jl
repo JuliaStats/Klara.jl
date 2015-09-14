@@ -11,12 +11,12 @@ macro dlogpdfd(dist::Symbol, rule)
 	ReverseDiffSource.deriv_rule( sig, :d, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
-	rule2 = ReverseDiffSource.substSymbols(rule, {:x => :(x[i]), :ds => :(ds[i])})
+	rule2 = ReverseDiffSource.substSymbols(rule, Dict{Any,Any}(:x => :(x[i]), :ds => :(ds[i])))
 	ReverseDiffSource.deriv_rule( sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
-	rule2 = ReverseDiffSource.substSymbols(rule, {:dd1 => :(dd1[i]), :dd2 => :(dd2[i]), :dd3 => :(dd3[i]), 
-		:x => :(x[i]), :ds => :(ds[i]), :d => :(d[i]) })
+	rule2 = ReverseDiffSource.substSymbols(rule, Dict{Any,Any}(:dd1 => :(dd1[i]), :dd2 => :(dd2[i]), :dd3 => :(dd3[i]), 
+		:x => :(x[i]), :ds => :(ds[i]), :d => :(d[i]) ))
 	ReverseDiffSource.deriv_rule(sig, :d, :(for i in 1:length(x) ; $rule2 ; end))
 end
 
@@ -25,11 +25,11 @@ macro dlogpdfx(dist::Symbol, rule)
 	ReverseDiffSource.deriv_rule( sig, :x, rule ) 
 
 	sig = :( logpdf($(Expr(:(::), :d, dist)), x::AbstractArray) )
-	rule2 = ReverseDiffSource.substSymbols(rule, {:dx => :(dx[i]), :x => :(x[i]), :ds => :(ds[i])})
+	rule2 = ReverseDiffSource.substSymbols(rule, Dict{Any,Any}(:dx => :(dx[i]), :x => :(x[i]), :ds => :(ds[i])))
 	ReverseDiffSource.deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule2 ; end))
 
 	sig = :( logpdf($(Expr(:(::), :d, Expr(:curly, :Array, dist))), x::AbstractArray) )
-	rule3 = ReverseDiffSource.substSymbols(rule2, {:d => :(d[i])})
+	rule3 = ReverseDiffSource.substSymbols(rule2, Dict{Any,Any}(:d => :(d[i])))
 	ReverseDiffSource.deriv_rule( sig, :x, :(for i in 1:length(x) ; $rule3 ; end))
 end
 
