@@ -11,7 +11,8 @@ import Base:
   select,
   mean,
   var,
-  std
+  std,
+  +
 import Distributions:
   Bernoulli,
   Beta,
