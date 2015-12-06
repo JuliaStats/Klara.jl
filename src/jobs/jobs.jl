@@ -1,59 +1,89 @@
-### Constructors for setting up a Monte Carlo job
+### MCJob
 
-function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC, t::T, j::Symbol)
-  mcjob::MCJob
-  if j == :plain
-    mcjob = PlainMCJob(m, s, r, t)
-  elseif j == :task
-    mcjob = TaskMCJob(m, s, r, t)
+abstract MCJob
+
+# Set defaults for possibly unspecified output options
+
+function augment!(outopts::Dict)
+  destination = get!(outopts, :destination, :nstate)
+
+  if destination != :none
+    if !haskey(outopts, :monitor)
+      outopts[:monitor] = [:value]
+    end
+
+    if !haskey(outopts, :diagnostics)
+      outopts[:diagnostics] = Symbol[]
+    end
+
+    if destination == :iostream
+      if !haskey(outopts, :filepath)
+        outopts[:filepath] = ""
+      end
+
+      if !haskey(outopts, :filesuffix)
+        outopts[:filesuffix] = "csv"
+      end
+
+      if !haskey(outopts, :flush)
+        outopts[:flush] = false
+      end
+    end
+  end
+end
+
+augment!(outopts::Vector{Dict}) = map(augment!, outopts)
+
+# initialize_output() needs to be defined for custom variable state or NState input arguments
+# Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
+
+function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicContUnvParameterNState(n, outopts[:monitor], outopts[:diagnostics], eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicContParamIOStream(
+      (),
+      n,
+      outopts[:monitor],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w",
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix]
+    )
+  elseif outopts[:destination] == :none
+    output = nothing
   else
-    error("Only :plain and :task jobs are available.")
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
   end
-  mcjob
+
+  output
 end
 
-MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::M, s::S, r::SerialMC; tuner::T=VanillaMCTuner(), job::Symbol=:task) =
-  MCJob(m, s, r, tuner, job)
+function initialize_output(state::BasicContMuvParameterState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
 
-### Constructors for setting up a vector of Monte Carlo jobs
-
-function MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC}, t::Vector{T},
-  j::Vector{Symbol})
-  @assert length(m) == length(s) == length(r) == length(t) == length(j)
-    "Number of models, samplers, runners, tuners and job types not equal."
-  map(MCJob, m, s, r, t, j)
-end
-
-MCJob{M<:MCModel, S<:MCSampler, T<:MCTuner}(m::Vector{M}, s::Vector{S}, r::Vector{SerialMC};
-  tuners::Vector{T}=fill(VanillaMCTuner(), length(m)), jobs::Vector{Symbol}=fill(:task, length(m))) =
-  map(MCJob, m, s, r, tuners, jobs)
-
-### Functions for running jobs
-
-function run(j::MCJob)
-  if j.dim == 1
-    if isa(j.runner[1], SerialMC)
-      run(j.model[1], j.sampler[1], j.runner[1], j.tuner[1], j.jobtype)
-    end
+  if outopts[:destination] == :nstate
+    output = BasicContMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicContParamIOStream(
+      (),
+      n,
+      outopts[:monitor],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w",
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix]
+    )
+    output.mark()
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
   end
+
+  output
 end
 
-run{J<:MCJob}(j::Vector{J}) = map(run, j)
-
-### Functions for resuming jobs
-
-function resume!(j::MCJob, c::MCChain; nsteps::Int=100)
-  if j.dim == 1
-    if isa(j.runner[1], SerialMC)
-      resume!(j.model[1], j.sampler[1], j.runner[1], c, j.tuner[1], j.jobtype; nsteps=nsteps)
-    end
-  end
-end
-
-function resume(j::MCJob, c::MCChain; nsteps::Int=100)
-  if j.dim == 1
-    if isa(j.runner[1], SerialMC)
-      resume!(deepcopy(j.model)[1], j.sampler[1], j.runner[1], c, j.tuner[1], j.jobtype; nsteps=nsteps)
-    end
-  end
-end
+Base.run{J<:MCJob}(job::Vector{J}) = map(run, job)
