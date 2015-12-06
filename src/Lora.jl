@@ -1,109 +1,183 @@
 module Lora
 
-using Base.LinAlg.BLAS
 using Distributions
-using StatsBase
-using ReverseDiffSource
+# using ForwardDiff
+using Graphs
+# using ReverseDiffSource
 
 import Base:
-  show,
+  ==,
+  close,
+  convert,
+  copy!,
+  eltype,
+  flush,
+  getindex,
+  isequal,
+  mark,
+  open,
+  read!,
+  read,
   run,
-  select,
-  mean,
-  var,
-  std,
-  +
-import Distributions:
-  Bernoulli,
-  Beta,
-  Binomial,
-  Cauchy,
-  Exponential,
-  Gamma,
-  Laplace,
-  LogNormal,
-  Normal,
-  Poisson,
-  TDist,
-  Uniform,
-  Weibull,
-  logpdf,
-  logcdf,
-  logccdf
+  show,
+  write
+
+import Graphs:
+  add_edge!,
+  add_vertex!,
+  edge_index,
+  edges,
+  in_degree,
+  in_edges,
+  in_neighbors,
+  is_directed,
+  make_edge,
+  num_edges,
+  num_vertices,
+  out_degree,
+  out_edges,
+  out_neighbors,
+  revedge,
+  source,
+  target,
+  topological_sort_by_dfs,
+  vertex_index,
+  vertices
 
 export
-  ### types
-  MCLikelihood,
-  MCChain,
-  ARS,
-  SliceSampler,
-  MH,
-  RAM,
-  HMC,
+  ### Types
+  AcceptanceRateMCTune,
+  AcceptanceRateMCTuner,
+  BasicContMuvParameter,
+  BasicContMuvParameterNState,
+  BasicContMuvParameterState,
+  BasicContParamIOStream,
+  BasicContUnvParameter,
+  BasicContUnvParameterNState,
+  BasicContUnvParameterState,
+  BasicMCJob,
+  BasicMCRange,
+  BasicMavVariableNState,
+  BasicMavVariableState,
+  BasicMuvVariableNState,
+  BasicMuvVariableState,
+  BasicUnvVariableNState,
+  BasicUnvVariableState,
+  BasicVariableIOStream,
+  Constant,
+  ContMuvMarkovChain,
+  ContUnvMarkovChain,
+  Data,
+  Dependence,
+  Deterministic,
+  GenericModel,
+  HMCSampler,
+  Hyperparameter,
+  LMCSampler,
   MALA,
-  SMMALA,
-  SerialMC,
-  VanillaMCTuner,
-  EmpiricalMCTuner,
+  MALAState,
   MCJob,
-  PlainMCJob,
-  TaskMCJob,
-  ### functions
-  model,
-  run,
-  resume,
-  select,
-  mean,
-  mcvar,
-  mcse,
-  ess,
-  actime,
-  acceptance,
-  describe,
-  linearzv,
-  quadraticzv
+  MCRange,
+  MCSampler,
+  MCSamplerState,
+  MCTuner,
+  MCTunerState,
+  MH,
+  MHSampler,
+  MHState,
+  MarkovChain,
+  MuvMALAState,
+  Parameter,
+  ParameterIOStream,
+  ParameterNState,
+  ParameterState,
+  Random,
+  Sampleability,
+  Transformation,
+  VanillaMCTune,
+  VanillaMCTuner,
+  Variable,
+  VariableIOStream,
+  VariableNState,
+  VariableState,
 
-include("api/api.jl")
-include("api/samples.jl")
-include("api/states.jl")
-include("api/chains.jl")
-include("parsers/expr_funcs.jl")
-include("parsers/modelparser.jl")
-include("parsers/definitions/DistributionsExtensions.jl")
-include("parsers/definitions/AccumulatorDerivRules.jl")
-include("parsers/definitions/MCMCDerivRules.jl")
-include("parsers/expr_funcs.jl")
-include("models/MCLikelihood.jl")
-include("models/models.jl")
-include("samplers/ARS.jl")
-include("samplers/SliceSampler.jl")
-include("samplers/MH.jl")
-include("samplers/RAM.jl")
-# include("samplers/IMH.jl")
-include("samplers/HMC.jl")
-# include("samplers/HMCDA.jl")
-# include("samplers/NUTS.jl")
-include("samplers/MALA.jl")
-include("samplers/SMMALA.jl")
-# include("samplers/RMHMC.jl")
-# include("samplers/PMALA.jl")
-include("runners/SerialMC.jl")
-# include("runners/SerialTempMC.jl")
-# include("runners/SeqMC.jl")
+  ### Functions
+  add_dimension,
+  add_edge!,
+  add_vertex!,
+  count!,
+  edge_index,
+  edges,
+  erf_rate_score,
+  in_degree,
+  in_edges,
+  in_neighbors,
+  is_directed,
+  is_indexed,
+  likelihood_model,
+  logistic,
+  logistic_rate_score,
+  make_edge,
+  num_edges,
+  num_vertices,
+  out_degree,
+  out_edges,
+  out_neighbors,
+  rate!,
+  replace!,
+  reset!,
+  reset_burnin!,
+  revedge,
+  run,
+  sampler_state,
+  save!,
+  save,
+  single_parameter_likelihood_model,
+  source,
+  target,
+  topological_sort_by_dfs,
+  tune!,
+  tuner_state,
+  vertex_index,
+  vertices
+
+include("parser/replace.jl")
+
+include("stats/logistic.jl")
+
+include("states/VariableStates.jl")
+include("states/ParameterStates.jl")
+include("states/VariableNStates.jl")
+include("states/ParameterNStates.jl")
+
+include("iostreams/VariableIOStreams.jl")
+include("iostreams/ParameterIOStreams.jl")
+
+include("variables/variables.jl")
+include("variables/BasicContUnvParameter.jl")
+include("variables/BasicContMuvParameter.jl")
+include("variables/dependencies.jl")
+
+include("models/GenericModel.jl")
+include("models/generators.jl")
+
+include("ranges/ranges.jl")
+include("ranges/BasicMCRange.jl")
+
+include("tuners/tuners.jl")
 include("tuners/VanillaMCTuner.jl")
-include("tuners/EmpiricalMCTuner.jl")
-include("jobs/PlainMCJob.jl")
-include("jobs/TaskMCJob.jl")
+include("tuners/AcceptanceRateMCTuner.jl")
+
+include("samplers/samplers.jl")
+include("samplers/MH.jl")
+include("samplers/MALA.jl")
+
 include("jobs/jobs.jl")
-include("stats/mean.jl")
-include("stats/var.jl")
-include("stats/zv.jl")
-include("diagnostics/ess.jl")
-include("diagnostics/actime.jl")
-include("diagnostics/summary.jl")
-# Output management: filter, merge, extract, read and write chains, convert btwn chains, arrays and dataframes
-# include("output/filter.jl")
-# include("output/merge.jl")
-include("ui/minimal.jl")
+include("jobs/BasicMCJob.jl")
+# include("jobs/GibbsJob.jl")
+
+include("samplers/iterate/MH.jl")
+include("samplers/iterate/MALA.jl")
+include("samplers/iterate/iterate.jl")
 
 end

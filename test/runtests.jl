@@ -1,8 +1,23 @@
 tests =
-  ["test_empmctuner",
-  "test_ARS1",
-  "test_ARS2",
-  "test_slice_sampler"]
+  [
+    "common",
+    "VariableStates",
+    "ParameterStates",
+    "VariableNStates",
+    "ParameterNStates",
+    "VariableIOStreams",
+    "ParameterIOStreams",
+    "variables",
+    "BasicContUnvParameter",
+    "BasicContMuvParameter",
+    "dependencies",
+    "GenericModel",
+    "generators"
+    # "tuners",
+    # "VanillaMCTuner",
+    # "AcceptanceRateMCTuner",
+    # "MH"
+  ]
 
 println("Running tests:")
 

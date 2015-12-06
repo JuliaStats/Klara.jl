@@ -1,112 +1,144 @@
-### MH holds the fields of the Metropolis-Hastings sampler
-### In its most general case it accommodates an asymmetric proposal density
-### For symetric proposals, the proposal correction factor equals 1, so the logproposal field is set to nothing
+### MHState
 
-immutable MH <: MHSampler
-  symmetric::Bool # If the proposal density is symmetric, then symmetric=true, otherwise symmetric=false
-  logproposal::Union(Function, Nothing) # logpdf of asymmetric proposal density
-                                        # For symmetric proposals, logproposal is set to nothing
-  randproposal::Function # random sampling from proposal density
+# MHState holds the internal state ("local variables") of the Metropolis-Hastings sampler
 
-  function MH(s::Bool, l::Union(Function, Nothing), r::Function)
-    if s && !isa(l, Nothing)
-      error("If the symmetric field is true, then logproposal is not used in the calculations.")
+type MHState <: MCSamplerState
+  pstate::ParameterState # Parameter state used internally by MH
+  tune::MCTunerState
+  ratio::Real # Acceptance ratio
+
+  function MHState(pstate::ParameterState, tune::MCTunerState, ratio::Real)
+    if !isnan(ratio)
+      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(s, l, r)
+    new(pstate, tune, ratio)
   end
 end
 
-MH(l::Function, r::Function) = MH(false, l, r) # Metropolis-Hastings sampler (asymmetric proposal)
-MH(r::Function) = MH(true, nothing, r) # Metropolis sampler (symmetric proposal)
+MHState(pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) = MHState(pstate, tune, NaN)
 
-# Random-walk Metropolis, i.e. Metropolis with a normal proposal density
-MH(σ::Matrix{Float64}) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
-MH(σ::Vector{Float64}) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
-MH(σ::Float64) = MH(x::Vector{Float64} -> rand(MvNormal(x, σ)))
-MH() = MH(x::Vector{Float64} -> rand(MvNormal(x, 1.0)))
+### Metropolis-Hastings (MH) sampler
 
-### MHHeap type holds the internal state ("local variables") of the MH sampler
+# In its most general case it accommodates an asymmetric proposal density
+# For symetric proposals, the proposal correction factor equals 1, so the logproposal field is set to nothing
 
-type MHHeap <: MCHeap{MCBaseSample}
-  instate::MCState{MCBaseSample} # Monte Carlo state used internally by the sampler
-  outstate::MCState{MCBaseSample} # Monte Carlo state outputted by the sampler
-  tune::MCTune
-  count::Int # Current number of iterations
-  ratio::Float64
+immutable MH <: MHSampler
+  symmetric::Bool # If symmetric=true then the proposal density is symmetric, else it is asymmetric
+  logproposal::Union{Function, Void} # logpdf of asymmetric proposal. For symmetric proposals, logproposal=nothing
+  randproposal::Function # random sampling from proposal density
+
+  function MH(symmetric::Bool, logproposal::Union{Function, Void}, randproposal::Function)
+    if symmetric && logproposal != nothing
+      error("If the symmetric field is true, then logproposal is not used in the calculations")
+    end
+    new(symmetric, logproposal, randproposal)
+  end
 end
 
-MHHeap() =
-  MHHeap(MCState(MCBaseSample(), MCBaseSample()), MCState(MCBaseSample(), MCBaseSample()), VanillaMCTune(), 0, NaN)
+# Metropolis-Hastings sampler (asymmetric proposal)
 
-MHHeap(l::Int, t::MCTune=VanillaMCTune()) =
-  MHHeap(MCState(MCBaseSample(l), MCBaseSample(l)), MCState(MCBaseSample(l), MCBaseSample(l)), t, 0, NaN)
+MH(logproposal::Function, randproposal::Function) = MH(false, logproposal, randproposal)
+
+# Metropolis sampler (symmetric proposal)
+
+MH(randproposal::Function) = MH(true, nothing, randproposal)
+
+# Random-walk Metropolis, i.e. Metropolis with a normal proposal density
+
+MH{N<:Real}(σ::Matrix{N}) = MH(x::Vector{N} -> rand(MvNormal(x, σ)))
+MH{N<:Real}(σ::Vector{N}) = MH(x::Vector{N} -> rand(MvNormal(x, σ)))
+MH{N<:Real}(σ::N) = MH(x::N -> rand(Normal(x, σ)))
+MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> rand(Normal(x, 1.0)))
 
 ### Initialize Metropolis-Hastings sampler
 
-function initialize_heap(m::MCModel, s::MH, r::MCRunner, t::MCTuner)
-  heap::MHHeap = MHHeap(m.size)
+## Initialize parameter state
 
-  heap.instate.current = MCBaseSample(copy(m.init))
-  logtarget!(heap.instate.current, m.eval)
-  @assert isfinite(heap.instate.current.logtarget) "Initial values out of model support."
-
-  heap.tune = VanillaMCTune()
-
-  heap.count = 1
-
-  heap
+function initialize!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MH
+)
+  parameter.logtarget!(pstate, vstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
-function reset!(heap::MHHeap, x::Vector{Float64}, m::MCModel)
-  heap.instate.current = MCBaseSample(copy(x))
-  logtarget!(heap.instate.current, m.eval)
+function initialize!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MH
+)
+  parameter.logtarget!(pstate, vstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
-function initialize_task!(heap::MHHeap, m::MCModel, s::MH, r::MCRunner, t::MCTuner)
-  # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
+## Initialize MHState
+
+sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState) =
+  MHState(generate_empty(pstate), tuner_state(sampler, tuner))
+
+## Reset parameter state
+
+function reset!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MH
+)
+  pstate.value = x
+  parameter.logtarget!(pstate, vstate)
+end
+
+function reset!{N<:Real, S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  x::Vector{N},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MH
+)
+  pstate.value = copy(x)
+  parameter.logtarget!(pstate, vstate)
+end
+
+## Initialize task
+
+function initialize_task!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  sstate::MHState,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MH,
+  tuner::MCTuner,
+  range::BasicMCRange,
+  resetplain!::Function,
+  iterate!::Function
+)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(heap, m, s, r, t, produce)
+    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
   end
 end
 
-### Perform iteration for Metropolis-Hastings sampler
+function initialize_task!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  sstate::MHState,
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MH,
+  tuner::MCTuner,
+  range::BasicMCRange,
+  resetplain!::Function,
+  iterate!::Function
+)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, resetplain!)
 
-function iterate!(heap::MHHeap, m::MCModel, s::MH, r::MCRunner, t::MCTuner, send::Function)
-  if t.verbose
-    heap.tune.proposed += 1
+  while true
+    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
   end
-
-  heap.instate.successive = MCBaseSample(s.randproposal(heap.instate.current.sample))
-  logtarget!(heap.instate.successive, m.eval)
-
-  if s.symmetric
-    heap.ratio = heap.instate.successive.logtarget-heap.instate.current.logtarget
-  else
-    heap.ratio = (heap.instate.successive.logtarget
-      +s.logproposal(heap.instate.successive.sample, heap.instate.current.sample)
-      -heap.instate.current.logtarget
-      -s.logproposal(heap.instate.current.sample, heap.instate.successive.sample)
-    )
-  end
-  if heap.ratio > 0 || (heap.ratio > log(rand()))
-    heap.outstate = MCState(heap.instate.successive, heap.instate.current, Dict{Any, Any}("accept" => true))
-    heap.instate.current = deepcopy(heap.instate.successive)
-
-    if t.verbose
-      heap.tune.accepted += 1
-    end
-  else
-    heap.outstate = MCState(heap.instate.current, heap.instate.current, Dict{Any, Any}("accept" => false))
-  end
-
-  if t.verbose && heap.count <= r.burnin && mod(heap.count, t.period) == 0
-    rate!(heap.tune)
-    println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
-  end
-
-  heap.count += 1
-
-  send(heap.outstate)
 end

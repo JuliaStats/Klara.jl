@@ -1,124 +1,196 @@
-### MALA holds the fields of the MALA sampler
-### These fields represent the initial user-defined state of the sampler
-### These sampler fields are copied to the corresponding heap type fields, where the latter can be tuned
+### Abstract MALA state
 
-immutable MALA <: LMCSampler
-  driftstep::Float64
+abstract MALAState <: MCSamplerState
 
-  function MALA(ds::Float64)
-    @assert ds > 0 "Drift step is not positive."
-    new(ds)
+### MALA state subtypes
+
+## UnvMALAState holds the internal state ("local variables") of the MALA sampler for univariate parameters
+
+type UnvMALAState <: MALAState
+  pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by MALA
+  driftstep::Real # Drift stepsize for a single Monte Carlo iteration
+  tune::MCTunerState
+  ratio::Real
+  vmean::Real
+  pnewgivenold::Real
+  poldgivennew::Real
+
+  function UnvMALAState(
+    pstate::ParameterState{Continuous, Univariate},
+    driftstep::Real,
+    tune::MCTunerState,
+    ratio::Real,
+    vmean::Real,
+    pnewgivenold::Real,
+    poldgivennew::Real
+  )
+    if !isnan(driftstep)
+      @assert driftstep > 0 "Drift step size must be positive"
+    end
+    if !isnan(ratio)
+      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+    end
+    new(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
   end
 end
 
-MALA(; driftstep::Float64=1.) = MALA(driftstep)
+UnvMALAState(pstate::ParameterState{Continuous, Univariate}, driftstep::Real=1., tune::MCTunerState=VanillaMCTune()) =
+  UnvMALAState(pstate, driftstep, tune, NaN, NaN, NaN, NaN)
 
-### MALAHeap type holds the internal state ("local variables") of the MALA sampler
+## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
-type MALAHeap <: MCHeap{MCGradSample}
-  instate::MCState{MCGradSample} # Monte Carlo state used internally by the sampler
-  outstate::MCState{MCGradSample} # Monte Carlo state outputted by the sampler
-  tune::MCTune
-  count::Int # Current number of iterations
-  driftstep::Float64 # Drift stepsize for the current Monte Carlo iteration (possibly tuned)
-  smean::Vector{Float64}
-  ratio::Float64
-  pnewgivenold::Float64
-  poldgivennew::Float64
+type MuvMALAState{N<:Real} <: MALAState
+  pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by MALA
+  driftstep::Real # Drift stepsize for a single Monte Carlo iteration
+  tune::MCTunerState
+  ratio::Real
+  vmean::Vector{N}
+  pnewgivenold::Real
+  poldgivennew::Real
+
+  function MuvMALAState(
+    pstate::ParameterState{Continuous, Multivariate},
+    driftstep::Real,
+    tune::MCTunerState,
+    ratio::Real,
+    vmean::Vector{N},
+    pnewgivenold::Real,
+    poldgivennew::Real
+  )
+    if !isnan(driftstep)
+      @assert driftstep > 0 "Drift step size must be positive"
+    end
+    if !isnan(ratio)
+      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+    end
+    new(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
+  end
 end
 
-MALAHeap() =
-  MALAHeap(MCState(MCGradSample(), MCGradSample()), MCState(MCGradSample(), MCGradSample()), VanillaMCTune(), 0, NaN,
-  Float64[], NaN, NaN, NaN)
+MuvMALAState{N<:Real}(
+  pstate::ParameterState{Continuous, Multivariate},
+  driftstep::Real,
+  tune::MCTunerState,
+  ratio::Real,
+  vmean::Vector{N},
+  pnewgivenold::Real,
+  poldgivennew::Real
+) =
+  MuvMALAState{N}(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
 
-MALAHeap(l::Int, t::MCTune=VanillaMCTune()) =
-  MALAHeap(MCState(MCGradSample(l), MCGradSample(l)), MCState(MCGradSample(l), MCGradSample(l)), t, 0, NaN,
-    fill(NaN, l), NaN, NaN, NaN)
+MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, driftstep::Real=1., tune::MCTunerState=VanillaMCTune()) =
+  MuvMALAState(pstate, driftstep, tune, NaN, Array(eltype(pstate), pstate.size), NaN, NaN)
+
+Base.eltype{N<:Real}(::Type{MuvMALAState{N}}) = N
+Base.eltype{N<:Real}(s::MuvMALAState{N}) = N
+
+### Metropolis-adjusted Langevin Algorithm (MALA)
+
+immutable MALA <: LMCSampler
+  driftstep::Real
+
+  function MALA(driftstep::Real)
+    @assert driftstep > 0 "Drift step is not positive"
+    new(driftstep)
+  end
+end
+
+MALA() = MALA(1.)
 
 ### Initialize MALA sampler
 
-function initialize_heap(m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
-  @assert hasgradient(m) "MALA sampler requires model with gradient function."
-  heap::MALAHeap = MALAHeap(m.size)
+## Initialize parameter state
 
-  heap.instate.current = MCGradSample(copy(m.init))
-  gradlogtargetall!(heap.instate.current, m.evalallg)
-  @assert isfinite(heap.instate.current.logtarget) "Initial values out of model support."
-
-  if isa(t, VanillaMCTuner)
-    heap.tune = VanillaMCTune()
-  elseif isa(t, EmpiricalMCTuner)
-    heap.tune = EmpiricalMCTune(s.driftstep)
-  end
-
-  heap.count = 1
-
-  heap
+function initialize!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MALA
+)
+  parameter.uptogradlogtarget!(pstate, vstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.gradlogtarget) "Gradient of log-target not finite: initial values out of parameter support"
 end
 
-function reset!(heap::MALAHeap, x::Vector{Float64}, m::MCModel)
-  heap.instate.current = MCGradSample(copy(x))
-  gradlogtargetall!(heap.instate.current, m.evalallg)
+function initialize!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MALA
+)
+  parameter.uptogradlogtarget!(pstate, vstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
+  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
 end
 
-function initialize_task!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner)
-  # Hook inside Task to allow remote resetting
-  task_local_storage(:reset, (x::Vector{Float64})->reset!(heap, x, m))
+## Initialize MuvMALAState
+
+sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
+  UnvMALAState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))
+
+sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
+  MuvMALAState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))
+
+## Reset parameter state
+
+function reset!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MALA
+)
+  pstate.value = x
+  parameter.uptogradlogtarget!(pstate, vstate)
+end
+
+function reset!{N<:Real, S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  x::Vector{N},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MALA
+)
+  pstate.value = copy(x)
+  parameter.uptogradlogtarget!(pstate, vstate)
+end
+
+## Initialize task
+
+function initialize_task!{S<:VariableState}(
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::Vector{S},
+  sstate::UnvMALAState,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MALA,
+  tuner::MCTuner,
+  range::BasicMCRange,
+  resetplain!::Function,
+  iterate!::Function
+)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(heap, m, s, r, t, produce)
+    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
   end
 end
 
-### Perform iteration for MALA sampler
+function initialize_task!{N<:Real, S<:VariableState}(
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::Vector{S},
+  sstate::MuvMALAState{N},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MALA,
+  tuner::MCTuner,
+  range::BasicMCRange,
+  resetplain!::Function,
+  iterate!::Function
+)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, resetplain!)
 
-function iterate!(heap::MALAHeap, m::MCModel, s::MALA, r::MCRunner, t::MCTuner, send::Function)
-  if isa(t, VanillaMCTuner)
-    heap.driftstep = s.driftstep
-    if t.verbose
-      heap.tune.proposed += 1
-    end
-  elseif isa(t, EmpiricalMCTuner)
-    heap.driftstep = heap.tune.step
-    heap.tune.proposed += 1
+  while true
+    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
   end
-
-  heap.smean = heap.instate.current.sample+(heap.driftstep/2.)*heap.instate.current.gradlogtarget
-  heap.instate.successive = MCGradSample(heap.smean+sqrt(heap.driftstep)*randn(m.size))
-  gradlogtargetall!(heap.instate.successive, m.evalallg)
-  heap.pnewgivenold =
-    sum(-(heap.smean-heap.instate.successive.sample).^2/(2*heap.driftstep).-log(2*pi*heap.driftstep)/2)
-
-  heap.smean = heap.instate.successive.sample+(heap.driftstep/2)*heap.instate.successive.gradlogtarget
-  heap.poldgivennew =
-    sum(-(heap.smean-heap.instate.current.sample).^2/(2*heap.driftstep).-log(2*pi*heap.driftstep)/2)
-
-  heap.ratio = heap.instate.successive.logtarget+heap.poldgivennew-heap.instate.current.logtarget-heap.pnewgivenold
-  if heap.ratio > 0 || (heap.ratio > log(rand()))
-    heap.outstate = MCState(heap.instate.successive, heap.instate.current, Dict{Any, Any}("accept" => true))
-    heap.instate.current = deepcopy(heap.instate.successive)
-
-    if isa(t, VanillaMCTuner) && t.verbose
-      heap.tune.accepted += 1
-    elseif isa(t, EmpiricalMCTuner)
-      heap.tune.accepted += 1
-    end
-  else
-    heap.outstate = MCState(heap.instate.current, heap.instate.current, Dict{Any, Any}("accept" => false))
-  end
-
-  if isa(t, VanillaMCTuner) && t.verbose && heap.count <= r.burnin && mod(heap.count, t.period) == 0
-    rate!(heap.tune)
-    println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
-  elseif isa(t, EmpiricalMCTuner) && heap.count <= r.burnin && mod(heap.count, t.period) == 0
-    adapt!(heap.tune, t)
-    reset!(heap.tune)
-    if t.verbose
-      println("Burnin iteration $(heap.count) of $(r.burnin): ", round(100*heap.tune.rate, 2), " % acceptance rate")
-    end
-  end
-
-  heap.count += 1
-
-  send(heap.outstate)
 end
