@@ -13,16 +13,15 @@ type BasicMCJob{S<:VariableState} <: MCJob
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
   pstate::ParameterState # Points to vstate[pindex] for faster access
   sstate::MCSamplerState # Internal state of MCSampler
-  output::Union{VariableNState, VariableIOStream} # Output of model's single parameter
+  output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Int # Current number of post-burnin iterations
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   resetplain!::Function
   iterate!::Function
-  close::Function
   reset!::Function
-  consume!::Function
-  save!::Function
+  save!::Union{Function, Void}
+  run!::Function
 
   function BasicMCJob(
     model::GenericModel,
@@ -61,15 +60,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
-    if outopts[:destination] == :nstate
-      instance.close = () -> ()
-      instance.save! = (i::Int) -> instance.output.copy(instance.pstate, i)
-    elseif outopts[:destination] == :iostream
-      instance.close = () -> instance.output.close()
-      instance.save! = eval(codegen_save_iostream_basic_mcjob(instance, outopts))
-    else
-      error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
-    end
+    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basic_mcjob(instance, outopts))
 
     instance.resetplain! = eval(codegen_resetplain_basic_mcjob(instance))
     instance.iterate! = eval(codegen_iterate_basic_mcjob(instance, outopts))
@@ -77,15 +68,6 @@ type BasicMCJob{S<:VariableState} <: MCJob
     if plain
       instance.task = nothing
       instance.reset! = instance.resetplain!
-      instance.consume! = () -> instance.iterate!(
-        instance.pstate,
-        instance.vstate,
-        instance.sstate,
-        instance.parameter,
-        instance.sampler,
-        instance.tuner,
-        instance.range
-      )
     else
       instance.task = Task(() -> initialize_task!(
         instance.pstate,
@@ -99,8 +81,9 @@ type BasicMCJob{S<:VariableState} <: MCJob
         instance.iterate!
       ))
       instance.reset! = eval(codegen_reset_task_basic_mcjob(instance))
-      instance.consume! = () -> consume(instance.task)
     end
+
+    instance.run! = eval(codegen_run_basic_mcjob(instance))
 
     instance
   end
@@ -205,19 +188,24 @@ end
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
 # In that case the iterate!() function will take a second variable (transformation) as input argument
 
-function codegen_save_iostream_basic_mcjob(job::BasicMCJob, outopts::Dict)
+function codegen_save_basic_mcjob(job::BasicMCJob, outopts::Dict)
   body = []
 
-  push!(body, :($(job).output.write($(job).pstate)))
-
-  if outopts[:flush]
-    push!(body, :($(job).output.flush()))
+  if isa(job.output, VariableNState)
+    push!(body, :($(job).output.copy($(job).pstate, _i)))
+  elseif isa(job.output, VariableIOStream)
+    push!(body, :($(job).output.write($(job).pstate)))
+    if outopts[:flush]
+      push!(body, :($(job).output.flush()))
+    end
+  else
+    error("To save output, :destination must be set to :nstate or :iostream, got $(outopts[:destination])")
   end
 
-  @gensym save_iostream_basic_mcjob
+  @gensym save_basic_mcjob
 
   quote
-    function $save_iostream_basic_mcjob(_i::Int)
+    function $save_basic_mcjob(_i::Int)
       $(body...)
     end
   end
@@ -243,7 +231,7 @@ function codegen_resetplain_basic_mcjob(job::BasicMCJob)
   vform = variate_form(job.pstate)
   if vform == Univariate
     result = quote
-      function $resetplain_basic_mcjob{N<:Real}(_x::N)
+      function $resetplain_basic_mcjob(_x::Real)
         $(body...)
       end
     end
@@ -271,7 +259,7 @@ function codegen_reset_task_basic_mcjob(job::BasicMCJob)
   vform = variate_form(job.pstate)
   if vform == Univariate
     result = quote
-      function $reset_task_basic_mcjob{N<:Real}(_x::N)
+      function $reset_task_basic_mcjob(_x::Real)
         $(body...)
       end
     end
@@ -283,6 +271,52 @@ function codegen_reset_task_basic_mcjob(job::BasicMCJob)
     end
   else
     error("It is not possible to define task reset for given job")
+  end
+
+  result
+end
+
+function codegen_run_basic_mcjob(job::BasicMCJob)
+  result::Expr
+  ifforbody = []
+  forbody = []
+  body = []
+
+  if job.plain
+    push!(forbody, :($(job).iterate!(
+      $(job).pstate,
+      $(job).vstate,
+      $(job).sstate,
+      $(job).parameter,
+      $(job).sampler,
+      $(job).tuner,
+      $(job).range
+    )))
+  else
+    push!(forbody, :(consume($(job).task)))
+  end
+
+  push!(ifforbody, :($(job).count+=1))
+  if job.output != nothing
+    push!(ifforbody, :($(job).save!($(job).count)))
+  end
+
+  push!(forbody, Expr(:if, :(in(i, $(job).range.postrange)), Expr(:block, ifforbody...)))
+
+  push!(body, Expr(:for, :(i in 1:$(job).range.nsteps), Expr(:block, forbody...)))
+
+  if isa(job.output, VariableIOStream)
+    push!(body, :($(job).output.close()))
+  end
+
+  push!(body, :(return $(job).output))
+
+  @gensym run_basic_mcjob
+
+  result = quote
+    function $run_basic_mcjob()
+      $(body...)
+    end
   end
 
   result
@@ -328,16 +362,7 @@ function checkin(job::BasicMCJob)
   end
 end
 
-function Base.run(job::BasicMCJob)
-  for i in 1:job.range.nsteps
-    job.consume!()
+Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
+Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
-    if in(i, job.range.postrange)
-      job.save!(job.count+=1)
-    end
-  end
-
-  job.close()
-
-  job.output
-end
+Base.run(job::BasicMCJob) = job.run!()

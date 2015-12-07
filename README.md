@@ -74,7 +74,7 @@ chain.value
 To reset the job, using a new initial value for the targeted parameter, run
 
 ```
-job.reset!([3.2, 9.4])
+reset(job, [3.2, 9.4])
 
 chain = run(job)
 ```
@@ -156,7 +156,7 @@ chain = run(job)
 Task-based jobs can also be reset:
 
 ```
-job.reset!([-2.8, 3.4])
+reset(job, [-2.8, 3.4])
 
 chain = run(job)
 ```

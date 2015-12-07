@@ -80,8 +80,8 @@ function codegen_iterate_mh(job::BasicMCJob, outopts::Dict)
       _sstate::$(typeof(job.sstate)),
       _parameter::$(typeof(job.parameter)),
       _sampler::MH,
-      _tuner::MCTuner,
-      _range::BasicMCRange
+      _tuner::$(typeof(job.tuner)),
+      _range::$(typeof(job.range))
     )
       $(body...)
     end

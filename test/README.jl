@@ -49,7 +49,7 @@ chain.value
 
 [mean(chain.value[i, :]) for i in 1:2]
 
-job.reset!([3.2, 9.4])
+reset(job, [3.2, 9.4])
 
 chain = run(job)
 
@@ -95,7 +95,7 @@ job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true)
 
 chain = run(job)
 
-job.reset!([-2.8, 3.4])
+reset(job, [-2.8, 3.4])
 
 chain = run(job)
 
