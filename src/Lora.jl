@@ -1,7 +1,6 @@
 module Lora
 
 using Distributions
-# using ForwardDiff
 using Graphs
 # using ReverseDiffSource
 
@@ -22,6 +21,8 @@ import Base:
   run,
   show,
   write
+
+import ForwardDiff
 
 import Graphs:
   add_edge!,

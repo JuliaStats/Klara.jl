@@ -19,56 +19,41 @@ is_indexed(v::Variable) = v.index > 0 ? true : false
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
-function codegen_internal_variable_method(f::Function, r::Vector{Symbol}=Symbol[], k::Vector{Symbol}=Symbol[], i::Int=0)
+function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, nfargs::Bool=true)
   body = []
-  fexprn::Array{Any, 1}
+  fargs::Union{Expr, Vector}
+  rvalues::Expr
 
-  if isempty(k)
-    fexprn = code_lowered(f, (Any,))
+  if nkeys == 0
+    fargs = [:(_state.value)]
+  elseif nkeys > 0
+    if nfargs
+      fargs = [Expr(:vect, [:(_states[$j].value) for j in 1:nkeys]...)]
+    else
+      fargs = [:(_state.value), Expr(:vect, [:(_states[$j].value) for j in 1:nkeys]...)]
+    end
   else
-    fexprn = code_lowered(f, (Any, Any))
-  end
-
-  for exprn in fexprn[1].args[3].args
-    if !isa(exprn, LineNumberNode)
-      push!(body, exprn)
-    end
-  end
-
-  fargs = fexprn[1].args[1]
-  nfargs = length(fargs)
-
-  for exprn in body
-    replace!(exprn, fargs[1], :(_state.value))
-  end
-
-  if nfargs > 1
-    for exprn in body
-      for j in [1:(i-1); (i+1):length(k)]
-        replace!(exprn, :($(GlobalRef(Main, :getindex))($(fargs[2]), $(QuoteNode(k[j])))), :(_states[$j].value))
-      end
-    end
+    error("nkeys must be positive")
   end
 
   nr = length(r)
-
   if nr == 1
-    body[end] = Expr(:(=), Expr(:., :_state, QuoteNode(r[1])), body[end].args[1])
+    rvalues = Expr(:., :_state, QuoteNode(r[1]))
   elseif nr > 1
-    rvalues = pop!(body)
-    rvalues = rvalues.args[1].args
-    shift!(rvalues)
-
-    @assert nr == length(rvalues) "Wrong number of returned values in user-defined function"
-
-    for j in 1:nr
-      push!(body, Expr(:(=), Expr(:., :_state, QuoteNode(r[j])), rvalues[j]))
-    end
+    rvalues = Expr(:tuple, [Expr(:., :_state, QuoteNode(r[j])) for j in 1:nr]...)
+  else
+    error("Vector of return symbols must have at leasat one element")
   end
+
+  push!(body, Expr(:(=), rvalues, :($(f)($(fargs...)))))
 
   @gensym internal_variable_method
 
-  Expr(:function, Expr(:call, internal_variable_method, :_state, :_states), Expr(:block, body...))
+  quote
+    function $internal_variable_method(_state, _states)
+      $(body...)
+    end
+  end
 end
 
 Base.show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")

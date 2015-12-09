@@ -285,7 +285,9 @@ function BasicContUnvParameter(
   dtensorlogtarget::Union{Function, Void}=nothing,
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
-  uptodtensorlogtarget::Union{Function, Void}=nothing
+  uptodtensorlogtarget::Union{Function, Void}=nothing,
+  nkeys::Int=0,
+  nfargs::Bool=true
 )
   outargs = Array(Union{Function, Void}, 17)
 
@@ -320,21 +322,7 @@ function BasicContUnvParameter(
     if inargs[i] == nothing
       outargs[i] = nothing
     elseif isa(inargs[i], Function)
-      if isgeneric(inargs[i])
-        if any([method_exists(inargs[i], (T,)) for T in
-          (Any, Number, Real, AbstractFloat, BigFloat, Float64, Float32, Float16)
-        ])
-          outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i]))
-        elseif any([method_exists(inargs[i], (T, Dict)) for T in
-          (Any, Number, Real, AbstractFloat, BigFloat, Float64, Float32, Float16)
-        ])
-          outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], key, index))
-        else
-          error("Function $(f[i]) has wrong signature")
-        end
-      else
-        error("BasicContUnvParameter with vector key input argument works only with generic input methods")
-      end
+      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, nfargs))
     end
   end
 
@@ -429,7 +417,8 @@ value_support(s::BasicContUnvParameter) = Continuous
 variate_form(s::Type{BasicContUnvParameter}) = Univariate
 variate_form(s::BasicContUnvParameter) = Univariate
 
-function default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict)
-  augment!(outopts)
-  BasicContUnvParameterState(value, in(:accept, outopts[:diagnostics]) ? [:accept] : Symbol[])
-end
+default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict) =
+  BasicContUnvParameterState(
+    value,
+    (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
+  )

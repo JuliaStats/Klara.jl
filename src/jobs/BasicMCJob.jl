@@ -55,7 +55,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.sstate = sampler_state(sampler, tuner, instance.pstate)
 
-    augment!(outopts)
+    augment_outopts_basic_mcjob!(outopts)
     instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
 
     instance.count = 0
@@ -320,6 +320,36 @@ function codegen_run_basic_mcjob(job::BasicMCJob)
   end
 
   result
+end
+
+# Set defaults for possibly unspecified output options
+
+function augment_outopts_basic_mcjob!(outopts::Dict)
+  destination = get!(outopts, :destination, :nstate)
+
+  if destination != :none
+    if !haskey(outopts, :monitor)
+      outopts[:monitor] = [:value]
+    end
+
+    if !haskey(outopts, :diagnostics)
+      outopts[:diagnostics] = Symbol[]
+    end
+
+    if destination == :iostream
+      if !haskey(outopts, :filepath)
+        outopts[:filepath] = ""
+      end
+
+      if !haskey(outopts, :filesuffix)
+        outopts[:filesuffix] = "csv"
+      end
+
+      if !haskey(outopts, :flush)
+        outopts[:flush] = false
+      end
+    end
+  end
 end
 
 function checkin(job::BasicMCJob)
