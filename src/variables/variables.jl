@@ -20,7 +20,6 @@ Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
 function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, nfargs::Bool=true)
-  body = []
   fargs::Union{Expr, Vector}
   rvalues::Expr
 
@@ -45,13 +44,13 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
     error("Vector of return symbols must have at leasat one element")
   end
 
-  push!(body, Expr(:(=), rvalues, :($(f)($(fargs...)))))
+  body = Expr(:(=), rvalues, :($(f)($(fargs...))))
 
   @gensym internal_variable_method
 
   quote
     function $internal_variable_method(_state, _states)
-      $(body...)
+      $(body)
     end
   end
 end

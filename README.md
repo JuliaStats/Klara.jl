@@ -26,7 +26,7 @@ using Lora
 
 vkeys = [:p]
 
-### Define the log-target, which must be a generic function
+### Define the log-target as a function (generic or anonymous):
 
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
