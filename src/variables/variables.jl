@@ -27,9 +27,9 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
     fargs = [:(_state.value)]
   elseif nkeys > 0
     if nfargs
-      fargs = [Expr(:vect, [:(_states[$j].value) for j in 1:nkeys]...)]
+      fargs = [Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]
     else
-      fargs = [:(_state.value), Expr(:vect, [:(_states[$j].value) for j in 1:nkeys]...)]
+      fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]
     end
   else
     error("nkeys must be positive")
