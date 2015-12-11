@@ -69,13 +69,23 @@ export
   Constant,
   ContMuvMarkovChain,
   ContUnvMarkovChain,
+  DTensorLogLikelihood,
+  DTensorLogPrior,
+  DTensorLogTarget,
   Data,
+  DataUpdate,
   Dependence,
   Deterministic,
   GenericModel,
+  GradLogLikelihood,
+  GradLogPrior,
+  GradLogTarget,
   HMCSampler,
   Hyperparameter,
   LMCSampler,
+  LogLikelihood,
+  LogPrior,
+  LogTarget,
   MALA,
   MALAState,
   MCJob,
@@ -93,8 +103,13 @@ export
   ParameterIOStream,
   ParameterNState,
   ParameterState,
+  ParameterUpdate,
   Random,
   Sampleability,
+  TensorLogLikelihood,
+  TensorLogPrior,
+  TensorLogTarget,
+  Transform,
   Transformation,
   VanillaMCTune,
   VanillaMCTuner,
@@ -102,6 +117,7 @@ export
   VariableIOStream,
   VariableNState,
   VariableState,
+  VariableUpdate,
 
   ### Functions
   add_dimension,
@@ -154,6 +170,9 @@ include("states/ParameterNStates.jl")
 
 include("iostreams/VariableIOStreams.jl")
 include("iostreams/ParameterIOStreams.jl")
+
+include("updates/updates.jl")
+include("updates/targets.jl")
 
 include("variables/variables.jl")
 include("variables/BasicContUnvParameter.jl")
