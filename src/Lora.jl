@@ -99,6 +99,7 @@ export
   VanillaMCTune,
   VanillaMCTuner,
   Variable,
+  VariableFunctor,
   VariableIOStream,
   VariableNState,
   VariableState,
@@ -155,6 +156,7 @@ include("states/ParameterNStates.jl")
 include("iostreams/VariableIOStreams.jl")
 include("iostreams/ParameterIOStreams.jl")
 
+include("variables/functors.jl")
 include("variables/variables.jl")
 include("variables/BasicContUnvParameter.jl")
 include("variables/BasicContMuvParameter.jl")
