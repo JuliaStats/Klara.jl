@@ -50,12 +50,12 @@ type BasicContParamIOStream <: ParameterIOStream{Continuous}
     instance.n = n
     instance.diagnostickeys = diagnostickeys
 
-    instance.open = eval(codegen_open_continuous_parameter_iostream(instance, fnames))
-    instance.close = eval(codegen_close_continuous_parameter_iostream(instance, fnames))
-    instance.mark = eval(codegen_mark_continuous_parameter_iostream(instance, fnames))
-    instance.reset = eval(codegen_reset_continuous_parameter_iostream(instance, fnames))
-    instance.flush = eval(codegen_flush_continuous_parameter_iostream(instance, fnames))
-    instance.write = eval(codegen_write_continuous_parameter_iostream(instance, fnames))
+    instance.open = eval(codegen_open_basiccontparamiostream(instance, fnames))
+    instance.close = eval(codegen_close_basiccontparamiostream(instance, fnames))
+    instance.mark = eval(codegen_mark_basiccontparamiostream(instance, fnames))
+    instance.reset = eval(codegen_reset_basiccontparamiostream(instance, fnames))
+    instance.flush = eval(codegen_flush_basiccontparamiostream(instance, fnames))
+    instance.write = eval(codegen_write_basiccontparamiostream(instance, fnames))
 
     instance
   end
@@ -119,7 +119,7 @@ function BasicContParamIOStream(
   )
 end
 
-function codegen_close_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_close_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -130,16 +130,16 @@ function codegen_close_continuous_parameter_iostream(iostream::BasicContParamIOS
     end
   end
 
-  @gensym close_continuous_parameter_iostream
+  @gensym close_basiccontparamiostream
 
   quote
-    function $close_continuous_parameter_iostream()
+    function $close_basiccontparamiostream()
       $(body...)
     end
   end
 end
 
-function codegen_open_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_open_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -152,16 +152,16 @@ function codegen_open_continuous_parameter_iostream(iostream::BasicContParamIOSt
     end
   end
 
-  @gensym open_continuous_parameter_iostream
+  @gensym open_basiccontparamiostream
 
   quote
-    function $open_continuous_parameter_iostream{S<:AbstractString}(_names::Vector{S}, _mode::AbstractString="w")
+    function $open_basiccontparamiostream{S<:AbstractString}(_names::Vector{S}, _mode::AbstractString="w")
       $(body...)
     end
   end
 end
 
-function codegen_mark_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_mark_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -172,16 +172,16 @@ function codegen_mark_continuous_parameter_iostream(iostream::BasicContParamIOSt
     end
   end
 
-  @gensym mark_continuous_parameter_iostream
+  @gensym mark_basiccontparamiostream
 
   quote
-    function $mark_continuous_parameter_iostream()
+    function $mark_basiccontparamiostream()
       $(body...)
     end
   end
 end
 
-function codegen_reset_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_reset_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -192,16 +192,16 @@ function codegen_reset_continuous_parameter_iostream(iostream::BasicContParamIOS
     end
   end
 
-  @gensym reset_continuous_parameter_iostream
+  @gensym reset_basiccontparamiostream
 
   quote
-    function $reset_continuous_parameter_iostream()
+    function $reset_basiccontparamiostream()
       $(body...)
     end
   end
 end
 
-function codegen_flush_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_flush_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -212,23 +212,23 @@ function codegen_flush_continuous_parameter_iostream(iostream::BasicContParamIOS
     end
   end
 
-  @gensym flush_continuous_parameter_iostream
+  @gensym flush_basiccontparamiostream
 
   quote
-    function $flush_continuous_parameter_iostream()
+    function $flush_basiccontparamiostream()
       $(body...)
     end
   end
 end
 
-# To visually inspect code generation via codegen_write_continuous_parameter_iostream, try for example
+# To visually inspect code generation via codegen_write_basiccontparamiostream, try for example
 # using Lora
 #
 # iostream = BasicContParamIOStream((), 4, filepath="", mode="w")
-# Lora.codegen_write_continuous_parameter_iostream(iostream, fieldnames(BasicContParamIOStream))
+# Lora.codegen_write_basiccontparamiostream(iostream, fieldnames(BasicContParamIOStream))
 # close(iostream)
 
-function codegen_write_continuous_parameter_iostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen_write_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
@@ -242,10 +242,10 @@ function codegen_write_continuous_parameter_iostream(iostream::BasicContParamIOS
     end
   end
 
-  @gensym write_continuous_parameter_iostream
+  @gensym write_basiccontparamiostream
 
   quote
-    function $write_continuous_parameter_iostream{F<:VariateForm}(_state::ParameterState{Continuous, F})
+    function $write_basiccontparamiostream{F<:VariateForm}(_state::ParameterState{Continuous, F})
       $(body...)
     end
   end

@@ -14,7 +14,7 @@ function codegen_iterate_mh(job::BasicMCJob, outopts::Dict)
   end
 
   push!(body, :(_sstate.pstate.value = _sampler.randproposal(_pstate.value)))
-  push!(body, :(_parameter.logtarget!(_sstate.pstate, _vstate)))
+  push!(body, :(_parameter.logtarget!(_sstate.pstate)))
 
   if job.sampler.symmetric
     push!(body, :(_sstate.ratio = _sstate.pstate.logtarget-_pstate.logtarget))
@@ -74,9 +74,8 @@ function codegen_iterate_mh(job::BasicMCJob, outopts::Dict)
   @gensym iterate_mh
 
   result = quote
-    function $iterate_mh{S<:VariableState}(
+    function $iterate_mh(
       _pstate::$(typeof(job.pstate)),
-      _vstate::Vector{S},
       _sstate::$(typeof(job.sstate)),
       _parameter::$(typeof(job.parameter)),
       _sampler::MH,

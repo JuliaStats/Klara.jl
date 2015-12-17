@@ -19,14 +19,14 @@ is_indexed(v::Variable) = v.index > 0 ? true : false
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
-function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, nfargs::Bool=true)
+function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=true)
   fargs::Union{Expr, Vector}
   rvalues::Expr
 
   if nkeys == 0
     fargs = [:(_state.value)]
   elseif nkeys > 0
-    if nfargs
+    if vfarg
       fargs = [Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]
     else
       fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]

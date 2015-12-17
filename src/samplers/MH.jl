@@ -54,23 +54,21 @@ MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> rand(Normal(x, 1.0)))
 
 ## Initialize parameter state
 
-function initialize!{S<:VariableState}(
+function initialize!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   parameter::Parameter{Continuous, Univariate},
   sampler::MH
 )
-  parameter.logtarget!(pstate, vstate)
+  parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
-function initialize!{S<:VariableState}(
+function initialize!(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   parameter::Parameter{Continuous, Multivariate},
   sampler::MH
 )
-  parameter.logtarget!(pstate, vstate)
+  parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
@@ -81,33 +79,30 @@ sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState) =
 
 ## Reset parameter state
 
-function reset!{S<:VariableState}(
+function reset!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   x::Real,
   parameter::Parameter{Continuous, Univariate},
   sampler::MH
 )
   pstate.value = x
-  parameter.logtarget!(pstate, vstate)
+  parameter.logtarget!(pstate)
 end
 
-function reset!{N<:Real, S<:VariableState}(
+function reset!{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   x::Vector{N},
   parameter::Parameter{Continuous, Multivariate},
   sampler::MH
 )
   pstate.value = copy(x)
-  parameter.logtarget!(pstate, vstate)
+  parameter.logtarget!(pstate)
 end
 
 ## Initialize task
 
-function initialize_task!{S<:VariableState}(
+function initialize_task!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   sstate::MHState,
   parameter::Parameter{Continuous, Univariate},
   sampler::MH,
@@ -120,13 +115,12 @@ function initialize_task!{S<:VariableState}(
   task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
+    iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end
 
-function initialize_task!{S<:VariableState}(
+function initialize_task!(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   sstate::MHState,
   parameter::Parameter{Continuous, Multivariate},
   sampler::MH,
@@ -139,6 +133,6 @@ function initialize_task!{S<:VariableState}(
   task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
+    iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end

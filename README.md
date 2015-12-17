@@ -36,7 +36,7 @@ plogtarget(z::Vector{Float64}) = -dot(z, z)
 ### 2) the index of the current variable in vkeys,
 ### 3) the log-target
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget)
+p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, nkeys=0)
 
 #### Define the model using the single_parameter_likelihood_model generator
 
@@ -172,7 +172,7 @@ plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 pgradlogtarget(z::Vector{Float64}) = -2*z
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, gradlogtarget=pgradlogtarget)
+p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, gradlogtarget=pgradlogtarget, nkeys=0)
 
 model = single_parameter_likelihood_model(p)
 

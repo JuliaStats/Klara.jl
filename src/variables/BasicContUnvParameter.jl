@@ -5,7 +5,9 @@
 # 2) Target-related fields have higher priority than implicitly derived likelihood+prior fields
 # 3) Upto-related fields have higher priority than implicitly derived Function tuples
 
-type BasicContUnvParameter <: Parameter{Continuous, Univariate}
+### BasicContUnvParameter
+
+type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate}
   key::Symbol
   index::Int
   pdf::Union{ContinuousUnivariateDistribution, Void}
@@ -27,6 +29,7 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
   uptogradlogtarget!::Union{Function, Void}
   uptotensorlogtarget!::Union{Function, Void}
   uptodtensorlogtarget!::Union{Function, Void}
+  states::Vector{S}
 
   function BasicContUnvParameter(
     key::Symbol,
@@ -49,13 +52,15 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     dtlt::Union{Function, Void},
     uptoglt::Union{Function, Void},
     uptotlt::Union{Function, Void},
-    uptodtlt::Union{Function, Void}
+    uptodtlt::Union{Function, Void},
+    states::Vector{S}
   )
     instance = new()
     instance.key = key
     instance.index = index
     instance.pdf = pdf
     instance.prior = prior
+    instance.states = states
 
     args = (setpdf, setprior, ll, lp, lt, gll, glp, glt, tll, tlp, tlt, dtll, dtlp, dtlt, uptoglt, uptotlt, uptodtlt)
     fnames = fieldnames(BasicContUnvParameter)[5:21]
@@ -64,7 +69,12 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     for i = 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
-        !any([method_exists(args[i], (BasicContUnvParameterState, Vector{S})) for S in subtypes(VariableState)])
+        !(any([
+          method_exists(args[i], (BasicContUnvParameterState, Vector{S})) ||
+          method_exists(args[i], (BasicContUnvParameterState,)) ||
+          method_exists(args[i], (Vector{S},))
+          for S in subtypes(VariableState)
+        ]))
         error("$(fnames[i]) has wrong signature")
       end
     end
@@ -75,16 +85,24 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
         instance,
         setter,
         if isa(args[i], Function)
-          eval(codegen_setdistribution_continuous_univariate_parameter(instance, distribution, args[i]))
+          eval(codegen_setfield_basiccontunvparameter(instance, distribution, args[i]))
         else
-          args[i]
+          nothing
         end
       )
     end
 
     # Define loglikelihood! (i = 3) and gradloglikelihood! (i = 6)
-    instance.loglikelihood! = args[3]
-    instance.gradloglikelihood! = args[6]
+    instance.loglikelihood! = if isa(args[3], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[3]))
+    else
+      nothing
+    end
+    instance.gradloglikelihood! = if isa(args[6], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[6]))
+    else
+      nothing
+    end
 
     # Define logprior! (i = 4) and gradlogprior! (i = 7)
     # ppfield and spfield stand for parameter prior-related field and state prior-related field repsectively
@@ -94,13 +112,15 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
       setfield!(
         instance,
         ppfield,
-        if args[i] == nothing && (
-          (isa(prior, ContinuousUnivariateDistribution) && method_exists(f, (typeof(prior), eltype(prior)))) ||
-          isa(args[2], Function)
-        )
-          eval(codegen_setfield_via_distribution_continuous_univariate_parameter(instance, spfield, :prior, f))
+        if isa(args[i], Function)
+          eval(codegen_method_basiccontunvparameter(instance, args[i]))
         else
-          args[i]
+          if (isa(prior, ContinuousUnivariateDistribution) && method_exists(f, (typeof(prior), eltype(prior)))) ||
+            isa(args[2], Function)
+            eval(codegen_method_via_distribution_basiccontunvparameter(instance, :prior, f, spfield))
+          else
+            nothing
+          end
         end
       )
     end
@@ -108,7 +128,7 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     # Define logtarget! (i = 5) and gradlogtarget! (i = 8)
     # ptfield, plfield and ppfield stand for parameter target, likelihood and prior-related field respectively
     # stfield, slfield and spfield stand for state target, likelihood and prior-related field respectively
-    for (i, ptfield, plfield, ppfield, stfield, slfield, spfield, f) in (
+    for (i , ptfield, plfield, ppfield, stfield, slfield, spfield, f) in (
       (5, :logtarget!, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior, logpdf),
       (
         8,
@@ -120,28 +140,44 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
       setfield!(
         instance,
         ptfield,
-        if args[i] == nothing
+        if isa(args[i], Function)
+          eval(codegen_method_basiccontunvparameter(instance, args[i]))
+        else
           if isa(args[i-2], Function) && isa(getfield(instance, ppfield), Function)
-            eval(codegen_setfield_via_sum_continuous_univariate_parameter(
-              instance, plfield, ppfield, stfield, slfield, spfield
-            ))
+            eval(codegen_method_via_sum_basiccontunvparameter(instance, plfield, ppfield, stfield, slfield, spfield))
           elseif (isa(pdf, ContinuousUnivariateDistribution) && method_exists(f, (typeof(pdf), eltype(pdf)))) ||
             isa(args[1], Function)
-            eval(codegen_setfield_via_distribution_continuous_univariate_parameter(instance, stfield, :pdf, f))
+            eval(codegen_method_via_distribution_basiccontunvparameter(instance, :pdf, f, stfield))
+          else
+            nothing
           end
-        else
-          args[i]
         end
       )
     end
 
     # Define tensorloglikelihood! (i = 9) and dtensorloglikelihood! (i = 12)
-    instance.tensorloglikelihood! = args[9]
-    instance.dtensorloglikelihood! = args[12]
+    instance.tensorloglikelihood! = if isa(args[9], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[9]))
+    else
+      nothing
+    end
+    instance.dtensorloglikelihood! = if isa(args[12], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[12]))
+    else
+      nothing
+    end
 
     # Define tensorlogprior! (i = 10) and dtensorlogprior! (i = 13)
-    instance.tensorlogprior! = args[10]
-    instance.dtensorlogprior! = args[13]
+    instance.tensorlogprior! = if isa(args[10], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[10]))
+    else
+      nothing
+    end
+    instance.dtensorlogprior! = if isa(args[13], Function)
+      eval(codegen_method_basiccontunvparameter(instance, args[13]))
+    else
+      nothing
+    end
 
     # Define tensorlogtarget! (i = 11) and dtensorlogtarget! (i = 14)
     for (i , ptfield, plfield, ppfield, stfield, slfield, spfield) in (
@@ -159,12 +195,14 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
       setfield!(
         instance,
         ptfield,
-        if args[i] == nothing && isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_setfield_via_sum_continuous_univariate_parameter(
-            instance, plfield, ppfield, stfield, slfield, spfield
-          ))
+        if isa(args[i], Function)
+          eval(codegen_method_basiccontunvparameter(instance, args[i]))
         else
-          args[i]
+          if isa(args[i-2], Function) && isa(args[i-1], Function)
+            eval(codegen_method_via_sum_basiccontunvparameter(instance, plfield, ppfield, stfield, slfield, spfield))
+          else
+            nothing
+          end
         end
       )
     end
@@ -173,10 +211,14 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     setfield!(
       instance,
       :uptogradlogtarget!,
-      if args[15] == nothing && isa(instance.logtarget!, Function) && isa(instance.gradlogtarget!, Function)
-        eval(codegen_setuptofields_continuous_univariate_parameter(instance, [:logtarget!, :gradlogtarget!]))
+      if isa(args[15], Function)
+        eval(codegen_method_basiccontunvparameter(instance, args[15]))
       else
-        args[15]
+        if isa(instance.logtarget!, Function) && isa(instance.gradlogtarget!, Function)
+          eval(codegen_uptomethods_basiccontunvparameter(instance, [:logtarget!, :gradlogtarget!]))
+        else
+          nothing
+        end
       end
     )
 
@@ -184,15 +226,16 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     setfield!(
       instance,
       :uptotensorlogtarget!,
-      if args[16] == nothing &&
-        isa(instance.logtarget!, Function) &&
-        isa(instance.gradlogtarget!, Function) &&
-        isa(instance.tensorlogtarget!, Function)
-        eval(codegen_setuptofields_continuous_univariate_parameter(
-          instance, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]
-        ))
+      if isa(args[16], Function)
+        eval(codegen_method_basiccontunvparameter(instance, args[16]))
       else
-        args[16]
+        if isa(instance.logtarget!, Function) &&
+          isa(instance.gradlogtarget!, Function) &&
+          isa(instance.tensorlogtarget!, Function)
+          eval(codegen_uptomethods_basiccontunvparameter(instance, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
+        else
+          nothing
+        end
       end
     )
 
@@ -200,16 +243,19 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     setfield!(
       instance,
       :uptodtensorlogtarget!,
-      if args[17] == nothing &&
-        isa(instance.logtarget!, Function) &&
-        isa(instance.gradlogtarget!, Function) &&
-        isa(instance.tensorlogtarget!, Function) &&
-        isa(instance.dtensorlogtarget!, Function)
-        eval(codegen_setuptofields_continuous_univariate_parameter(
-          instance, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]
-        ))
+      if isa(args[17], Function)
+        eval(codegen_method_basiccontunvparameter(instance, args[17]))
       else
-        args[17]
+        if isa(instance.logtarget!, Function) &&
+          isa(instance.gradlogtarget!, Function) &&
+          isa(instance.tensorlogtarget!, Function) &&
+          isa(instance.dtensorlogtarget!, Function)
+          eval(codegen_uptomethods_basiccontunvparameter(
+            instance, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]
+          ))
+        else
+          nothing
+        end
       end
     )
 
@@ -217,7 +263,56 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
   end
 end
 
-BasicContUnvParameter(
+BasicContUnvParameter{S<:VariableState}(
+  key::Symbol,
+  index::Int,
+  pdf::Union{ContinuousUnivariateDistribution, Void},
+  prior::Union{ContinuousUnivariateDistribution, Void},
+  setpdf::Union{Function, Void},
+  setprior::Union{Function, Void},
+  ll::Union{Function, Void},
+  lp::Union{Function, Void},
+  lt::Union{Function, Void},
+  gll::Union{Function, Void},
+  glp::Union{Function, Void},
+  glt::Union{Function, Void},
+  tll::Union{Function, Void},
+  tlp::Union{Function, Void},
+  tlt::Union{Function, Void},
+  dtll::Union{Function, Void},
+  dtlp::Union{Function, Void},
+  dtlt::Union{Function, Void},
+  uptoglt::Union{Function, Void},
+  uptotlt::Union{Function, Void},
+  uptodtlt::Union{Function, Void},
+  states::Vector{S}
+) =
+  BasicContUnvParameter{S}(
+    key,
+    index,
+    pdf,
+    prior,
+    setpdf,
+    setprior,
+    ll,
+    lp,
+    lt,
+    gll,
+    glp,
+    glt,
+    tll,
+    tlp,
+    tlt,
+    dtll,
+    dtlp,
+    dtlt,
+    uptoglt,
+    uptotlt,
+    uptodtlt,
+    states
+  )
+
+BasicContUnvParameter{S<:VariableState}(
   key::Symbol,
   index::Int=0;
   pdf::Union{ContinuousUnivariateDistribution, Void}=nothing,
@@ -238,7 +333,8 @@ BasicContUnvParameter(
   dtensorlogtarget::Union{Function, Void}=nothing,
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
-  uptodtensorlogtarget::Union{Function, Void}=nothing
+  uptodtensorlogtarget::Union{Function, Void}=nothing,
+  states::Vector{S}=VariableState[]
 ) =
   BasicContUnvParameter(
     key,
@@ -261,7 +357,8 @@ BasicContUnvParameter(
     dtensorlogtarget,
     uptogradlogtarget,
     uptotensorlogtarget,
-    uptodtensorlogtarget
+    uptodtensorlogtarget,
+    states
   )
 
 function BasicContUnvParameter(
@@ -286,8 +383,8 @@ function BasicContUnvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  nkeys::Int=0,
-  nfargs::Bool=true
+  nkeys::Int=length(key),
+  vfarg::Bool=false
 )
   outargs = Array(Union{Function, Void}, 17)
 
@@ -322,47 +419,46 @@ function BasicContUnvParameter(
     if inargs[i] == nothing
       outargs[i] = nothing
     elseif isa(inargs[i], Function)
-      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, nfargs))
+      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, vfarg))
     end
   end
 
-  BasicContUnvParameter(key[index], index, pdf, prior, outargs...)
+  BasicContUnvParameter(key[index], index, pdf, prior, outargs..., VariableState[])
 end
 
-function codegen_setdistribution_continuous_univariate_parameter(
+function codegen_setfield_basiccontunvparameter(parameter::BasicContUnvParameter, field::Symbol, f::Function)
+  @gensym codegen_setfield_basiccontunvparameter
+  quote
+    function $codegen_setfield_basiccontunvparameter(_state::BasicContUnvParameterState)
+      setfield!($(parameter), $(QuoteNode(field)), $(f)(_state, $(parameter).states))
+    end
+  end
+end
+
+function codegen_method_basiccontunvparameter(parameter::BasicContUnvParameter, f::Function)
+  @gensym codegen_method_basiccontunvparameter
+  quote
+    function $codegen_method_basiccontunvparameter(_state::BasicContUnvParameterState)
+      $(f)(_state, $(parameter).states)
+    end
+  end
+end
+
+function codegen_method_via_distribution_basiccontunvparameter(
   parameter::BasicContUnvParameter,
   distribution::Symbol,
-  f::Function
+  f::Function,
+  field::Symbol
 )
-  body = :(setfield!($(parameter), $(QuoteNode(distribution)), $(f)(_state, _states)))
-  @gensym setdistribution_continuous_univariate_parameter
+  @gensym codegen_method_via_distribution_basiccontunvparameter
   quote
-    function $setdistribution_continuous_univariate_parameter{S<:VariableState}(
-      _state::BasicContUnvParameterState,
-      _states::Vector{S})
-      $(body)
+    function $codegen_method_via_distribution_basiccontunvparameter(_state::BasicContUnvParameterState)
+      setfield!(_state, $(QuoteNode(field)), $(f)(getfield($(parameter), $(QuoteNode(distribution))), _state.value))
     end
   end
 end
 
-function codegen_setfield_via_distribution_continuous_univariate_parameter(
-  parameter::BasicContUnvParameter,
-  field::Symbol,
-  distribution::Symbol,
-  f::Function
-)
-  body = :(setfield!(_state, $(QuoteNode(field)), $(f)(getfield($(parameter), $(QuoteNode(distribution))), _state.value)))
-  @gensym codegen_setfield_via_distribution_continuous_univariate_parameter
-  quote
-    function $codegen_setfield_via_distribution_continuous_univariate_parameter{S<:VariableState}(
-      _state::BasicContUnvParameterState,
-      _states::Vector{S})
-      $(body)
-    end
-  end
-end
-
-function codegen_setfield_via_sum_continuous_univariate_parameter(
+function codegen_method_via_sum_basiccontunvparameter(
   parameter::BasicContUnvParameter,
   plfield::Symbol,
   ppfield::Symbol,
@@ -372,40 +468,36 @@ function codegen_setfield_via_sum_continuous_univariate_parameter(
 )
   body = []
 
-  push!(body, :(getfield($(parameter), $(QuoteNode(plfield)))(_state, _states)))
-  push!(body, :(getfield($(parameter), $(QuoteNode(ppfield)))(_state, _states)))
+  push!(body, :(getfield($(parameter), $(QuoteNode(plfield)))(_state)))
+  push!(body, :(getfield($(parameter), $(QuoteNode(ppfield)))(_state)))
   push!(body, :(setfield!(
     _state,
     $(QuoteNode(stfield)),
     getfield(_state, $(QuoteNode(slfield)))+getfield(_state, $(QuoteNode(spfield)))))
   )
 
-  @gensym codegen_setfield_via_sum_continuous_univariate_parameter
+  @gensym codegen_method_via_sum_basiccontunvparameter
 
   quote
-    function $codegen_setfield_via_sum_continuous_univariate_parameter{S<:VariableState}(
-      _state::BasicContUnvParameterState,
-      _states::Vector{S})
+    function $codegen_method_via_sum_basiccontunvparameter(_state::BasicContUnvParameterState)
       $(body...)
     end
   end
 end
 
-function codegen_setuptofields_continuous_univariate_parameter(parameter::BasicContUnvParameter, fields::Vector{Symbol})
+function codegen_uptomethods_basiccontunvparameter(parameter::BasicContUnvParameter, fields::Vector{Symbol})
   body = []
   local f::Symbol
 
   for i in 1:length(fields)
     f = fields[i]
-    push!(body, :(getfield($(parameter), $(QuoteNode(f)))(_state, _states)))
+    push!(body, :(getfield($(parameter), $(QuoteNode(f)))(_state)))
   end
 
-  @gensym codegen_setuptofields_continuous_univariate_parameter
+  @gensym codegen_uptomethods_basiccontunvparameter
 
   quote
-    function $codegen_setuptofields_continuous_univariate_parameter{S<:VariableState}(
-      _state::BasicContUnvParameterState,
-      _states::Vector{S})
+    function $codegen_uptomethods_basiccontunvparameter(_state::BasicContUnvParameterState)
       $(body...)
     end
   end

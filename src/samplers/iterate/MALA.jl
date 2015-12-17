@@ -24,7 +24,7 @@ function codegen_iterate_mala(job::BasicMCJob, outopts::Dict)
     push!(body, :(_sstate.pstate.value = _sstate.vmean+sqrt($(stepsize))*randn(_pstate.size)))
   end
 
-  push!(body, :(_parameter.uptogradlogtarget!(_sstate.pstate, _vstate)))
+  push!(body, :(_parameter.uptogradlogtarget!(_sstate.pstate)))
 
   if vform == Univariate
     push!(body, :(_sstate.pnewgivenold = -0.5*(abs2(_sstate.vmean-_sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))))
@@ -115,9 +115,8 @@ function codegen_iterate_mala(job::BasicMCJob, outopts::Dict)
   @gensym iterate_mala
 
   result = quote
-    function $iterate_mala{S<:VariableState}(
+    function $iterate_mala(
       _pstate::$(typeof(job.pstate)),
-      _vstate::Vector{S},
       _sstate::$(typeof(job.sstate)),
       _parameter::$(typeof(job.parameter)),
       _sampler::MALA,

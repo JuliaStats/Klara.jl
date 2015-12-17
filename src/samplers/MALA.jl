@@ -101,24 +101,22 @@ MALA() = MALA(1.)
 
 ## Initialize parameter state
 
-function initialize!{S<:VariableState}(
+function initialize!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   parameter::Parameter{Continuous, Univariate},
   sampler::MALA
 )
-  parameter.uptogradlogtarget!(pstate, vstate)
+  parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
   @assert isfinite(pstate.gradlogtarget) "Gradient of log-target not finite: initial values out of parameter support"
 end
 
-function initialize!{S<:VariableState}(
+function initialize!(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   parameter::Parameter{Continuous, Multivariate},
   sampler::MALA
 )
-  parameter.uptogradlogtarget!(pstate, vstate)
+  parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
 end
@@ -133,33 +131,30 @@ sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, 
 
 ## Reset parameter state
 
-function reset!{S<:VariableState}(
+function reset!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   x::Real,
   parameter::Parameter{Continuous, Univariate},
   sampler::MALA
 )
   pstate.value = x
-  parameter.uptogradlogtarget!(pstate, vstate)
+  parameter.uptogradlogtarget!(pstate)
 end
 
-function reset!{N<:Real, S<:VariableState}(
+function reset!{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   x::Vector{N},
   parameter::Parameter{Continuous, Multivariate},
   sampler::MALA
 )
   pstate.value = copy(x)
-  parameter.uptogradlogtarget!(pstate, vstate)
+  parameter.uptogradlogtarget!(pstate)
 end
 
 ## Initialize task
 
-function initialize_task!{S<:VariableState}(
+function initialize_task!(
   pstate::ParameterState{Continuous, Univariate},
-  vstate::Vector{S},
   sstate::UnvMALAState,
   parameter::Parameter{Continuous, Univariate},
   sampler::MALA,
@@ -172,13 +167,12 @@ function initialize_task!{S<:VariableState}(
   task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
+    iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end
 
-function initialize_task!{N<:Real, S<:VariableState}(
+function initialize_task!{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::Vector{S},
   sstate::MuvMALAState{N},
   parameter::Parameter{Continuous, Multivariate},
   sampler::MALA,
@@ -191,6 +185,6 @@ function initialize_task!{N<:Real, S<:VariableState}(
   task_local_storage(:reset, resetplain!)
 
   while true
-    iterate!(pstate, vstate, sstate, parameter, sampler, tuner, range)
+    iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end

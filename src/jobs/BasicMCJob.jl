@@ -49,21 +49,22 @@ type BasicMCJob{S<:VariableState} <: MCJob
     end
 
     instance.parameter = instance.model.vertices[instance.pindex]
+    instance.parameter.states = instance.vstate
 
     instance.pstate = instance.vstate[instance.pindex]
-    initialize!(instance.pstate, instance.vstate, instance.parameter, sampler)
+    initialize!(instance.pstate, instance.parameter, sampler)
 
     instance.sstate = sampler_state(sampler, tuner, instance.pstate)
 
-    augment_outopts_basic_mcjob!(outopts)
+    augment_outopts_basicmcjob!(outopts)
     instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
 
     instance.count = 0
 
-    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basic_mcjob(instance, outopts))
+    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance, outopts))
 
-    instance.resetplain! = eval(codegen_resetplain_basic_mcjob(instance))
-    instance.iterate! = eval(codegen_iterate_basic_mcjob(instance, outopts))
+    instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
+    instance.iterate! = eval(codegen_iterate_basicmcjob(instance, outopts))
 
     if plain
       instance.task = nothing
@@ -71,7 +72,6 @@ type BasicMCJob{S<:VariableState} <: MCJob
     else
       instance.task = Task(() -> initialize_task!(
         instance.pstate,
-        instance.vstate,
         instance.sstate,
         instance.parameter,
         instance.sampler,
@@ -80,10 +80,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
         instance.resetplain!,
         instance.iterate!
       ))
-      instance.reset! = eval(codegen_reset_task_basic_mcjob(instance))
+      instance.reset! = eval(codegen_reset_task_basicmcjob(instance))
     end
 
-    instance.run! = eval(codegen_run_basic_mcjob(instance))
+    instance.run! = eval(codegen_run_basicmcjob(instance))
 
     instance
   end
@@ -188,7 +188,7 @@ end
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
 # In that case the iterate!() function will take a second variable (transformation) as input argument
 
-function codegen_save_basic_mcjob(job::BasicMCJob, outopts::Dict)
+function codegen_save_basicmcjob(job::BasicMCJob, outopts::Dict)
   body = []
 
   if isa(job.output, VariableNState)
@@ -202,20 +202,20 @@ function codegen_save_basic_mcjob(job::BasicMCJob, outopts::Dict)
     error("To save output, :destination must be set to :nstate or :iostream, got $(outopts[:destination])")
   end
 
-  @gensym save_basic_mcjob
+  @gensym save_basicmcjob
 
   quote
-    function $save_basic_mcjob(_i::Int)
+    function $save_basicmcjob(_i::Int)
       $(body...)
     end
   end
 end
 
-function codegen_resetplain_basic_mcjob(job::BasicMCJob)
+function codegen_resetplain_basicmcjob(job::BasicMCJob)
   result::Expr
   body = []
 
-  push!(body, :(reset!($(job).pstate, $(job).vstate, _x, $(job).parameter, $(job).sampler)))
+  push!(body, :(reset!($(job).pstate, _x, $(job).parameter, $(job).sampler)))
 
   push!(body, :(reset!($(job).sstate.tune, $(job).sampler, $(job).tuner)))
 
@@ -226,18 +226,18 @@ function codegen_resetplain_basic_mcjob(job::BasicMCJob)
 
   push!(body, :($(job).count = 0))
 
-  @gensym resetplain_basic_mcjob
+  @gensym resetplain_basicmcjob
 
   vform = variate_form(job.pstate)
   if vform == Univariate
     result = quote
-      function $resetplain_basic_mcjob(_x::Real)
+      function $resetplain_basicmcjob(_x::Real)
         $(body...)
       end
     end
   elseif vform == Multivariate
     result = quote
-      function $resetplain_basic_mcjob{N<:Real}(_x::Vector{N})
+      function $resetplain_basicmcjob{N<:Real}(_x::Vector{N})
         $(body...)
       end
     end
@@ -248,24 +248,24 @@ function codegen_resetplain_basic_mcjob(job::BasicMCJob)
   result
 end
 
-function codegen_reset_task_basic_mcjob(job::BasicMCJob)
+function codegen_reset_task_basicmcjob(job::BasicMCJob)
   result::Expr
   body = []
 
   push!(body, :($(job).task.storage[:reset](_x)))
 
-  @gensym reset_task_basic_mcjob
+  @gensym reset_task_basicmcjob
 
   vform = variate_form(job.pstate)
   if vform == Univariate
     result = quote
-      function $reset_task_basic_mcjob(_x::Real)
+      function $reset_task_basicmcjob(_x::Real)
         $(body...)
       end
     end
   elseif vform == Multivariate
     result = quote
-      function $reset_task_basic_mcjob{N<:Real}(_x::Vector{N})
+      function $reset_task_basicmcjob{N<:Real}(_x::Vector{N})
         $(body...)
       end
     end
@@ -276,7 +276,7 @@ function codegen_reset_task_basic_mcjob(job::BasicMCJob)
   result
 end
 
-function codegen_run_basic_mcjob(job::BasicMCJob)
+function codegen_run_basicmcjob(job::BasicMCJob)
   result::Expr
   ifforbody = []
   forbody = []
@@ -285,7 +285,6 @@ function codegen_run_basic_mcjob(job::BasicMCJob)
   if job.plain
     push!(forbody, :($(job).iterate!(
       $(job).pstate,
-      $(job).vstate,
       $(job).sstate,
       $(job).parameter,
       $(job).sampler,
@@ -311,10 +310,10 @@ function codegen_run_basic_mcjob(job::BasicMCJob)
 
   push!(body, :(return $(job).output))
 
-  @gensym run_basic_mcjob
+  @gensym run_basicmcjob
 
   result = quote
-    function $run_basic_mcjob()
+    function $run_basicmcjob()
       $(body...)
     end
   end
@@ -324,7 +323,7 @@ end
 
 # Set defaults for possibly unspecified output options
 
-function augment_outopts_basic_mcjob!(outopts::Dict)
+function augment_outopts_basicmcjob!(outopts::Dict)
   destination = get!(outopts, :destination, :nstate)
 
   if destination != :none
