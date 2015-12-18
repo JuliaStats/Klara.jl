@@ -44,13 +44,11 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
     error("Vector of return symbols must have at leasat one element")
   end
 
-  body = Expr(:(=), rvalues, :($(f)($(fargs...))))
-
   @gensym internal_variable_method
 
   quote
     function $internal_variable_method(_state, _states)
-      $(body)
+      $rvalues = $(f)($(fargs...))
     end
   end
 end

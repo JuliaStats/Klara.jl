@@ -62,12 +62,7 @@ type BasicContMuvParameter{S<:VariableState} <: Parameter{Continuous, Multivaria
     for i = 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
-        !(any([
-          method_exists(args[i], (BasicContMuvParameterState, Vector{S})) ||
-          method_exists(args[i], (BasicContMuvParameterState,)) ||
-          method_exists(args[i], (Vector{S},))
-          for S in subtypes(VariableState)
-        ]))
+        !(any([method_exists(args[i], (BasicContMuvParameterState, Vector{S})) for S in subtypes(VariableState)]))
         error("$(fnames[i]) has wrong signature")
       end
     end

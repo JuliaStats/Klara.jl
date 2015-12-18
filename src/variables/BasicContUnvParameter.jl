@@ -69,12 +69,7 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
     for i = 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
-        !(any([
-          method_exists(args[i], (BasicContUnvParameterState, Vector{S})) ||
-          method_exists(args[i], (BasicContUnvParameterState,)) ||
-          method_exists(args[i], (Vector{S},))
-          for S in subtypes(VariableState)
-        ]))
+        !(any([method_exists(args[i], (BasicContUnvParameterState, Vector{S})) for S in subtypes(VariableState)]))
         error("$(fnames[i]) has wrong signature")
       end
     end
