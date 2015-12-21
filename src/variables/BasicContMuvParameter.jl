@@ -87,7 +87,6 @@ type BasicContMuvParameter{S<:VariableState} <: Parameter{Continuous, Multivaria
   end
 end
 
-
 BasicContMuvParameter{S<:VariableState}(
   key::Symbol,
   index::Int,
@@ -477,6 +476,68 @@ function BasicContMuvParameter(
   )
 end
 
+function basiccontmuvparameter_via_fad{S<:VariableState}(
+  key::Vector{Symbol},
+  index::Int,
+  loglikelihood::Union{Function, Void},
+  logprior::Union{Function, Void},
+  logtarget::Union{Function, Void};
+  pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
+  prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
+  setpdf::Union{Function, Void}=nothing,
+  setprior::Union{Function, Void}=nothing,
+  states::Vector{S}=VariableState[],
+  fstatesarg::Bool=true,
+  order::Int=1,
+  chunksize::Int=0
+)
+  @assert 1 <= order <= 3 "Derivative order must be 1 or 2 or 3, got $order"
+
+  parameter = BasicContMuvParameter(key[index], index, pdf, prior, fill(nothing, 17)..., states)
+
+  outargs = Union{Function, Void}[nothing for i in 1:17]
+
+  fnames = Array(Any, 17)
+  fnames[1:2] = fill(Symbol[], 2)
+  fnames[3:14] = [Symbol[f] for f in fieldnames(BasicContMuvParameterState)[2:13]]
+  for i in 1:3
+    fnames[14+i] = fnames[5:3:(5+i*3)]
+  end
+
+  nkeys = fstatesarg ? length(key) : 0
+
+  for (i, f) in ((1, setpdf), (2, setprior))
+    if isa(f, Function)
+      outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], nkeys, false))
+    end
+  end
+
+  for (i, f) in ((3, loglikelihood), (4, logprior), (5, logtarget))
+    if isa(f, Function)
+      outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], nkeys, false))
+      if order >= 1
+        outargs[i+3] = eval(codegen_internal_variable_method(
+          ForwardDiff.gradient(fstatesarg == true ? eval(codegen_internal_fad_closure(parameter, f, nkeys)) : f),
+          fnames[i+3],
+          0
+        ))
+      end
+
+      # if order >= 2
+      # end
+
+      # if order == 3
+      # end
+    else
+      outargs[i] = nothing
+    end
+  end
+
+  BasicContMuvParameter!(parameter, outargs...)
+
+  parameter
+end
+
 function codegen_setfield_basiccontmuvparameter(parameter::BasicContMuvParameter, field::Symbol, f::Function)
   @gensym codegen_setfield_basiccontmuvparameter
   quote
@@ -550,6 +611,18 @@ function codegen_uptomethods_basiccontmuvparameter(parameter::BasicContMuvParame
   quote
     function $codegen_uptomethods_basiccontmuvparameter(_state::BasicContMuvParameterState)
       $(body...)
+    end
+  end
+end
+
+function codegen_internal_fad_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Int)
+  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
+
+  @gensym internal_fad_closure
+
+  quote
+    function $internal_fad_closure(_x::Vector)
+      $(f)(_x, $(fstatesarg...))
     end
   end
 end

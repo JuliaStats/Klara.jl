@@ -19,7 +19,8 @@ is_indexed(v::Variable) = v.index > 0 ? true : false
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
-function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=true)
+function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=false)
+  body::Expr
   fargs::Union{Expr, Vector}
   rvalues::Expr
 
@@ -27,28 +28,32 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
     fargs = [:(_state.value)]
   elseif nkeys > 0
     if vfarg
-      fargs = [Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]
+      fargs = [Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
     else
-      fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$j].value) for j in 1:nkeys]...)]
+      fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
     end
   else
     error("nkeys must be positive")
   end
 
   nr = length(r)
-  if nr == 1
+  if nr == 0
+    body = :($(f)($(fargs...)))
+  elseif nr == 1
     rvalues = Expr(:., :_state, QuoteNode(r[1]))
+    body = :($rvalues = $(f)($(fargs...)))
   elseif nr > 1
-    rvalues = Expr(:tuple, [Expr(:., :_state, QuoteNode(r[j])) for j in 1:nr]...)
+    rvalues = Expr(:tuple, [Expr(:., :_state, QuoteNode(r[i])) for i in 1:nr]...)
+    body = :($rvalues = $(f)($(fargs...)))
   else
-    error("Vector of return symbols must have at leasat one element")
+    error("Vector of return symbols must have one or more elements")
   end
 
   @gensym internal_variable_method
 
   quote
     function $internal_variable_method(_state, _states)
-      $rvalues = $(f)($(fargs...))
+      $(body)
     end
   end
 end
