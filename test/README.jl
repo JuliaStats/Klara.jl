@@ -139,3 +139,23 @@ job = BasicMCJob(
 )
 
 chain = run(job)
+
+vkeys = [:p]
+
+plogtarget(z::Vector) = -dot(z, z)
+
+p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, autodiff=:forward, nkeys=0)
+
+model = single_parameter_likelihood_model(p)
+
+sampler = MALA(0.9)
+
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:p=>[5.1, -0.9])
+
+outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
+
+chain = run(job)

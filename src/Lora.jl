@@ -2,7 +2,6 @@ module Lora
 
 using Distributions
 using Graphs
-# using ReverseDiffSource
 
 import Base:
   ==,
@@ -45,6 +44,8 @@ import Graphs:
   topological_sort_by_dfs,
   vertex_index,
   vertices
+
+# import ReverseDiffSource
 
 export
   ### Types
@@ -126,7 +127,6 @@ export
   out_edges,
   out_neighbors,
   rate!,
-  replace!,
   reset!,
   reset_burnin!,
   revedge,
@@ -143,9 +143,10 @@ export
   vertex_index,
   vertices
 
-include("parser/replace.jl")
-
 include("stats/logistic.jl")
+
+include("autodiff/reverse.jl")
+include("autodiff/forward.jl")
 
 include("states/VariableStates.jl")
 include("states/ParameterStates.jl")

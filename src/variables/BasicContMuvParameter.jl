@@ -172,15 +172,17 @@ function BasicContMuvParameter!(
   end
 
   # Define loglikelihood! (i = 3) and gradloglikelihood! (i = 6)
-  parameter.loglikelihood! = if isa(args[3], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[3]))
-  else
-    nothing
-  end
-  parameter.gradloglikelihood! = if isa(args[6], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[6]))
-  else
-    nothing
+  # plfield stands for parameter likelihood-related field respectively
+  for (i, plfield) in ((3, :loglikelihood!), (6, :gradloglikelihood!))
+    setfield!(
+      parameter,
+      plfield,
+      if isa(args[i], Function)
+        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+      else
+        nothing
+      end
+    )
   end
 
   # Define logprior! (i = 4) and gradlogprior! (i = 7)
@@ -234,27 +236,31 @@ function BasicContMuvParameter!(
   end
 
   # Define tensorloglikelihood! (i = 9) and dtensorloglikelihood! (i = 12)
-  parameter.tensorloglikelihood! = if isa(args[9], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[9]))
-  else
-    nothing
-  end
-  parameter.dtensorloglikelihood! = if isa(args[12], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[12]))
-  else
-    nothing
+  # plfield stands for parameter likelihood-related field respectively
+  for (i, plfield) in ((9, :tensorloglikelihood!), (12, :dtensorloglikelihood!))
+    setfield!(
+      parameter,
+      plfield,
+      if isa(args[i], Function)
+        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+      else
+        nothing
+      end
+    )
   end
 
   # Define tensorlogprior! (i = 10) and dtensorlogprior! (i = 13)
-  parameter.tensorlogprior! = if isa(args[10], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[10]))
-  else
-    nothing
-  end
-  parameter.dtensorlogprior! = if isa(args[13], Function)
-    eval(codegen_method_basiccontmuvparameter(parameter, args[13]))
-  else
-    nothing
+  # ppfield stands for parameter prior-related field respectively
+  for (i, ppfield) in ((10, :tensorlogprior!), (13, :dtensorlogprior!))
+    setfield!(
+      parameter,
+      ppfield,
+      if isa(args[i], Function)
+        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+      else
+        nothing
+      end
+    )
   end
 
   # Define tensorlogtarget! (i = 11) and dtensorlogtarget! (i = 14)
@@ -388,16 +394,16 @@ function BasicContMuvParameter{S<:VariableState}(
   parameter
 end
 
-function BasicContMuvParameter(
+function BasicContMuvParameter{S<:VariableState}(
   key::Vector{Symbol},
   index::Int;
   pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
   setprior::Union{Function, Void}=nothing,
-  loglikelihood::Union{Function, Void}=nothing,
-  logprior::Union{Function, Void}=nothing,
-  logtarget::Union{Function, Void}=nothing,
+  loglikelihood::Union{Function, Expr, Void}=nothing,
+  logprior::Union{Function, Expr, Void}=nothing,
+  logtarget::Union{Function, Expr, Void}=nothing,
   gradloglikelihood::Union{Function, Void}=nothing,
   gradlogprior::Union{Function, Void}=nothing,
   gradlogtarget::Union{Function, Void}=nothing,
@@ -410,11 +416,14 @@ function BasicContMuvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
+  states::Vector{S}=VariableState[],
   nkeys::Int=length(key),
-  vfarg::Bool=false
+  vfarg::Bool=false,
+  autodiff::Symbol=:none,
+  order::Int=1,
+  chunksize::Int=0,
+  rsinit::Union{Tuple, Void}=nothing
 )
-  outargs = Array(Union{Function, Void}, 17)
-
   inargs = (
     setpdf,
     setprior,
@@ -439,98 +448,91 @@ function BasicContMuvParameter(
   fnames[1:2] = fill(Symbol[], 2)
   fnames[3:14] = [Symbol[f] for f in fieldnames(BasicContMuvParameterState)[2:13]]
   for i in 1:3
-    fnames[14+i] = fnames[5:3:(5+i*3)]
+    fnames[14+i] = Symbol[fnames[j][1] for j in 5:3:(5+i*3)]
   end
 
-  for i in 1:17
-    if inargs[i] == nothing
-      outargs[i] = nothing
-    elseif isa(inargs[i], Function)
-      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, vfarg))
+  for i in 3:5
+    if isa(inargs[i], Expr) && autodiff != :reverse
+      error("The only case $(fnames[i]) can be an expression is when used in conjunction with reverse mode autodiff")
     end
   end
 
-  BasicContMuvParameter(
-    key[index],
-    index,
-    pdf=pdf,
-    prior=prior,
-    setpdf=outargs[1],
-    setprior=outargs[2],
-    loglikelihood=outargs[3],
-    logprior=outargs[4],
-    logtarget=outargs[5],
-    gradloglikelihood=outargs[6],
-    gradlogprior=outargs[7],
-    gradlogtarget=outargs[8],
-    tensorloglikelihood=outargs[9],
-    tensorlogprior=outargs[10],
-    tensorlogtarget=outargs[11],
-    dtensorloglikelihood=outargs[12],
-    dtensorlogprior=outargs[13],
-    dtensorlogtarget=outargs[14],
-    uptogradlogtarget=outargs[15],
-    uptotensorlogtarget=outargs[16],
-    uptodtensorlogtarget=outargs[17],
-    states=VariableState[]
-  )
-end
+  if nkeys > 0
+    if autodiff == :forward && vfarg
+      error("In the case of forward mode autodiff, if nkeys is not 0, then vfarg must be false")
+    elseif autodiff == :reverse
+      error("In the case of reverse mode autodiff, the current implementation supports only nkeys = 0")
+    end
+  elseif nkeys < 0
+    "nkeys must be non-negative, got @nkeys"
+  end
 
-function basiccontmuvparameter_via_fad{S<:VariableState}(
-  key::Vector{Symbol},
-  index::Int,
-  loglikelihood::Union{Function, Void},
-  logprior::Union{Function, Void},
-  logtarget::Union{Function, Void};
-  pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
-  prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
-  setpdf::Union{Function, Void}=nothing,
-  setprior::Union{Function, Void}=nothing,
-  states::Vector{S}=VariableState[],
-  fstatesarg::Bool=true,
-  order::Int=1,
-  chunksize::Int=0
-)
-  @assert 1 <= order <= 3 "Derivative order must be 1 or 2 or 3, got $order"
+  if !in(autodiff, (:none, :forward, :reverse))
+    error("autodiff must be :nore or :forward or :reverse, got @autodiff")
+  end
+
+  if order < 0 || order > 1
+    error("Derivative order must be 0 or 1, got $order")
+  elseif autodiff != :reverse && order == 0
+    error("Zero order can be used only with reverse mode autodiff")
+  end
+
+  @assert 0 <= order <= 3 "Derivative order must be 0 or 1 or 2 or 3, got $order"
+
+  @assert chunksize >= 0 "chunksize must be non-negative, got @chunksize"
+
+  if rsinit == nothing
+    if autodiff == :reverse
+      error("rsinit must be set for reverse mode autodiff")
+    end
+  else
+    @assert length(rsinit) == 2 "rsinit must be a tuple of length 2, got tuple of length $(length(rsinit))"
+    @assert isa(rsinit[1], Symbol) "The first element of rsinit must be a tuple, got element of type $(typeof(rsinit[1]))"
+  end
 
   parameter = BasicContMuvParameter(key[index], index, pdf, prior, fill(nothing, 17)..., states)
 
-  outargs = Union{Function, Void}[nothing for i in 1:17]
-
-  fnames = Array(Any, 17)
-  fnames[1:2] = fill(Symbol[], 2)
-  fnames[3:14] = [Symbol[f] for f in fieldnames(BasicContMuvParameterState)[2:13]]
-  for i in 1:3
-    fnames[14+i] = fnames[5:3:(5+i*3)]
+  outargs = Array(Union{Function, Void}, 17)
+  for i in 1:17
+    outargs[i] =
+      if isa(inargs[i], Function)
+        eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, vfarg))
+      else
+        nothing
+      end
   end
 
-  nkeys = fstatesarg ? length(key) : 0
-
-  for (i, f) in ((1, setpdf), (2, setprior))
-    if isa(f, Function)
-      outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], nkeys, false))
+  if autodiff == :forward
+    fadclosure = Array(Union{Function, Void}, 3)
+    for i in 3:5
+      fadclosure[i-2] =
+        if isa(inargs[i], Function)
+          nkeys == 0 ? inargs[i] : eval(codegen_internal_forward_autodiff_closure(parameter, inargs[i]))
+        else
+          nothing
+        end
     end
-  end
 
-  for (i, f) in ((3, loglikelihood), (4, logprior), (5, logtarget))
-    if isa(f, Function)
-      outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], nkeys, false))
-      if order >= 1
-        outargs[i+3] = eval(codegen_internal_variable_method(
-          ForwardDiff.gradient(fstatesarg == true ? eval(codegen_internal_fad_closure(parameter, f, nkeys)) : f),
-          fnames[i+3],
-          0
+    for i in 6:8
+      if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
+        outargs[i] = eval(codegen_internal_variable_method(
+          forward_autodiff_function(:gradient, fadclosure[i-5], false, chunksize), fnames[i], nkeys, vfarg
         ))
       end
-
-      # if order >= 2
-      # end
-
-      # if order == 3
-      # end
-    else
-      outargs[i] = nothing
     end
+
+    if !isa(inargs[15], Function) && isa(inargs[5], Function)
+      outargs[15] = eval(codegen_internal_variable_method(
+        eval(codegen_forward_autodiff_uptofunction(:gradient, fadclosure[3], chunksize)), fnames[15], nkeys, vfarg
+      ))
+    end
+
+    # if order >= 2
+    # end
+
+    # if order == 3
+    # end
+  elseif autodiff == :reverse
   end
 
   BasicContMuvParameter!(parameter, outargs...)
@@ -615,13 +617,13 @@ function codegen_uptomethods_basiccontmuvparameter(parameter::BasicContMuvParame
   end
 end
 
-function codegen_internal_fad_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Int)
-  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
+function codegen_internal_forward_autodiff_closure(parameter::BasicContMuvParameter, f::Function)
+  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:$(parameter).nkeys]...)]
 
-  @gensym internal_fad_closure
+  @gensym internal_forward_autodiff_closure
 
   quote
-    function $internal_fad_closure(_x::Vector)
+    function $internal_forward_autodiff_closure(_x::Vector)
       $(f)(_x, $(fstatesarg...))
     end
   end

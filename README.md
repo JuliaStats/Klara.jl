@@ -212,6 +212,37 @@ job = BasicMCJob(
 chain = run(job)
 ```
 
+The example below demonstrates how to run MCMC using forward mode automatic differentiation (AD):
+
+```
+using Lora
+vkeys = [:p]
+
+plogtarget(z::Vector) = -dot(z, z)
+
+p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, autodiff=:forward, nkeys=0)
+
+model = single_parameter_likelihood_model(p)
+
+sampler = MALA(0.9)
+
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:p=>[5.1, -0.9])
+
+outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
+
+chain = run(job)
+```
+
+Note that `plogtarget` takes an argument of type `Vector` instead of `Vector{Float64}`, as required by the ForwardDiff
+package. Furthermore, notice that in the definition of parameter `p`, the gradient of its log-target is not provided
+explicitly; instead, the optional argument `autodiff=:forward` enables computing the gradient via forward mode AD. Reverse
+mode AD will also be available soon via the `autodiff=:reverse` option, once an issue with ReverseDiffSource is resolved
+so as to be able to load the package from Julia.
+
 Documentation
 ------------------------------
 
