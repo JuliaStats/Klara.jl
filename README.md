@@ -5,6 +5,9 @@ Lora.jl
 [![Lora](http://pkg.julialang.org/badges/Lora_0.3.svg)](http://pkg.julialang.org/?pkg=Lora&ver=0.3)
 [![Lora](http://pkg.julialang.org/badges/Lora_0.4.svg)](http://pkg.julialang.org/?pkg=Lora&ver=0.4)
 [![Docs](https://readthedocs.org/projects/lorajl/badge/?version=latest)](http://lorajl.readthedocs.org/en/latest/)
+[![Stories in In Progress](https://badge.waffle.io/JuliaStats/Lora.jl.svg?label=In%20Progress&title=In%20Progress)](http://waffle.io/JuliaStats/Lora.jl)
+
+[![Throughput Graph](https://graphs.waffle.io/JuliaStats/Lora.jl/throughput.svg)](https://waffle.io/JuliaStats/Lora.jl/metrics)
 
 The Julia *Lora* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
 
