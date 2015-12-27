@@ -485,28 +485,28 @@ function BasicContMuvParameter{S<:VariableState}(
   @assert chunksize >= 0 "chunksize must be non-negative, got @chunksize"
 
   if autodiff != :reverse
-		@assert init == fill(nothing, 3) "init option is used only for reverse mode autodiff"	
-	else
+    @assert init == fill(nothing, 3) "init option is used only for reverse mode autodiff"
+  else
     @assert length(init) == 3 "init must be a vector of length 3, got vector of length $(length(init))"
-		
-		for i in 1:3
-			if isa(inargs[i], Function)
+
+    for i in 1:3
+      if isa(inargs[i], Function)
         if length(init[i]) != 1
-					"init element for $(fnames[i][1]) must be a tuple of length 1, got tuple of length $(length(init[i]))"
-				end
-			elseif isa(inargs[i], Expr)
+          "init element for $(fnames[i][1]) must be a tuple of length 1, got tuple of length $(length(init[i]))"
+        end
+      elseif isa(inargs[i], Expr)
         if length(init[i]) != 2
-					"init element for $(fnames[i][1]) must be a tuple of length 2, got tuple of length $(length(init[i]))"
-				end
+          "init element for $(fnames[i][1]) must be a tuple of length 2, got tuple of length $(length(init[i]))"
+        end
         if !isa(init[i][1], Symbol)
-					"The first element of init for $(fnames[i][1]) must be a tuple, got element of type $(typeof(init[i][1]))"
-				end
-			else
+          "The first element of init for $(fnames[i][1]) must be a tuple, got element of type $(typeof(init[i][1]))"
+        end
+      else
         if init[i] != nothing
-					"init element for $(fnames[i][1]) must be set to nothing, got init set to $(init[i])"
-				end				
-		  end
-		end	
+          "init element for $(fnames[i][1]) must be set to nothing, got init set to $(init[i])"
+        end
+      end
+    end
   end
 
   parameter = BasicContMuvParameter(key[index], index, pdf, prior, fill(nothing, 17)..., states)
@@ -561,12 +561,13 @@ function BasicContMuvParameter{S<:VariableState}(
     for i in 6:8
       if !isa(inargs[i], Function)
         if isa(inargs[i-3], Function)
-					outargs[i] = eval(codegen_internal_variable_method(
-					  ReverseDiffSource.rdiff(inargs[i-3], init[i-5], order=1, allorders=false), fnames[i], nkeys
-					))
+          outargs[i] = eval(codegen_internal_variable_method(
+            # The call to ReverseDiffSource.rdiff() will work after issue #29 in ReverseDiffSource is fixed
+            ReverseDiffSource.rdiff(inargs[i-3], init[i-5], order=1, allorders=false), fnames[i], nkeys
+          ))
         elseif isa(inargs[i-3], Expr)
           outargs[i] = eval(codegen_internal_variable_method(
-					  # The call to codegen_reverse_autodiff_function() will work after issue #29 in ReverseDiffSource is fixed
+            # The call to codegen_reverse_autodiff_function() will work after issue #29 in ReverseDiffSource is fixed
             eval(codegen_reverse_autodiff_function(inargs[i-3], init[i-5], 1, false)), fnames[i], nkeys
           ))
         end
@@ -575,9 +576,9 @@ function BasicContMuvParameter{S<:VariableState}(
 
     if !isa(inargs[15], Function)
       if isa(inargs[5], Function)
-	      outargs[15] = eval(codegen_internal_variable_method(
-				  ReverseDiffSource.rdiff(inargs[5], init[3], order=1, allorders=true), fnames[15], nkeys
-				))
+        outargs[15] = eval(codegen_internal_variable_method(
+          ReverseDiffSource.rdiff(inargs[5], init[3], order=1, allorders=true), fnames[15], nkeys
+        ))
       elseif isa(inargs[5], Expr)
         outargs[15] = eval(codegen_internal_variable_method(
           eval(codegen_reverse_autodiff_function(inargs[5], init[3], 1, true)), fnames[15], nkeys
