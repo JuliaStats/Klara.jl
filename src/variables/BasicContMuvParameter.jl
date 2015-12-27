@@ -394,9 +394,6 @@ function BasicContMuvParameter{S<:VariableState}(
   parameter
 end
 
-# The constructor below has not be split in autodiff-specific constructors on purpose
-# The rationale is that it allows to provide some order derivatives in closed form while compute others via AD
-
 function BasicContMuvParameter{S<:VariableState}(
   key::Vector{Symbol},
   index::Int;
@@ -553,7 +550,7 @@ function BasicContMuvParameter{S<:VariableState}(
     for i in 3:5
       if isa(inargs[i], Expr)
         outargs[i] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[i], init[i-2], 0, false)), fnames[i], nkeys
+          eval(codegen_reverse_autodiff_function(inargs[i], :Vector, init[i-2], 0, false)), fnames[i], nkeys
         ))
       end
     end
@@ -568,7 +565,7 @@ function BasicContMuvParameter{S<:VariableState}(
         elseif isa(inargs[i-3], Expr)
           outargs[i] = eval(codegen_internal_variable_method(
             # The call to codegen_reverse_autodiff_function() will work after issue #29 in ReverseDiffSource is fixed
-            eval(codegen_reverse_autodiff_function(inargs[i-3], init[i-5], 1, false)), fnames[i], nkeys
+            eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, init[i-5], 1, false)), fnames[i], nkeys
           ))
         end
       end
@@ -581,7 +578,7 @@ function BasicContMuvParameter{S<:VariableState}(
         ))
       elseif isa(inargs[5], Expr)
         outargs[15] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[5], init[3], 1, true)), fnames[15], nkeys
+          eval(codegen_reverse_autodiff_function(inargs[5], :Vector, init[3], 1, true)), fnames[15], nkeys
         ))
       end
     end
