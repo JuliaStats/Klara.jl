@@ -1,4 +1,4 @@
-function codegen_iterate_mh(job::BasicMCJob, outopts::Dict)
+function codegen_iterate_mh(job::BasicMCJob, outopts::Dict, plain::Bool)
   result::Expr
   update = []
   noupdate = []
@@ -67,7 +67,7 @@ function codegen_iterate_mh(job::BasicMCJob, outopts::Dict)
     ))
   end
 
-  if !job.plain
+  if !plain
     push!(body, :(produce()))
   end
 

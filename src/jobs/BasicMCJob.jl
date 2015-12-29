@@ -15,7 +15,6 @@ type BasicMCJob{S<:VariableState} <: MCJob
   sstate::MCSamplerState # Internal state of MCSampler
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Int # Current number of post-burnin iterations
-  plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   resetplain!::Function
   iterate!::Function
@@ -31,22 +30,22 @@ type BasicMCJob{S<:VariableState} <: MCJob
     range::BasicMCRange,
     vstate::Vector{S},
     outopts::Dict, # Options related to output
-    plain::Bool,
-    checkin::Bool
+    plain::Bool, # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
+    check::Bool
   )
     instance = new()
 
     instance.model = model
     instance.pindex = pindex
+    instance.vstate = vstate
+
+    if check
+      checkin(instance)
+    end
+
     instance.sampler = sampler
     instance.tuner = tuner
     instance.range = range
-    instance.vstate = vstate
-    instance.plain = plain
-
-    if checkin
-      checkin(instance)
-    end
 
     instance.parameter = instance.model.vertices[instance.pindex]
     instance.parameter.states = instance.vstate
@@ -64,7 +63,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance, outopts))
 
     instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
-    instance.iterate! = eval(codegen_iterate_basicmcjob(instance, outopts))
+    instance.iterate! = eval(codegen_iterate_basicmcjob(instance, outopts, plain))
 
     if plain
       instance.task = nothing
@@ -96,11 +95,11 @@ BasicMCJob{S<:VariableState}(
   tuner::MCTuner,
   range::BasicMCRange,
   vstate::Vector{S},
-  outopts::Dict, # Options related to output
+  outopts::Dict,
   plain::Bool,
-  checkin::Bool
+  check::Bool
 ) =
-  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, outopts, plain, checkin)
+  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
 
 BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -111,9 +110,9 @@ BasicMCJob{S<:VariableState}(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   plain::Bool=true,
-  checkin::Bool=false
+  check::Bool=false
 ) =
-  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, plain, checkin)
+  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, plain, check)
 
 function BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -124,14 +123,14 @@ function BasicMCJob{S<:VariableState}(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   plain::Bool=true,
-  checkin::Bool=false
+  check::Bool=false
 )
   vstate = Array(S, length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
 
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, checkin)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
 end
 
 function BasicMCJob(
@@ -143,7 +142,7 @@ function BasicMCJob(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   plain::Bool=true,
-  checkin::Bool=false
+  check::Bool=false
 )
   nv0 = length(v0)
   vstate = Array(VariableState, nv0)
@@ -163,7 +162,7 @@ function BasicMCJob(
     end
   end
 
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, checkin)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
 end
 
 function BasicMCJob(
@@ -175,14 +174,14 @@ function BasicMCJob(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   plain::Bool=true,
-  checkin::Bool=false
+  check::Bool=false
 )
   vstate = Array(Any, length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
 
-  BasicMCJob(model, sampler, range, vstate, pindex=pindex, tuner=tuner, outopts=outopts, plain=plain, checkin=checkin)
+  BasicMCJob(model, sampler, range, vstate, pindex=pindex, tuner=tuner, outopts=outopts, plain=plain, check=check)
 end
 
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
@@ -282,7 +281,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   forbody = []
   body = []
 
-  if job.plain
+  if job.task == nothing
     push!(forbody, :($(job).iterate!(
       $(job).pstate,
       $(job).sstate,
@@ -352,13 +351,6 @@ function augment_outopts_basicmcjob!(outopts::Dict)
 end
 
 function checkin(job::BasicMCJob)
-  nv = num_vertices(job.model)
-  nvstate = length(job.vstate)
-
-  if nv != nvstate
-    error("Number of variables ( = $nv) not equal to number of variable states ( = $nvstate)")
-  end
-
   pindex = find(v::Variable -> isa(v, Parameter), job.model.vertices)
   np = length(pindex)
 
@@ -368,6 +360,13 @@ function checkin(job::BasicMCJob)
     if pindex[1] != job.pindex
       error("Parameter located in job.model.vertices[$(pindex[1])], but job.pindex = $(job.pindex)")
     end
+  end
+
+  nv = num_vertices(job.model)
+  nvstate = length(job.vstate)
+
+  if nv != nvstate
+    error("Number of variables ( = $nv) not equal to number of variable states ( = $nvstate)")
   end
 
   pstate = job.vstate[job.pindex]

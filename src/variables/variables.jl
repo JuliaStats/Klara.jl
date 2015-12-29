@@ -97,13 +97,15 @@ default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableSta
 
 ## Transformation
 
-immutable Transformation <: Variable{Deterministic}
+immutable Transformation{S<:VariableState} <: Variable{Deterministic}
   key::Symbol
   index::Int
   transform::Function
+  states::Vector{S}
 end
 
-Transformation(key::Symbol, transform::Function) = Transformation(key, 0, transform)
+Transformation{S<:VariableState}(key::Symbol, transform::Function, states::Vector{S}=VariableState[]) =
+  Transformation(key, 0, transform, states)
 
 default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableState(value)
 default_state{N<:Number}(variable::Transformation, value::Vector{N}) = BasicMuvVariableState(value)

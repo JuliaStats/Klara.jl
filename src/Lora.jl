@@ -74,6 +74,7 @@ export
   Dependence,
   Deterministic,
   GenericModel,
+  GibbsJob,
   HMCSampler,
   Hyperparameter,
   LMCSampler,
@@ -177,7 +178,7 @@ include("samplers/MALA.jl")
 
 include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
-# include("jobs/GibbsJob.jl")
+include("jobs/GibbsJob.jl")
 
 include("samplers/iterate/MH.jl")
 include("samplers/iterate/MALA.jl")
