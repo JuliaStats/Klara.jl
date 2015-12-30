@@ -11,9 +11,19 @@ Lora.jl
 
 The Julia *Lora* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
 
-*Lora* has undergone a major upgrade. Model specification has been internally altered, and it is now based on graphs. New
-functionality has been added, yet some of the old one has not been fully ported. The full porting of old functionality, as
-well as further developments, will be completed shortly. Progress is being tracked systematically via issues and milestones.
+*Lora* has undergone a major upgrade. Some of its recent changes include:
+
+* Models are represented internally by graphs.
+* Memory allocation and garbage collection have been reduced by using mutating functions associated with targets.
+* It is possible to select storing output in memory or in file at runtime.
+* Automatic differentiation is available allowing to choose between forward mode and reverse mode (the latter relying
+on source transformation).
+
+*To run the current version of Lora, it is needed to `Pkg.checkout()` both Lora and ReverseDiffSource. Both packages will
+be pushed to METADATA very soon.*
+
+Some of the old one has not been fully ported. The full porting of old functionality, as well as further developments, will
+be completed shortly. Progress is being tracked systematically via issues and milestones.
 
 The documentation is out of date, but will be brought up-to-date fairly soon. In the meantime, this README file provides a
 few examples of the new interface, explaining how to get up to speed with the new face of Lora.
@@ -215,7 +225,9 @@ job = BasicMCJob(
 chain = run(job)
 ```
 
-The example below demonstrates how to run MCMC using forward mode automatic differentiation (AD):
+The examples below demonstrates how to run MCMC using automatic differentiation (AD).
+
+To use forward mode AD, try the following:
 
 ```
 using Lora
@@ -242,9 +254,72 @@ chain = run(job)
 
 Note that `plogtarget` takes an argument of type `Vector` instead of `Vector{Float64}`, as required by the ForwardDiff
 package. Furthermore, notice that in the definition of parameter `p`, the gradient of its log-target is not provided
-explicitly; instead, the optional argument `autodiff=:forward` enables computing the gradient via forward mode AD. Reverse
-mode AD will also be available soon via the `autodiff=:reverse` option, once an issue with ReverseDiffSource is resolved
-so as to be able to load the package from Julia.
+explicitly; instead, the optional argument `autodiff=:forward` enables computing the gradient via forward mode AD.
+
+To employ reverse mode AD, try
+
+```
+using Lora
+
+vkeys = [:p]
+
+plogtarget(z::Vector) = -dot(z, z)
+
+p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, autodiff=:reverse, nkeys=0, init=[nothing, nothing, (ones(2),)])
+
+model = single_parameter_likelihood_model(p)
+
+sampler = MALA(0.9)
+
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:p=>[5.1, -0.9])
+
+outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
+
+chain = run(job)
+```
+
+In this case the optional argument `autodiff=:reverse` enables computing the gradient via reverse mode AD using
+source transformation. Notice also the `init=[nothing, nothing, (ones(2),)]` optional argument, which allows passing the
+required input to the `init` optinal argument of `rdiff()` of the ReverseDiffSource package. From the Lora side,
+`init` is a 3-element vector with the first, second and third arguments corresponding to the `init` arguments passed to
+`rdiff()` for the log-likelihood, log-prior and log-target. If some of these functions is on specified, then the
+respective `init` element is set to `nothing`.
+
+Finally, it is possible to run reverse mode AD by passing an expression for the log-target (or log-likelihood or
+log-prior) instead of a function. An example follows where the log-target is specified via an experession:
+
+```
+using Lora
+
+vkeys = [:p]
+
+p = BasicContMuvParameter(
+  vkeys,
+  1,
+  logtarget=:(-dot(z, z)),
+  autodiff=:reverse,
+  nkeys=0,
+  init=[nothing, nothing, (:z, ones(2))]
+)
+
+model = single_parameter_likelihood_model(p)
+
+sampler = MALA(0.9)
+
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:p=>[5.1, -0.9])
+
+outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
+
+chain = run(job)
+```
 
 Documentation
 ------------------------------

@@ -45,7 +45,7 @@ import Graphs:
   vertex_index,
   vertices
 
-# import ReverseDiffSource
+import ReverseDiffSource
 
 export
   ### Types
