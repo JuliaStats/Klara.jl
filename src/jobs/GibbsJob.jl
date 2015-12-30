@@ -4,7 +4,7 @@ type GibbsJob{S<:VariableState} <: MCJob
   model::GenericModel
   dpindices::Vector{Int} # Indices of dependent variables (parameters and transformations) in model.vertices
   dependent::Vector{Union{Parameter, Transformation}} # Points to model.vertices[dpindices] for faster access
-  dpjobs::Dict{Symbol, BasicMCJob}
+  dpjobs::Dict{Symbol, BasicMCJob} # BasicMCJobs for parameters (in dependent) that will be sampled via Monte Carlo methods
   range::BasicMCRange
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
   output::Dict{Symbol, Union{VariableNState, VariableIOStream}} # Output of model's dependent variables
@@ -16,4 +16,87 @@ type GibbsJob{S<:VariableState} <: MCJob
   # reset!::Function
   # save!::Union{Function, Void}
   run!::Function
+
+  function GibbsJob(
+    model::GenericModel,
+    dpindices::Vector{Int},
+    dpjobs::Dict{Symbol, BasicMCJob},
+    range::BasicMCRange,
+    vstate::Vector{S},
+    outopts::Dict, # Options related to output
+    imperative::Bool, # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
+    plain::Bool, # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
+    check::Bool
+  )
+    instance = new()
+
+    instance.model = model
+    instance.dpindices = dpindices
+    instance.dpjobs = dpjobs
+    instance.vstate = vstate
+
+    if check
+      checkin(instance)
+    end
+
+    # instance.range = range
+    #
+    # if !imperative
+    #   # reset model, dpindices, vstate, dpjobs
+    # end
+    #
+    # instance.dependent = instance.model.vertices[instance.dpindices]
+    # instance.ndp = length(instance.dependent)
+    # for i in 1:instance.ndp
+    #   instance.dependent[i].states = instance.vstate
+    # end
+    #
+    # for v in values(instance.dpjobs)
+    #   v.vstate = instance.vstate
+    #   v.parameter.states = v.vstate
+    # end
+    #
+    # augment_outopts_gibbsjob!(outopts)
+    # instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
+    #
+    # instance.count = 0
+    #
+    # instance.iterate! = eval(codegen_iterate_gibbsjob(instance, outopts, plain))
+
+    instance
+  end
+end
+
+function checkin(job::GibbsJob)
+  dpindices = find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), job.model.vertices)
+  ndp = length(dpindices)
+
+  @assert ndp > 0 "The model has neither parameters nor transformations, but at least one of them is required in a GibbsJob"
+
+  ndpindices = length(job.dpindices)
+
+  @assert ndpindices > 0 "Length of job.dpindices must be positive, got $ndpindices"
+
+  if ndp == ndpindices
+    if dpindices != job.dpindices
+      error(string(
+        "Indices of parameters and transformations ($dpindices) in model.vertices not same as job.dpindices ",
+        "($(job.dpindices))"
+      ))
+    end
+  elseif ndp < ndpindices
+    error(
+      "Number of parameters and transformations ($ndp) in model.vertices less than length of job.dpindices ($ndpindices)"
+    )
+  else # ndp > ndpindices
+    warn(
+      "Number of parameters and transformations ($ndp) in model.vertices greater than length of job.dpindices ($ndpindices)"
+    )
+    if in(job.dpindices, dpindices)
+      error(string(
+        "Indices of parameters and transformations ($dpindices) in model.vertices do not contain job.dpindices ",
+        "($(job.dpindices))"
+      ))
+    end
+  end
 end

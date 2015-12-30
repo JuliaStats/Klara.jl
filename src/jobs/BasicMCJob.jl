@@ -354,11 +354,16 @@ function checkin(job::BasicMCJob)
   pindex = find(v::Variable -> isa(v, Parameter), job.model.vertices)
   np = length(pindex)
 
-  if np == 0 || np >= 2
-    error("The model has $(np == 0 ? "no": string(np)) parameters, but a BasicMCJob requires exactly one parameter")
-  else # elseif np == 1
+  if np == 0
+    error("The model does not have a parameter, but a BasicMCJob requires a parameter")
+  elseif np == 1
     if pindex[1] != job.pindex
       error("Parameter located in job.model.vertices[$(pindex[1])], but job.pindex = $(job.pindex)")
+    end
+  elseif np >= 2
+    warn("The model has $np parameters, but a BasicMCJob requires exactly one parameter")
+    if in(job.pindex, pindex)
+      error("Indices of parameters ($pindex) in model.vertices do not contain job.pindex ($(job.pindex))")
     end
   end
 
@@ -366,7 +371,7 @@ function checkin(job::BasicMCJob)
   nvstate = length(job.vstate)
 
   if nv != nvstate
-    error("Number of variables ( = $nv) not equal to number of variable states ( = $nvstate)")
+    warn("Number of variables ( = $nv) not equal to number of variable states ( = $nvstate)")
   end
 
   pstate = job.vstate[job.pindex]
@@ -375,7 +380,7 @@ function checkin(job::BasicMCJob)
     error("The parameter's state must be saved in a ParameterState subtype, got $(typeof(pstate)) state type")
   else
     if value_support(job.model.vertices[job.pindex]) != value_support(pstate)
-      error(string(
+      warn(string(
         "Value support of parameter ($(value_support(job.model.vertices[job.pindex]))) and of ",
         "($(value_support(pstate))) not in agreement"
       ))

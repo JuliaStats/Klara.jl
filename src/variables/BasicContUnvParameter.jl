@@ -474,11 +474,11 @@ function BasicContUnvParameter{S<:VariableState}(
       error("In the case of reverse mode autodiff, the current implementation supports only nkeys = 0")
     end
   elseif nkeys < 0
-    "nkeys must be non-negative, got @nkeys"
+    "nkeys must be non-negative, got $nkeys"
   end
 
   if !in(autodiff, (:none, :forward, :reverse))
-    error("autodiff must be :nore or :forward or :reverse, got @autodiff")
+    error("autodiff must be :nore or :forward or :reverse, got $autodiff")
   end
 
   if order < 0 || order > 1
@@ -489,7 +489,7 @@ function BasicContUnvParameter{S<:VariableState}(
 
   @assert 0 <= order <= 3 "Derivative order must be 0 or 1 or 2 or 3, got $order"
 
-  @assert chunksize >= 0 "chunksize must be non-negative, got @chunksize"
+  @assert chunksize >= 0 "chunksize must be non-negative, got $chunksize"
 
   if autodiff != :reverse
     @assert init == fill(nothing, 3) "init option is used only for reverse mode autodiff"
