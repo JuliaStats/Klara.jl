@@ -12,9 +12,11 @@ abstract Variable{S<:Sampleability}
 
 Base.eltype{S<:Sampleability}(::Type{Variable{S}}) = S
 
+vertex_key(v::Variable) = v.key
 vertex_index(v::Variable) = v.index
-
 is_indexed(v::Variable) = v.index > 0 ? true : false
+
+Base.keys{V<:Variable}(variables::Vector{V}) = Symbol[v.key for v in variables]
 
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
@@ -119,3 +121,13 @@ abstract Parameter{S<:ValueSupport, F<:VariateForm} <: Variable{Random}
 
 value_support{S<:ValueSupport, F<:VariateForm}(::Type{Parameter{S, F}}) = S
 variate_form{S<:ValueSupport, F<:VariateForm}(::Type{Parameter{S, F}}) = F
+
+function check_support{P<:Parameter, S<:ParameterState}(parameter::P, state::S)
+  if value_support(parameter) != value_support(state)
+    warn("Value support of parameter ($(value_support(parameter))) and of ($(value_support(state))) not in agreement")
+  end
+
+  if variate_form(parameter) != variate_form(state)
+    error("Variate form of parameter ($(variate_form(parameter))) and of ($(variate_form(state))) not in agreement")
+  end
+end

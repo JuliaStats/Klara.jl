@@ -79,10 +79,7 @@ function checkin(job::GibbsJob)
 
   if ndp == ndpindices
     if dpindices != job.dpindices
-      error(string(
-        "Indices of parameters and transformations ($dpindices) in model.vertices not same as job.dpindices ",
-        "($(job.dpindices))"
-      ))
+      error("Indices of parameters and transformations in model.vertices not same as job.dpindices")
     end
   elseif ndp < ndpindices
     error(
@@ -93,10 +90,28 @@ function checkin(job::GibbsJob)
       "Number of parameters and transformations ($ndp) in model.vertices greater than length of job.dpindices ($ndpindices)"
     )
     if in(job.dpindices, dpindices)
-      error(string(
-        "Indices of parameters and transformations ($dpindices) in model.vertices do not contain job.dpindices ",
-        "($(job.dpindices))"
-      ))
+      error("Indices of parameters and transformations in model.vertices do not contain job.dpindices ")
+    end
+  end
+
+  if !issubset(keys(job.dpjobs), keys(job.model))
+    warn("Keys of job.dpjobs not a subset of keys of job.model")
+  end
+
+  nv = num_vertices(job.model)
+  nvstate = length(job.vstate)
+
+  if nv != nvstate
+    warn("Number of variables ($nv) not equal to number of variable states ($nvstate)")
+  end
+
+  for i in ndpindices
+    if isa(job.model.vertices[i], Parameter)
+      if !isa(job.vstate[i], ParameterState)
+        error("The parameter's state must be saved in a ParameterState subtype, got $(typeof(job.vstate[i])) state type")
+      else
+        check_support(job.model.vertices[i], job.vstate[i])
+      end
     end
   end
 end

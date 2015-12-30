@@ -12,6 +12,7 @@ import Base:
   flush,
   getindex,
   isequal,
+  keys,
   mark,
   open,
   read!,
@@ -142,6 +143,7 @@ export
   tune!,
   tuner_state,
   vertex_index,
+  vertex_key,
   vertices
 
 include("stats/logistic.jl")

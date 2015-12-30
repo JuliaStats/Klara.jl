@@ -27,7 +27,7 @@ edge_index(d::Dependence, m::GenericModel) = edge_index(d)
 source(d::Dependence, m::GenericModel) = d.source
 target(d::Dependence, m::GenericModel) = d.target
 
-make_edge(m::GenericModel, s::Variable, t::Variable) = Dependence(num_edges(m)+1, s, t)
+Base.keys(m::GenericModel) = keys(m.vertices)
 
 out_edges(v::Variable, m::GenericModel) = m.finclist[vertex_index(v, m)]
 out_degree(v::Variable, m::GenericModel) = length(out_edges(v, m))
@@ -36,6 +36,8 @@ out_neighbors(v::Variable, m::GenericModel) = Graphs.TargetIterator(m, out_edges
 in_edges(v::Variable, m::GenericModel) = m.binclist[vertex_index(v, m)]
 in_degree(v::Variable, m::GenericModel) = length(in_edges(v, m))
 in_neighbors(v::Variable, m::GenericModel) = Graphs.SourceIterator(m, in_edges(v, m))
+
+make_edge(m::GenericModel, s::Variable, t::Variable) = Dependence(num_edges(m)+1, s, t)
 
 function add_vertex!(m::GenericModel, v::Variable)
     push!(m.vertices, v)
