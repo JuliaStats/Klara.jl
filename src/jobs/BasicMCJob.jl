@@ -13,8 +13,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
   pstate::ParameterState # Points to vstate[pindex] for faster access
   sstate::MCSamplerState # Internal state of MCSampler
+  outopts::Dict # Options related to output
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Int # Current number of post-burnin iterations
+  plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   resetplain!::Function
   iterate!::Function
@@ -29,8 +31,8 @@ type BasicMCJob{S<:VariableState} <: MCJob
     tuner::MCTuner,
     range::BasicMCRange,
     vstate::Vector{S},
-    outopts::Dict, # Options related to output
-    plain::Bool, # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
+    outopts::Dict,
+    plain::Bool,
     check::Bool
   )
     instance = new()
@@ -46,6 +48,8 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.sampler = sampler
     instance.tuner = tuner
     instance.range = range
+    instance.outopts = outopts
+    instance.plain = plain
 
     instance.parameter = instance.model.vertices[instance.pindex]
     instance.parameter.states = instance.vstate
@@ -60,10 +64,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
-    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance, outopts))
+    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance))
 
     instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
-    instance.iterate! = eval(codegen_iterate_basicmcjob(instance, outopts, plain))
+    instance.iterate! = eval(codegen_iterate_basicmcjob(instance))
 
     if plain
       instance.task = nothing
@@ -187,18 +191,18 @@ end
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
 # In that case the iterate!() function will take a second variable (transformation) as input argument
 
-function codegen_save_basicmcjob(job::BasicMCJob, outopts::Dict)
+function codegen_save_basicmcjob(job::BasicMCJob)
   body = []
 
   if isa(job.output, VariableNState)
     push!(body, :($(job).output.copy($(job).pstate, _i)))
   elseif isa(job.output, VariableIOStream)
     push!(body, :($(job).output.write($(job).pstate)))
-    if outopts[:flush]
+    if job.outopts[:flush]
       push!(body, :($(job).output.flush()))
     end
   else
-    error("To save output, :destination must be set to :nstate or :iostream, got $(outopts[:destination])")
+    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
   end
 
   @gensym save_basicmcjob

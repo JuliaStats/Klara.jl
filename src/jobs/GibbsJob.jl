@@ -39,6 +39,20 @@ type GibbsJob{S<:VariableState} <: MCJob
       checkin(instance)
     end
 
+    if !imperative
+      instance.model = GenericModel(topological_sort_by_dfs(model), model.edges, model.is_directed)
+
+      instance.dpindices = Array(Int, length(dpindices))
+      for i in 1:length(dpindices)
+        instance.dpindices[i] = instance.model.ofkey[vertex_key(model.vertices[dpindices[i]])]
+      end
+
+      instance.vstate = Array(S, length(vstate))
+      for i in 1:length(vstate)
+        instance.vstate[instance.model.ofkey[vertex_key(model.vertices[i])]] = vstate[i]
+      end
+    end
+
     # instance.range = range
     #
     # if !imperative

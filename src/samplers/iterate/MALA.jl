@@ -1,4 +1,4 @@
-function codegen_iterate_mala(job::BasicMCJob, outopts::Dict, plain::Bool)
+function codegen_iterate_mala(job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -47,30 +47,30 @@ function codegen_iterate_mala(job::BasicMCJob, outopts::Dict, plain::Bool)
   if vform == Univariate
     push!(update, :(_pstate.value = _sstate.pstate.value))
     push!(update, :(_pstate.gradlogtarget = _sstate.pstate.gradlogtarget))
-    if in(:gradloglikelihood, outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
       push!(update, :(_pstate.gradloglikelihood = _sstate.pstate.gradloglikelihood))
     end
-    if in(:gradlogprior, outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
       push!(update, :(_pstate.gradlogprior = _sstate.pstate.gradlogprior))
     end
   elseif vform == Multivariate
     push!(update, :(_pstate.value = copy(_sstate.pstate.value)))
     push!(update, :(_pstate.gradlogtarget = copy(_sstate.pstate.gradlogtarget)))
-    if in(:gradloglikelihood, outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
       push!(update, :(_pstate.gradloglikelihood = copy(_sstate.pstate.gradloglikelihood)))
     end
-    if in(:gradlogprior, outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
       push!(update, :(_pstate.gradlogprior = copy(_sstate.pstate.gradlogprior)))
     end
   end
   push!(update, :(_pstate.logtarget = _sstate.pstate.logtarget))
-  if in(:loglikelihood, outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+  if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
     push!(update, :(_pstate.loglikelihood = _sstate.pstate.loglikelihood))
   end
-  if in(:logprior, outopts[:monitor]) && job.parameter.logprior! != nothing
+  if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
     push!(update, :(_pstate.logprior = _sstate.pstate.logprior))
   end
-  if in(:accept, outopts[:diagnostics])
+  if in(:accept, job.outopts[:diagnostics])
     push!(update, :(_pstate.diagnosticvalues[1] = true))
     push!(noupdate, :(_pstate.diagnosticvalues[1] = false))
   end
@@ -108,7 +108,7 @@ function codegen_iterate_mala(job::BasicMCJob, outopts::Dict, plain::Bool)
     ))
   end
 
-  if !plain
+  if !job.plain
     push!(body, :(produce()))
   end
 
