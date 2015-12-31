@@ -7,9 +7,11 @@ type GibbsJob{S<:VariableState} <: MCJob
   dpjobs::Dict{Symbol, BasicMCJob} # BasicMCJobs for parameters (in dependent) that will be sampled via Monte Carlo methods
   range::BasicMCRange
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
+  outopts::Dict # Options related to output
   output::Dict{Symbol, Union{VariableNState, VariableIOStream}} # Output of model's dependent variables
   ndp::Int # Number of dependent variables, i.e. length(dependent)
   count::Int # Current number of post-burnin iterations
+  # plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   # task::Union{Task, Void}
   # resetplain!::Function
   iterate!::Function
@@ -23,9 +25,9 @@ type GibbsJob{S<:VariableState} <: MCJob
     dpjobs::Dict{Symbol, BasicMCJob},
     range::BasicMCRange,
     vstate::Vector{S},
-    outopts::Dict, # Options related to output
+    outopts::Dict,
     imperative::Bool, # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
-    plain::Bool, # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
+    plain::Bool,
     check::Bool
   )
     instance = new()
@@ -39,42 +41,53 @@ type GibbsJob{S<:VariableState} <: MCJob
       checkin(instance)
     end
 
-    if !imperative
-      instance.model = GenericModel(topological_sort_by_dfs(model), model.edges, model.is_directed)
+    instance.ndp = length(dpindices)
 
-      instance.dpindices = Array(Int, length(dpindices))
-      for i in 1:length(dpindices)
+    if !imperative
+      instance.model = GenericModel(topological_sort_by_dfs(model), edges(model), is_directed(model))
+
+      instance.dpindices = Array(Int, instance.ndp)
+      for i in 1:instance.ndp
         instance.dpindices[i] = instance.model.ofkey[vertex_key(model.vertices[dpindices[i]])]
       end
 
-      instance.vstate = Array(S, length(vstate))
-      for i in 1:length(vstate)
+      nvstate = length(vstate)
+      instance.vstate = Array(S, nvstate)
+      for i in 1:nvstate
         instance.vstate[instance.model.ofkey[vertex_key(model.vertices[i])]] = vstate[i]
+      end
+
+      kdpjob::BasicMCJob
+      for k in keys(dpjobs)
+        kdpjob = dpjobs[k]
+        instance.dpjobs[k] = BasicMCJob(
+          instance.model,
+          instance.model.ofkey[k],
+          kdpjob.sampler,
+          kdpjob.tuner,
+          kdpjob.range,
+          instance.vstate,
+          kdpjob.outopts,
+          kdpjob.plain,
+          false
+        )
       end
     end
 
-    # instance.range = range
-    #
-    # if !imperative
-    #   # reset model, dpindices, vstate, dpjobs
-    # end
-    #
-    # instance.dependent = instance.model.vertices[instance.dpindices]
-    # instance.ndp = length(instance.dependent)
-    # for i in 1:instance.ndp
-    #   instance.dependent[i].states = instance.vstate
-    # end
-    #
-    # for v in values(instance.dpjobs)
-    #   v.vstate = instance.vstate
-    #   v.parameter.states = v.vstate
-    # end
-    #
+    instance.range = range
+    instance.outopts = outopts
+    instance.plain = plain
+
+    instance.dependent = instance.model.vertices[instance.dpindices]
+    for i in 1:instance.ndp
+      instance.dependent[i].states = instance.vstate
+    end
+
     # augment_outopts_gibbsjob!(outopts)
     # instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
-    #
-    # instance.count = 0
-    #
+
+    instance.count = 0
+
     # instance.iterate! = eval(codegen_iterate_gibbsjob(instance, outopts, plain))
 
     instance
