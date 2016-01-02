@@ -133,7 +133,7 @@ BasicContMuvParameterState{N<:Real}(
   ::Type{N}=Float64,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diagnosticvalues)
+  BasicContMuvParameterState(fill(convert(N, NaN), size), monitor, diagnostickeys, diagnosticvalues)
 
 BasicContMuvParameterState{N<:Real}(
   size::Int,
@@ -142,7 +142,7 @@ BasicContMuvParameterState{N<:Real}(
   ::Type{N}=Float64,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diagnosticvalues)
+  BasicContMuvParameterState(fill(convert(N, NaN), size), monitor, diagnostickeys, diagnosticvalues)
 
 value_support{N<:Real}(s::Type{BasicContMuvParameterState{N}}) = Continuous
 value_support{N<:Real}(s::BasicContMuvParameterState{N}) = Continuous

@@ -4,14 +4,14 @@ type GibbsJob{S<:VariableState} <: MCJob
   model::GenericModel
   dpindices::Vector{Int} # Indices of dependent variables (parameters and transformations) in model.vertices
   dependent::Vector{Union{Parameter, Transformation}} # Points to model.vertices[dpindices] for faster access
-  dpjobs::Dict{Symbol, BasicMCJob} # BasicMCJobs for parameters (in dependent) that will be sampled via Monte Carlo methods
+  dpjobs::Vector{Union{BasicMCJob, Void}} # BasicMCJobs for parameters that will be sampled via Monte Carlo methods
   range::BasicMCRange
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
   outopts::Dict # Options related to output
-  output::Dict{Symbol, Union{VariableNState, VariableIOStream}} # Output of model's dependent variables
+  output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Int # Number of dependent variables, i.e. length(dependent)
   count::Int # Current number of post-burnin iterations
-  # plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
+  plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   # task::Union{Task, Void}
   # resetplain!::Function
   iterate!::Function
@@ -57,20 +57,24 @@ type GibbsJob{S<:VariableState} <: MCJob
         instance.vstate[instance.model.ofkey[vertex_key(model.vertices[i])]] = vstate[i]
       end
 
-      kdpjob::BasicMCJob
-      for k in keys(dpjobs)
-        kdpjob = dpjobs[k]
-        instance.dpjobs[k] = BasicMCJob(
-          instance.model,
-          instance.model.ofkey[k],
-          kdpjob.sampler,
-          kdpjob.tuner,
-          kdpjob.range,
-          instance.vstate,
-          kdpjob.outopts,
-          kdpjob.plain,
-          false
-        )
+      instance.dpjobs = Array(Union{BasicMCJob, Void}, instance.ndp)
+      for i in 1:instance.ndp
+        instance.dpjobs[i] =
+          if isa(dpjobs[i], BasicMCJob)
+            BasicMCJob(
+              instance.model,
+              instance.model.vertices[instance.dpindices[i]],
+              dpjobs[i].sampler,
+              dpjobs[i].tuner,
+              dpjobs[i].range,
+              instance.vstate,
+              dpjobs[i].outopts,
+              dpjobs[i].plain,
+              false
+            )
+          else
+            nothing
+          end
       end
     end
 
@@ -102,27 +106,34 @@ function checkin(job::GibbsJob)
 
   ndpindices = length(job.dpindices)
 
-  @assert ndpindices > 0 "Length of job.dpindices must be positive, got $ndpindices"
+  @assert ndpindices > 0 "Length of dpindices must be positive, got $ndpindices"
 
   if ndp == ndpindices
     if dpindices != job.dpindices
-      error("Indices of parameters and transformations in model.vertices not same as job.dpindices")
+      error("Indices of parameters and transformations in model.vertices not same as dpindices")
     end
   elseif ndp < ndpindices
     error(
-      "Number of parameters and transformations ($ndp) in model.vertices less than length of job.dpindices ($ndpindices)"
+      "Number of parameters and transformations ($ndp) in model.vertices less than length of dpindices ($ndpindices)"
     )
   else # ndp > ndpindices
     warn(
-      "Number of parameters and transformations ($ndp) in model.vertices greater than length of job.dpindices ($ndpindices)"
+      "Number of parameters and transformations ($ndp) in model.vertices greater than length of dpindices ($ndpindices)"
     )
     if in(job.dpindices, dpindices)
-      error("Indices of parameters and transformations in model.vertices do not contain job.dpindices ")
+      error("Indices of parameters and transformations in model.vertices do not contain dpindices")
     end
   end
 
-  if !issubset(keys(job.dpjobs), keys(job.model))
-    warn("Keys of job.dpjobs not a subset of keys of job.model")
+  ndpjobs = length(job.dpjobs)
+  if ndpindices != ndpjobs
+    error("Length of dpindices ($ndpindices) not equal to length of length of dpjobs ($ndpjobs)")
+  else
+    for i in 1:ndpindices
+      if isa(job.dpjobs[i], BasicMCJob) && !isa(job.model.vertices[job.dpindices[i]], Parameter)
+        error("BasicMCJob specified for model.vertices[$(job.dpindices[i])] variable, which is not a parameter")
+      end
+    end
   end
 
   nv = num_vertices(job.model)

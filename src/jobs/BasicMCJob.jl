@@ -55,6 +55,15 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.parameter.states = instance.vstate
 
     instance.pstate = instance.vstate[instance.pindex]
+    if any(isnan, instance.pstate.value)
+      if instance.parameter.pdf != nothing
+        instance.pstate.value = rand(instance.parameter.pdf)
+      elseif instance.parameter.prior != nothing
+        instance.pstate.value = rand(instance.parameter.prior)
+      else
+        error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
+      end
+    end
     initialize!(instance.pstate, instance.parameter, sampler)
 
     instance.sstate = sampler_state(sampler, tuner, instance.pstate)
@@ -362,12 +371,12 @@ function checkin(job::BasicMCJob)
     error("The model does not have a parameter, but a BasicMCJob requires a parameter")
   elseif np == 1
     if pindex[1] != job.pindex
-      error("Parameter located in job.model.vertices[$(pindex[1])], but job.pindex = $(job.pindex)")
+      error("Parameter located in model.vertices[$(pindex[1])], but pindex = $(job.pindex)")
     end
   elseif np >= 2
     warn("The model has $np parameters, but a BasicMCJob requires exactly one parameter")
     if in(job.pindex, pindex)
-      error("Indices of parameters in model.vertices do not contain job.pindex")
+      error("Indices of parameters in model.vertices do not contain pindex")
     end
   end
 
