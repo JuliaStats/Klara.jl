@@ -314,7 +314,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
 
   push!(forbody, Expr(:if, :(in(i, $(job).range.postrange)), Expr(:block, ifforbody...)))
 
-  push!(body, Expr(:for, :(i in 1:$(job).range.nsteps), Expr(:block, forbody...)))
+  push!(body, Expr(:for, :(i = 1:$(job).range.nsteps), Expr(:block, forbody...)))
 
   if isa(job.output, VariableIOStream)
     push!(body, :($(job).output.close()))

@@ -278,16 +278,16 @@ function Base.write(iostream::BasicContParamIOStream, nstate::BasicContMuvParame
   for i in 8:10
     if iostream.(fnames[i]) != nothing
       statelen = abs2(iostream.size)
-      for i in 1:nstate.n
-        write(iostream.stream, join(nstate.value[1+(i-1)*statelen:i*statelen], ','), "\n")
+      for j in 1:nstate.n
+        write(iostream.stream, join(nstate.value[1+(j-1)*statelen:j*statelen], ','), "\n")
       end
     end
   end
   for i in 11:13
     if iostream.(fnames[i]) != nothing
       statelen = iostream.size^3
-      for i in 1:nstate.n
-        write(iostream.stream, join(nstate.value[1+(i-1)*statelen:i*statelen], ','), "\n")
+      for j in 1:nstate.n
+        write(iostream.stream, join(nstate.value[1+(j-1)*statelen:j*statelen], ','), "\n")
       end
     end
   end

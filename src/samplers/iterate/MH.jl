@@ -6,7 +6,7 @@ function codegen_iterate_mh(job::BasicMCJob)
 
   vform = variate_form(job.pstate)
   if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in MALA code generation")
+    error("Only univariate or multivariate parameter states allowed in MH code generation")
   end
 
   if job.tuner.verbose
