@@ -380,3 +380,22 @@ Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
 Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
 Base.run(job::BasicMCJob) = job.run!()
+
+function Base.show(io::IO, job::BasicMCJob)
+  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+
+  println(io, "BasicMCJob:")
+  print(io, "  ")
+  show(io, job.model)
+  print(io, "\n  ")
+  show(io, job.parameter)
+  print(io, "\n  ")
+  show(io, job.sampler)
+  print(io, "\n  ")
+  show(io, job.tuner)
+  print(io, "\n  ")
+  show(io, job.range)
+  print(io, "\n  plain = $(job.plain) ($isplain)")
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)

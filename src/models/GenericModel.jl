@@ -139,3 +139,10 @@ function topological_sort_by_dfs(m::GenericModel)
 
   mvs
 end
+
+function Base.show(io::IO, model::GenericModel)
+  isdirected = is_directed(model) ? "directed": "undirected"
+  print(io, "GenericModel: $(num_vertices(model)) variables, $(num_edges(model)) dependencies ($isdirected graph)")
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", model::GenericModel) = show(io, model)

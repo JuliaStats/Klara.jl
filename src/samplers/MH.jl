@@ -136,3 +136,10 @@ function initialize_task!(
     iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end
+
+function Base.show(io::IO, sampler::MH)
+  issymmetric = sampler.symmetric ? "symmetric" : "non-symmmetric"
+  print(io, "MH sampler: $issymmetric proposal")
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", sampler::MH) = show(io, sampler)

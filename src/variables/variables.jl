@@ -77,6 +77,9 @@ default_state{N<:Number}(variable::Constant, value::N) = BasicUnvVariableState(v
 default_state{N<:Number}(variable::Constant, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Constant, value::Matrix{N}) = BasicMavVariableState(value)
 
+Base.show(io::IO, ::Type{Constant}) = print(io, "Constant")
+Base.writemime(io::IO, ::MIME"text/plain", t::Type{Constant}) = show(io, t)
+
 ## Hyperparameter
 
 typealias Hyperparameter Constant
@@ -97,6 +100,9 @@ default_state{N<:Number}(variable::Data, value::N) = BasicUnvVariableState(value
 default_state{N<:Number}(variable::Data, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableState(value)
 
+Base.show(io::IO, ::Type{Data}) = print(io, "Data")
+Base.writemime(io::IO, ::MIME"text/plain", t::Type{Data}) = show(io, t)
+
 ## Transformation
 
 immutable Transformation{S<:VariableState} <: Variable{Deterministic}
@@ -112,6 +118,9 @@ Transformation{S<:VariableState}(key::Symbol, transform::Function, states::Vecto
 default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableState(value)
 default_state{N<:Number}(variable::Transformation, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Transformation, value::Matrix{N}) = BasicMavVariableState(value)
+
+Base.show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
+Base.writemime(io::IO, ::MIME"text/plain", t::Type{Transformation}) = show(io, t)
 
 ### Random Variable subtypes
 

@@ -705,3 +705,6 @@ default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict)
     value,
     (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
+
+Base.show{S<:VariableState}(io::IO, ::Type{BasicContUnvParameter{S}}) = print(io, "BasicContUnvParameter")
+Base.writemime{S<:VariableState}(io::IO, ::MIME"text/plain", t::Type{BasicContUnvParameter{S}}) = show(io, t)

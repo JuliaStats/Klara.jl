@@ -694,3 +694,6 @@ default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopt
     [getfield(variable, fieldnames(BasicContMuvParameter)[i]) == nothing ? false : true for i in 10:18],
     (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
+
+Base.show{S<:VariableState}(io::IO, ::Type{BasicContMuvParameter{S}}) = print(io, "BasicContMuvParameter")
+Base.writemime{S<:VariableState}(io::IO, ::MIME"text/plain", t::Type{BasicContMuvParameter{S}}) = show(io, t)

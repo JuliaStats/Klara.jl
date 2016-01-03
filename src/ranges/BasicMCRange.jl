@@ -32,5 +32,7 @@ BasicMCRange{T<:Int}(postrange::UnitRange{T}) = BasicMCRange{T}(first(postrange)
 
 BasicMCRange{T<:Int}(; burnin::T=0, thinning::T=1, nsteps::T=100) = BasicMCRange{T}((burnin+1):thinning:nsteps)
 
-Base.writemime(io::IO, ::MIME"text/plain", r::BasicMCRange) =
-  print(io, "nsteps = ", repr(r.nsteps), ", burnin = ", repr(r.burnin), ", thinning = ", repr(r.thinning))
+Base.show(io::IO, r::BasicMCRange) =
+  print(io, "BasicMCRange: number of steps = $(r.nsteps), burnin = $(r.burnin), thinning = $(r.thinning)")
+
+Base.writemime(io::IO, ::MIME"text/plain", r::BasicMCRange) = show(io, r)

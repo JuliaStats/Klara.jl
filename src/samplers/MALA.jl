@@ -188,3 +188,7 @@ function initialize_task!{N<:Real}(
     iterate!(pstate, sstate, parameter, sampler, tuner, range)
   end
 end
+
+Base.show(io::IO, sampler::MALA) = print(io, "MALA sampler: drift step = $(sampler.driftstep)")
+
+Base.writemime(io::IO, ::MIME"text/plain", sampler::MALA) = show(io, sampler)
