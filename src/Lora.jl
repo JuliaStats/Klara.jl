@@ -20,7 +20,8 @@ import Base:
   reset,
   run,
   show,
-  write
+  write,
+  writemime
 
 import ForwardDiff
 

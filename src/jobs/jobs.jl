@@ -2,6 +2,34 @@
 
 abstract MCJob
 
+# Set defaults for possibly unspecified output options
+
+function augment_basic_outopts!(outopts::Dict)
+  destination = get!(outopts, :destination, :nstate)
+
+  if destination != :none
+    if !haskey(outopts, :monitor)
+      outopts[:monitor] = [:value]
+    end
+
+    if destination == :iostream
+      if !haskey(outopts, :filepath)
+        outopts[:filepath] = ""
+      end
+
+      if !haskey(outopts, :filesuffix)
+        outopts[:filesuffix] = "csv"
+      end
+
+      if !haskey(outopts, :flush)
+        outopts[:flush] = false
+      end
+    end
+  end
+end
+
+augment_basic_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_basic_outopts!, outopts)
+
 # initialize_output() needs to be defined for custom variable state or NState input arguments
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
 

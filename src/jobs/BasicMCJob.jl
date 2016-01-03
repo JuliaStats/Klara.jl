@@ -333,32 +333,12 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   result
 end
 
-# Set defaults for possibly unspecified output options
-
 function augment_outopts_basicmcjob!(outopts::Dict)
-  destination = get!(outopts, :destination, :nstate)
+  augment_basic_outopts!(outopts)
 
-  if destination != :none
-    if !haskey(outopts, :monitor)
-      outopts[:monitor] = [:value]
-    end
-
+  if outopts[:destination] != :none
     if !haskey(outopts, :diagnostics)
       outopts[:diagnostics] = Symbol[]
-    end
-
-    if destination == :iostream
-      if !haskey(outopts, :filepath)
-        outopts[:filepath] = ""
-      end
-
-      if !haskey(outopts, :filesuffix)
-        outopts[:filesuffix] = "csv"
-      end
-
-      if !haskey(outopts, :flush)
-        outopts[:flush] = false
-      end
     end
   end
 end
