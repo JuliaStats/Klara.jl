@@ -26,12 +26,12 @@ vstate = [
   BasicContUnvParameterState(2.3, [:value]),
 ]
 
-outopts = Dict[Dict(:destination=>:none), Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
+outopts = Dict{Symbol,Any}[Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
 
 GibbsJob(
   model,
   [2, 3],
-  Union{BasicMCJob, Void}[nothing, nothing, nothing],
+  Union{BasicMCJob, Void}[nothing, nothing],
   mcrange,
   vstate,
   outopts,

@@ -68,7 +68,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.sstate = sampler_state(sampler, tuner, instance.pstate)
 
-    augment_outopts_basicmcjob!(outopts)
+    augment_parameter_outopts!(outopts)
     instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
 
     instance.count = 0
@@ -326,16 +326,6 @@ function initialize_task!(job::BasicMCJob)
   end
 end
 
-function augment_outopts_basicmcjob!(outopts::Dict)
-  augment_basic_outopts!(outopts)
-
-  if outopts[:destination] != :none
-    if !haskey(outopts, :diagnostics)
-      outopts[:diagnostics] = Symbol[]
-    end
-  end
-end
-
 function checkin(job::BasicMCJob)
   pindex = find(v::Variable -> isa(v, Parameter), job.model.vertices)
   np = length(pindex)
@@ -379,9 +369,9 @@ function Base.show(io::IO, job::BasicMCJob)
 
   println(io, "BasicMCJob:")
   print(io, "  ")
-  show(io, job.model)
-  print(io, "\n  ")
   show(io, job.parameter)
+  print(io, "\n  ")
+  show(io, job.model)
   print(io, "\n  ")
   show(io, job.sampler)
   print(io, "\n  ")

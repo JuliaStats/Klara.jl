@@ -4,7 +4,7 @@ abstract MCJob
 
 # Set defaults for possibly unspecified output options
 
-function augment_basic_outopts!(outopts::Dict)
+function augment_variable_outopts!(outopts::Dict)
   destination = get!(outopts, :destination, :nstate)
 
   if destination != :none
@@ -28,7 +28,19 @@ function augment_basic_outopts!(outopts::Dict)
   end
 end
 
-augment_basic_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_basic_outopts!, outopts)
+augment_variable_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_variable_outopts!, outopts)
+
+function augment_parameter_outopts!(outopts::Dict)
+  augment_variable_outopts!(outopts)
+
+  if outopts[:destination] != :none
+    if !haskey(outopts, :diagnostics)
+      outopts[:diagnostics] = Symbol[]
+    end
+  end
+end
+
+augment_parameter_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_parameter_outopts!, outopts)
 
 # initialize_output() needs to be defined for custom variable state or NState input arguments
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates

@@ -8,10 +8,11 @@ type GibbsJob{S<:VariableState} <: MCJob
   range::BasicMCRange
   vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
   dpstate::Vector{VariableState} # Points to vstate[dpindex] for faster access
-  outopts::Vector{Dict} # Options related to output
+  outopts::Vector # Options related to output
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Int # Number of dependent variables, i.e. length(dependent)
   count::Int # Current number of post-burnin iterations
+  imperative::Bool # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   # task::Union{Task, Void}
   # resetplain!::Function
@@ -26,8 +27,8 @@ type GibbsJob{S<:VariableState} <: MCJob
     dpjob::Vector{Union{BasicMCJob, Void}},
     range::BasicMCRange,
     vstate::Vector{S},
-    outopts::Vector{Dict},
-    imperative::Bool, # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
+    outopts::Vector,
+    imperative::Bool,
     plain::Bool,
     check::Bool
   )
@@ -63,6 +64,7 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.range = range
     instance.outopts = outopts
+    instance.imperative = imperative
     instance.plain = plain
 
     instance.dependent = instance.model.vertices[instance.dpindex]
@@ -96,14 +98,12 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.dpstate = instance.vstate[instance.dpindex]
 
-    println(instance.ndp)
-
     instance.output = Array(Union{VariableNState, VariableIOStream, Void}, instance.ndp)
     for i in 1:instance.ndp
-      if isa(instance.dpjob[i], BasicMCJob)
-        augment_outopts_basicmcjob!(outopts[i])
+      if isa(instance.dependent[i], Parameter)
+        augment_parameter_outopts!(outopts[i])
       else
-        augment_basic_outopts!(outopts[i])
+        augment_variable_outopts!(outopts[i])
       end
       instance.output[i] = initialize_output(instance.dpstate[i], range.npoststeps, outopts[i])
     end
@@ -122,7 +122,7 @@ GibbsJob{S<:VariableState}(
   dpjob::Vector{Union{BasicMCJob, Void}},
   range::BasicMCRange,
   vstate::Vector{S},
-  outopts::Vector{Dict},
+  outopts::Vector,
   imperative::Bool,
   plain::Bool,
   check::Bool
@@ -211,3 +211,34 @@ function checkin(job::GibbsJob)
     end
   end
 end
+
+num_dp(job::GibbsJob) = job.ndp
+num_dptransforms(job::GibbsJob) = count(v -> isa(v, Transformation), job.dependent)
+num_randdp(job::GibbsJob) = count(v -> isa(v, Parameter), job.dependent)
+num_randdp_viamcmc(job::GibbsJob) = count(j -> j != nothing, job.dpjob)
+num_radndp_viadistribution(job::GibbsJob) = num_dp(job)-num_dptransforms(job)-num_randdp_viamcmc(job)
+
+function Base.show(io::IO, job::GibbsJob)
+  ndptransforms = num_dptransforms(job)
+  ndpviamcmc = num_randdp_viamcmc(job)
+  ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
+
+  isimperative = job.imperative ? "imperative graph traversal" : "declarative graph traversal (topologically sorted nodes)"
+  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+
+  println(io, "BasicMCJob:")
+  print(io, string(
+    "  $(num_dp(job)) dependent variables: ",
+    "$ndptransforms transformations, ",
+    "$ndpviadistribution sampled from their distribution, ",
+    "$ndpviamcmc sampled via MCMC-within-Gibbs"
+  ))
+  print(io, "\n  ")
+  show(io, job.model)
+  print(io, "\n  ")
+  show(io, job.range)
+  println(io, "\n  plain = $(job.plain) ($isplain)")
+  print(io, "  imperative = $(job.imperative) ($isimperative)")
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", job::GibbsJob) = show(io, job)
