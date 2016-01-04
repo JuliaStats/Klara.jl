@@ -82,16 +82,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
       instance.task = nothing
       instance.reset! = instance.resetplain!
     else
-      instance.task = Task(() -> initialize_task!(
-        instance.pstate,
-        instance.sstate,
-        instance.parameter,
-        instance.sampler,
-        instance.tuner,
-        instance.range,
-        instance.resetplain!,
-        instance.iterate!
-      ))
+      instance.task = Task(() -> initialize_task!(instance))
       instance.reset! = eval(codegen_reset_task_basicmcjob(instance))
     end
 
@@ -295,14 +286,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   body = []
 
   if job.task == nothing
-    push!(forbody, :($(job).iterate!(
-      $(job).pstate,
-      $(job).sstate,
-      $(job).parameter,
-      $(job).sampler,
-      $(job).tuner,
-      $(job).range
-    )))
+    push!(forbody, :($(job).iterate!()))
   else
     push!(forbody, :(consume($(job).task)))
   end
@@ -331,6 +315,15 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   end
 
   result
+end
+
+function initialize_task!(job::BasicMCJob)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, job.resetplain!)
+
+  while true
+    job.iterate!()
+  end
 end
 
 function augment_outopts_basicmcjob!(outopts::Dict)

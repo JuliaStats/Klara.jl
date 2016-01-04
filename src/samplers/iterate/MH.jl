@@ -10,59 +10,62 @@ function codegen_iterate_mh(job::BasicMCJob)
   end
 
   if job.tuner.verbose
-    push!(body, :(_sstate.tune.proposed += 1))
+    push!(body, :($(job).sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_sstate.pstate.value = _sampler.randproposal(_pstate.value)))
-  push!(body, :(_parameter.logtarget!(_sstate.pstate)))
+  push!(body, :($(job).sstate.pstate.value = $(job).sampler.randproposal($(job).pstate.value)))
+  push!(body, :($(job).parameter.logtarget!($(job).sstate.pstate)))
 
   if job.sampler.symmetric
-    push!(body, :(_sstate.ratio = _sstate.pstate.logtarget-_pstate.logtarget))
+    push!(body, :($(job).sstate.ratio = $(job).sstate.pstate.logtarget-$(job).pstate.logtarget))
   else
-    push!(body, :(_sstate.ratio = (
-      _sstate.pstate.logtarget
-      +_sampler.logproposal(_sstate.pstate.value, _pstate.value)
-      -_pstate.logtarget
-      -_sampler.logproposal(_pstate.value, _sstate.pstate.value)
+    push!(body, :($(job).sstate.ratio = (
+      $(job).sstate.pstate.logtarget
+      +$(job).sampler.logproposal($(job).sstate.pstate.value, $(job).pstate.value)
+      -$(job).pstate.logtarget
+      -$(job).sampler.logproposal($(job).pstate.value, $(job).sstate.pstate.value)
     )))
   end
 
   if vform == Univariate
-    push!(update, :(_pstate.value = _sstate.pstate.value))
+    push!(update, :($(job).pstate.value = $(job).sstate.pstate.value))
   elseif vform == Multivariate
-    push!(update, :(_pstate.value = copy(_sstate.pstate.value)))
+    push!(update, :($(job).pstate.value = copy($(job).sstate.pstate.value)))
   end
-  push!(update, :(_pstate.logtarget = _sstate.pstate.logtarget))
+  push!(update, :($(job).pstate.logtarget = $(job).sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_pstate.loglikelihood = _sstate.pstate.loglikelihood))
+    push!(update, :($(job).pstate.loglikelihood = $(job).sstate.pstate.loglikelihood))
   end
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_pstate.logprior = _sstate.pstate.logprior))
+    push!(update, :($(job).pstate.logprior = $(job).sstate.pstate.logprior))
   end
   if in(:accept, job.outopts[:diagnostics])
-    push!(update, :(_pstate.diagnosticvalues[1] = true))
-    push!(noupdate, :(_pstate.diagnosticvalues[1] = false))
+    push!(update, :($(job).pstate.diagnosticvalues[1] = true))
+    push!(noupdate, :($(job).pstate.diagnosticvalues[1] = false))
   end
   if job.tuner.verbose
-    push!(update, :(_sstate.tune.accepted += 1))
+    push!(update, :($(job).sstate.tune.accepted += 1))
   end
 
-  push!(body, Expr(:if, :(_sstate.ratio > 0 || (_sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+  push!(
+    body,
+    Expr(:if, :($(job).sstate.ratio > 0 || ($(job).sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...)
+  )
 
   if job.tuner.verbose
     push!(body, :(
-      if _sstate.tune.totproposed <= _range.burnin && mod(_sstate.tune.proposed, _tuner.period) == 0
-        rate!(_sstate.tune)
+      if $(job).sstate.tune.totproposed <= $(job).range.burnin && mod($(job).sstate.tune.proposed, $(job).tuner.period) == 0
+        rate!($(job).sstate.tune)
         println(
           "Burnin iteration ",
-          _sstate.tune.totproposed,
+          $(job).sstate.tune.totproposed,
           " of ",
-          _range.burnin,
+          $(job).range.burnin,
           ": ",
-          round(100*_sstate.tune.rate, 2),
+          round(100*$(job).sstate.tune.rate, 2),
           " % acceptance rate"
         )
-        reset_burnin!(_sstate.tune)
+        reset_burnin!($(job).sstate.tune)
       end
     ))
   end
@@ -74,14 +77,7 @@ function codegen_iterate_mh(job::BasicMCJob)
   @gensym iterate_mh
 
   result = quote
-    function $iterate_mh(
-      _pstate::$(typeof(job.pstate)),
-      _sstate::$(typeof(job.sstate)),
-      _parameter::$(typeof(job.parameter)),
-      _sampler::MH,
-      _tuner::$(typeof(job.tuner)),
-      _range::$(typeof(job.range))
-    )
+    function $iterate_mh()
       $(body...)
     end
   end

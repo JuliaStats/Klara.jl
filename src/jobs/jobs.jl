@@ -33,6 +33,72 @@ augment_basic_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_basic_ou
 # initialize_output() needs to be defined for custom variable state or NState input arguments
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
 
+function initialize_output(state::BasicUnvVariableState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicUnvVariableNState(n, eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicVariableIOStream(
+      (),
+      n,
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix],
+      mode="w"
+    )
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
+  end
+
+  output
+end
+
+function initialize_output(state::BasicMuvVariableState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicMuvVariableNState(state.size, n, eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicVariableIOStream(
+      (state.size,),
+      n,
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix],
+      mode="w"
+    )
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
+  end
+
+  output
+end
+
+function initialize_output(state::BasicMavVariableState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicMavVariableNState(state.size, n, eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicVariableIOStream(
+      state.size,
+      n,
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix],
+      mode="w"
+    )
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
+  end
+
+  output
+end
+
 function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
@@ -43,10 +109,10 @@ function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::D
       (),
       n,
       outopts[:monitor],
-      diagnostickeys=outopts[:diagnostics],
-      mode="w",
       filepath=outopts[:filepath],
-      filesuffix=outopts[:filesuffix]
+      filesuffix=outopts[:filesuffix],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w"
     )
   elseif outopts[:destination] == :none
     output = nothing
@@ -64,13 +130,13 @@ function initialize_output(state::BasicContMuvParameterState, n::Int, outopts::D
     output = BasicContMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state))
   elseif outopts[:destination] == :iostream
     output = BasicContParamIOStream(
-      (),
+      (state.size,),
       n,
       outopts[:monitor],
-      diagnostickeys=outopts[:diagnostics],
-      mode="w",
       filepath=outopts[:filepath],
-      filesuffix=outopts[:filesuffix]
+      filesuffix=outopts[:filesuffix],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w"
     )
     output.mark()
   elseif outopts[:destination] == :none

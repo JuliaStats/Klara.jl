@@ -15,18 +15,18 @@ type GibbsJob{S<:VariableState} <: MCJob
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   # task::Union{Task, Void}
   # resetplain!::Function
-  iterate!::Function
+  # iterate!::Function
   # reset!::Function
   # save!::Union{Function, Void}
-  run!::Function
+  # run!::Function
 
   function GibbsJob(
     model::GenericModel,
     dpindex::Vector{Int},
-    dpjob::Dict{Symbol, BasicMCJob},
+    dpjob::Vector{Union{BasicMCJob, Void}},
     range::BasicMCRange,
     vstate::Vector{S},
-    outopts::Dict,
+    outopts::Vector{Dict},
     imperative::Bool, # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
     plain::Bool,
     check::Bool
@@ -59,16 +59,27 @@ type GibbsJob{S<:VariableState} <: MCJob
       for i in setdiff(1:nvstate, dpindex)
         instance.vstate[instance.model.ofkey[vertex_key(model.vertices[i])]] = vstate[i]
       end
+    end
 
+    instance.range = range
+    instance.outopts = outopts
+    instance.plain = plain
+
+    instance.dependent = instance.model.vertices[instance.dpindex]
+    for i in 1:instance.ndp
+      instance.dependent[i].states = instance.vstate
+    end
+
+    if !imperative
       instance.dpjob = Array(Union{BasicMCJob, Void}, instance.ndp)
       idpjob::BasicMCJob
       for i in 1:instance.ndp
-        idpjob = dpjob[dpindex[i]]
-        instance.dpjob[instance.dpindex[i]] =
+        idpjob = dpjob[i]
+        instance.dpjob[i] =
           if isa(idpjob, BasicMCJob)
             BasicMCJob(
               instance.model,
-              instance.model.vertices[instance.dpindex[i]],
+              instance.dependent[i],
               idpjob.sampler,
               idpjob.tuner,
               idpjob.range,
@@ -83,20 +94,17 @@ type GibbsJob{S<:VariableState} <: MCJob
       end
     end
 
-    instance.range = range
-    instance.outopts = outopts
-    instance.plain = plain
-
-    instance.dependent = instance.model.vertices[instance.dpindex]
-    for i in 1:instance.ndp
-      instance.dependent[i].states = instance.vstate
-    end
-
     instance.dpstate = instance.vstate[instance.dpindex]
 
-    augment_basic_outopts!(outopts)
+    println(instance.ndp)
+
     instance.output = Array(Union{VariableNState, VariableIOStream, Void}, instance.ndp)
     for i in 1:instance.ndp
+      if isa(instance.dpjob[i], BasicMCJob)
+        augment_outopts_basicmcjob!(outopts[i])
+      else
+        augment_basic_outopts!(outopts[i])
+      end
       instance.output[i] = initialize_output(instance.dpstate[i], range.npoststeps, outopts[i])
     end
 
@@ -106,6 +114,50 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance
   end
+end
+
+GibbsJob{S<:VariableState}(
+  model::GenericModel,
+  dpindex::Vector{Int},
+  dpjob::Vector{Union{BasicMCJob, Void}},
+  range::BasicMCRange,
+  vstate::Vector{S},
+  outopts::Vector{Dict},
+  imperative::Bool,
+  plain::Bool,
+  check::Bool
+) =
+  GibbsJob{S}(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, check)
+
+function iterate!(job::GibbsJob)
+  for j in 1:job.ndp
+    if isa(job.dependent[i], Parameter)
+      if isa(job.dpjob[i], BasicMCJob)
+        run(job.dpjob[i])
+        reset(job, job.dpstate[i])
+      else
+        job.dependent[i].setpdf(job.dpstate[i])
+        job.dpstate[i] = rand(job.pdf)
+      end
+    else
+      job.dependent[i].transform!(job.dpstate[i])
+    end
+  end
+end
+
+function Base.run(job::GibbsJob)
+  for i in 1:job.range.nsteps
+    iterate!(job)
+
+    #if in(i, job.range.postrange)
+    #  job.count+=1
+    #  job.save!(job.count)
+    #end
+  end
+
+  #job.close()
+
+  #job.output
 end
 
 function checkin(job::GibbsJob)

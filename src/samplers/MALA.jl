@@ -151,44 +151,6 @@ function reset!{N<:Real}(
   parameter.uptogradlogtarget!(pstate)
 end
 
-## Initialize task
-
-function initialize_task!(
-  pstate::ParameterState{Continuous, Univariate},
-  sstate::UnvMALAState,
-  parameter::Parameter{Continuous, Univariate},
-  sampler::MALA,
-  tuner::MCTuner,
-  range::BasicMCRange,
-  resetplain!::Function,
-  iterate!::Function
-)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, resetplain!)
-
-  while true
-    iterate!(pstate, sstate, parameter, sampler, tuner, range)
-  end
-end
-
-function initialize_task!{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  sstate::MuvMALAState{N},
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::MALA,
-  tuner::MCTuner,
-  range::BasicMCRange,
-  resetplain!::Function,
-  iterate!::Function
-)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, resetplain!)
-
-  while true
-    iterate!(pstate, sstate, parameter, sampler, tuner, range)
-  end
-end
-
 Base.show(io::IO, sampler::MALA) = print(io, "MALA sampler: drift step = $(sampler.driftstep)")
 
 Base.writemime(io::IO, ::MIME"text/plain", sampler::MALA) = show(io, sampler)

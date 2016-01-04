@@ -99,44 +99,6 @@ function reset!{N<:Real}(
   parameter.logtarget!(pstate)
 end
 
-## Initialize task
-
-function initialize_task!(
-  pstate::ParameterState{Continuous, Univariate},
-  sstate::MHState,
-  parameter::Parameter{Continuous, Univariate},
-  sampler::MH,
-  tuner::MCTuner,
-  range::BasicMCRange,
-  resetplain!::Function,
-  iterate!::Function
-)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, resetplain!)
-
-  while true
-    iterate!(pstate, sstate, parameter, sampler, tuner, range)
-  end
-end
-
-function initialize_task!(
-  pstate::ParameterState{Continuous, Multivariate},
-  sstate::MHState,
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::MH,
-  tuner::MCTuner,
-  range::BasicMCRange,
-  resetplain!::Function,
-  iterate!::Function
-)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, resetplain!)
-
-  while true
-    iterate!(pstate, sstate, parameter, sampler, tuner, range)
-  end
-end
-
 function Base.show(io::IO, sampler::MH)
   issymmetric = sampler.symmetric ? "symmetric" : "non-symmmetric"
   print(io, "MH sampler: $issymmetric proposal")

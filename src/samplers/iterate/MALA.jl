@@ -10,100 +10,127 @@ function codegen_iterate_mala(job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in MALA code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_sstate.tune.step) : :(_sstate.driftstep)
+  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sstate.driftstep)
 
   if job.tuner.verbose
-    push!(body, :(_sstate.tune.proposed += 1))
+    push!(body, :($(job).sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_sstate.vmean = _pstate.value+0.5*$(stepsize)*_pstate.gradlogtarget))
+  push!(body, :($(job).sstate.vmean = $(job).pstate.value+0.5*$(stepsize)*$(job).pstate.gradlogtarget))
 
   if vform == Univariate
-    push!(body, :(_sstate.pstate.value = _sstate.vmean+sqrt($(stepsize))*randn()))
+    push!(body, :($(job).sstate.pstate.value = $(job).sstate.vmean+sqrt($(stepsize))*randn()))
   elseif vform == Multivariate
-    push!(body, :(_sstate.pstate.value = _sstate.vmean+sqrt($(stepsize))*randn(_pstate.size)))
+    push!(body, :($(job).sstate.pstate.value = $(job).sstate.vmean+sqrt($(stepsize))*randn($(job).pstate.size)))
   end
 
-  push!(body, :(_parameter.uptogradlogtarget!(_sstate.pstate)))
+  push!(body, :($(job).parameter.uptogradlogtarget!($(job).sstate.pstate)))
 
   if vform == Univariate
-    push!(body, :(_sstate.pnewgivenold = -0.5*(abs2(_sstate.vmean-_sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))))
+    push!(
+      body,
+      :(
+        $(job).sstate.pnewgivenold =
+        -0.5*(abs2($(job).sstate.vmean-$(job).sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))
+      )
+    )
   elseif vform == Multivariate
-    push!(body, :(_sstate.pnewgivenold =
-      sum(-0.5*(abs2(_sstate.vmean-_sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
+    push!(body, :($(job).sstate.pnewgivenold =
+      sum(-0.5*(abs2($(job).sstate.vmean-$(job).sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
     ))
   end
 
-  push!(body, :(_sstate.vmean = _sstate.pstate.value+0.5*$(stepsize)*_sstate.pstate.gradlogtarget))
+  push!(body, :($(job).sstate.vmean = $(job).sstate.pstate.value+0.5*$(stepsize)*$(job).sstate.pstate.gradlogtarget))
 
   if vform == Univariate
-    push!(body, :(_sstate.poldgivennew = -0.5*(abs2(_sstate.vmean-_pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))))
+    push!(
+      body,
+      :(
+        $(job).sstate.poldgivennew =
+        -0.5*(abs2($(job).sstate.vmean-$(job).pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))
+      )
+    )
   elseif vform == Multivariate
-    push!(body, :(_sstate.poldgivennew = sum(-0.5*(abs2(_sstate.vmean-_pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))))
+    push!(
+      body,
+      :(
+        $(job).sstate.poldgivennew =
+        sum(-0.5*(abs2($(job).sstate.vmean-$(job).pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
+      )
+    )
   end
 
-  push!(body, :(_sstate.ratio = _sstate.pstate.logtarget+_sstate.poldgivennew-_pstate.logtarget-_sstate.pnewgivenold))
+  push!(
+    body,
+    :(
+      $(job).sstate.ratio =
+      $(job).sstate.pstate.logtarget+$(job).sstate.poldgivennew-$(job).pstate.logtarget-$(job).sstate.pnewgivenold
+    )
+  )
 
   if vform == Univariate
-    push!(update, :(_pstate.value = _sstate.pstate.value))
-    push!(update, :(_pstate.gradlogtarget = _sstate.pstate.gradlogtarget))
+    push!(update, :($(job).pstate.value = $(job).sstate.pstate.value))
+    push!(update, :($(job).pstate.gradlogtarget = $(job).sstate.pstate.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_pstate.gradloglikelihood = _sstate.pstate.gradloglikelihood))
+      push!(update, :($(job).pstate.gradloglikelihood = $(job).sstate.pstate.gradloglikelihood))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_pstate.gradlogprior = _sstate.pstate.gradlogprior))
+      push!(update, :($(job).pstate.gradlogprior = $(job).sstate.pstate.gradlogprior))
     end
   elseif vform == Multivariate
-    push!(update, :(_pstate.value = copy(_sstate.pstate.value)))
-    push!(update, :(_pstate.gradlogtarget = copy(_sstate.pstate.gradlogtarget)))
+    push!(update, :($(job).pstate.value = copy($(job).sstate.pstate.value)))
+    push!(update, :($(job).pstate.gradlogtarget = copy($(job).sstate.pstate.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_pstate.gradloglikelihood = copy(_sstate.pstate.gradloglikelihood)))
+      push!(update, :($(job).pstate.gradloglikelihood = copy($(job).sstate.pstate.gradloglikelihood)))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_pstate.gradlogprior = copy(_sstate.pstate.gradlogprior)))
+      push!(update, :($(job).pstate.gradlogprior = copy($(job).sstate.pstate.gradlogprior)))
     end
   end
-  push!(update, :(_pstate.logtarget = _sstate.pstate.logtarget))
+  push!(update, :($(job).pstate.logtarget = $(job).sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_pstate.loglikelihood = _sstate.pstate.loglikelihood))
+    push!(update, :($(job).pstate.loglikelihood = $(job).sstate.pstate.loglikelihood))
   end
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_pstate.logprior = _sstate.pstate.logprior))
+    push!(update, :($(job).pstate.logprior = $(job).sstate.pstate.logprior))
   end
   if in(:accept, job.outopts[:diagnostics])
-    push!(update, :(_pstate.diagnosticvalues[1] = true))
-    push!(noupdate, :(_pstate.diagnosticvalues[1] = false))
+    push!(update, :($(job).pstate.diagnosticvalues[1] = true))
+    push!(noupdate, :($(job).pstate.diagnosticvalues[1] = false))
   end
   if job.tuner.verbose
-    push!(update, :(_sstate.tune.accepted += 1))
+    push!(update, :($(job).sstate.tune.accepted += 1))
   end
 
-  push!(body, Expr(:if, :(_sstate.ratio > 0 || (_sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+  push!(
+    body,
+    Expr(:if, :($(job).sstate.ratio > 0 || ($(job).sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...)
+  )
 
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(burninbody, :(rate!(_sstate.tune)))
+    push!(burninbody, :(rate!($(job).sstate.tune)))
 
     if isa(job.tuner, AcceptanceRateMCTuner)
-      push!(burninbody, :(tune!(_sstate.tune, _tuner)))
+      push!(burninbody, :(tune!($(job).sstate.tune, $(job).tuner)))
     end
 
     if job.tuner.verbose
       push!(burninbody, :(println(
         "Burnin iteration ",
-        _sstate.tune.totproposed,
+        $(job).sstate.tune.totproposed,
         " of ",
-        _range.burnin,
+        $(job).range.burnin,
         ": ",
-        round(100*_sstate.tune.rate, 2),
+        round(100*$(job).sstate.tune.rate, 2),
         " % acceptance rate"
       )))
     end
 
-    push!(burninbody, :(reset_burnin!(_sstate.tune)))
+    push!(burninbody, :(reset_burnin!($(job).sstate.tune)))
 
     push!(body, Expr(
       :if,
-      :(_sstate.tune.totproposed <= _range.burnin && mod(_sstate.tune.proposed, _tuner.period) == 0),
+      :($(job).sstate.tune.totproposed <= $(job).range.burnin && mod($(job).sstate.tune.proposed, $(job).tuner.period) == 0),
       Expr(:block, burninbody...)
     ))
   end
@@ -115,14 +142,7 @@ function codegen_iterate_mala(job::BasicMCJob)
   @gensym iterate_mala
 
   result = quote
-    function $iterate_mala(
-      _pstate::$(typeof(job.pstate)),
-      _sstate::$(typeof(job.sstate)),
-      _parameter::$(typeof(job.parameter)),
-      _sampler::MALA,
-      _tuner::$(typeof(job.tuner)),
-      _range::$(typeof(job.range))
-    )
+    function $iterate_mala()
       $(body...)
     end
   end

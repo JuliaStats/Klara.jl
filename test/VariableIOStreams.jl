@@ -5,7 +5,7 @@ filename = joinpath(dirname(@__FILE__), "sample.txt")
 
 println("    Testing BasicVariableIOStream constructors and close method...")
 
-iostream = BasicVariableIOStream(filename, (), 10000)
+iostream = BasicVariableIOStream((), 10000, filename)
 
 close(iostream)
 rm(filename)
@@ -18,14 +18,14 @@ nstatev = Float64[1.87, -4.5, 29.55, -0.91, 0.16]
 iostreamsize = ()
 iostreamn = length(nstatev)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "w")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "w")
 for v in nstatev
   write(iostream, BasicUnvVariableState(v))
 end
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstate = read(iostream, Float64)
 
 @test isa(nstate, BasicUnvVariableNState{Float64})
@@ -41,13 +41,13 @@ nstatev = Float32[11.5, -41.22, -5.62, 1.98, 7.16]
 iostreamsize = ()
 iostreamn = length(nstatev)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn)
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename)
 nstatein = BasicUnvVariableNState(nstatev)
 write(iostream, nstatein)
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstateout = read(iostream, Float32)
 
 @test isa(nstateout, BasicUnvVariableNState{Float32})
@@ -63,14 +63,14 @@ nstatev = Float64[8.11 -0.99 -4.19 0.1; 0.01 -0.02 1.4 8.47]
 iostreamsize = (size(nstatev, 1),)
 iostreamn = size(nstatev, 2)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn)
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename)
 for i in 1:iostreamn
   write(iostream, BasicMuvVariableState(nstatev[:, i]))
 end
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstate = read(iostream, Float64)
 
 @test isa(nstate, BasicMuvVariableNState{Float64})
@@ -87,13 +87,13 @@ nstatev = Float32[-7.1 -1.19 -7.76 6.1; -3.8 4.2 3.7 2.21]
 iostreamsize = (size(nstatev, 1),)
 iostreamn = size(nstatev, 2)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn)
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename)
 nstatein = BasicMuvVariableNState(nstatev)
 write(iostream, nstatein)
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstateout = read(iostream, Float32)
 
 @test isa(nstateout, BasicMuvVariableNState{Float32})
@@ -120,14 +120,14 @@ nstatev[:, :, 2] = [
 iostreamsize = (size(nstatev, 1), size(nstatev, 2))
 iostreamn = size(nstatev, 3)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn)
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename)
 for i in 1:iostreamn
   write(iostream, BasicMavVariableState(nstatev[:, :, i]))
 end
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstate = read(iostream, Float64)
 
 @test isa(nstate, BasicMavVariableNState{Float64})
@@ -154,13 +154,13 @@ nstatev[:, :, 2] = [
 iostreamsize = (size(nstatev, 1), size(nstatev, 2))
 iostreamn = size(nstatev, 3)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn)
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename)
 nstatein = BasicMavVariableNState(nstatev)
 write(iostream, nstatein)
 
 close(iostream)
 
-iostream = BasicVariableIOStream(filename, iostreamsize, iostreamn, "r")
+iostream = BasicVariableIOStream(iostreamsize, iostreamn, filename, "r")
 nstateout = read(iostream, Float32)
 
 @test isa(nstateout, BasicMavVariableNState{Float32})

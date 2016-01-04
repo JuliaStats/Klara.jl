@@ -10,8 +10,17 @@ type BasicVariableIOStream <: VariableIOStream
   n::Int
 end
 
-BasicVariableIOStream(filename::AbstractString, size::Tuple, n::Int, mode::AbstractString="w") =
+BasicVariableIOStream(size::Tuple, n::Int, filename::AbstractString, mode::AbstractString="w") =
   BasicVariableIOStream(open(filename, mode), size, n)
+
+BasicVariableIOStream(
+  size::Tuple,
+  n::Int;
+  filepath::AbstractString="",
+  filesuffix::AbstractString="csv",
+  mode::AbstractString="w"
+) =
+  BasicVariableIOStream(size, n, joinpath(filepath, "value."*filesuffix), mode)
 
 Base.close(iostream::BasicVariableIOStream) = close(iostream.stream)
 
