@@ -19,8 +19,7 @@ The Julia *Lora* package provides a generic engine for Markov Chain Monte Carlo 
 * Automatic differentiation is available allowing to choose between forward mode and reverse mode (the latter relying
 on source transformation).
 
-*To run the current version of Lora, it is needed to `Pkg.checkout()` both Lora and ReverseDiffSource. Both packages will
-be pushed to METADATA very soon.*
+*To run the current version of Lora, it is needed to run `Pkg.checkout("Lora")`. Lora will be pushed to METADATA very soon.*
 
 Some of the old one has not been fully ported. The full porting of old functionality, as well as further developments, will
 be completed shortly. Progress is being tracked systematically via issues and milestones.

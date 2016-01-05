@@ -210,29 +210,6 @@ end
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
 # In that case the iterate!() function will take a second variable (transformation) as input argument
 
-function codegen_save_basicmcjob(job::BasicMCJob)
-  body = []
-
-  if isa(job.output, VariableNState)
-    push!(body, :($(job).output.copy($(job).pstate, _i)))
-  elseif isa(job.output, VariableIOStream)
-    push!(body, :($(job).output.write($(job).pstate)))
-    if job.outopts[:flush]
-      push!(body, :($(job).output.flush()))
-    end
-  else
-    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
-  end
-
-  @gensym save_basicmcjob
-
-  quote
-    function $save_basicmcjob(_i::Int)
-      $(body...)
-    end
-  end
-end
-
 function codegen_resetplain_basicmcjob(job::BasicMCJob)
   fsignature::Vector{Union{Symbol, Expr}}
   body = []
@@ -294,6 +271,29 @@ function codegen_reset_task_basicmcjob(job::BasicMCJob)
   end
 
   result
+end
+
+function codegen_save_basicmcjob(job::BasicMCJob)
+  body = []
+
+  if isa(job.output, VariableNState)
+    push!(body, :($(job).output.copy($(job).pstate, _i)))
+  elseif isa(job.output, VariableIOStream)
+    push!(body, :($(job).output.write($(job).pstate)))
+    if job.outopts[:flush]
+      push!(body, :($(job).output.flush()))
+    end
+  else
+    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
+  end
+
+  @gensym save_basicmcjob
+
+  quote
+    function $save_basicmcjob(_i::Int)
+      $(body...)
+    end
+  end
 end
 
 function codegen_run_basicmcjob(job::BasicMCJob)

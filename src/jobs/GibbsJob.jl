@@ -148,19 +148,59 @@ function iterate!(job::GibbsJob)
   end
 end
 
+function codegen_save_basicmcjob(job::BasicMCJob)
+  body = []
+
+  if isa(job.output, VariableNState)
+    push!(body, :($(job).output.copy($(job).pstate, _i)))
+  elseif isa(job.output, VariableIOStream)
+    push!(body, :($(job).output.write($(job).pstate)))
+    if job.outopts[:flush]
+      push!(body, :($(job).output.flush()))
+    end
+  else
+    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
+  end
+
+  @gensym save_basicmcjob
+
+  quote
+    function $save_basicmcjob(_i::Int)
+      $(body...)
+    end
+  end
+end
+
+function save!(job::GibbsJob)
+  for j in 1:job.ndp
+    if isa(job.output[j], VariableNState)
+      job.output[j].copy(job.dpstate[j], job.count)
+    elseif isa(job.output[j], VariableIOStream)
+      job.output[j].write(job.dpstate[j])
+      if job.outopts[j][:flush]
+        job.outopts[j].flush()
+      end
+    else
+      error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[j][:destination])")
+    end
+  end
+end
+
 function Base.run(job::GibbsJob)
   for i in 1:job.range.nsteps
     iterate!(job)
 
-    #if in(i, job.range.postrange)
-    #  job.count+=1
-    #  job.save!(job.count)
-    #end
+    if in(i, job.range.postrange)
+      job.count+=1
+      save!(job)
+    end
   end
 
-  #job.close()
-
-  #job.output
+  for j in 1:job.ndp
+    if isa(job.output[j], VariableIOStream)
+      job.output[j].close()
+    end
+  end
 end
 
 function checkin(job::GibbsJob)
@@ -225,8 +265,7 @@ dpkeys(job::GibbsJob) = Symbol[dp.key for dp in job.dependent]
 
 output(job::GibbsJob) = job.output
 
-Dict(job::GibbsJob, field::Symbol=:output) =
-  Dict{Symbol, Union{VariableNState, VariableIOStream, Void}}(zip(dpkeys(job), getfield(job, field)))
+Dict(job::GibbsJob, field::Symbol=:output) = Dict(zip(dpkeys(job), getfield(job, field)))
 
 function Base.show(io::IO, job::GibbsJob)
   ndptransforms = num_dptransforms(job)

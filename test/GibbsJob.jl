@@ -18,7 +18,7 @@ p2 = BasicContUnvParameter(
 
 model = GenericModel([ρ, p1, p2], [ρ p1; ρ p2; p1 p2])
 
-mcrange = BasicMCRange(nsteps=100, burnin=10)
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
 vstate = [
   BasicUnvVariableState(0.8),
@@ -42,6 +42,10 @@ job = GibbsJob(
 
 @time run(job)
 
-output(job)
+# output(job)
 
-Dict(job)
+chains = Dict(job)
+
+[mean(chains[k].value) for k in keys(chains)]
+
+cov(chains[:p1].value, chains[:p2].value)
