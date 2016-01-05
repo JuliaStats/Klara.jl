@@ -59,10 +59,12 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.pstate = instance.vstate[instance.pindex]
     if any(isnan, instance.pstate.value)
-      if instance.parameter.prior != nothing
+      if instance.parameter.pdf != nothing
+        instance.pstate.value = rand(instance.parameter.pdf)
+      elseif instance.parameter.prior != nothing
         instance.pstate.value = rand(instance.parameter.prior)
       else
-        error("Not possible to initialize pstate with missing pstate.value and without parameter.prior")
+        error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
       end
     end
     initialize!(instance.pstate, instance.parameter, sampler)
@@ -380,21 +382,21 @@ Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
 Base.run(job::BasicMCJob) = job.run!()
 
-# function Base.show(io::IO, job::BasicMCJob)
-#   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
-#
-#   println(io, "BasicMCJob:")
-#   print(io, "  ")
-#   show(io, job.parameter)
-#   print(io, "\n  ")
-#   show(io, job.model)
-#   print(io, "\n  ")
-#   show(io, job.sampler)
-#   print(io, "\n  ")
-#   show(io, job.tuner)
-#   print(io, "\n  ")
-#   show(io, job.range)
-#   print(io, "\n  plain = $(job.plain) ($isplain)")
-# end
-#
-# Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)
+function Base.show(io::IO, job::BasicMCJob)
+  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+
+  println(io, "BasicMCJob:")
+  print(io, "  ")
+  show(io, job.parameter)
+  print(io, "\n  ")
+  show(io, job.model)
+  print(io, "\n  ")
+  show(io, job.sampler)
+  print(io, "\n  ")
+  show(io, job.tuner)
+  print(io, "\n  ")
+  show(io, job.range)
+  print(io, "\n  plain = $(job.plain) ($isplain)")
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)
