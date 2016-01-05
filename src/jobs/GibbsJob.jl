@@ -74,7 +74,6 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     if !imperative
       instance.dpjob = Array(Union{BasicMCJob, Void}, instance.ndp)
-      idpjob::BasicMCJob
       for i in 1:instance.ndp
         idpjob = dpjob[i]
         instance.dpjob[i] =
@@ -134,7 +133,11 @@ function iterate!(job::GibbsJob)
     if isa(job.dependent[i], Parameter)
       if isa(job.dpjob[i], BasicMCJob)
         run(job.dpjob[i])
-        reset(job, job.dpstate[i])
+        if job.resetpstate
+          reset(job, rand(job.prior))
+        else
+          reset(job)
+        end
       else
         job.dependent[i].setpdf(job.dpstate[i])
         job.dpstate[i] = rand(job.pdf)
@@ -223,10 +226,10 @@ function Base.show(io::IO, job::GibbsJob)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
 
-  isimperative = job.imperative ? "imperative graph traversal" : "declarative graph traversal (topologically sorted nodes)"
+  isimperative = job.imperative ? "imperative graph traversal" : "declarative graph traversal via topologically sorted nodes"
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
 
-  println(io, "BasicMCJob:")
+  println(io, "GibbsJob:")
   print(io, string(
     "  $(num_dp(job)) dependent variables: ",
     "$ndptransforms transformations, ",

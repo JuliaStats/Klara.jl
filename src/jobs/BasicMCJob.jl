@@ -16,6 +16,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
   outopts::Dict # Options related to output
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Int # Current number of post-burnin iterations
+  resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   resetplain!::Function
@@ -32,6 +33,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     range::BasicMCRange,
     vstate::Vector{S},
     outopts::Dict,
+    resetpstate::Bool,
     plain::Bool,
     check::Bool
   )
@@ -40,6 +42,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.model = model
     instance.pindex = pindex
     instance.vstate = vstate
+    instance.resetpstate = resetpstate
 
     if check
       checkin(instance)
@@ -56,12 +59,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.pstate = instance.vstate[instance.pindex]
     if any(isnan, instance.pstate.value)
-      if instance.parameter.pdf != nothing
-        instance.pstate.value = rand(instance.parameter.pdf)
-      elseif instance.parameter.prior != nothing
+      if instance.parameter.prior != nothing
         instance.pstate.value = rand(instance.parameter.prior)
       else
-        error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
+        error("Not possible to initialize pstate with missing pstate.value and without parameter.prior")
       end
     end
     initialize!(instance.pstate, instance.parameter, sampler)
@@ -100,10 +101,11 @@ BasicMCJob{S<:VariableState}(
   range::BasicMCRange,
   vstate::Vector{S},
   outopts::Dict,
+  resetpstate::Bool,
   plain::Bool,
   check::Bool
 ) =
-  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
+  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
 
 BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -113,10 +115,11 @@ BasicMCJob{S<:VariableState}(
   pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+  resetpstate::Bool=true,
   plain::Bool=true,
   check::Bool=false
 ) =
-  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, plain, check)
 
 function BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -126,6 +129,7 @@ function BasicMCJob{S<:VariableState}(
   pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+  resetpstate::Bool=true,
   plain::Bool=true,
   check::Bool=false
 )
@@ -134,7 +138,7 @@ function BasicMCJob{S<:VariableState}(
     vstate[model.ofkey[k]] = v
   end
 
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
 end
 
 function BasicMCJob(
@@ -145,6 +149,7 @@ function BasicMCJob(
   pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+  resetpstate::Bool=true,
   plain::Bool=true,
   check::Bool=false
 )
@@ -166,7 +171,7 @@ function BasicMCJob(
     end
   end
 
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
 end
 
 function BasicMCJob(
@@ -177,6 +182,7 @@ function BasicMCJob(
   pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+  resetpstate::Bool=true,
   plain::Bool=true,
   check::Bool=false
 )
@@ -185,7 +191,18 @@ function BasicMCJob(
     vstate[model.ofkey[k]] = v
   end
 
-  BasicMCJob(model, sampler, range, vstate, pindex=pindex, tuner=tuner, outopts=outopts, plain=plain, check=check)
+  BasicMCJob(
+    model,
+    sampler,
+    range,
+    vstate,
+    pindex=pindex,
+    tuner=tuner,
+    outopts=outopts,
+    resetpstate=resetpstate,
+    plain=plain,
+    check=check
+  )
 end
 
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
@@ -215,10 +232,12 @@ function codegen_save_basicmcjob(job::BasicMCJob)
 end
 
 function codegen_resetplain_basicmcjob(job::BasicMCJob)
-  result::Expr
+  fsignature::Vector{Union{Symbol, Expr}}
   body = []
 
-  push!(body, :(reset!($(job).pstate, _x, $(job).parameter, $(job).sampler)))
+  if job.resetpstate
+    push!(body, :(reset!($(job).pstate, _x, $(job).parameter, $(job).sampler)))
+  end
 
   push!(body, :(reset!($(job).sstate.tune, $(job).sampler, $(job).tuner)))
 
@@ -231,24 +250,20 @@ function codegen_resetplain_basicmcjob(job::BasicMCJob)
 
   @gensym resetplain_basicmcjob
 
-  vform = variate_form(job.pstate)
-  if vform == Univariate
-    result = quote
-      function $resetplain_basicmcjob(_x::Real)
-        $(body...)
-      end
-    end
-  elseif vform == Multivariate
-    result = quote
-      function $resetplain_basicmcjob{N<:Real}(_x::Vector{N})
-        $(body...)
-      end
+  if job.resetpstate
+    vform = variate_form(job.pstate)
+    if vform == Univariate
+      fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_x::Real)]
+    elseif vform == Multivariate
+      fsignature = Union{Symbol, Expr}[:($resetplain_basicmcjob{N<:Real}), :(_x::Vector{N})]
+    else
+      error("It is not possible to define plain reset for given job")
     end
   else
-    error("It is not possible to define plain reset for given job")
+    fsignature = Union{Symbol, Expr}[resetplain_basicmcjob]
   end
 
-  result
+  Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
 end
 
 function codegen_reset_task_basicmcjob(job::BasicMCJob)
@@ -359,26 +374,27 @@ function checkin(job::BasicMCJob)
   end
 end
 
+Base.reset(job::BasicMCJob) = job.reset!()
 Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
 Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
 Base.run(job::BasicMCJob) = job.run!()
 
-function Base.show(io::IO, job::BasicMCJob)
-  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
-
-  println(io, "BasicMCJob:")
-  print(io, "  ")
-  show(io, job.parameter)
-  print(io, "\n  ")
-  show(io, job.model)
-  print(io, "\n  ")
-  show(io, job.sampler)
-  print(io, "\n  ")
-  show(io, job.tuner)
-  print(io, "\n  ")
-  show(io, job.range)
-  print(io, "\n  plain = $(job.plain) ($isplain)")
-end
-
-Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)
+# function Base.show(io::IO, job::BasicMCJob)
+#   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+#
+#   println(io, "BasicMCJob:")
+#   print(io, "  ")
+#   show(io, job.parameter)
+#   print(io, "\n  ")
+#   show(io, job.model)
+#   print(io, "\n  ")
+#   show(io, job.sampler)
+#   print(io, "\n  ")
+#   show(io, job.tuner)
+#   print(io, "\n  ")
+#   show(io, job.range)
+#   print(io, "\n  plain = $(job.plain) ($isplain)")
+# end
+#
+# Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)

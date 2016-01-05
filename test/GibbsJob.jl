@@ -16,7 +16,7 @@ p2 = BasicContUnvParameter(
   setpdf=(state, states) -> Normal(states[1].value*states[2].value, sqrt(1-abs2(states[1].value)))
 )
 
-model = GenericModel([ρ, p1, p2], [ρ p1; ρ p2; p1 p2; p2 p1])
+model = GenericModel([ρ, p1, p2], [ρ p1; ρ p2; p1 p2])
 
 mcrange = BasicMCRange(nsteps=100, burnin=10)
 

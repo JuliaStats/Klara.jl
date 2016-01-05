@@ -28,6 +28,7 @@ job = BasicMCJob(
   vstate,
   outopts,
   true,
+  true,
   false
 )
 
@@ -58,6 +59,7 @@ job = BasicMCJob(
   mcrange,
   vstate,
   outopts,
+  true,
   true,
   false
 )
