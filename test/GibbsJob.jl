@@ -28,7 +28,7 @@ vstate = [
 
 outopts = Dict{Symbol,Any}[Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
 
-GibbsJob(
+job = GibbsJob(
   model,
   [2, 3],
   Union{BasicMCJob, Void}[nothing, nothing],
@@ -39,3 +39,5 @@ GibbsJob(
   true,
   false
 )
+
+@time run(job)

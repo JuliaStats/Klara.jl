@@ -130,20 +130,20 @@ GibbsJob{S<:VariableState}(
 
 function iterate!(job::GibbsJob)
   for j in 1:job.ndp
-    if isa(job.dependent[i], Parameter)
-      if isa(job.dpjob[i], BasicMCJob)
-        run(job.dpjob[i])
+    if isa(job.dependent[j], Parameter)
+      if isa(job.dpjob[j], BasicMCJob)
+        run(job.dpjob[j])
         if job.resetpstate
-          reset(job, rand(job.prior))
+          reset(job, rand(job.dependent[j].prior))
         else
           reset(job)
         end
       else
-        job.dependent[i].setpdf(job.dpstate[i])
-        job.dpstate[i] = rand(job.pdf)
+        job.dependent[j].setpdf(job.dpstate[j])
+        job.dpstate[j].value = rand(job.dependent[j].pdf)
       end
     else
-      job.dependent[i].transform!(job.dpstate[i])
+      job.dependent[j].transform!(job.dpstate[j])
     end
   end
 end
