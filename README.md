@@ -73,9 +73,11 @@ job = BasicMCJob(model, sampler, mcrange, v0)
 
 ### Run the simulation
 
-chain = run(job)
+run(job)
 
 ### Get simulated values
+
+chain = output(job)
 
 chain.value
 
@@ -89,7 +91,9 @@ To reset the job, using a new initial value for the targeted parameter, run
 ```
 reset(job, [3.2, 9.4])
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 To see how the acceptance rate changes during burnin, set the vanilla tuner in verbose mode
@@ -97,7 +101,9 @@ To see how the acceptance rate changes during burnin, set the vanilla tuner in v
 ```
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true))
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 If apart from the simulated chain you also want to store the log-target, then pass an additional dictionary to the job to
@@ -110,7 +116,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 chain.logtarget
 ```
@@ -122,7 +130,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:acce
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 Instead of saving the output in memory, it can be written in file via the output option `:destination=>:iostream`:
@@ -163,7 +173,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:acce
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts, plain=false)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 Task-based jobs can also be reset:
@@ -171,7 +183,9 @@ Task-based jobs can also be reset:
 ```
 reset(job, [-2.8, 3.4])
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 To run a sampler which requires the gradient of the log-target, such as MALA, try
@@ -203,14 +217,16 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 chain.gradlogtarget
 
 [mean(chain.value[i, :]) for i in 1:2]
 ```
 
-To adapt the MALA driftstep empirically during burnin towards an intended acceptance rate of 60%, run
+To adapt the MALA drift step empirically during burnin towards an intended acceptance rate of 60%, run
 
 ```
 job = BasicMCJob(
@@ -222,7 +238,9 @@ job = BasicMCJob(
   outopts=outopts
 )
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 The examples below demonstrates how to run MCMC using automatic differentiation (AD).
@@ -231,6 +249,7 @@ To use forward mode AD, try the following:
 
 ```
 using Lora
+
 vkeys = [:p]
 
 plogtarget(z::Vector) = -dot(z, z)
@@ -249,7 +268,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 Note that `plogtarget` takes an argument of type `Vector` instead of `Vector{Float64}`, as required by the ForwardDiff
@@ -279,18 +300,20 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 In this case the optional argument `autodiff=:reverse` enables computing the gradient via reverse mode AD using
 source transformation. Notice also the `init=[nothing, nothing, (ones(2),)]` optional argument, which allows passing the
-required input to the `init` optinal argument of `rdiff()` of the ReverseDiffSource package. From the Lora side,
+required input to the `init` optional argument of `rdiff()` of the ReverseDiffSource package. From the Lora side,
 `init` is a 3-element vector with the first, second and third arguments corresponding to the `init` arguments passed to
 `rdiff()` for the log-likelihood, log-prior and log-target. If some of these functions is on specified, then the
 respective `init` element is set to `nothing`.
 
 Finally, it is possible to run reverse mode AD by passing an expression for the log-target (or log-likelihood or
-log-prior) instead of a function. An example follows where the log-target is specified via an experession:
+log-prior) instead of a function. An example follows where the log-target is specified via an expression:
 
 ```
 using Lora
@@ -318,7 +341,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 ```
 
 Documentation

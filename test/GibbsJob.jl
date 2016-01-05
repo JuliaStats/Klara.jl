@@ -41,3 +41,7 @@ job = GibbsJob(
 )
 
 @time run(job)
+
+output(job)
+
+Dict(job)

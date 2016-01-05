@@ -321,7 +321,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
     push!(body, :($(job).output.close()))
   end
 
-  push!(body, :(return $(job).output))
+  # push!(body, :(return $(job).output))
 
   @gensym run_basicmcjob
 
@@ -381,6 +381,8 @@ Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
 Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
 Base.run(job::BasicMCJob) = job.run!()
+
+output(job::BasicMCJob) = job.output
 
 function Base.show(io::IO, job::BasicMCJob)
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"

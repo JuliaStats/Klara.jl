@@ -5,6 +5,7 @@ using Graphs
 
 import Base:
   ==,
+  Dict,
   close,
   convert,
   copy!,
@@ -129,6 +130,7 @@ export
   out_degree,
   out_edges,
   out_neighbors,
+  output,
   rate!,
   reset!,
   reset_burnin!,

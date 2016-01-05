@@ -5,7 +5,7 @@ using Lora
 
 vkeys = [:p]
 
-### Define the log-target, which must be a generic function
+### Define the log-target as a function (generic or anonymous):
 
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
@@ -39,9 +39,11 @@ job = BasicMCJob(model, sampler, mcrange, v0)
 
 ### Run the simulation
 
-chain = run(job)
+run(job)
 
 ### Get simulated values
+
+chain = output(job)
 
 chain.value
 
@@ -51,25 +53,29 @@ chain.value
 
 reset(job, [3.2, 9.4])
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true))
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 chain.logtarget
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
-
-chain = run(job)
 
 filepath = dirname(@__FILE__)
 filesuffix = "csv"
@@ -93,11 +99,15 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:acce
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts, plain=false)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 reset(job, [-2.8, 3.4])
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 vkeys = [:p]
 
@@ -123,7 +133,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 chain.gradlogtarget
 
@@ -138,7 +150,9 @@ job = BasicMCJob(
   outopts=outopts
 )
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 vkeys = [:p]
 
@@ -158,7 +172,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 vkeys = [:p]
 
@@ -178,7 +194,9 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)
 
 vkeys = [:p]
 
@@ -203,4 +221,6 @@ outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :dia
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
 
-chain = run(job)
+run(job)
+
+chain = output(job)

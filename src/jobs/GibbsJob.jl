@@ -221,6 +221,13 @@ num_randdp(job::GibbsJob) = count(v -> isa(v, Parameter), job.dependent)
 num_randdp_viamcmc(job::GibbsJob) = count(j -> j != nothing, job.dpjob)
 num_radndp_viadistribution(job::GibbsJob) = num_dp(job)-num_dptransforms(job)-num_randdp_viamcmc(job)
 
+dpkeys(job::GibbsJob) = Symbol[dp.key for dp in job.dependent]
+
+output(job::GibbsJob) = job.output
+
+Dict(job::GibbsJob, field::Symbol=:output) =
+  Dict{Symbol, Union{VariableNState, VariableIOStream, Void}}(zip(dpkeys(job), getfield(job, field)))
+
 function Base.show(io::IO, job::GibbsJob)
   ndptransforms = num_dptransforms(job)
   ndpviamcmc = num_randdp_viamcmc(job)
