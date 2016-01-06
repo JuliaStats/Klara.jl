@@ -30,7 +30,7 @@ few examples of the new interface, explaining how to get up to speed with the ne
 Example: sampling from an unnormalized normal target
 ------------------------------
 
-```
+```julia
 using Lora
 
 ### Define the vector of keys referring to model variables
@@ -87,7 +87,7 @@ chain.value
 
 To reset the job, using a new initial value for the targeted parameter, run
 
-```
+```julia
 reset(job, [3.2, 9.4])
 
 run(job)
@@ -97,7 +97,7 @@ chain = output(job)
 
 To see how the acceptance rate changes during burnin, set the vanilla tuner in verbose mode
 
-```
+```julia
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true))
 
 run(job)
@@ -110,7 +110,7 @@ specify the output options. In particular, the `:monitor` key indicates which it
 both `:value` and `:logtarget` will be monitored, referring to the chain and log-target respectively. These can then be
 accessed by the corresponding fields `chain.value` and `chain.logtarget`:
 
-```
+```julia
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
@@ -124,7 +124,7 @@ chain.logtarget
 
 The acceptance ratio diagnostics can be stgored via the `:diagnostics=>[:accept]` entry of `outopts`:
 
-```
+```julia
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
@@ -136,7 +136,7 @@ chain = output(job)
 
 Instead of saving the output in memory, it can be written in file via the output option `:destination=>:iostream`:
 
-```
+```julia
 outopts = Dict{Symbol, Any}(
   :monitor=>[:value, :logtarget],
   :diagnostics=>[:accept],
@@ -152,7 +152,7 @@ The chain, log-target and acceptance ratio diagnostics of the above example are 
 "value.csv", "logtarget.csv" and "diagnosticvalues.csv" of the current directory. To save the output in another directory,
 use the `:filepath=>"myfullpath.csv"`, where "myfullpath.csv" is substituted by the full path of your choice:
 
-```
+```julia
 outopts = Dict{Symbol, Any}(
   :monitor=>[:value, :logtarget],
   :diagnostics=>[:accept],
@@ -167,7 +167,7 @@ run(job)
 
 To use Julia tasks for running the job, set `plain=false`:
 
-```
+```julia
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
 
 job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts, plain=false)
@@ -179,7 +179,7 @@ chain = output(job)
 
 Task-based jobs can also be reset:
 
-```
+```julia
 reset(job, [-2.8, 3.4])
 
 run(job)
@@ -189,7 +189,7 @@ chain = output(job)
 
 To run a sampler which requires the gradient of the log-target, such as MALA, try
 
-```
+```julia
 using Lora
 
 vkeys = [:p]
@@ -227,7 +227,7 @@ chain.gradlogtarget
 
 To adapt the MALA drift step empirically during burnin towards an intended acceptance rate of 60%, run
 
-```
+```julia
 job = BasicMCJob(
   model,
   sampler,
@@ -246,7 +246,7 @@ The examples below demonstrates how to run MCMC using automatic differentiation 
 
 To use forward mode AD, try the following:
 
-```
+```julia
 using Lora
 
 vkeys = [:p]
@@ -278,7 +278,7 @@ explicitly; instead, the optional argument `autodiff=:forward` enables computing
 
 To employ reverse mode AD, try
 
-```
+```julia
 using Lora
 
 vkeys = [:p]
@@ -314,7 +314,7 @@ respective `init` element is set to `nothing`.
 Finally, it is possible to run reverse mode AD by passing an expression for the log-target (or log-likelihood or
 log-prior) instead of a function. An example follows where the log-target is specified via an expression:
 
-```
+```julia
 using Lora
 
 vkeys = [:p]
