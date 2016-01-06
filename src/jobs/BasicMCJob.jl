@@ -20,9 +20,9 @@ type BasicMCJob{S<:VariableState} <: MCJob
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   resetplain!::Function
-  iterate!::Function
   reset!::Function
   save!::Union{Function, Void}
+  iterate!::Function
   run!::Function
 
   function BasicMCJob(
@@ -76,9 +76,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
+    instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
+
     instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance))
 
-    instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
     instance.iterate! = eval(codegen_iterate_basicmcjob(instance))
 
     if plain

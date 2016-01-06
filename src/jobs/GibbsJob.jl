@@ -16,9 +16,9 @@ type GibbsJob{S<:VariableState} <: MCJob
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   # task::Union{Task, Void}
   # resetplain!::Function
-  # iterate!::Function
   # reset!::Function
   # save!::Union{Function, Void}
+  # iterate!::Function
   # run!::Function
 
   function GibbsJob(
@@ -109,8 +109,6 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
-    # instance.iterate! = eval(codegen_iterate_gibbsjob(instance, outopts, plain))
-
     instance
   end
 end
@@ -133,10 +131,10 @@ function iterate!(job::GibbsJob)
     if isa(job.dependent[j], Parameter)
       if isa(job.dpjob[j], BasicMCJob)
         run(job.dpjob[j])
-        if job.resetpstate
-          reset(job, rand(job.dependent[j].prior))
+        if job.dpjob[j].resetpstate
+          reset(job.dpjob[j], rand(job.dependent[j].prior))
         else
-          reset(job)
+          reset(job.dpjob[j])
         end
       else
         job.dependent[j].setpdf(job.dpstate[j])
@@ -144,29 +142,6 @@ function iterate!(job::GibbsJob)
       end
     else
       job.dependent[j].transform!(job.dpstate[j])
-    end
-  end
-end
-
-function codegen_save_basicmcjob(job::BasicMCJob)
-  body = []
-
-  if isa(job.output, VariableNState)
-    push!(body, :($(job).output.copy($(job).pstate, _i)))
-  elseif isa(job.output, VariableIOStream)
-    push!(body, :($(job).output.write($(job).pstate)))
-    if job.outopts[:flush]
-      push!(body, :($(job).output.flush()))
-    end
-  else
-    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
-  end
-
-  @gensym save_basicmcjob
-
-  quote
-    function $save_basicmcjob(_i::Int)
-      $(body...)
     end
   end
 end
