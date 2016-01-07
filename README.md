@@ -285,7 +285,14 @@ vkeys = [:p]
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, autodiff=:reverse, nkeys=0, init=[nothing, nothing, (ones(2),)])
+p = BasicContMuvParameter(
+  vkeys,
+  1,
+  logtarget=plogtarget,
+  autodiff=:reverse,
+  nkeys=0,
+  init=[nothing, nothing, (ones(2),)]
+)
 
 model = single_parameter_likelihood_model(p)
 

@@ -14,12 +14,13 @@ type GibbsJob{S<:VariableState} <: MCJob
   count::Int # Current number of post-burnin iterations
   imperative::Bool # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
-  # task::Union{Task, Void}
-  # resetplain!::Function
-  # reset!::Function
-  # save!::Union{Function, Void}
-  # iterate!::Function
-  # run!::Function
+  task::Union{Task, Void}
+  close::Union{Function, Void}
+  resetplain!::Union{Function, Void}
+  reset!::Union{Function, Void}
+  save!::Union{Function, Void}
+  iterate!::Function
+  run!::Function
 
   function GibbsJob(
     model::GenericModel,
@@ -109,6 +110,25 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
+    instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen_close_gibbsjob(instance))
+
+    nodpjob = all(j -> j == nothing, instance.dpjob)
+    instance.resetplain! = nodpjob ? nothing : eval(codegen_resetplain_gibbsjob(instance))
+
+    instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen_save_gibbsjob(instance))
+
+    instance.iterate! = eval(codegen_iterate_gibbsjob(instance))
+
+    if plain
+      instance.task = nothing
+      instance.reset! = nodpjob ? nothing : instance.resetplain!
+    else
+      instance.task = Task(() -> initialize_task!(instance))
+      instance.reset! = nodpjob ? nothing : eval(codegen_reset_task_gibbsjob(instance))
+    end
+
+    instance.run! = eval(codegen_run_gibbsjob(instance))
+
     instance
   end
 end
@@ -126,39 +146,145 @@ GibbsJob{S<:VariableState}(
 ) =
   GibbsJob{S}(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, check)
 
-function iterate!(job::GibbsJob)
+function codegen_close_gibbsjob(job::GibbsJob)
+  body = []
+
   for j in 1:job.ndp
-    if isa(job.dependent[j], Parameter)
-      if isa(job.dpjob[j], BasicMCJob)
-        run(job.dpjob[j])
-        if job.dpjob[j].resetpstate
-          reset(job.dpjob[j], rand(job.dependent[j].prior))
-        else
-          reset(job.dpjob[j])
-        end
-      else
-        job.dependent[j].setpdf(job.dpstate[j])
-        job.dpstate[j].value = rand(job.dependent[j].pdf)
-      end
-    else
-      job.dependent[j].transform!(job.dpstate[j])
+    if isa(job.output[j], VariableIOStream)
+      push!(body, :($(job).output[$j].close()))
+    end
+  end
+
+  @gensym close_gibbsjob
+
+  quote
+    function $close_gibbsjob()
+      $(body...)
     end
   end
 end
 
-function save!(job::GibbsJob)
+function codegen_resetplain_gibbsjob(job::GibbsJob)
+  body = []
+
+  for j in 1:job.ndp
+    if isa(job.dpjob[j], BasicMCJob)
+      if job.dpjob[j].resetpstate
+        push!(body, :(reset($(job).dpjob[$j], rand($(job).dependent[$j].prior))))
+      else
+        push!(body, :(reset($(job).dpjob[$j])))
+      end
+    end
+  end
+
+  @gensym resetplain_gibbsjob
+
+  quote
+    function $resetplain_gibbsjob()
+      $(body...)
+    end
+  end
+end
+
+function codegen_reset_task_gibbsjob(job::GibbsJob)
+  @gensym reset_task_gibbsjob
+  Expr(:function, Expr(:call, reset_task_gibbsjob), Expr(:block, :($(job).task.storage[:reset]())))
+end
+
+Base.reset(job::GibbsJob) = job.reset!()
+
+function codegen_save_gibbsjob(job::GibbsJob)
+  body = []
+
   for j in 1:job.ndp
     if isa(job.output[j], VariableNState)
-      job.output[j].copy(job.dpstate[j], job.count)
+      push!(body, :($(job).output[$j].copy($(job).dpstate[$j], _i)))
     elseif isa(job.output[j], VariableIOStream)
-      job.output[j].write(job.dpstate[j])
+      push!(body, :($(job).output[$j].write($(job).dpstate[$j])))
       if job.outopts[j][:flush]
-        job.outopts[j].flush()
+        push!(body, :($(job).outopts[$j].flush()))
       end
     else
       error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[j][:destination])")
     end
   end
+
+  @gensym save_gibbsjob
+
+  quote
+    function $save_gibbsjob(_i::Int)
+      $(body...)
+    end
+  end
+end
+
+function codegen_iterate_gibbsjob(job::GibbsJob)
+  body = []
+
+  for j in 1:job.ndp
+    if isa(job.dependent[j], Parameter)
+      if isa(job.dpjob[j], BasicMCJob)
+        push!(body, :(run($(job).dpjob[$j])))
+      else
+        push!(body, :($(job).dependent[$j].setpdf($(job).dpstate[$j])))
+        push!(body, :($(job).dpstate[$j].value = rand($(job).dependent[$j].pdf)))
+      end
+    else
+      push!(body, :($(job).dependent[$j].transform!($(job).dpstate[$j])))
+    end
+  end
+
+  @gensym iterate_gibbsjob
+
+  quote
+    function $iterate_gibbsjob()
+      $(body...)
+    end
+  end
+end
+
+function codegen_run_gibbsjob(job::GibbsJob)
+  result::Expr
+  ifforbody = []
+  forbody = []
+  body = []
+
+  if job.task == nothing
+    push!(forbody, :($(job).iterate!()))
+  else
+    push!(forbody, :(consume($(job).task)))
+  end
+
+  push!(ifforbody, :($(job).count+=1))
+  if job.save! != nothing
+    push!(ifforbody, :($(job).save!($(job).count)))
+  end
+
+  push!(forbody, Expr(:if, :(in(i, $(job).range.postrange)), Expr(:block, ifforbody...)))
+
+  if job.reset! != nothing
+    push!(forbody, :($(job).reset!()))
+  end
+
+  push!(body, Expr(:for, :(i = 1:$(job).range.nsteps), Expr(:block, forbody...)))
+
+  if isa(job.output, VariableIOStream)
+    push!(body, :($(job).output.close()))
+  end
+
+  if job.close != nothing
+    push!(body, :($(job).close()))
+  end
+
+  @gensym run_gibbsjob
+
+  result = quote
+    function $run_gibbsjob()
+      $(body...)
+    end
+  end
+
+  result
 end
 
 function Base.run(job::GibbsJob)
@@ -169,6 +295,8 @@ function Base.run(job::GibbsJob)
       job.count+=1
       save!(job)
     end
+
+    reset!(job)
   end
 
   for j in 1:job.ndp
@@ -177,6 +305,8 @@ function Base.run(job::GibbsJob)
     end
   end
 end
+
+Base.run(job::GibbsJob) = job.run!()
 
 function checkin(job::GibbsJob)
   dpindex = find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), job.model.vertices)

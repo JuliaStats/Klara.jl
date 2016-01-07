@@ -160,4 +160,13 @@ function initialize_output(state::BasicContMuvParameterState, n::Int, outopts::D
   output
 end
 
+function initialize_task!(job::MCJob)
+  # Hook inside task to allow remote resetting
+  task_local_storage(:reset, job.resetplain!)
+
+  while true
+    job.iterate!()
+  end
+end
+
 Base.run{J<:MCJob}(job::Vector{J}) = map(run, job)

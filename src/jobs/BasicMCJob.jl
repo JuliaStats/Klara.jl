@@ -247,32 +247,32 @@ function codegen_resetplain_basicmcjob(job::BasicMCJob)
 end
 
 function codegen_reset_task_basicmcjob(job::BasicMCJob)
-  result::Expr
-  body = []
-
-  push!(body, :($(job).task.storage[:reset](_x)))
+  fsignature::Vector{Union{Symbol, Expr}}
+  fbody::Expr
 
   @gensym reset_task_basicmcjob
 
-  vform = variate_form(job.pstate)
-  if vform == Univariate
-    result = quote
-      function $reset_task_basicmcjob(_x::Real)
-        $(body...)
-      end
+  if job.resetpstate
+    vform = variate_form(job.pstate)
+    if vform == Univariate
+      fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_x::Real)]
+    elseif vform == Multivariate
+      fsignature = Union{Symbol, Expr}[:($reset_task_basicmcjob{N<:Real}), :(_x::Vector{N})]
+    else
+      error("It is not possible to define plain reset for given job")
     end
-  elseif vform == Multivariate
-    result = quote
-      function $reset_task_basicmcjob{N<:Real}(_x::Vector{N})
-        $(body...)
-      end
-    end
+    fbody = :($(job).task.storage[:reset](_x))
   else
-    error("It is not possible to define task reset for given job")
+    fsignature = Union{Symbol, Expr}[reset_task_basicmcjob]
+    fbody = :($(job).task.storage[:reset]())
   end
 
-  result
+  Expr(:function, Expr(:call, fsignature...), Expr(:block, fbody))
 end
+
+Base.reset(job::BasicMCJob) = job.reset!()
+Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
+Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
 
 function codegen_save_basicmcjob(job::BasicMCJob)
   body = []
@@ -310,7 +310,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   end
 
   push!(ifforbody, :($(job).count+=1))
-  if job.output != nothing
+  if job.save! != nothing
     push!(ifforbody, :($(job).save!($(job).count)))
   end
 
@@ -321,8 +321,6 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   if isa(job.output, VariableIOStream)
     push!(body, :($(job).output.close()))
   end
-
-  # push!(body, :(return $(job).output))
 
   @gensym run_basicmcjob
 
@@ -335,14 +333,7 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   result
 end
 
-function initialize_task!(job::BasicMCJob)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, job.resetplain!)
-
-  while true
-    job.iterate!()
-  end
-end
+Base.run(job::BasicMCJob) = job.run!()
 
 function checkin(job::BasicMCJob)
   pindex = find(v::Variable -> isa(v, Parameter), job.model.vertices)
@@ -376,12 +367,6 @@ function checkin(job::BasicMCJob)
     check_support(job.model.vertices[job.pindex], pstate)
   end
 end
-
-Base.reset(job::BasicMCJob) = job.reset!()
-Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
-Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
-
-Base.run(job::BasicMCJob) = job.run!()
 
 output(job::BasicMCJob) = job.output
 
