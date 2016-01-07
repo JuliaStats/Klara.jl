@@ -234,6 +234,10 @@ function codegen_iterate_gibbsjob(job::GibbsJob)
     end
   end
 
+  if !job.plain
+    push!(body, :(produce()))
+  end
+
   @gensym iterate_gibbsjob
 
   quote
