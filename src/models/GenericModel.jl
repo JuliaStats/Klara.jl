@@ -28,6 +28,7 @@ source(d::Dependence, m::GenericModel) = d.source
 target(d::Dependence, m::GenericModel) = d.target
 
 Base.keys(m::GenericModel) = keys(m.vertices)
+indexes(m::GenericModel) = indexes(m.vertices)
 
 out_edges(v::Variable, m::GenericModel) = m.finclist[vertex_index(v, m)]
 out_degree(v::Variable, m::GenericModel) = length(out_edges(v, m))

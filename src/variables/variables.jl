@@ -17,6 +17,7 @@ vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
 Base.keys{V<:Variable}(variables::Vector{V}) = Symbol[v.key for v in variables]
+indexes{V<:Variable}(variables::Vector{V}) = Int[v.index for v in variables]
 
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]

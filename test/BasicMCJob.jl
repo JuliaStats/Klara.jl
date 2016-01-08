@@ -17,7 +17,7 @@ mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
 vstate = [BasicContMuvParameterState([1.25, 3.11], [:value, :logtarget], [:accept])]
 
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
+outopts = Dict(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
 
 job = BasicMCJob(
   model,
@@ -51,7 +51,7 @@ mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
 vstate = [BasicContUnvParameterState(5.1, [:value, :logtarget])]
 
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget])
+outopts = Dict(:monitor=>[:value, :logtarget])
 
 job = BasicMCJob(
   model,

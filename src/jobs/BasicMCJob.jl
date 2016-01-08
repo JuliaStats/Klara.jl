@@ -51,7 +51,6 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.sampler = sampler
     instance.tuner = tuner
     instance.range = range
-    instance.outopts = outopts
     instance.plain = plain
 
     instance.parameter = instance.model.vertices[instance.pindex]
@@ -71,8 +70,10 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.sstate = sampler_state(sampler, tuner, instance.pstate)
 
-    augment_parameter_outopts!(outopts)
-    instance.output = initialize_output(instance.pstate, range.npoststeps, outopts)
+    instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
+    augment_parameter_outopts!(instance.outopts)
+
+    instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 
     instance.count = 0
 

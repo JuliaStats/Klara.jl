@@ -119,6 +119,7 @@ export
   in_degree,
   in_edges,
   in_neighbors,
+  indexes,
   is_directed,
   is_indexed,
   likelihood_model,

@@ -26,7 +26,7 @@ vstate = [
   BasicContUnvParameterState(2.3, [:value]),
 ]
 
-outopts = Dict{Symbol,Any}[Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
+outopts = [Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
 
 job = GibbsJob(
   model,
