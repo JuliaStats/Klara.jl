@@ -25,7 +25,7 @@ type GibbsJob{S<:VariableState} <: MCJob
   function GibbsJob(
     model::GenericModel,
     dpindex::Vector{Int},
-    dpjob::Vector{Union{BasicMCJob, Void}},
+    dpjob::Vector,
     range::BasicMCRange,
     vstate::Vector{S},
     outopts::Vector,
@@ -59,17 +59,18 @@ type GibbsJob{S<:VariableState} <: MCJob
 
       instance.dpjob = Array(Union{BasicMCJob, Void}, instance.ndp)
       for i in 1:instance.ndp
+        idpjob = dpjob[dpidxs[i]]
         instance.dpjob[i] =
-          if isa(dpidxs[i], BasicMCJob)
+          if isa(idpjob, BasicMCJob)
             BasicMCJob(
               instance.model,
               instance.dpindex[i],
-              dpidxs[i].sampler,
-              dpidxs[i].tuner,
-              dpidxs[i].range,
+              idpjob.sampler,
+              idpjob.tuner,
+              idpjob.range,
               instance.vstate,
-              dpidxs[i].outopts,
-              dpidxs[i].plain,
+              idpjob.outopts,
+              idpjob.plain,
               false
             )
           else
@@ -90,10 +91,6 @@ type GibbsJob{S<:VariableState} <: MCJob
     end
 
     instance.dpstate = instance.vstate[instance.dpindex]
-
-    if !isa(instance.outopts, Vector{Dict{Symbol, Any}})
-      instance.outopts = convert(Vector{Dict{Symbol, Any}}, instance.outopts)
-    end
 
     instance.output = Array(Union{VariableNState, VariableIOStream, Void}, instance.ndp)
     for i in 1:instance.ndp
@@ -130,31 +127,64 @@ type GibbsJob{S<:VariableState} <: MCJob
   end
 end
 
-GibbsJob{S<:VariableState}(
+function GibbsJob{S<:VariableState}(
   model::GenericModel,
   dpindex::Vector{Int},
-  dpjob::Vector{Union{BasicMCJob, Void}},
+  dpjob::Vector,
   range::BasicMCRange,
   vstate::Vector{S},
   outopts::Vector,
   imperative::Bool,
   plain::Bool,
   check::Bool
-) =
-  GibbsJob{S}(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, check)
+)
+  job = isa(dpjob, Vector{Union{BasicMCJob, Void}}) ? dpjob : convert(Vector{Union{BasicMCJob, Void}}, dpjob)
+  opts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
+  GibbsJob{S}(model, dpindex, job, range, vstate, opts, imperative, plain, check)
+end
 
 GibbsJob{S<:VariableState}(
   model::GenericModel,
-  dpjob::Vector{Union{BasicMCJob, Void}},
+  dpjob::Vector,
   range::BasicMCRange,
   v0::Vector{S};
-  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), job.model.vertices),
+  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
   plain::Bool=true,
   check::Bool=false
 ) =
   GibbsJob{S}(model, dpindex, dpjob, range, v0, outopts, imperative, plain, check)
+
+function GibbsJob{S<:VariableState}(
+  model::GenericModel,
+  dpjob::Dict,
+  range::BasicMCRange,
+  v0::Dict{Symbol, S};
+  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
+  imperative::Bool=true,
+  plain::Bool=true,
+  check::Bool=false
+)
+  ndpindex = length(dpindex)
+
+  jobs = Array(Union{BasicMCJob, Void}, ndpindex)
+  opts = Array(Dict, ndpindex)
+
+  for i in 1:ndpindex
+    key = vertex_key(model.vertices[dpindex[i]])
+    jobs[i] = haskey(dpjob, key) ? dpjob[key] : nothing
+    opts[i] = haskey(outopts, key) ? outopts[key] : Dict(:destination=>:nstate, :monitor=>[:value])
+  end
+
+  vstate = Array(S, length(v0))
+  for (k, v) in v0
+    vstate[model.ofkey[k]] = v
+  end
+
+  GibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, check)
+end
 
 function codegen_close_gibbsjob(job::GibbsJob)
   body = []

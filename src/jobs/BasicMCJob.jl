@@ -97,7 +97,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
   end
 end
 
-BasicMCJob{S<:VariableState}(
+function BasicMCJob{S<:VariableState}(
   model::GenericModel,
   pindex::Int,
   sampler::MCSampler,
@@ -108,8 +108,10 @@ BasicMCJob{S<:VariableState}(
   resetpstate::Bool,
   plain::Bool,
   check::Bool
-) =
-  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
+)
+  opts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
+  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, opts, resetpstate, plain, check)
+end
 
 BasicMCJob{S<:VariableState}(
   model::GenericModel,
