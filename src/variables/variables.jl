@@ -61,6 +61,37 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
   end
 end
 
+function default_state(v::Variable, v0, outopts::Dict=Dict())
+  vstate::VariableState
+
+  if isa(v0, VariableState)
+    vstate = v0
+  elseif isa(v0, Number) ||
+    (isa(v0, Vector) && issubtype(eltype(v0), Number)) ||
+    (isa(v0, Matrix) && issubtype(eltype(v0), Number))
+    if isa(v, Parameter)
+      vstate = default_state(v, v0, outopts)
+    else
+      vstate = default_state(v, v0)
+    end
+  else
+    error("Variable state or state value of type $(typeof(v0[i])) not valid")
+  end
+
+  vstate
+end
+
+default_state{V<:Variable}(v::Vector{V}, v0::Vector, outopts::Vector) =
+  VariableState[default_state(v[i], v0[i], outopts[i]) for i in 1:length(v0)]
+
+function default_state{V<:Variable}(v::Vector{V}, v0::Vector, outopts::Vector, dpindex::Vector{Int})
+  opts = fill(Dict(), length(v0))
+  for i in 1:length(dpindex)
+    opts[dpindex[i]] = outopts[i]
+  end
+  default_state(v, v0, opts)
+end
+
 Base.show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
 
 ### Deterministic Variable subtypes

@@ -186,6 +186,50 @@ function GibbsJob{S<:VariableState}(
   GibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, check)
 end
 
+function GibbsJob(
+  model::GenericModel,
+  dpjob::Vector,
+  range::BasicMCRange,
+  v0::Vector;
+  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
+  imperative::Bool=true,
+  plain::Bool=true,
+  check::Bool=false
+)
+  vstate = default_state(model.vertices, v0, outopts, dpindex)
+  GibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, check)
+end
+
+function GibbsJob(
+  model::GenericModel,
+  dpjob::Dict,
+  range::BasicMCRange,
+  v0::Dict;
+  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
+  imperative::Bool=true,
+  plain::Bool=true,
+  check::Bool=false
+)
+  vstate = Dict{Symbol, VariableState}()
+  for (k, v) in v0
+    vstate[k] = default_state(model[k], v, get!(outopts, k, Dict()))
+  end
+
+  GibbsJob(
+    model,
+    dpjob,
+    range,
+    vstate,
+    dpindex=dpindex,
+    outopts=outopts,
+    imperative=imperative,
+    plain=plain,
+    check=check
+  )
+end
+
 function codegen_close_gibbsjob(job::GibbsJob)
   body = []
 

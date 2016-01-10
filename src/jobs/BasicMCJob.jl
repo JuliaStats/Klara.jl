@@ -143,7 +143,6 @@ function BasicMCJob{S<:VariableState}(
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
-
   BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
 end
 
@@ -159,24 +158,7 @@ function BasicMCJob(
   plain::Bool=true,
   check::Bool=false
 )
-  nv0 = length(v0)
-  vstate = Array(VariableState, nv0)
-  for i in 1:nv0
-    if isa(v0[i], VariableState)
-      vstate[i] = v0[i]
-    elseif isa(v0[i], Number) ||
-      (isa(v0[i], Vector) && issubtype(eltype(v0[i]), Number)) ||
-      (isa(v0[i], Matrix) && issubtype(eltype(v0[i]), Number))
-      if isa(model.vertices[pindex], Parameter)
-        vstate[i] = default_state(model.vertices[i], v0[i], outopts)
-      else
-        vstate[i] = default_state(model.vertices[i], v0[i])
-      end
-    else
-      error("Variable state or state value of type $(typeof(v0[i])) not valid")
-    end
-  end
-
+  vstate = default_state(model.vertices, v0, [outopts], [pindex])
   BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
 end
 
