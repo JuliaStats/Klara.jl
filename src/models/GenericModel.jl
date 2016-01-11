@@ -5,7 +5,6 @@ type GenericModel <: AbstractGraph{Variable, Dependence}
   finclist::Vector{Vector{Dependence}} # Forward incidence list
   binclist::Vector{Vector{Dependence}} # Backward incidence list
   ofkey::Dict{Symbol, Int}             # Dictionary storing index of vertex (variable) of corresponding key
-  ofindex::Dict{Int, Int}              # Dictionary storing index of vertex (variable) of corresponding index
 end
 
 @graph_implements GenericModel vertex_list edge_list
@@ -47,7 +46,6 @@ function add_vertex!(m::GenericModel, v::Variable, n::Int=num_vertices(m)+1)
     push!(m.binclist, Int[])
 
     m.ofkey[v.key] = n
-    m.ofindex[v.index] = n
 
     v
 end
@@ -67,7 +65,6 @@ function set_vertex!(m::GenericModel, v::Variable)
   push!(m.binclist, Int[])
 
   m.ofkey[v.key] = v.index
-  m.ofindex[v.index] = v.index
 
   v
 end
@@ -107,8 +104,7 @@ function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}, isdire
     Dependence[],
     Graphs.multivecs(Dependence, n),
     Graphs.multivecs(Dependence, n),
-    Dict{Symbol, Int}(),
-    Dict{Int, Int}()
+    Dict{Symbol, Int}()
   )
 
   setvertex ? set_vertex!(m, vs) : add_vertex!(m, vs, num_vertices(m)+1)
@@ -139,8 +135,8 @@ end
 
 function Base.convert(::Type{GenericGraph}, m::GenericModel)
   dict = Dict{KeyVertex{Symbol}, Int}()
-  for (k, v) in m.ofindex
-    dict[convert(KeyVertex, m.vertices[v])] = k
+  for v in values(m.ofkey)
+    dict[convert(KeyVertex, m.vertices[v])] = m.vertices[v].index
   end
 
   Graph{KeyVertex{Symbol}, Edge{KeyVertex{Symbol}}}(
