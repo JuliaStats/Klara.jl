@@ -18,10 +18,7 @@ function likelihood_model{P<:Parameter}(
     end
   end
 
-  for v in variables
-    add_vertex!(m, v)
-    m.indexof[v] = v.index
-  end
+  add_vertex!(m, variables, num_vertices(m)+1)
 
   for t in p
     for s in variables[(length(p)+1):end]

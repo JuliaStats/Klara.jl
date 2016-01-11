@@ -17,7 +17,7 @@ vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
 Base.keys{V<:Variable}(variables::Vector{V}) = Symbol[v.key for v in variables]
-indexes{V<:Variable}(variables::Vector{V}) = Int[v.index for v in variables]
+indices{V<:Variable}(variables::Vector{V}) = Int[v.index for v in variables]
 
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
@@ -144,7 +144,9 @@ immutable Transformation{S<:VariableState} <: Variable{Deterministic}
   states::Vector{S}
 end
 
-Transformation{S<:VariableState}(key::Symbol, transform::Function, states::Vector{S}=VariableState[]) =
+Transformation(key::Symbol, index::Int, transform::Function=()->()) = Transformation(key, index, transform, VariableState[])
+
+Transformation{S<:VariableState}(key::Symbol, transform::Function=()->(), states::Vector{S}=VariableState[]) =
   Transformation(key, 0, transform, states)
 
 default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableState(value)

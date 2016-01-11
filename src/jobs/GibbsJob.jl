@@ -49,13 +49,13 @@ type GibbsJob{S<:VariableState} <: MCJob
     if imperative
       instance.outopts = outopts
     else
-      instance.model = GenericModel(topological_sort_by_dfs(model), edges(model), is_directed(model))
-
-      idxs = indexes(instance.model)
+      idxs = [
+        model.ofkey[k]
+        for k in keys(topological_sort_by_dfs(GenericModel(vertices(model), edges(model), is_directed(model), true)))
+      ]
       instance.dpindex = intersect(idxs, dpindex)
-      instance.vstate = vstate[idxs]
 
-      dpidxs = [findfirst(x -> x == instance.dpindex[i], dpindex) for i in 1:instance.ndp]
+      dpidxs = map(x -> findfirst(dpindex, x), instance.dpindex)
 
       instance.dpjob = Array(Union{BasicMCJob, Void}, instance.ndp)
       for i in 1:instance.ndp
