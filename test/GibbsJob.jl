@@ -31,12 +31,13 @@ outopts = [Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
 job = GibbsJob(
   model,
   [2, 3],
-  Union{BasicMCJob, Void}[nothing, nothing],
+  [nothing, nothing],
   mcrange,
   vstate,
   outopts,
   true,
   true,
+  false,
   false
 )
 
@@ -48,4 +49,4 @@ chains = Dict(job)
 
 [mean(chains[k].value) for k in keys(chains)]
 
-cov(chains[:p1].value, chains[:p2].value)
+cor(chains[:p1].value, chains[:p2].value)

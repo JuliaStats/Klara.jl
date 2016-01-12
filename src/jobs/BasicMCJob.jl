@@ -19,6 +19,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
+  verbose::Bool
   resetplain!::Function
   reset!::Function
   save!::Union{Function, Void}
@@ -35,6 +36,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     outopts::Dict,
     resetpstate::Bool,
     plain::Bool,
+    verbose::Bool,
     check::Bool
   )
     instance = new()
@@ -52,6 +54,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     instance.tuner = tuner
     instance.range = range
     instance.plain = plain
+    instance.verbose = verbose
 
     instance.parameter = instance.model.vertices[instance.pindex]
     instance.parameter.states = instance.vstate
@@ -107,10 +110,11 @@ function BasicMCJob{S<:VariableState}(
   outopts::Dict,
   resetpstate::Bool,
   plain::Bool,
+  verbose::Bool,
   check::Bool
 )
   opts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
-  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, opts, resetpstate, plain, check)
+  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, opts, resetpstate, plain, verbose, check)
 end
 
 BasicMCJob{S<:VariableState}(
@@ -123,9 +127,10 @@ BasicMCJob{S<:VariableState}(
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 ) =
-  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, plain, verbose, check)
 
 function BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -137,13 +142,14 @@ function BasicMCJob{S<:VariableState}(
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   vstate = Array(S, length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, verbose, check)
 end
 
 function BasicMCJob(
@@ -156,10 +162,11 @@ function BasicMCJob(
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, [outopts], [pindex])
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, verbose, check)
 end
 
 function BasicMCJob(
@@ -172,6 +179,7 @@ function BasicMCJob(
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   vstate = Array(Any, length(v0))
@@ -189,6 +197,7 @@ function BasicMCJob(
     outopts=outopts,
     resetpstate=resetpstate,
     plain=plain,
+    verbose=verbose,
     check=check
   )
 end
@@ -287,6 +296,10 @@ function codegen_run_basicmcjob(job::BasicMCJob)
   ifforbody = []
   forbody = []
   body = []
+
+  if job.verbose
+    push!(forbody, :(println("Iteration ", i, " of ", $(job).range.nsteps)))
+  end
 
   if job.task == nothing
     push!(forbody, :($(job).iterate!()))

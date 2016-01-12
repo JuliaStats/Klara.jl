@@ -15,6 +15,7 @@ type GibbsJob{S<:VariableState} <: MCJob
   imperative::Bool # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
+  verbose::Bool
   close::Union{Function, Void}
   resetplain!::Union{Function, Void}
   reset!::Union{Function, Void}
@@ -31,6 +32,7 @@ type GibbsJob{S<:VariableState} <: MCJob
     outopts::Vector,
     imperative::Bool,
     plain::Bool,
+    verbose::Bool,
     check::Bool
   )
     instance = new()
@@ -84,6 +86,7 @@ type GibbsJob{S<:VariableState} <: MCJob
     instance.range = range
     instance.imperative = imperative
     instance.plain = plain
+    instance.verbose = verbose
 
     instance.dependent = instance.model.vertices[instance.dpindex]
     for i in 1:instance.ndp
@@ -136,11 +139,12 @@ function GibbsJob{S<:VariableState}(
   outopts::Vector,
   imperative::Bool,
   plain::Bool,
+  verbose::Bool,
   check::Bool
 )
   job = isa(dpjob, Vector{Union{BasicMCJob, Void}}) ? dpjob : convert(Vector{Union{BasicMCJob, Void}}, dpjob)
   opts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
-  GibbsJob{S}(model, dpindex, job, range, vstate, opts, imperative, plain, check)
+  GibbsJob{S}(model, dpindex, job, range, vstate, opts, imperative, plain, verbose, check)
 end
 
 GibbsJob{S<:VariableState}(
@@ -152,9 +156,10 @@ GibbsJob{S<:VariableState}(
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 ) =
-  GibbsJob{S}(model, dpindex, dpjob, range, v0, outopts, imperative, plain, check)
+  GibbsJob{S}(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
 
 function GibbsJob{S<:VariableState}(
   model::GenericModel,
@@ -165,6 +170,7 @@ function GibbsJob{S<:VariableState}(
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
   imperative::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   ndpindex = length(dpindex)
@@ -183,7 +189,7 @@ function GibbsJob{S<:VariableState}(
     vstate[model.ofkey[k]] = v
   end
 
-  GibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, check)
+  GibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, verbose, check)
 end
 
 function GibbsJob(
@@ -195,10 +201,11 @@ function GibbsJob(
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, outopts, dpindex)
-  GibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, check)
+  GibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, verbose, check)
 end
 
 function GibbsJob(
@@ -210,6 +217,7 @@ function GibbsJob(
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
   imperative::Bool=true,
   plain::Bool=true,
+  verbose::Bool=false,
   check::Bool=false
 )
   vstate = Dict{Symbol, VariableState}()
@@ -226,6 +234,7 @@ function GibbsJob(
     outopts=outopts,
     imperative=imperative,
     plain=plain,
+    verbose=verbose,
     check=check
   )
 end
@@ -337,6 +346,10 @@ function codegen_run_gibbsjob(job::GibbsJob)
   forbody = []
   body = []
 
+  if job.verbose
+    push!(forbody, :(println("Iteration ", i, " of ", $(job).range.nsteps)))
+  end
+
   if job.task == nothing
     push!(forbody, :($(job).iterate!()))
   else
@@ -373,25 +386,6 @@ function codegen_run_gibbsjob(job::GibbsJob)
   end
 
   result
-end
-
-function Base.run(job::GibbsJob)
-  for i in 1:job.range.nsteps
-    iterate!(job)
-
-    if in(i, job.range.postrange)
-      job.count+=1
-      save!(job)
-    end
-
-    reset!(job)
-  end
-
-  for j in 1:job.ndp
-    if isa(job.output[j], VariableIOStream)
-      job.output[j].close()
-    end
-  end
 end
 
 Base.run(job::GibbsJob) = job.run!()
