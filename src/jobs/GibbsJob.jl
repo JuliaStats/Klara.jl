@@ -53,7 +53,7 @@ type GibbsJob{S<:VariableState} <: MCJob
     else
       idxs = [
         model.ofkey[k]
-        for k in keys(topological_sort_by_dfs(GenericModel(vertices(model), edges(model), is_directed(model), true)))
+        for k in keys(topological_sort_by_dfs(GenericModel(vertices(model), edges(model), is_directed(model))))
       ]
       instance.dpindex = intersect(idxs, dpindex)
 

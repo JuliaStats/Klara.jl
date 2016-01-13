@@ -33,26 +33,20 @@ Example: sampling from an unnormalized normal target
 ```julia
 using Lora
 
-### Define the vector of keys referring to model variables
-### For this naive example, the model consists of a single parameter represented by the :p key
-
-vkeys = [:p]
-
 ### Define the log-target as a function (generic or anonymous):
 
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 ### Define the parameter via BasicContMuvParameter (it is a continuous multivariate variable)
 ### The input arguments for BasicContMuvParameter are:
-### 1) vkeys, the vector of variable keys,
-### 2) the index of the current variable in vkeys,
-### 3) the log-target
+### 1) the variable key,
+### 2) the log-target
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, nkeys=0)
+p = BasicContMuvParameter(:p, logtarget=plogtarget)
 
 #### Define the model using the single_parameter_likelihood_model generator
 
-model = single_parameter_likelihood_model(p)
+model = single_parameter_likelihood_model(p, isindexed=false)
 
 ### Define a Metropolis-Hastings sampler with an identity covariance matrix
 
@@ -192,13 +186,11 @@ To run a sampler which requires the gradient of the log-target, such as MALA, tr
 ```julia
 using Lora
 
-vkeys = [:p]
-
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 pgradlogtarget(z::Vector{Float64}) = -2*z
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, gradlogtarget=pgradlogtarget, nkeys=0)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, gradlogtarget=pgradlogtarget)
 
 model = single_parameter_likelihood_model(p)
 
@@ -249,11 +241,9 @@ To use forward mode AD, try the following:
 ```julia
 using Lora
 
-vkeys = [:p]
-
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(vkeys, 1, logtarget=plogtarget, autodiff=:forward, nkeys=0)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:forward)
 
 model = single_parameter_likelihood_model(p)
 
@@ -281,16 +271,12 @@ To employ reverse mode AD, try
 ```julia
 using Lora
 
-vkeys = [:p]
-
 plogtarget(z::Vector) = -dot(z, z)
 
 p = BasicContMuvParameter(
-  vkeys,
-  1,
+  :p,
   logtarget=plogtarget,
   autodiff=:reverse,
-  nkeys=0,
   init=[nothing, nothing, (ones(2),)]
 )
 
@@ -324,14 +310,10 @@ log-prior) instead of a function. An example follows where the log-target is spe
 ```julia
 using Lora
 
-vkeys = [:p]
-
 p = BasicContMuvParameter(
-  vkeys,
-  1,
+  :p,
   logtarget=:(-dot(z, z)),
   autodiff=:reverse,
-  nkeys=0,
   init=[nothing, nothing, (:z, ones(2))]
 )
 

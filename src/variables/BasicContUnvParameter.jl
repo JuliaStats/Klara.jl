@@ -353,7 +353,7 @@ end
 
 function BasicContUnvParameter{S<:VariableState}(
   key::Symbol,
-  index::Int=0;
+  index::Int;
   pdf::Union{ContinuousUnivariateDistribution, Void}=nothing,
   prior::Union{ContinuousUnivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -405,8 +405,8 @@ end
 # The rationale is that it allows to provide some order derivatives in closed form while compute others via AD
 
 function BasicContUnvParameter{S<:VariableState}(
-  key::Vector{Symbol},
-  index::Int;
+  key::Symbol;
+  index::Int=0,
   pdf::Union{ContinuousUnivariateDistribution, Void}=nothing,
   prior::Union{ContinuousUnivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -427,7 +427,7 @@ function BasicContUnvParameter{S<:VariableState}(
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
   states::Vector{S}=VariableState[],
-  nkeys::Int=length(key),
+  nkeys::Int=0,
   vfarg::Bool=false,
   autodiff::Symbol=:none,
   order::Int=1,
@@ -516,7 +516,7 @@ function BasicContUnvParameter{S<:VariableState}(
     end
   end
 
-  parameter = BasicContUnvParameter(key[index], index, pdf, prior, fill(nothing, 17)..., states)
+  parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 

@@ -95,19 +95,46 @@ end
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
 
-function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}, isdirected::Bool=true, setvertex::Bool=false)
+function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
 
   m = GenericModel(
     isdirected,
-    setvertex ? Array(V, n) : Variable[],
+    Variable[],
     Dependence[],
     Graphs.multivecs(Dependence, n),
     Graphs.multivecs(Dependence, n),
     Dict{Symbol, Int}()
   )
 
-  setvertex ? set_vertex!(m, vs) : add_vertex!(m, vs, num_vertices(m)+1)
+  add_vertex!(m, vs, 1)
+
+  if !isindexed
+    for i in 1:n
+      m.vertices[i].index = i
+    end
+  end
+
+  for d in ds
+    add_edge!(m, d)
+  end
+
+  return m
+end
+
+function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}, isdirected::Bool)
+  n = length(vs)
+
+  m = GenericModel(
+    isdirected,
+    Array(V, n),
+    Dependence[],
+    Graphs.multivecs(Dependence, n),
+    Graphs.multivecs(Dependence, n),
+    Dict{Symbol, Int}()
+  )
+
+  set_vertex!(m, vs)
 
   for d in ds
     add_edge!(m, d)
@@ -118,8 +145,8 @@ end
 
 GenericModel(isdirected::Bool=true) = GenericModel(Variable[], Dependence[], isdirected)
 
-GenericModel{V<:Variable}(vs::Vector{V}, ds::Matrix{V}, isdirected::Bool=true, setvertex::Bool=false) =
-  GenericModel(vs, [Dependence(i, ds[i, 1], ds[i, 2]) for i in 1:size(ds, 1)], isdirected, setvertex)
+GenericModel{V<:Variable}(vs::Vector{V}, ds::Matrix{V}; isdirected::Bool=true, isindexed::Bool=true) =
+  GenericModel(vs, [Dependence(i, ds[i, 1], ds[i, 2]) for i in 1:size(ds, 1)], isdirected=isdirected, isindexed=isindexed)
 
 function GenericModel(vs::Dict{Symbol, DataType}, ds::Dict{Symbol, Symbol}, isdirected::Bool=true)
   i = 0

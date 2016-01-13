@@ -346,7 +346,7 @@ end
 
 function BasicContMuvParameter{S<:VariableState}(
   key::Symbol,
-  index::Int=0;
+  index::Int;
   pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -395,8 +395,8 @@ function BasicContMuvParameter{S<:VariableState}(
 end
 
 function BasicContMuvParameter{S<:VariableState}(
-  key::Vector{Symbol},
-  index::Int;
+  key::Symbol;
+  index::Int=0,
   pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -417,7 +417,7 @@ function BasicContMuvParameter{S<:VariableState}(
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
   states::Vector{S}=VariableState[],
-  nkeys::Int=length(key),
+  nkeys::Int=0,
   vfarg::Bool=false,
   autodiff::Symbol=:none,
   order::Int=1,
@@ -506,7 +506,7 @@ function BasicContMuvParameter{S<:VariableState}(
     end
   end
 
-  parameter = BasicContMuvParameter(key[index], index, pdf, prior, fill(nothing, 17)..., states)
+  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 
