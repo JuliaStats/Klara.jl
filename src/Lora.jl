@@ -126,6 +126,7 @@ export
   logistic,
   logistic_rate_score,
   make_edge,
+  model2dot,
   num_edges,
   num_vertices,
   out_degree,

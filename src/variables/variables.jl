@@ -112,6 +112,8 @@ default_state{N<:Number}(variable::Constant, value::Matrix{N}) = BasicMavVariabl
 Base.show(io::IO, ::Type{Constant}) = print(io, "Constant")
 Base.writemime(io::IO, ::MIME"text/plain", t::Type{Constant}) = show(io, t)
 
+dotshape(variable::Constant) = "trapezium"
+
 ## Hyperparameter
 
 typealias Hyperparameter Constant
@@ -135,6 +137,8 @@ default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableSta
 Base.show(io::IO, ::Type{Data}) = print(io, "Data")
 Base.writemime(io::IO, ::MIME"text/plain", t::Type{Data}) = show(io, t)
 
+dotshape(variable::Data) = "rectangle"
+
 ## Transformation
 
 immutable Transformation{S<:VariableState} <: Variable{Deterministic}
@@ -156,6 +160,8 @@ default_state{N<:Number}(variable::Transformation, value::Matrix{N}) = BasicMavV
 Base.show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
 Base.writemime(io::IO, ::MIME"text/plain", t::Type{Transformation}) = show(io, t)
 
+dotshape(variable::Transformation) = "polygon"
+
 ### Random Variable subtypes
 
 ## Abstract Parameter types
@@ -174,3 +180,5 @@ function check_support{P<:Parameter, S<:ParameterState}(parameter::P, state::S)
     error("Variate form of parameter ($(variate_form(parameter))) and of ($(variate_form(state))) not in agreement")
   end
 end
+
+dotshape(variable::Parameter) = "circle"
