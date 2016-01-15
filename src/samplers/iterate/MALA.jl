@@ -115,13 +115,16 @@ function codegen_iterate_mala(job::BasicMCJob)
     end
 
     if job.tuner.verbose
+      fmt_iter = format_iteration(ndigits(job.range.burnin))
+      fmt_perc = format_percentage()
+
       push!(burninbody, :(println(
         "Burnin iteration ",
-        $(job).sstate.tune.totproposed,
+        $(fmt_iter)($(job).sstate.tune.totproposed),
         " of ",
         $(job).range.burnin,
         ": ",
-        round(100*$(job).sstate.tune.rate, 2),
+        $(fmt_perc)(100*$(job).sstate.tune.rate),
         " % acceptance rate"
       )))
     end

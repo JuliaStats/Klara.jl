@@ -53,16 +53,19 @@ function codegen_iterate_mh(job::BasicMCJob)
   )
 
   if job.tuner.verbose
+    fmt_iter = format_iteration(ndigits(job.range.burnin))
+    fmt_perc = format_percentage()
+    
     push!(body, :(
       if $(job).sstate.tune.totproposed <= $(job).range.burnin && mod($(job).sstate.tune.proposed, $(job).tuner.period) == 0
         rate!($(job).sstate.tune)
         println(
           "Burnin iteration ",
-          $(job).sstate.tune.totproposed,
+          $(fmt_iter)($(job).sstate.tune.totproposed),
           " of ",
           $(job).range.burnin,
           ": ",
-          round(100*$(job).sstate.tune.rate, 2),
+          $(fmt_perc)(100*$(job).sstate.tune.rate),
           " % acceptance rate"
         )
         reset_burnin!($(job).sstate.tune)

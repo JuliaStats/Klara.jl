@@ -347,7 +347,8 @@ function codegen_run_gibbsjob(job::GibbsJob)
   body = []
 
   if job.verbose
-    push!(forbody, :(println("Iteration ", i, " of ", $(job).range.nsteps)))
+    fmt_iter = format_iteration(ndigits(job.range.nsteps))
+    push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", $(job).range.nsteps)))
   end
 
   if job.task == nothing

@@ -1,6 +1,7 @@
 module Lora
 
 using Distributions
+using Formatting
 using Graphs
 
 import Base:
@@ -150,6 +151,8 @@ export
   vertex_index,
   vertex_key,
   vertices
+
+include("format.jl")
 
 include("stats/logistic.jl")
 

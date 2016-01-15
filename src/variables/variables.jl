@@ -137,7 +137,7 @@ default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableSta
 Base.show(io::IO, ::Type{Data}) = print(io, "Data")
 Base.writemime(io::IO, ::MIME"text/plain", t::Type{Data}) = show(io, t)
 
-dotshape(variable::Data) = "rectangle"
+dotshape(variable::Data) = "box"
 
 ## Transformation
 
