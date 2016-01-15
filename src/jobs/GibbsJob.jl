@@ -479,3 +479,44 @@ function Base.show(io::IO, job::GibbsJob)
 end
 
 Base.writemime(io::IO, ::MIME"text/plain", job::GibbsJob) = show(io, job)
+
+function job2dot(stream::IOStream, job::GibbsJob)
+  graphkeyword, edgesign = is_directed(job.model) ? ("digraph", "->") : ("graph", "--")
+  dotindentation, dotspacing = "  ", " "
+
+  write(stream, "$graphkeyword GibbsJob {\n")
+
+  invdpindex = Dict{Symbol, Int}(zip(keys(job.model.vertices[job.dpindex]), 1:job.ndp))
+
+  for v in vertices(job.model)
+    vstring = string(lcover(v.key, dotindentation), lcover("[shape=", dotspacing), dotshape(v))
+
+    if isa(v, Parameter) || isa(v, Transformation)
+      vstring *= ","*lcover("peripheries=2", dotspacing)
+
+      i = invdpindex[v.key]
+
+      if job.outopts[i][:destination] != :none
+        vstring *= ","*lcover("label=<<u>$(v.key)</u>>", dotspacing)
+      end
+
+      if isa(v, Parameter) && (job.dpjob[i] != nothing)
+        vstring *= ","*lcover("style=diagonals", dotspacing)
+      end
+    end
+
+    write(stream, string(vstring, "]\n"))
+  end
+
+  for d in edges(job.model)
+    write(stream, string(lcover(d.source.key, dotindentation), cover(edgesign, dotspacing), d.target.key, "\n"))
+  end
+
+  write(stream, "}\n")
+end
+
+function job2dot(filename::AbstractString, job::GibbsJob, mode::AbstractString="w")
+  stream = open(filename, mode)
+  job2dot(stream, job)
+  close(stream)
+end

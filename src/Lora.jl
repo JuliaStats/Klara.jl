@@ -123,6 +123,7 @@ export
   indices,
   is_directed,
   is_indexed,
+  job2dot,
   likelihood_model,
   logistic,
   logistic_rate_score,

@@ -199,16 +199,16 @@ Base.writemime(io::IO, ::MIME"text/plain", model::GenericModel) = show(io, model
 
 function model2dot(stream::IOStream, model::GenericModel)
   graphkeyword, edgesign = is_directed(model) ? ("digraph", "->") : ("graph", "--")
-  dotindentation = "  "
+  dotindentation, dotspacing = "  ", " "
 
   write(stream, "$graphkeyword GenericModel {\n")
 
   for v in vertices(model)
-    write(stream, string(lcover(v.key, dotindentation), lcover("[shape="), dotshape(v), "]\n"))
+    write(stream, string(lcover(v.key, dotindentation), lcover("[shape=", dotspacing), dotshape(v), "]\n"))
   end
 
   for d in edges(model)
-    write(stream, string(lcover(d.source.key, dotindentation), cover(edgesign), d.target.key, "\n"))
+    write(stream, string(lcover(d.source.key, dotindentation), cover(edgesign, dotspacing), d.target.key, "\n"))
   end
 
   write(stream, "}\n")
