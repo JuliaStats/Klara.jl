@@ -2,33 +2,15 @@
 
 ## likelihood_model represents a likelihood L(Vector{Parameter} | Vector{Data}, Vector{Hyperparameter})
 
-function likelihood_model{P<:Parameter}(
-  p::Vector{P};
-  data::Vector{Data}=Array(Data, 0),
-  hyperparameters::Vector{Hyperparameter}=Array(Hyperparameter, 0),
-  isdirected::Bool=true,
-  isindexed::Bool=true
-)
-  variables = [p; data; hyperparameters]
+function likelihood_model{V<:Variable}(vs::Vector{V}; isdirected::Bool=true, isindexed::Bool=true)
+  m = GenericModel(vs, Dependence[], isdirected=isdirected, isindexed=isindexed)
 
-  m = GenericModel(variables, Dependence[], isdirected=isdirected, isindexed=isindexed)
-
-  for t in p
-    for s in variables[(length(p)+1):end]
-      add_edge!(m, s, t)
+  pindex = find(v::Variable -> isa(v, Parameter), m.vertices)
+  for i in pindex
+    for j in setdiff(1:length(vs), pindex)
+      add_edge!(m, m.vertices[j], m.vertices[i])
     end
   end
 
   return m
 end
-
-## single_parameter_likelihood_model represents a likelihood L(Parameter | Vector{Data}, Vector{Hyperparameter})
-
-single_parameter_likelihood_model(
-  p::Parameter;
-  data::Vector{Data}=Array(Data, 0),
-  hyperparameters::Vector{Hyperparameter}=Array(Hyperparameter, 0),
-  isdirected::Bool=true,
-  isindexed::Bool=true
-) =
-  likelihood_model(Parameter[p], data=data, hyperparameters=hyperparameters, isdirected=isdirected, isindexed=isindexed)

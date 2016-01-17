@@ -6,8 +6,4 @@ println("    Testing likelihood_model generator...")
 x = Data(:x, 2)
 λ = Hyperparameter(:λ, 3)
 
-likelihood_model([θ], data=[x], hyperparameters=[λ])
-
-println("    Testing single_parameter_likelihood_model generator...")
-
-single_parameter_likelihood_model(θ, data=[x], hyperparameters=[λ])
+likelihood_model([θ, x, λ])

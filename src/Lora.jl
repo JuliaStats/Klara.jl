@@ -143,7 +143,7 @@ export
   sampler_state,
   save!,
   save,
-  single_parameter_likelihood_model,
+  sort_by_index,
   source,
   target,
   topological_sort_by_dfs,

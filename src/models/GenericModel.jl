@@ -37,8 +37,6 @@ in_edges(v::Variable, m::GenericModel) = m.binclist[vertex_index(v, m)]
 in_degree(v::Variable, m::GenericModel) = length(in_edges(v, m))
 in_neighbors(v::Variable, m::GenericModel) = Graphs.SourceIterator(m, in_edges(v, m))
 
-make_edge(m::GenericModel, s::Variable, t::Variable) = Dependence(num_edges(m)+1, s, t)
-
 function add_vertex!(m::GenericModel, v::Variable, n::Int=num_vertices(m)+1)
     push!(m.vertices, v)
 
@@ -75,6 +73,8 @@ function set_vertex!{V<:Variable}(m::GenericModel, vs::Vector{V})
   end
 end
 
+make_edge(m::GenericModel, s::Variable, t::Variable) = Dependence(num_edges(m)+1, s, t)
+
 function add_edge!(m::GenericModel, u::Variable, v::Variable, d::Dependence)
     ui = vertex_index(u, m)
     vi = vertex_index(v, m)
@@ -94,6 +94,8 @@ end
 
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
+
+sort_by_index{V<:Variable}(vs::Vector{V}) = vs[[v.index for v in vs]]
 
 function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
