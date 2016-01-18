@@ -114,6 +114,8 @@ export
   add_edge!,
   add_vertex!,
   count!,
+  dataset,
+  datasets,
   edge_index,
   edges,
   erf_rate_score,
@@ -154,6 +156,8 @@ export
   vertices
 
 include("format.jl")
+
+include("data.jl")
 
 include("stats/logistic.jl")
 

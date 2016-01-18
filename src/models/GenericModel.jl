@@ -95,8 +95,6 @@ end
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
 
-sort_by_index{V<:Variable}(vs::Vector{V}) = vs[[v.index for v in vs]]
-
 function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
 
@@ -108,10 +106,10 @@ function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdire
     Graphs.multivecs(Dependence, n),
     Dict{Symbol, Int}()
   )
-
-  add_vertex!(m, vs, 1)
-
-  if !isindexed
+  if isindexed
+    add_vertex!(m, sort_by_index(vs), 1)
+  else
+    add_vertex!(m, vs, 1)
     for i in 1:n
       m.vertices[i].index = i
     end

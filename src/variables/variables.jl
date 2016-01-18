@@ -22,6 +22,8 @@ indices{V<:Variable}(variables::Vector{V}) = Int[v.index for v in variables]
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
+sort_by_index{V<:Variable}(vs::Vector{V}) = vs[[v.index for v in vs]]
+
 function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=false)
   body::Expr
   fargs::Union{Expr, Vector}
