@@ -531,7 +531,7 @@ function BasicContUnvParameter{S<:VariableState}(
     for i in 3:5
       fadclosure[i-2] =
         if isa(inargs[i], Function)
-          nkeys == 0 ? inargs[i] : eval(codegen_internal_forward_autodiff_closure(parameter, inargs[i]))
+          nkeys == 0 ? inargs[i] : eval(codegen_internal_forward_autodiff_closure(parameter, inargs[i], nkeys))
         else
           nothing
         end
@@ -682,8 +682,8 @@ function codegen_uptomethods_basiccontunvparameter(parameter::BasicContUnvParame
   end
 end
 
-function codegen_internal_forward_autodiff_closure(parameter::BasicContUnvParameter, f::Function)
-  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:$(parameter).nkeys]...)]
+function codegen_internal_forward_autodiff_closure(parameter::BasicContUnvParameter, f::Function, nkeys::Int)
+  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
 
   @gensym internal_forward_autodiff_closure
 

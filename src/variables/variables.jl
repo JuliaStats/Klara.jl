@@ -77,7 +77,7 @@ function default_state(v::Variable, v0, outopts::Dict=Dict())
       vstate = default_state(v, v0)
     end
   else
-    error("Variable state or state value of type $(typeof(v0[i])) not valid")
+    error("Variable state or state value of type $(typeof(v0)) not valid")
   end
 
   vstate
@@ -100,7 +100,7 @@ Base.show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(t
 
 ## Constant
 
-immutable Constant <: Variable{Deterministic}
+type Constant <: Variable{Deterministic}
   key::Symbol
   index::Int
 end
@@ -122,7 +122,7 @@ typealias Hyperparameter Constant
 
 ## Data
 
-immutable Data <: Variable{Deterministic}
+type Data <: Variable{Deterministic}
   key::Symbol
   index::Int
   update::Union{Function, Void}
@@ -143,7 +143,7 @@ dotshape(variable::Data) = "box"
 
 ## Transformation
 
-immutable Transformation{S<:VariableState} <: Variable{Deterministic}
+type Transformation{S<:VariableState} <: Variable{Deterministic}
   key::Symbol
   index::Int
   transform::Function
