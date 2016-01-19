@@ -11,7 +11,7 @@ outcome = data[:, end]
 
 function ploglikelihood(p::Vector{Float64}, v::Vector)
   Xp = v[2]*p
-  (Xp'*v[3]-sum(log(1+exp(Xp))))[1]
+  dot(Xp, v[3])-sum(log(1+exp(Xp)))
 end
 
 plogprior(p::Vector{Float64}, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
