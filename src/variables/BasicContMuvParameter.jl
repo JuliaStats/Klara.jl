@@ -530,14 +530,14 @@ function BasicContMuvParameter{S<:VariableState}(
     for i in 6:8
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_internal_variable_method(
-          forward_autodiff_function(:gradient, fadclosure[i-5], false, chunksize), fnames[i], nkeys, vfarg
+          forward_autodiff_function(:gradient, fadclosure[i-5], false, chunksize), fnames[i], 0
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_internal_variable_method(
-        eval(codegen_forward_autodiff_uptofunction(:gradient, fadclosure[3], chunksize)), fnames[15], nkeys, vfarg
+        eval(codegen_forward_autodiff_uptofunction(:gradient, fadclosure[3], chunksize)), fnames[15], 0
       ))
     end
 
@@ -550,7 +550,7 @@ function BasicContMuvParameter{S<:VariableState}(
     for i in 3:5
       if isa(inargs[i], Expr)
         outargs[i] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[i], :Vector, init[i-2], 0, false)), fnames[i], nkeys
+          eval(codegen_reverse_autodiff_function(inargs[i], :Vector, init[i-2], 0, false)), fnames[i], 0
         ))
       end
     end
@@ -559,11 +559,11 @@ function BasicContMuvParameter{S<:VariableState}(
       if !isa(inargs[i], Function)
         if isa(inargs[i-3], Function)
           outargs[i] = eval(codegen_internal_variable_method(
-            ReverseDiffSource.rdiff(inargs[i-3], init[i-5], order=1, allorders=false), fnames[i], nkeys
+            ReverseDiffSource.rdiff(inargs[i-3], init[i-5], order=1, allorders=false), fnames[i], 0
           ))
         elseif isa(inargs[i-3], Expr)
           outargs[i] = eval(codegen_internal_variable_method(
-            eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, init[i-5], 1, false)), fnames[i], nkeys
+            eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, init[i-5], 1, false)), fnames[i], 0
           ))
         end
       end
@@ -572,11 +572,11 @@ function BasicContMuvParameter{S<:VariableState}(
     if !isa(inargs[15], Function)
       if isa(inargs[5], Function)
         outargs[15] = eval(codegen_internal_variable_method(
-          ReverseDiffSource.rdiff(inargs[5], init[3], order=1, allorders=true), fnames[15], nkeys
+          ReverseDiffSource.rdiff(inargs[5], init[3], order=1, allorders=true), fnames[15], 0
         ))
       elseif isa(inargs[5], Expr)
         outargs[15] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[5], :Vector, init[3], 1, true)), fnames[15], nkeys
+          eval(codegen_reverse_autodiff_function(inargs[5], :Vector, init[3], 1, true)), fnames[15], 0
         ))
       end
     end
