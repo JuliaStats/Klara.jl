@@ -19,13 +19,12 @@ The Julia *Lora* package provides a generic engine for Markov Chain Monte Carlo 
 * Automatic differentiation is available allowing to choose between forward mode and reverse mode (the latter relying
 on source transformation).
 
-*To run the current version of Lora, it is needed to run `Pkg.checkout("Lora")`. Lora will be pushed to METADATA very soon.*
-
 Some of the old one has not been fully ported. The full porting of old functionality, as well as further developments, will
 be completed shortly. Progress is being tracked systematically via issues and milestones.
 
 The documentation is out of date, but will be brought up-to-date fairly soon. In the meantime, this README file provides a
-few examples of the new interface, explaining how to get up to speed with the new face of Lora.
+few examples of the new interface, explaining how to get up to speed with the new face of Lora. More examples can be found
+in doc/examples.
 
 Example: sampling from an unnormalized normal target
 ------------------------------
@@ -44,9 +43,10 @@ plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget)
 
-#### Define the model using the likelihood_model generator
+### Define the model using the likelihood_model generator
+### The second argument informs the likelihood_model generator that p.index has not been set
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 ### Define a Metropolis-Hastings sampler with an identity covariance matrix
 
@@ -192,7 +192,7 @@ pgradlogtarget(z::Vector{Float64}) = -2*z
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget, gradlogtarget=pgradlogtarget)
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 ### Set driftstep to 0.9
 
@@ -245,7 +245,7 @@ plogtarget(z::Vector) = -dot(z, z)
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:forward)
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 
@@ -280,7 +280,7 @@ p = BasicContMuvParameter(
   init=[nothing, nothing, (ones(2),)]
 )
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 
@@ -317,7 +317,7 @@ p = BasicContMuvParameter(
   init=[nothing, nothing, (:z, ones(2))]
 )
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 

@@ -11,9 +11,10 @@ plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget)
 
-#### Define the model using the likelihood_model generator
+### Define the model using the likelihood_model generator
+### The second argument informs the likelihood_model generator that p.index has not been set
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 ### Define a Metropolis-Hastings sampler with an identity covariance matrix
 
@@ -109,7 +110,7 @@ pgradlogtarget(z::Vector{Float64}) = -2*z
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget, gradlogtarget=pgradlogtarget)
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 ### Set driftstep to 0.9
 
@@ -150,7 +151,7 @@ plogtarget(z::Vector) = -dot(z, z)
 
 p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:forward)
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 
@@ -175,7 +176,7 @@ p = BasicContMuvParameter(
   init=[nothing, nothing, (ones(2),)]
 )
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 
@@ -198,7 +199,7 @@ p = BasicContMuvParameter(
   init=[nothing, nothing, (:z, ones(2))]
 )
 
-model = likelihood_model([p], isindexed=false)
+model = likelihood_model(p, false)
 
 sampler = MALA(0.9)
 

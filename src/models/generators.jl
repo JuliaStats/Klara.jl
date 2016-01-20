@@ -14,3 +14,5 @@ function likelihood_model{V<:Variable}(vs::Vector{V}; isdirected::Bool=true, isi
 
   return m
 end
+
+likelihood_model(v::Variable, isindexed::Bool=true) = GenericModel(Variable[v], Dependence[], isindexed=isindexed)
