@@ -19,16 +19,6 @@ User Guide
 ==========================================================================================
 .. toctree::
    :maxdepth: 2
-   
+
    user_guide/intro
-   user_guide/models
-   user_guide/samplers
-   user_guide/runners
-   user_guide/tuners
-   user_guide/jobs
-   user_guide/chains
-   user_guide/output_analysis
-   user_guide/output_management
-   user_guide/minimal_interface
-   user_guide/examples
    user_guide/xrefs
