@@ -12,9 +12,9 @@ The Julia *Lora* package provides an interoperable generic engine for a breadth 
 
 The idea that there exists no unique optimal MCMC methodology for all purposes has been a development cornerstone. Along
 these lines, interest is in providing a wealth of Monte Carlo strategies and options, letting the user decide which
-algorithm suits their use case. Such "agnostic" approach to coding drives *Lora* from top to bottom, offering a variety of
+algorithm suits their use case. Such "agnostic" approach to coding permeates *Lora* from top to bottom, offering a variety of
 methods and detailed configuration, ultimately leading to rich functionality. *Lora*'s wide range of functionality makes
-itself useful in applications and as a test bed for comparative methodological research. It also offers the flexibility to
+itself useful in applications and as a test bed for comparative methodological research. It also gives the flexibility to
 connect *Lora* with various other packages, exploiting different levels of ongoing developments in them.
 
 In fact, interoperability has been another central principle of development. A high-level API enables the user to implement
@@ -35,7 +35,7 @@ thanks to the duality of higher and lower level APIs.
 Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A summary of *Lora*'s main features includes:
+A summary of *Lora*'s main features follows:
 
 * *Graph-based model specification*. Representing the model as a graph widens the scope of accommodated models and enables \
   exploiting graph algorithms from the *Graphs* package.
@@ -55,10 +55,9 @@ A summary of *Lora*'s main features includes:
   a flexible manner.
 
 * *Wide range of Monte Carlo samplers*. A range of MCMC samplers is available, including accept-reject and slice sampling,
-  variations of the Metropolis-Hastings algorithm, No-U-Turn (NUTS) sampling, geometric MCMC schemes, such as Riemann
-  manifold Langevin and Hamiltonian Monte Carlo. Adaptive samplers, such as random adaptive Metropolis, and empirical tuning
-  are included in *Lora* as alternative means to expedite convergence. It is noted that most of these samplers need to be
-  ported from the older version of Lora, which is work in progress.
+  Metropolis-Hastings algorithm, No-U-Turn (NUTS) sampling, and geometric MCMC schemes, such as Riemann manifold Langevin and
+  Hamiltonian Monte Carlo. Adaptive samplers and empirical tuning are included in *Lora* as a means to faster convergence. It
+  is noted that most of these samplers need to be ported from the older version of Lora, which is work in progress.
 
 * *MCMC summary statistics and convergence diagnostics*. Main routines for computing the effective sampling size and
   integrated autocorrelation time have been coded, while there is a roadmap to provide more convergence diagnostics tools
@@ -66,7 +65,7 @@ A summary of *Lora*'s main features includes:
 
 * *States and chains*. Proposed Monte Carlo samples are organized systematically with the help of a state and chain type
   system. This way, values can be passed around and stored without re-allocating memory. At the same time, the state/chain
-  type system offers scope for extending the current functionality if storing of less usual components is intended.
+  type system offers scope for extending the current functionality if it is required to store less usual components.
 
 * *Detailed configuration of output storage in memory or in file*. The chain resulting from a Monte Carlo simulation can be
   saved in memory or can be written directly to a file stream. Detailed output configuration is possible, allowing to
@@ -76,3 +75,32 @@ A summary of *Lora*'s main features includes:
   the log-target. If these derivatives are not user-inputted explicitly, *Lora* can optionally compute them using reverse or
   forward mode automatic differentiation. For this purpose, *Lora* uses *ReverseDiffSource* and *ForwardDiff* under the
   hood.
+
+.. _preliminary_exposition_of_graph_models:
+
+Preliminary exposition of graph models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Lora*'s graph model is presented concisely in the current section as a smooth introduction to subsequent elaborate chapters.
+A single model type, named *GenericModel*, serves as the sole entry point for defining any graph model in *Lora*.
+*GenericModel* has been inspired by and operates on par with *GenericGraph*, a versatile graph type of the *Graphs* package.
+
+*GenericModel* can be conceptualized as a graph whose nodes represent the underlying model's variables and its edges specify
+the dependencies between these variables. As it becomes obvious, the main front end of *GenericModel* consists of its
+*vertices* and *edges* fields, which are of type `Vector{Variable}` and `Vector{Dependence}` respectively. Without going
+into details, each vertex is defined as constant, data, transformation or parameter, all being `Variable` subtypes. A single
+non-abstract `Dependence` type suffices to describe variable dependencies.
+
+Typical probabilistic graphical models, such as directed acyclic graphs (DAGs) and factor graphs, are permitted in
+*GenericModel*. Similarly to *GenericGraph*, the *is_directed* field of *GenericModel* dictates whether the model is directed
+or not. Practically, Gibbs sampling is not affected by the distinction between directed and non-directed graphs. However,
+effort has been made to define *GenericModel* generically in order to provide scope for future developments if the need
+arises to distinguish between DAGs and factor graphs in programming practice.
+
+The graph-oriented definition of *GenericModel* finds its main utility in *Lora*'s optional declarative model specification.
+In other words, it is possible to delegate responsibility of variable ordering to *GenericModel* via topological sorting of
+the graph. Furthermore, the statistical model is easier to disseminate by visualizing *GenericModel* as a graph.
+
+Topological sorting and graph visualization are achieved via "outsourcing". In particular, converting *GenericModel* to its
+corresponding *GenericGraph* allows to harness sorting routines in the *Graphs* package. Moreover, *GenericModel* is
+convertible to DOT format, thus making it possible to use the DOT graph description language for model visualization.
