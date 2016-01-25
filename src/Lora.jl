@@ -99,6 +99,7 @@ export
   ParameterIOStream,
   ParameterNState,
   ParameterState,
+  RAM,
   Random,
   Sampleability,
   Transformation,
@@ -189,6 +190,7 @@ include("tuners/AcceptanceRateMCTuner.jl")
 
 include("samplers/samplers.jl")
 include("samplers/MH.jl")
+include("samplers/RAM.jl")
 include("samplers/MALA.jl")
 
 include("jobs/jobs.jl")
@@ -196,6 +198,7 @@ include("jobs/BasicMCJob.jl")
 include("jobs/GibbsJob.jl")
 
 include("samplers/iterate/MH.jl")
+include("samplers/iterate/RAM.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
 

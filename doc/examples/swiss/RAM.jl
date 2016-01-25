@@ -25,7 +25,7 @@ p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, 
 
 model = likelihood_model([λ, X, y, p], isindexed=false)
 
-sampler = MH(ones(npars))
+sampler = RAM(ones(npars))
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 

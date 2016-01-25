@@ -3,6 +3,8 @@ function codegen_iterate_basicmcjob(job::BasicMCJob)
 
   if isa(job.sampler, MH)
     result = codegen_iterate_mh(job)
+  elseif isa(job.sampler, RAM)
+    result = codegen_iterate_ram(job)
   elseif isa(job.sampler, MALA)
     result = codegen_iterate_mala(job)
   end
