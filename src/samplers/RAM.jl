@@ -4,6 +4,41 @@ abstract RAMState <: MCSamplerState
 
 ### RAM state subtypes
 
+## UnvRAMState holds the internal state ("local variables") of the RAM sampler for univariate parameters
+
+type UnvRAMState <: RAMState
+  pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by RAM
+  tune::MCTunerState
+  ratio::Real # Acceptance ratio
+  S::Real
+  SST::Real
+  randnsample::Real
+  η::Real
+
+  function UnvRAMState(
+    pstate::ParameterState{Continuous, Univariate},
+    tune::MCTunerState,
+    ratio::Real,
+    S::Real,
+    SST::Real,
+    randnsample::Real,
+    η::Real
+  )
+    if !isnan(ratio)
+      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+    end
+    new(pstate, tune, ratio, S, SST, randnsample, η)
+  end
+end
+
+UnvRAMState(
+  pstate::ParameterState{Continuous, Univariate},
+  tune::MCTunerState=VanillaMCTune(),
+  S::Real=NaN,
+  SST::Real=abs2(S)
+) =
+  UnvRAMState(pstate, tune, NaN, S, SST, NaN, NaN)
+
 ## MuvRAMState holds the internal state ("local variables") of the RAM sampler for multivariate parameters
 
 type MuvRAMState{N<:Real} <: RAMState
@@ -72,11 +107,20 @@ RAM{N<:Real}(S0::Matrix{N}, targetrate::Real=0.234, γ::Real=0.7) = RAM{N}(S0, t
 
 RAM{N<:Real}(S0::Vector{N}, targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
 
-# RAM(S0::Real, n::Int=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(s0, n), targetrate, γ)
+RAM(S0::Real=1., n::Int=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate, γ)
 
 ### Initialize RAM sampler
 
 ## Initialize parameter state
+
+function initialize!(
+  pstate::ParameterState{Continuous, Univariate},
+  parameter::Parameter{Continuous, Univariate},
+  sampler::RAM
+)
+  parameter.logtarget!(pstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
+end
 
 function initialize!(
   pstate::ParameterState{Continuous, Multivariate},
@@ -89,6 +133,14 @@ end
 
 ## Initialize MuvRAMState
 
+sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
+  UnvRAMState(
+    generate_empty(pstate),
+    tuner_state(sampler, tuner),
+    sampler.S0[1, 1],
+    NaN
+  )
+
 sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
   MuvRAMState(
     generate_empty(pstate),
@@ -98,6 +150,16 @@ sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, M
   )
 
 ## Reset parameter state
+
+function reset!(
+  pstate::ParameterState{Continuous, Univariate},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::RAM
+)
+  pstate.value = x
+  parameter.logtarget!(pstate)
+end
 
 function reset!{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},

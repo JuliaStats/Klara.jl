@@ -72,6 +72,12 @@ function codegen_iterate_ram(job::BasicMCJob)
 
   if vform == Univariate
     push!(body, :($(job).sstate.η = min(1, $(job).count^(-$(job).sampler.γ))))
+
+    push!(body, :($(job).sstate.SST = $(job).sstate.η*(min(1, exp($(job).sstate.ratio))-$(job).sampler.targetrate)))
+
+    push!(body, :($(job).sstate.SST = abs2($(job).sstate.S)*(1+$(job).sstate.SST)))
+
+    push!(body, :($(job).sstate.S = chol($(job).sstate.SST)))
   elseif vform == Multivariate
     push!(body, :($(job).sstate.η = min(1, $(job).pstate.size*$(job).count^(-$(job).sampler.γ))))
 

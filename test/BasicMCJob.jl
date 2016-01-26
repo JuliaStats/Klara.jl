@@ -50,7 +50,7 @@ tuner = VanillaMCTuner()
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
-vstate = [BasicContUnvParameterState(5.1, [:value, :logtarget])]
+vstate = [BasicContUnvParameterState(5.1)]
 
 outopts = Dict(:monitor=>[:value, :logtarget])
 

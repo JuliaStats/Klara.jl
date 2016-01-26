@@ -20,11 +20,7 @@ model = GenericModel([ρ, p1, p2], [ρ p1; ρ p2; p1 p2])
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
-vstate = [
-  BasicUnvVariableState(0.8),
-  BasicContUnvParameterState(5.1, [:value]),
-  BasicContUnvParameterState(2.3, [:value]),
-]
+vstate = [BasicUnvVariableState(0.8), BasicContUnvParameterState(5.1), BasicContUnvParameterState(2.3)]
 
 outopts = [Dict(:monitor=>[:value]), Dict(:monitor=>[:value])]
 
