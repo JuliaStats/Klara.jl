@@ -40,4 +40,4 @@ run(job)
 
 chain = output(job)
 
-[mean(chain.value[i, :]) for i in 1:4]
+mean(chain)

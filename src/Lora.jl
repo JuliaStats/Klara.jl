@@ -16,6 +16,7 @@ import Base:
   isequal,
   keys,
   mark,
+  mean,
   open,
   read!,
   read,
@@ -201,5 +202,7 @@ include("samplers/iterate/MH.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
+
+include("stats/descriptive/mean.jl")
 
 end

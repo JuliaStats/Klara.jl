@@ -76,7 +76,7 @@ chain.value
 
 ### Check that the simulated values are close to the zero-mean target
 
-[mean(chain.value[i, :]) for i in 1:2]
+mean(chain)
 ```
 
 To reset the job, using a new initial value for the targeted parameter, run
@@ -214,7 +214,7 @@ chain = output(job)
 
 chain.gradlogtarget
 
-[mean(chain.value[i, :]) for i in 1:2]
+mean(chain)
 ```
 
 To adapt the MALA drift step empirically during burnin towards an intended acceptance rate of 60%, run

@@ -44,7 +44,7 @@ chain.value
 
 ### Check that the simulated values are close to the zero-mean target
 
-[mean(chain.value[i, :]) for i in 1:2]
+mean(chain)
 
 reset(job, [3.2, 9.4])
 
@@ -132,7 +132,7 @@ chain = output(job)
 
 chain.gradlogtarget
 
-[mean(chain.value[i, :]) for i in 1:2]
+mean(chain)
 
 job = BasicMCJob(
   model,
