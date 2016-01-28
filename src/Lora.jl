@@ -204,5 +204,6 @@ include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
 
 include("stats/descriptive/mean.jl")
+include("stats/descriptive/variance.jl")
 
 end
