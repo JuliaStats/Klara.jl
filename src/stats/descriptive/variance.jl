@@ -4,6 +4,8 @@
 
 mcvar_iid(v::AbstractArray) = var(v)/length(v)
 
+mcvar_iid(v::AbstractArray, region) = mapslices(mcvar_iid, v, region)
+
 mcvar_iid(s::VariableNState{Univariate}) = mcvar_iid(s.value)
 
 mcvar_iid(s::VariableNState{Multivariate}, i::Int) = mcvar_iid(s.value[i, :])
@@ -13,6 +15,8 @@ mcvar_iid(s::VariableNState{Multivariate}, r::Range=1:s.size) = eltype(s)[mcvar_
 ## Monte Carlo standard error assuming IID samples
 
 mcse_iid(v::AbstractArray) = sqrt(mcvar_iid(v))
+
+mcse_iid(v::AbstractArray, region) = mapslices(mcse_iid, v, region)
 
 mcse_iid(s::VariableNState{Univariate}) = mcse_iid(s.value)
 
@@ -34,6 +38,8 @@ function mcvar_bm{T}(v::AbstractArray{T}; batchlen::Int=100)
   return batchlen*var(batchmeans)/nbsamples
 end
 
+mcvar_bm(v::AbstractArray, region; batchlen::Int=100) = mapslices(x -> mcvar_bm(x, batchlen=batchlen), v, region)
+
 mcvar_bm(s::VariableNState{Univariate}; batchlen::Int=100) = mcvar_bm(s.value, batchlen=batchlen)
 
 mcvar_bm(s::VariableNState{Multivariate}, i::Int; batchlen::Int=100) = mcvar_bm(s.value[i, :], batchlen=batchlen)
@@ -44,6 +50,8 @@ mcvar_bm(s::VariableNState{Multivariate}, r::Range=1:s.size; batchlen::Int=100) 
 ## Monte Carlo standard error using batch means
 
 mcse_bm(v::AbstractArray; batchlen::Int=100) = sqrt(mcvar_bm(v, batchlen=batchlen))
+
+mcse_bm(v::AbstractArray, region; batchlen::Int=100) = mapslices(x -> mcse_bm(x, batchlen=batchlen), v, region)
 
 mcse_bm(s::VariableNState{Univariate}; batchlen::Int=100) = mcse_bm(s.value, batchlen=batchlen)
 
@@ -90,9 +98,15 @@ function mcvar_imse{T}(v::AbstractVector{T}; maxlag::Int=length(v)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(v)
 end
 
+mcvar_imse(v::AbstractArray; maxlag::Int=length(v)-1) = mcvar_imse(vec(v), maxlag=maxlag)
+
+mcvar_imse(v::AbstractArray, region; maxlag::Int=length(v)-1) = mapslices(x -> mcvar_imse(x, maxlag=maxlag), v, region)
+
+mcvar_imse(v::AbstractArray, region) = mapslices(x -> mcvar_imse(x, maxlag=length(x)-1), v, region)
+
 mcvar_imse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcvar_imse(s.value, maxlag=maxlag)
 
-mcvar_imse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcvar_imse(vec(s.value[i, :]), maxlag=maxlag)
+mcvar_imse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcvar_imse(s.value[i, :], maxlag=maxlag)
 
 mcvar_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcvar_imse(s, i, maxlag=maxlag) for i in r]
@@ -100,6 +114,10 @@ mcvar_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo standard error
 
 mcse_imse(v::AbstractArray; maxlag::Int=length(v)-1) = sqrt(mcvar_imse(v, maxlag=maxlag))
+
+mcse_imse(v::AbstractArray, region; maxlag::Int=length(v)-1) = mapslices(x -> mcse_imse(x, maxlag=maxlag), v, region)
+
+mcse_imse(v::AbstractArray, region) = mapslices(x -> mcse_imse(x, maxlag=length(x)-1), v, region)
 
 mcse_imse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcse_imse(s.value, maxlag=maxlag)
 
