@@ -3,6 +3,7 @@ module Lora
 using Distributions
 using Formatting
 using Graphs
+using StatsBase
 
 import Base:
   ==,
