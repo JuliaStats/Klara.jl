@@ -125,3 +125,93 @@ mcse_imse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcse_ims
 
 mcse_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcse_imse(s, i, maxlag=maxlag) for i in r]
+
+## Initial positive sequence estimator (IPSE) of Monte Carlo variance
+## Reference:
+## Geyer C.J.
+## Practical Markov Chain Monte Carlo
+## Statistical Science, 1992, 7 (4), pp 473-483
+
+function mcvar_ipse{T}(v::AbstractVector{T}; maxlag::Int=length(v)-1)
+  k = convert(Int, floor((maxlag-1)/2))
+
+  # Preallocate memory
+  g = Array(T, k+1)
+  m = k+1
+
+  # Calculate empirical autocovariance
+  acv = autocov(v, 0:maxlag)
+
+  # Calculate \hat{G}_{n, m} from the autocovariances, see pp. 477 in Geyer
+  for j = 0:k
+    g[j+1] = acv[2*j+1]+acv[2*j+2]
+    if g[j+1] <= 0
+      m = j
+      break
+    end
+  end
+
+  # Calculate the initial positive sequence estimator
+  return (-acv[1]+2*sum(g[1:m]))/length(v)
+end
+
+mcvar_ipse(v::AbstractArray; maxlag::Int=length(v)-1) = mcvar_ipse(vec(v), maxlag=maxlag)
+
+mcvar_ipse(v::AbstractArray, region; maxlag::Int=length(v)-1) = mapslices(x -> mcvar_ipse(x, maxlag=maxlag), v, region)
+
+mcvar_ipse(v::AbstractArray, region) = mapslices(x -> mcvar_ipse(x, maxlag=length(x)-1), v, region)
+
+mcvar_ipse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcvar_ipse(s.value, maxlag=maxlag)
+
+mcvar_ipse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcvar_ipse(s.value[i, :], maxlag=maxlag)
+
+mcvar_ipse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+  eltype(s)[mcvar_ipse(s, i, maxlag=maxlag) for i in r]
+
+## Initial positive sequence estimator (IPSE) of Monte Carlo standard error
+
+mcse_ipse(v::AbstractArray; maxlag::Int=length(v)-1) = sqrt(mcvar_ipse(v, maxlag=maxlag))
+
+mcse_ipse(v::AbstractArray, region; maxlag::Int=length(v)-1) = mapslices(x -> mcse_ipse(x, maxlag=maxlag), v, region)
+
+mcse_ipse(v::AbstractArray, region) = mapslices(x -> mcse_ipse(x, maxlag=length(x)-1), v, region)
+
+mcse_ipse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcse_ipse(s.value, maxlag=maxlag)
+
+mcse_ipse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcse_ipse(s.value[i, :], maxlag=maxlag)
+
+mcse_ipse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+  eltype(s)[mcse_ipse(s, i, maxlag=maxlag) for i in r]
+
+## Wrapper function for estimating Monte Carlo variance using various approaches
+
+mcvar_types = (:iid, :bm, :imse, :ipse)
+mcvar_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcvar_iid, mcvar_bm, mcvar_imse, mcvar_ipse)))
+mcse_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcse_iid, mcse_bm, mcse_imse, mcse_ipse)))
+
+mcvar(v::AbstractVector; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v; args...)
+
+mcvar(v::AbstractArray; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v; args...)
+
+mcvar(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v, region; args...)
+
+mcvar(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](s; args...)
+
+mcvar(s::VariableNState{Multivariate}, i::Int; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](s, i; args...)
+
+mcvar(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, args...) =
+  mcvar_functions[vtype](s, r; args...)
+
+## Wrapper function for estimating Monte Carlo standard error using various approaches
+
+mcse(v::AbstractVector; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v; args...)
+
+mcse(v::AbstractArray; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v; args...)
+
+mcse(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v, region; args...)
+
+mcse(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s; args...)
+
+mcse(s::VariableNState{Multivariate}, i::Int; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s, i; args...)
+
+mcse(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s, r; args...)

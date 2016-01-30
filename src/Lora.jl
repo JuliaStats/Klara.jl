@@ -133,6 +133,8 @@ export
   logistic,
   logistic_rate_score,
   make_edge,
+  mcse,
+  mcvar,
   model2dot,
   num_edges,
   num_vertices,
