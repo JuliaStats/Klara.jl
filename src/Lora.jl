@@ -122,6 +122,7 @@ export
   edge_index,
   edges,
   erf_rate_score,
+  ess,
   in_degree,
   in_edges,
   in_neighbors,
@@ -208,5 +209,6 @@ include("samplers/iterate/iterate.jl")
 
 include("stats/descriptive/mean.jl")
 include("stats/descriptive/variance.jl")
+include("stats/convergence/ess.jl")
 
 end

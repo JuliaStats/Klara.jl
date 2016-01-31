@@ -189,8 +189,6 @@ mcvar_types = (:iid, :bm, :imse, :ipse)
 mcvar_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcvar_iid, mcvar_bm, mcvar_imse, mcvar_ipse)))
 mcse_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcse_iid, mcse_bm, mcse_imse, mcse_ipse)))
 
-mcvar(v::AbstractVector; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v; args...)
-
 mcvar(v::AbstractArray; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v; args...)
 
 mcvar(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v, region; args...)
@@ -203,8 +201,6 @@ mcvar(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, a
   mcvar_functions[vtype](s, r; args...)
 
 ## Wrapper function for estimating Monte Carlo standard error using various approaches
-
-mcse(v::AbstractVector; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v; args...)
 
 mcse(v::AbstractArray; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v; args...)
 
