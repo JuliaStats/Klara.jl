@@ -1,6 +1,6 @@
 ### Effective sample size (ESS)
 
-ess(v::AbstractArray; vtype::Symbol=:imse, args...) = length(v)*mcvar_iid(v)./mcvar(v; vtype=vtype, args...)
+ess(v::AbstractArray; vtype::Symbol=:imse, args...) = length(v)*mcvar_iid(v)/mcvar(v; vtype=vtype, args...)
 
 ess(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mapslices(x -> ess(x; vtype=vtype, args...), v, region)
 

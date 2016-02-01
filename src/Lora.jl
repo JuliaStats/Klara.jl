@@ -113,6 +113,7 @@ export
   VariableState,
 
   ### Functions
+  actime,
   add_dimension,
   add_edge!,
   add_vertex!,
@@ -209,6 +210,8 @@ include("samplers/iterate/iterate.jl")
 
 include("stats/descriptive/mean.jl")
 include("stats/descriptive/variance.jl")
+
+include("stats/convergence/actime.jl")
 include("stats/convergence/ess.jl")
 
 end
