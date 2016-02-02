@@ -134,6 +134,7 @@ export
   likelihood_model,
   logistic,
   logistic_rate_score,
+  lzv,
   make_edge,
   mcse,
   mcvar,
@@ -144,6 +145,7 @@ export
   out_edges,
   out_neighbors,
   output,
+  # qzv,
   rate!,
   reset!,
   reset_burnin!,
@@ -208,8 +210,10 @@ include("samplers/iterate/RAM.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
 
-include("stats/descriptive/mean.jl")
-include("stats/descriptive/variance.jl")
+include("stats/mean.jl")
+
+include("stats/variance/mcvar.jl")
+include("stats/variance/zv.jl")
 
 include("stats/convergence/actime.jl")
 include("stats/convergence/ess.jl")

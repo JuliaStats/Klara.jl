@@ -26,7 +26,7 @@ mcse_iid(s::VariableNState{Multivariate}, r::Range=1:s.size) = eltype(s)[mcse_ii
 
 ## Monte Carlo variance using batch means
 ## Reference:
-## Flegal J.M and Jones G.L.
+## Flegal J.M and Jones G.L
 ## Batch Means and Spectral Variance Estimators in Markov chain Monte Carlo
 ## Annals of Statistics, 2010, 38 (2), pp 1034-1070
 
@@ -62,7 +62,7 @@ mcse_bm(s::VariableNState{Multivariate}, r::Range=1:s.size; batchlen::Int=100) =
 
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo variance
 ## Reference:
-## Geyer C.J.
+## Geyer C.J
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
@@ -128,7 +128,7 @@ mcse_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1)
 
 ## Initial positive sequence estimator (IPSE) of Monte Carlo variance
 ## Reference:
-## Geyer C.J.
+## Geyer C.J
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
