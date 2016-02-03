@@ -36,3 +36,49 @@ end
 lzv(s::ParameterNState{Continuous, Univariate}) = lzv(s.value, s.gradlogtarget)
 
 lzv(s::ParameterNState{Continuous, Multivariate}) = lzv(transpose(s.value), transpose(s.gradlogtarget))
+
+## Zero variance (ZV) Monte Carlo estimators quadratic polynomials
+
+function qzv{N<:Real}(chain::Vector{N}, grad::Vector{N})
+  z = -0.5*grad
+  qz = [z 2*z.*chain-1]
+  augmentedcov = cov([qz chain])
+  a = -inv(augmentedcov[1:2, 1:2])*augmentedcov[1:2, 3]
+  return chain+qz*a, a
+end
+
+function qzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
+  nsamples, npars = size(chain)
+  k = convert(Int, npars*(npars+3)/2)
+  l = 2*npars+1
+
+  qz = Array(N, nsamples, k)
+  augmentedcov = Array(N, k+1, k+1, npars)
+  precision = Array(N, k, k, npars)
+  sigma = Array(N, k, npars)
+  a = Array(N, k, npars)
+
+  z = -grad/2
+
+  qz[:, 1:npars] = z
+  qz[:, (npars+1):(2*npars)] = 2*z.*chain-1
+  for i = 1:(npars-1)
+    for j = (i+1):npars
+      qz[:, l] = chain[:, i].*z[:, j]+chain[:, j].*z[:, i]
+      l += 1
+    end
+  end
+
+  for i = 1:npars
+    augmentedcov[:, :, i] = cov([qz chain[:, i]])
+    precision[:, :, i] = inv(augmentedcov[1:k, 1:k, i])
+    sigma[:, i] = augmentedcov[1:k, k+1, i]
+    a[:, i] = -precision[:, :, i]*sigma[:, i]
+  end
+
+  return chain+qz*a, a
+end
+
+qzv(s::ParameterNState{Continuous, Univariate}) = qzv(s.value, s.gradlogtarget)
+
+qzv(s::ParameterNState{Continuous, Multivariate}) = qzv(transpose(s.value), transpose(s.gradlogtarget))

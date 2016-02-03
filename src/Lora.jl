@@ -145,7 +145,7 @@ export
   out_edges,
   out_neighbors,
   output,
-  # qzv,
+  qzv,
   rate!,
   reset!,
   reset_burnin!,
