@@ -119,6 +119,41 @@ Base.(:(==)){S<:BasicContUnvParameterNState}(z::S, w::S) =
 Base.isequal{S<:BasicContUnvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:16]])
 
+function Base.show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
+  fnames = fieldnames(BasicContUnvParameterNState)
+  fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
+  indentation = "  "
+
+  println(io, "BasicContUnvParameterNState:")
+
+  println(io, lcover("eltype: $(eltype(nstate))", indentation))
+  println(io, lcover("number of states: $(nstate.n)", indentation))
+
+  print(io, lcover("monitored components:", indentation))
+  if !any(fbool)
+    println(io, " none")
+  else
+    print(io, "\n")
+    for i in 1:13
+      if fbool[i]
+        println(io, lcover(fnames[i], indentation^2))
+      end
+    end
+  end
+
+  print(io, lcover("diagnostics:", indentation))
+  if isempty(nstate.diagnostickeys)
+    print(io, " none")
+  else
+    for k in nstate.diagnostickeys
+      print(io, "\n")
+      print(io, lcover(k, indentation^2))
+    end
+  end
+end
+
+Base.writemime{N<:Real}(io::IO, ::MIME"text/plain", nstate::BasicContUnvParameterNState{N}) = show(io, nstate)
+
 ## BasicContMuvParameterNState
 
 type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multivariate}
@@ -286,3 +321,39 @@ Base.(:(==)){S<:BasicContMuvParameterNState}(z::S, w::S) =
 
 Base.isequal{S<:BasicContMuvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:17]])
+
+function Base.show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
+  fnames = fieldnames(BasicContUnvParameterNState)
+  fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
+  indentation = "  "
+
+  println(io, "BasicContMuvParameterNState:")
+
+  println(io, lcover("eltype: $(eltype(nstate))", indentation))
+  println(io, lcover("state size: $(nstate.size)", indentation))
+  println(io, lcover("number of states: $(nstate.n)", indentation))
+
+  print(io, lcover("monitored components:", indentation))
+  if !any(fbool)
+    println(io, " none")
+  else
+    print(io, "\n")
+    for i in 1:13
+      if fbool[i]
+        println(io, lcover(fnames[i], indentation^2))
+      end
+    end
+  end
+
+  print(io, lcover("diagnostics:", indentation))
+  if isempty(nstate.diagnostickeys)
+    print(io, " none")
+  else
+    for k in nstate.diagnostickeys
+      print(io, "\n")
+      print(io, lcover(k, indentation^2))
+    end
+  end
+end
+
+Base.writemime{N<:Real}(io::IO, ::MIME"text/plain", nstate::BasicContMuvParameterNState{N}) = show(io, nstate)

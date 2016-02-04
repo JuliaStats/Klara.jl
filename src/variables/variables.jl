@@ -95,6 +95,7 @@ function default_state{V<:Variable}(v::Vector{V}, v0::Vector, outopts::Vector, d
 end
 
 Base.show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
+Base.writemime(io::IO, ::MIME"text/plain", v::Variable) = show(io, v)
 
 ### Deterministic Variable subtypes
 
