@@ -372,3 +372,38 @@ function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
 
   nstate
 end
+
+function Base.show(io::IO, iostream::BasicContParamIOStream)
+  fnames = fieldnames(BasicContParamIOStream)
+  fbool = map(n -> getfield(iostream, n) != nothing, fnames[1:13])
+  indentation = "  "
+
+  println(io, "BasicContParamIOStream:")
+
+  println(io, lcover("state size = $(iostream.size)", indentation))
+  println(io, lcover("number of states = $(iostream.n)", indentation))
+
+  print(io, lcover("monitored components:", indentation))
+  if !any(fbool)
+    println(io, " none")
+  else
+    print(io, "\n")
+    for i in 1:13
+      if fbool[i]
+        println(io, lcover(fnames[i], indentation^2))
+      end
+    end
+  end
+
+  print(io, lcover("diagnostics:", indentation))
+  if isempty(iostream.diagnostickeys)
+    print(io, " none")
+  else
+    for k in iostream.diagnostickeys
+      print(io, "\n")
+      print(io, lcover(k, indentation^2))
+    end
+  end
+end
+
+Base.writemime(io::IO, ::MIME"text/plain", iostream::BasicContParamIOStream) = show(io, iostream)

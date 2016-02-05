@@ -23,6 +23,17 @@ Base.eltype{N<:Number}(s::BasicUnvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Int) = (nstate.value[i] = state.value)
 
+function Base.show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
+  indentation = "  "
+
+  println(io, "BasicUnvVariableNState:")
+
+  println(io, lcover("eltype: $(eltype(nstate))", indentation))
+  print(io, lcover("number of states = $(nstate.n)", indentation))
+end
+
+Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicUnvVariableNState{N}) = show(io, nstate)
+
 ## BasicMuvVariableNState
 
 type BasicMuvVariableNState{N<:Number} <: VariableNState{Multivariate}
@@ -41,6 +52,18 @@ Base.eltype{N<:Number}(s::BasicMuvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Int) =
   (nstate.value[1+(i-1)*state.size:i*state.size] = state.value)
+
+function Base.show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
+  indentation = "  "
+
+  println(io, "BasicMuvVariableNState:")
+
+  println(io, lcover("eltype: $(eltype(nstate))", indentation))
+  println(io, lcover("state size = $(nstate.size)", indentation))
+  print(io, lcover("number of states = $(nstate.n)", indentation))
+end
+
+Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMuvVariableNState{N}) = show(io, nstate)
 
 ## BasicMavVariableNState
 
@@ -61,3 +84,15 @@ Base.eltype{N<:Number}(s::BasicMavVariableNState{N}) = N
 
 Base.copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Int, statelen::Int=prod(state.size)) =
   (nstate.value[1+(i-1)*statelen:i*statelen] = state.value)
+
+function Base.show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
+  indentation = "  "
+
+  println(io, "BasicMavVariableNState:")
+
+  println(io, lcover("eltype: $(eltype(nstate))", indentation))
+  println(io, lcover("state size = $(nstate.size)", indentation))
+  print(io, lcover("number of states = $(nstate.n)", indentation))
+end
+
+Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMavVariableNState{N}) = show(io, nstate)

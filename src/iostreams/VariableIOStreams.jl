@@ -70,3 +70,8 @@ function Base.read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
 
   nstate
 end
+
+Base.show(io::IO, iostream::BasicVariableIOStream) =
+  print(io, "BasicVariableIOStream: state size = $(iostream.size), number of states = $(iostream.n)")
+
+Base.writemime(io::IO, ::MIME"text/plain", iostream::BasicVariableIOStream) = show(io, iostream)

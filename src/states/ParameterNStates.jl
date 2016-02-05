@@ -127,7 +127,7 @@ function Base.show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
   println(io, "BasicContUnvParameterNState:")
 
   println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("number of states: $(nstate.n)", indentation))
+  println(io, lcover("number of states = $(nstate.n)", indentation))
 
   print(io, lcover("monitored components:", indentation))
   if !any(fbool)
@@ -323,15 +323,15 @@ Base.isequal{S<:BasicContMuvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:17]])
 
 function Base.show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
-  fnames = fieldnames(BasicContUnvParameterNState)
+  fnames = fieldnames(BasicContMuvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
   indentation = "  "
 
   println(io, "BasicContMuvParameterNState:")
 
   println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("state size: $(nstate.size)", indentation))
-  println(io, lcover("number of states: $(nstate.n)", indentation))
+  println(io, lcover("state size = $(nstate.size)", indentation))
+  println(io, lcover("number of states = $(nstate.n)", indentation))
 
   print(io, lcover("monitored components:", indentation))
   if !any(fbool)
