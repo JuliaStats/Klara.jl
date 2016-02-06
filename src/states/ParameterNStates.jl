@@ -126,28 +126,28 @@ function Base.show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
 
   println(io, "BasicContUnvParameterNState:")
 
-  println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("number of states = $(nstate.n)", indentation))
+  println(io, indentation*"eltype: $(eltype(nstate))")
+  println(io, indentation*"number of states = $(nstate.n)")
 
-  print(io, lcover("monitored components:", indentation))
+  print(io, indentation*"monitored components:")
   if !any(fbool)
     println(io, " none")
   else
     print(io, "\n")
     for i in 1:13
       if fbool[i]
-        println(io, lcover(fnames[i], indentation^2))
+        println(io, string(indentation^2, fnames[i]))
       end
     end
   end
 
-  print(io, lcover("diagnostics:", indentation))
+  print(io, indentation*"diagnostics:")
   if isempty(nstate.diagnostickeys)
     print(io, " none")
   else
     for k in nstate.diagnostickeys
       print(io, "\n")
-      print(io, lcover(k, indentation^2))
+      print(io, string(indentation^2, k))
     end
   end
 end
@@ -329,29 +329,29 @@ function Base.show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
 
   println(io, "BasicContMuvParameterNState:")
 
-  println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("state size = $(nstate.size)", indentation))
-  println(io, lcover("number of states = $(nstate.n)", indentation))
+  println(io, indentation*"eltype: $(eltype(nstate))")
+  println(io, indentation*"state size = $(nstate.size)")
+  println(io, indentation*"number of states = $(nstate.n)")
 
-  print(io, lcover("monitored components:", indentation))
+  print(io, indentation*"monitored components:")
   if !any(fbool)
     println(io, " none")
   else
     print(io, "\n")
     for i in 1:13
       if fbool[i]
-        println(io, lcover(fnames[i], indentation^2))
+        println(io, string(indentation^2, fnames[i]))
       end
     end
   end
 
-  print(io, lcover("diagnostics:", indentation))
+  print(io, indentation*"diagnostics:")
   if isempty(nstate.diagnostickeys)
     print(io, " none")
   else
     for k in nstate.diagnostickeys
       print(io, "\n")
-      print(io, lcover(k, indentation^2))
+      print(io, string(indentation^2, k))
     end
   end
 end

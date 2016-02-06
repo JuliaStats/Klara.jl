@@ -1,6 +1,8 @@
 ### Integrated autocorrelation time
 
-actime(v::AbstractArray; vtype::Symbol=:imse, args...) = mcvar(v; vtype=vtype, args...)/mcvar_iid(v)
+actime{N<:Real}(mcvariance::N, iidvariance::N) = mcvariance/iidvariance
+
+actime(v::AbstractArray; vtype::Symbol=:imse, args...) = actime(mcvar(v; vtype=vtype, args...), mcvar_iid(v))
 
 actime(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mapslices(x -> actime(x; vtype=vtype, args...), v, region)
 

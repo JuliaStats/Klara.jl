@@ -371,19 +371,20 @@ output(job::BasicMCJob) = job.output
 
 function Base.show(io::IO, job::BasicMCJob)
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+  indentation = "  "
 
   println(io, "BasicMCJob:")
-  print(io, "  ")
+  print(io, indentation)
   show(io, job.parameter)
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.model)
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.sampler)
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.tuner)
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.range)
-  print(io, "\n  plain = $(job.plain) ($isplain)")
+  print(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
 end
 
 Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)

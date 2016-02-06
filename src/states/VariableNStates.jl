@@ -28,8 +28,8 @@ function Base.show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
 
   println(io, "BasicUnvVariableNState:")
 
-  println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  print(io, lcover("number of states = $(nstate.n)", indentation))
+  println(io, indentation*"eltype: $(eltype(nstate))")
+  print(io, indentation*"number of states = $(nstate.n)")
 end
 
 Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicUnvVariableNState{N}) = show(io, nstate)
@@ -58,9 +58,9 @@ function Base.show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
 
   println(io, "BasicMuvVariableNState:")
 
-  println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("state size = $(nstate.size)", indentation))
-  print(io, lcover("number of states = $(nstate.n)", indentation))
+  println(io, indentation*"eltype: $(eltype(nstate))")
+  println(io, indentation*"state size = $(nstate.size)")
+  print(io, indentation*"number of states = $(nstate.n)")
 end
 
 Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMuvVariableNState{N}) = show(io, nstate)
@@ -90,9 +90,9 @@ function Base.show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
 
   println(io, "BasicMavVariableNState:")
 
-  println(io, lcover("eltype: $(eltype(nstate))", indentation))
-  println(io, lcover("state size = $(nstate.size)", indentation))
-  print(io, lcover("number of states = $(nstate.n)", indentation))
+  println(io, indentation*"eltype: $(eltype(nstate))")
+  println(io, indentation*"state size = $(nstate.size)")
+  print(io, indentation*"number of states = $(nstate.n)")
 end
 
 Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMavVariableNState{N}) = show(io, nstate)

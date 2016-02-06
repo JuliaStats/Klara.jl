@@ -204,11 +204,11 @@ function model2dot(stream::IOStream, model::GenericModel)
   write(stream, "$graphkeyword GenericModel {\n")
 
   for v in vertices(model)
-    write(stream, string(lcover(v.key, dotindentation), lcover("[shape=", dotspacing), dotshape(v), "]\n"))
+    write(stream, string(dotindentation, v.key, dotspacing, "[shape=", dotshape(v), "]\n"))
   end
 
   for d in edges(model)
-    write(stream, string(lcover(d.source.key, dotindentation), cover(edgesign, dotspacing), d.target.key, "\n"))
+    write(stream, string(dotindentation, d.source.key, dotspacing, edgesign, dotspacing, d.target.key, "\n"))
   end
 
   write(stream, "}\n")

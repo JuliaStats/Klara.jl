@@ -465,17 +465,18 @@ function Base.show(io::IO, job::GibbsJob)
 
   println(io, "GibbsJob:")
   print(io, string(
-    "  $(num_dp(job)) dependent variables: ",
+    indentation,
+    "$(num_dp(job)) dependent variables: ",
     "$ndptransforms transformations, ",
     "$ndpviadistribution sampled from their distribution, ",
     "$ndpviamcmc sampled via MCMC-within-Gibbs"
   ))
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.model)
-  print(io, "\n  ")
+  print(io, "\n"*indentation)
   show(io, job.range)
-  println(io, "\n  plain = $(job.plain) ($isplain)")
-  print(io, "  imperative = $(job.imperative) ($isimperative)")
+  println(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
+  print(io, indentation*"imperative = $(job.imperative) ($isimperative)")
 end
 
 Base.writemime(io::IO, ::MIME"text/plain", job::GibbsJob) = show(io, job)
@@ -489,27 +490,27 @@ function job2dot(stream::IOStream, job::GibbsJob)
   invdpindex = Dict{Symbol, Int}(zip(keys(job.model.vertices[job.dpindex]), 1:job.ndp))
 
   for v in vertices(job.model)
-    vstring = string(lcover(v.key, dotindentation), lcover("[shape=", dotspacing), dotshape(v))
+    vstring = string(dotindentation, v.key, dotspacing, "[shape=", dotshape(v))
 
     if isa(v, Parameter) || isa(v, Transformation)
-      vstring *= ","*lcover("peripheries=2", dotspacing)
+      vstring *= ","*dotspacing*"peripheries=2"
 
       i = invdpindex[v.key]
 
       if job.outopts[i][:destination] != :none
-        vstring *= ","*lcover("label=<<u>$(v.key)</u>>", dotspacing)
+        vstring *= ","*dotspacing*"label=<<u>$(v.key)</u>>"
       end
 
       if isa(v, Parameter) && (job.dpjob[i] != nothing)
-        vstring *= ","*lcover("style=diagonals", dotspacing)
+        vstring *= ","*dotspacing*"style=diagonals"
       end
     end
 
-    write(stream, string(vstring, "]\n"))
+    write(stream, vstring*"]\n")
   end
 
   for d in edges(job.model)
-    write(stream, string(lcover(d.source.key, dotindentation), cover(edgesign, dotspacing), d.target.key, "\n"))
+    write(stream, string(dotindentation, d.source.key, dotspacing, edgesign, dotspacing, d.target.key, "\n"))
   end
 
   write(stream, "}\n")
