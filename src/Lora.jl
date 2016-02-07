@@ -120,6 +120,7 @@ export
   count!,
   dataset,
   datasets,
+  diagnostics,
   edge_index,
   edges,
   erf_rate_score,

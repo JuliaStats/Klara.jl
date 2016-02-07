@@ -10,7 +10,7 @@ mcvar_iid(s::VariableNState{Univariate}) = mcvar_iid(s.value)
 
 mcvar_iid(s::VariableNState{Multivariate}, i::Int) = mcvar_iid(s.value[i, :])
 
-mcvar_iid(s::VariableNState{Multivariate}, r::Range=1:s.size) = eltype(s)[mcvar_iid(s, i) for i in r]
+mcvar_iid(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size) = eltype(s)[mcvar_iid(s, i) for i in r]
 
 ## Monte Carlo standard error assuming IID samples
 
@@ -22,7 +22,7 @@ mcse_iid(s::VariableNState{Univariate}) = mcse_iid(s.value)
 
 mcse_iid(s::VariableNState{Multivariate}, i::Int) = mcse_iid(s.value[i, :])
 
-mcse_iid(s::VariableNState{Multivariate}, r::Range=1:s.size) = eltype(s)[mcse_iid(s, i) for i in r]
+mcse_iid(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size) = eltype(s)[mcse_iid(s, i) for i in r]
 
 ## Monte Carlo variance using batch means
 ## Reference:
@@ -44,7 +44,7 @@ mcvar_bm(s::VariableNState{Univariate}; batchlen::Int=100) = mcvar_bm(s.value, b
 
 mcvar_bm(s::VariableNState{Multivariate}, i::Int; batchlen::Int=100) = mcvar_bm(s.value[i, :], batchlen=batchlen)
 
-mcvar_bm(s::VariableNState{Multivariate}, r::Range=1:s.size; batchlen::Int=100) =
+mcvar_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; batchlen::Int=100) =
   eltype(s)[mcvar_bm(s, i, batchlen=batchlen) for i in r]
 
 ## Monte Carlo standard error using batch means
@@ -57,7 +57,7 @@ mcse_bm(s::VariableNState{Univariate}; batchlen::Int=100) = mcse_bm(s.value, bat
 
 mcse_bm(s::VariableNState{Multivariate}, i::Int; batchlen::Int=100) = mcse_bm(s.value[i, :], batchlen=batchlen)
 
-mcse_bm(s::VariableNState{Multivariate}, r::Range=1:s.size; batchlen::Int=100) =
+mcse_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; batchlen::Int=100) =
   eltype(s)[mcse_bm(s, i, batchlen=batchlen) for i in r]
 
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo variance
@@ -108,7 +108,7 @@ mcvar_imse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcvar_imse(s.valu
 
 mcvar_imse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcvar_imse(s.value[i, :], maxlag=maxlag)
 
-mcvar_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+mcvar_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcvar_imse(s, i, maxlag=maxlag) for i in r]
 
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo standard error
@@ -123,7 +123,7 @@ mcse_imse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcse_imse(s.value,
 
 mcse_imse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcse_imse(s.value[i, :], maxlag=maxlag)
 
-mcse_imse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+mcse_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcse_imse(s, i, maxlag=maxlag) for i in r]
 
 ## Initial positive sequence estimator (IPSE) of Monte Carlo variance
@@ -165,7 +165,7 @@ mcvar_ipse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcvar_ipse(s.valu
 
 mcvar_ipse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcvar_ipse(s.value[i, :], maxlag=maxlag)
 
-mcvar_ipse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+mcvar_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcvar_ipse(s, i, maxlag=maxlag) for i in r]
 
 ## Initial positive sequence estimator (IPSE) of Monte Carlo standard error
@@ -180,7 +180,7 @@ mcse_ipse(s::VariableNState{Univariate}; maxlag::Int=s.n-1) = mcse_ipse(s.value,
 
 mcse_ipse(s::VariableNState{Multivariate}, i::Int; maxlag::Int=s.n-1) = mcse_ipse(s.value[i, :], maxlag=maxlag)
 
-mcse_ipse(s::VariableNState{Multivariate}, r::Range=1:s.size; maxlag::Int=s.n-1) =
+mcse_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Int=s.n-1) =
   eltype(s)[mcse_ipse(s, i, maxlag=maxlag) for i in r]
 
 ## Wrapper function for estimating Monte Carlo variance using various approaches
@@ -197,7 +197,7 @@ mcvar(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcvar_funct
 
 mcvar(s::VariableNState{Multivariate}, i::Int; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](s, i; args...)
 
-mcvar(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, args...) =
+mcvar(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; vtype::Symbol=:imse, args...) =
   mcvar_functions[vtype](s, r; args...)
 
 ## Wrapper function for estimating Monte Carlo standard error using various approaches
@@ -210,4 +210,5 @@ mcse(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcse_functio
 
 mcse(s::VariableNState{Multivariate}, i::Int; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s, i; args...)
 
-mcse(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s, r; args...)
+mcse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; vtype::Symbol=:imse, args...) =
+  mcse_functions[vtype](s, r; args...)

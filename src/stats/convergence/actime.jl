@@ -10,5 +10,5 @@ actime(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = actime(s.v
 
 actime(s::VariableNState{Multivariate}, i::Int; vtype::Symbol=:imse, args...) = actime(s.value[i, :]; vtype=vtype, args...)
 
-actime(s::VariableNState{Multivariate}, r::Range=1:s.size; vtype::Symbol=:imse, args...) =
+actime(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; vtype::Symbol=:imse, args...) =
   eltype(s)[actime(s, i; vtype=vtype, args...) for i in r]
