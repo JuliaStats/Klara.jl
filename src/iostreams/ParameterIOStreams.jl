@@ -390,7 +390,7 @@ function Base.show(io::IO, iostream::BasicContParamIOStream)
     print(io, "\n")
     for i in 1:13
       if fbool[i]
-        println(io, (indentation^2)*fnames[i])
+        println(io, string(indentation^2, fnames[i]))
       end
     end
   end
@@ -401,7 +401,7 @@ function Base.show(io::IO, iostream::BasicContParamIOStream)
   else
     for k in iostream.diagnostickeys
       print(io, "\n")
-      print(io, (indentation^2)*k)
+      print(io, string(indentation^2, k))
     end
   end
 end

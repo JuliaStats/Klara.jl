@@ -43,6 +43,6 @@ job = GibbsJob(
 
 chains = Dict(job)
 
-[mean(chains[k].value) for k in keys(chains)]
+[mean(chains[k]) for k in keys(chains)]
 
 cor(chains[:p1].value, chains[:p2].value)

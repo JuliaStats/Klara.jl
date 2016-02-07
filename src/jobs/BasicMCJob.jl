@@ -371,6 +371,7 @@ output(job::BasicMCJob) = job.output
 
 function Base.show(io::IO, job::BasicMCJob)
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
+
   indentation = "  "
 
   println(io, "BasicMCJob:")

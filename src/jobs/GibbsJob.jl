@@ -463,6 +463,8 @@ function Base.show(io::IO, job::GibbsJob)
   isimperative = job.imperative ? "imperative graph traversal" : "declarative graph traversal via topologically sorted nodes"
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
 
+  indentation = "  "
+
   println(io, "GibbsJob:")
   print(io, string(
     indentation,
