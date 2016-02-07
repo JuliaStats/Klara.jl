@@ -1,8 +1,4 @@
-function acceptance(v::AbstractArray{Bool}, accept::Bool=true)
-  nv = length(v)
-  result = (accept ? 100*sum(v)/nv : 100*(nv-sum(v))/nv)
-  return result
-end
+acceptance(v::AbstractArray{Bool}, accept::Bool=true) = (accept ? mean(v) : 1-mean(v))
 
 acceptance(v::AbstractArray, accept::Bool=true) = acceptance(convert(AbstractArray{Bool}, v), accept)
 
