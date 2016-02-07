@@ -113,6 +113,7 @@ export
   VariableState,
 
   ### Functions
+  acceptance,
   actime,
   add_dimension,
   add_edge!,
@@ -211,6 +212,7 @@ include("samplers/iterate/RAM.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
 
+include("stats/acceptance.jl")
 include("stats/mean.jl")
 
 include("stats/variance/mcvar.jl")
