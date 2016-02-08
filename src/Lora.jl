@@ -114,7 +114,6 @@ export
 
   ### Functions
   acceptance,
-  actime,
   add_dimension,
   add_edge!,
   add_vertex!,
@@ -126,6 +125,7 @@ export
   edges,
   erf_rate_score,
   ess,
+  iact,
   in_degree,
   in_edges,
   in_neighbors,
@@ -218,7 +218,7 @@ include("stats/mean.jl")
 include("stats/variance/mcvar.jl")
 include("stats/variance/zv.jl")
 
-include("stats/convergence/actime.jl")
 include("stats/convergence/ess.jl")
+include("stats/convergence/iact.jl")
 
 end
