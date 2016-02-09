@@ -82,6 +82,7 @@ export
   GenericModel,
   GibbsJob,
   HMCSampler,
+  HMCState,
   Hyperparameter,
   LMCSampler,
   MALA,
@@ -96,6 +97,7 @@ export
   MHSampler,
   MHState,
   MarkovChain,
+  MuvHMCState,
   MuvMALAState,
   Parameter,
   ParameterIOStream,
@@ -201,6 +203,7 @@ include("tuners/AcceptanceRateMCTuner.jl")
 include("samplers/samplers.jl")
 include("samplers/MH.jl")
 include("samplers/RAM.jl")
+include("samplers/HMC.jl")
 include("samplers/MALA.jl")
 
 include("jobs/jobs.jl")
