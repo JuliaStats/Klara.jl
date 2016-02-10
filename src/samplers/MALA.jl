@@ -121,7 +121,7 @@ function initialize!(
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
 end
 
-## Initialize MuvMALAState
+## Initialize MALA state
 
 sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
   UnvMALAState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))

@@ -212,6 +212,7 @@ include("jobs/GibbsJob.jl")
 
 include("samplers/iterate/MH.jl")
 include("samplers/iterate/RAM.jl")
+include("samplers/iterate/HMC.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/iterate.jl")
 
