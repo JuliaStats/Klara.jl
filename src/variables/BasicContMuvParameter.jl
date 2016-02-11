@@ -52,7 +52,7 @@ type BasicContMuvParameter{S<:VariableState} <: Parameter{Continuous, Multivaria
     fnames = fieldnames(BasicContMuvParameter)[5:21]
 
     # Check that all generic functions have correct signature
-    for i = 1:17
+    for i in 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
         !(any([method_exists(args[i], (BasicContMuvParameterState, Vector{S})) for S in subtypes(VariableState)]))

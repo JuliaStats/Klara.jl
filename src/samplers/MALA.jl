@@ -107,8 +107,8 @@ function initialize!(
   sampler::MALA
 )
   parameter.uptogradlogtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
-  @assert isfinite(pstate.gradlogtarget) "Gradient of log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
+  @assert isfinite(pstate.gradlogtarget) "Gradient of log-target not finite: initial value out of parameter support"
 end
 
 function initialize!(

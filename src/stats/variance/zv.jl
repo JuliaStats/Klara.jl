@@ -23,7 +23,7 @@ function lzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
 
   z = -0.5*grad
 
-  for i = 1:npars
+  for i in 1:npars
      augmentedcov[:, :, i] = cov([z chain[:, i]])
      precision[:, :, i] = inv(augmentedcov[1:npars, 1:npars, i])
      sigma[:, i] = augmentedcov[1:npars, npars+1, i]
@@ -62,14 +62,14 @@ function qzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
 
   qz[:, 1:npars] = z
   qz[:, (npars+1):(2*npars)] = 2*z.*chain-1
-  for i = 1:(npars-1)
+  for i in 1:(npars-1)
     for j = (i+1):npars
       qz[:, l] = chain[:, i].*z[:, j]+chain[:, j].*z[:, i]
       l += 1
     end
   end
 
-  for i = 1:npars
+  for i in 1:npars
     augmentedcov[:, :, i] = cov([qz chain[:, i]])
     precision[:, :, i] = inv(augmentedcov[1:k, 1:k, i])
     sigma[:, i] = augmentedcov[1:k, k+1, i]

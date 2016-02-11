@@ -119,7 +119,7 @@ function initialize!(
   sampler::RAM
 )
   parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
 end
 
 function initialize!(

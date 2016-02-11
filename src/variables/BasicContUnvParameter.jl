@@ -59,7 +59,7 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
     fnames = fieldnames(BasicContUnvParameter)[5:21]
 
     # Check that all generic functions have correct signature
-    for i = 1:17
+    for i in 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
         !(any([method_exists(args[i], (BasicContUnvParameterState, Vector{S})) for S in subtypes(VariableState)]))

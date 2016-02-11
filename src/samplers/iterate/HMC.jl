@@ -46,7 +46,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
 
   push!(body, :(
     for i in 1:$(job).sampler.nleaps
-      leapfrog!($(job).sstate, $(job).parameter)
+      leapfrog!($(job).sstate, $(job).parameter, $(stepsize))
     end
   ))
 
