@@ -25,7 +25,7 @@ type MuvHMCState{N<:Real} <: HMCState
     newhamiltonian::Real
   )
     if !isnan(leapstep)
-      @assert leapstep > 0 "Drift step size must be positive"
+      @assert leapstep > 0 "Leap step size must be positive"
     end
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
@@ -57,7 +57,7 @@ immutable HMC <: HMCSampler
   nleaps::Int
   leapstep::Real
 
-  function HMC(nl::Int, leapstep::Real)
+  function HMC(nleaps::Int, leapstep::Real)
     @assert nleaps > 0 "Number of leapfrog steps is not positive"
     @assert leapstep > 0 "Leapfrog step is not positive"
     new(nleaps, leapstep)
@@ -83,7 +83,7 @@ end
 ## Initialize HMC state
 
 sampler_state(sampler::HMC, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
-  MuvHMCState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))
+  MuvHMCState(generate_empty(pstate), sampler.leapstep, tuner_state(sampler, tuner))
 
 ## Reset parameter state
 

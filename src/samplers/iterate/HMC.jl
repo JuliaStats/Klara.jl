@@ -25,6 +25,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
   push!(body, :($(job).sstate.oldhamiltonian = hamiltonian($(job).pstate.logtarget, $(job).sstate.momentum)))
 
   if vform == Univariate
+    push!(body, :($(job).sstate.pstate.value = $(job).pstate.value))
     push!(body, :($(job).sstate.pstate.gradlogtarget = $(job).pstate.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
       push!(body, :($(job).sstate.pstate.gradloglikelihood = $(job).pstate.gradloglikelihood))
@@ -33,6 +34,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
       push!(body, :($(job).sstate.pstate.gradlogprior = $(job).pstate.gradlogprior))
     end
   elseif vform == Multivariate
+    push!(body, :($(job).sstate.pstate.value = copy($(job).pstate.value)))
     push!(body, :($(job).sstate.pstate.gradlogtarget = copy($(job).pstate.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
       push!(body, :($(job).sstate.pstate.gradloglikelihood = copy($(job).pstate.gradloglikelihood)))
@@ -50,7 +52,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
 
   push!(body, :($(job).parameter.logtarget!($(job).sstate.pstate)))
 
-  push!(body, :($(job).sstate.newhamiltonian = hamiltonian($(job).sttate.pstate.logtarget, $(job).sstate.momentum)))
+  push!(body, :($(job).sstate.newhamiltonian = hamiltonian($(job).sstate.pstate.logtarget, $(job).sstate.momentum)))
 
   push!(body, :($(job).sstate.ratio = $(job).sstate.oldhamiltonian-$(job).sstate.newhamiltonian))
 

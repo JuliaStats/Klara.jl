@@ -81,6 +81,7 @@ export
   Deterministic,
   GenericModel,
   GibbsJob,
+  HMC,
   HMCSampler,
   HMCState,
   Hyperparameter,
