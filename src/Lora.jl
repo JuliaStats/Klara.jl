@@ -55,6 +55,8 @@ import ReverseDiffSource
 
 export
   ### Types
+  ARS,
+  ARSState,
   AcceptanceRateMCTune,
   AcceptanceRateMCTuner,
   BasicContMuvParameter,
@@ -202,6 +204,7 @@ include("tuners/VanillaMCTuner.jl")
 include("tuners/AcceptanceRateMCTuner.jl")
 
 include("samplers/samplers.jl")
+include("samplers/ARS.jl")
 include("samplers/MH.jl")
 include("samplers/RAM.jl")
 include("samplers/HMC.jl")
