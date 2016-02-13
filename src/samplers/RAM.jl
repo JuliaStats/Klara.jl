@@ -113,22 +113,13 @@ RAM(S0::Real=1., n::Int=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, 
 
 ## Initialize parameter state
 
-function initialize!(
-  pstate::ParameterState{Continuous, Univariate},
-  parameter::Parameter{Continuous, Univariate},
+function initialize!{F<:VariateForm}(
+  pstate::ParameterState{Continuous, F},
+  parameter::Parameter{Continuous, F},
   sampler::RAM
 )
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-end
-
-function initialize!(
-  pstate::ParameterState{Continuous, Multivariate},
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::RAM
-)
-  parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
 ## Initialize MuvRAMState

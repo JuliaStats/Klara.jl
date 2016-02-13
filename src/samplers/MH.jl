@@ -54,22 +54,9 @@ MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> rand(Normal(x, 1.0)))
 
 ## Initialize parameter state
 
-function initialize!(
-  pstate::ParameterState{Continuous, Univariate},
-  parameter::Parameter{Continuous, Univariate},
-  sampler::MH
-)
+function initialize!{F<:VariateForm}(pstate::ParameterState{Continuous, F}, parameter::Parameter{Continuous, F}, sampler::MH)
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-end
-
-function initialize!(
-  pstate::ParameterState{Continuous, Multivariate},
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::MH
-)
-  parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
 end
 
 ## Initialize MHState

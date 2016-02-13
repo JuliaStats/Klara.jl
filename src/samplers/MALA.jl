@@ -101,23 +101,13 @@ MALA() = MALA(1.)
 
 ## Initialize parameter state
 
-function initialize!(
-  pstate::ParameterState{Continuous, Univariate},
-  parameter::Parameter{Continuous, Univariate},
+function initialize!{F<:VariateForm}(
+  pstate::ParameterState{Continuous, F},
+  parameter::Parameter{Continuous, F},
   sampler::MALA
 )
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-  @assert isfinite(pstate.gradlogtarget) "Gradient of log-target not finite: initial value out of parameter support"
-end
-
-function initialize!(
-  pstate::ParameterState{Continuous, Multivariate},
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::MALA
-)
-  parameter.uptogradlogtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial values out of parameter support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
 end
 

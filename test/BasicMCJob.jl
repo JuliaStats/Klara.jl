@@ -37,6 +37,10 @@ job = BasicMCJob(
 
 chain = output(job)
 
+mean(chain)
+
+acceptance(chain)
+
 # Example 2: univariate parameter
 
 # using Lora
@@ -71,3 +75,7 @@ job = BasicMCJob(
 @time run(job)
 
 chain = output(job)
+
+mean(chain)
+
+acceptance(chain, diagnostics=false)

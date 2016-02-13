@@ -15,7 +15,7 @@ ARSState(pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) = ARSState(
 
 immutable ARS <: MCSampler
   logproposal::Function # Possibly unnormalized log-proposal (envelope)
-  proposalscale::Real # Scale factor to ensure scaled-up logproposal (envelope) covers target
+  proposalscale::Real # Scale factor for logproposal (envelope) to cover target
   jumpscale::Real # Scale factor for adapting jump size
 
   function ARS(logproposal::Function, proposalscale::Real, jumpscale::Real)

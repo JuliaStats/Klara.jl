@@ -1,6 +1,6 @@
 acceptance(v::AbstractArray{Bool}) = mean(v)
 
-function acceptance{N<:Number}(v::AbstractArray{N})
+function acceptance(v::AbstractArray)
   accepted = 1
   n = length(v)
 
@@ -13,13 +13,24 @@ function acceptance{N<:Number}(v::AbstractArray{N})
   return accepted/n
 end
 
-acceptance(v::AbstractArray) = acceptance(convert(AbstractArray{Bool}, v))
-
 acceptance(v::AbstractArray, region) = mapslices(acceptance, v, region)
 
-function acceptance(s::ParameterNState, key::Symbol=:accept)
-  i = findfirst(s.diagnostickeys, key)
-  i == 0 ? acceptance(s.value) : acceptance(s.diagnosticvalues[i, :])
+function acceptance{S<:ValueSupport}(s::ParameterNState{S, Univariate}; key::Symbol=:accept, diagnostics::Bool=true)
+  if diagnostics
+    return acceptance(convert(Array{Bool, 2}, s.diagnosticvalues[findfirst(s.diagnostickeys, key), :]))
+  else
+    return acceptance(s.value)
+  end
 end
 
-acceptance(s::VariableNState, key::Symbol=:accept) = acceptance(s.value)
+acceptance(s::VariableNState{Univariate}) = acceptance(s.value)
+
+function acceptance{S<:ValueSupport}(s::ParameterNState{S, Multivariate}; key::Symbol=:accept, diagnostics::Bool=true)
+  if diagnostics
+    return acceptance(convert(Array{Bool, 2}, s.diagnosticvalues[findfirst(s.diagnostickeys, key), :]))
+  else
+    return acceptance(Any[s.value[:, i] for i in 1:s.n])
+  end
+end
+
+acceptance(s::VariableNState{Multivariate}) = acceptance(Any[s.value[:, i] for i in 1:s.n])
