@@ -8,7 +8,6 @@ abstract MALAState <: MCSamplerState
 
 type UnvMALAState <: MALAState
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by MALA
-  driftstep::Real # Drift stepsize for a single Monte Carlo iteration
   tune::MCTunerState
   ratio::Real
   vmean::Real
@@ -17,31 +16,26 @@ type UnvMALAState <: MALAState
 
   function UnvMALAState(
     pstate::ParameterState{Continuous, Univariate},
-    driftstep::Real,
     tune::MCTunerState,
     ratio::Real,
     vmean::Real,
     pnewgivenold::Real,
     poldgivennew::Real
   )
-    if !isnan(driftstep)
-      @assert driftstep > 0 "Drift step size must be positive"
-    end
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
+    new(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
   end
 end
 
-UnvMALAState(pstate::ParameterState{Continuous, Univariate}, driftstep::Real=1., tune::MCTunerState=VanillaMCTune()) =
-  UnvMALAState(pstate, driftstep, tune, NaN, NaN, NaN, NaN)
+UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=VanillaMCTune()) =
+  UnvMALAState(pstate, tune, NaN, NaN, NaN, NaN)
 
 ## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
 type MuvMALAState{N<:Real} <: MALAState
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by MALA
-  driftstep::Real # Drift stepsize for a single Monte Carlo iteration
   tune::MCTunerState
   ratio::Real
   vmean::Vector{N}
@@ -50,36 +44,31 @@ type MuvMALAState{N<:Real} <: MALAState
 
   function MuvMALAState(
     pstate::ParameterState{Continuous, Multivariate},
-    driftstep::Real,
     tune::MCTunerState,
     ratio::Real,
     vmean::Vector{N},
     pnewgivenold::Real,
     poldgivennew::Real
   )
-    if !isnan(driftstep)
-      @assert driftstep > 0 "Drift step size must be positive"
-    end
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
+    new(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
   end
 end
 
 MuvMALAState{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},
-  driftstep::Real,
   tune::MCTunerState,
   ratio::Real,
   vmean::Vector{N},
   pnewgivenold::Real,
   poldgivennew::Real
 ) =
-  MuvMALAState{N}(pstate, driftstep, tune, ratio, vmean, pnewgivenold, poldgivennew)
+  MuvMALAState{N}(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
 
-MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, driftstep::Real=1., tune::MCTunerState=VanillaMCTune()) =
-  MuvMALAState(pstate, driftstep, tune, NaN, Array(eltype(pstate), pstate.size), NaN, NaN)
+MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=VanillaMCTune()) =
+  MuvMALAState(pstate, tune, NaN, Array(eltype(pstate), pstate.size), NaN, NaN)
 
 Base.eltype{N<:Real}(::Type{MuvMALAState{N}}) = N
 Base.eltype{N<:Real}(s::MuvMALAState{N}) = N
@@ -114,10 +103,10 @@ end
 ## Initialize MALA state
 
 sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
-  UnvMALAState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))
+  UnvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
 
 sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
-  MuvMALAState(generate_empty(pstate), sampler.driftstep, tuner_state(sampler, tuner))
+  MuvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state
 

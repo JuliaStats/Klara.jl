@@ -10,7 +10,7 @@ function codegen_iterate_mala(job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in MALA code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sstate.driftstep)
+  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sampler.driftstep)
 
   if job.tuner.verbose
     push!(body, :($(job).sstate.tune.proposed += 1))

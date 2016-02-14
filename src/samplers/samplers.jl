@@ -23,6 +23,7 @@ abstract LMCSampler <: MCSampler
 tuner_state(sampler::MCSampler, tuner::VanillaMCTuner) = VanillaMCTune(0, 0, tuner.period)
 
 tuner_state(sampler::MHSampler, tuner::AcceptanceRateMCTuner) = AcceptanceRateMCTune(1., 0, 0, tuner.period)
+tuner_state(sampler::HMCSampler, tuner::AcceptanceRateMCTuner) = AcceptanceRateMCTune(sampler.leapstep, 0, 0, tuner.period)
 tuner_state(sampler::LMCSampler, tuner::AcceptanceRateMCTuner) = AcceptanceRateMCTune(sampler.driftstep, 0, 0, tuner.period)
 
 reset!(tune::VanillaMCTune, sampler::MCSampler, tuner::VanillaMCTuner) =

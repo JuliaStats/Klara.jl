@@ -10,7 +10,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in HMC code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sstate.leapstep)
+  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sampler.leapstep)
 
   if job.tuner.verbose
     push!(body, :($(job).sstate.tune.proposed += 1))

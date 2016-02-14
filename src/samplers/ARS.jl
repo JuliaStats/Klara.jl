@@ -25,3 +25,48 @@ immutable ARS <: MCSampler
 end
 
 ARS(logproposal::Function; proposalscale::Real=1., jumpscale::Real=1.) = ARS(logproposal, proposalscale, jumpscale)
+
+### Initialize ARS sampler
+
+## Initialize parameter state
+
+function initialize!{F<:VariateForm}(
+  pstate::ParameterState{Continuous, F},
+  parameter::Parameter{Continuous, F},
+  sampler::ARS
+)
+  parameter.logtarget!(pstate)
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
+end
+
+## Initialize ARSState
+
+sampler_state(sampler::ARS, tuner::MCTuner, pstate::ParameterState) =
+  ARSState(generate_empty(pstate), tuner_state(sampler, tuner))
+
+## Reset parameter state
+
+function reset!(
+  pstate::ParameterState{Continuous, Univariate},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::ARS
+)
+  pstate.value = x
+  parameter.logtarget!(pstate)
+end
+
+function reset!{N<:Real}(
+  pstate::ParameterState{Continuous, Multivariate},
+  x::Vector{N},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::ARS
+)
+  pstate.value = copy(x)
+  parameter.logtarget!(pstate)
+end
+
+Base.show(io::IO, sampler::ARS) =
+  print(io, "ARS sampler: proposal scale = $(sampler.proposalscale), jump scale = $(sampler.jumpscale)")
+
+Base.writemime(io::IO, ::MIME"text/plain", sampler::ARS) = show(io, sampler)
