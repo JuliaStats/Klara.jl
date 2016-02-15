@@ -214,6 +214,7 @@ include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
 include("jobs/GibbsJob.jl")
 
+include("samplers/iterate/ARS.jl")
 include("samplers/iterate/MH.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/HMC.jl")
