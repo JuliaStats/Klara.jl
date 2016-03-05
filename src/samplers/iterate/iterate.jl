@@ -11,6 +11,8 @@ function codegen_iterate_basicmcjob(job::BasicMCJob)
     result = codegen_iterate_hmc(job)
   elseif isa(job.sampler, MALA)
     result = codegen_iterate_mala(job)
+  elseif isa(job.sampler, SMMALA)
+    result = codegen_iterate_smmala(job)
   end
 
   result

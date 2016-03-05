@@ -29,7 +29,21 @@ tuner_state(sampler::LMCSampler, tuner::AcceptanceRateMCTuner) = AcceptanceRateM
 reset!(tune::VanillaMCTune, sampler::MCSampler, tuner::VanillaMCTuner) =
   ((tune.accepted, tune.proposed, tune.totproposed, tune.rate) = (0, 0, tuner.period, NaN))
 
+function reset!(tune::AcceptanceRateMCTune, sampler::HMCSampler, tuner::AcceptanceRateMCTuner)
+  tune.step = sampler.leapstep
+  (tune.accepted, tune.proposed, tune.totproposed, tune.rate) = (0, 0, tuner.period, NaN)
+end
+
 function reset!(tune::AcceptanceRateMCTune, sampler::LMCSampler, tuner::AcceptanceRateMCTuner)
   tune.step = sampler.driftstep
   (tune.accepted, tune.proposed, tune.totproposed, tune.rate) = (0, 0, tuner.period, NaN)
 end
+
+reset!{S<:ValueSupport, F<:VariateForm}(
+  sstate::MCSamplerState,
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
+) =
+  reset!(sstate.tune, sampler, tuner)

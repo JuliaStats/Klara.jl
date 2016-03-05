@@ -102,12 +102,15 @@ export
   MarkovChain,
   MuvHMCState,
   MuvMALAState,
+  MuvSMMALAState,
   Parameter,
   ParameterIOStream,
   ParameterNState,
   ParameterState,
   RAM,
   Random,
+  SMMALA,
+  SMMALAState,
   Sampleability,
   Transformation,
   VanillaMCTune,
@@ -209,6 +212,7 @@ include("samplers/MH.jl")
 include("samplers/RAM.jl")
 include("samplers/HMC.jl")
 include("samplers/MALA.jl")
+include("samplers/SMMALA.jl")
 
 include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
@@ -219,6 +223,7 @@ include("samplers/iterate/MH.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/HMC.jl")
 include("samplers/iterate/MALA.jl")
+include("samplers/iterate/SMMALA.jl")
 include("samplers/iterate/iterate.jl")
 
 include("stats/acceptance.jl")

@@ -213,7 +213,7 @@ function codegen_resetplain_basicmcjob(job::BasicMCJob)
     push!(body, :(reset!($(job).pstate, _x, $(job).parameter, $(job).sampler)))
   end
 
-  push!(body, :(reset!($(job).sstate.tune, $(job).sampler, $(job).tuner)))
+  push!(body, :(reset!($(job).sstate, $(job).pstate, $(job).parameter, $(job).sampler, $(job).tuner)))
 
   if isa(job.output, VariableIOStream)
     push!(body, :($(job).output.reset()))
