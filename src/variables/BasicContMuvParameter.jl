@@ -471,13 +471,11 @@ function BasicContMuvParameter{S<:VariableState}(
     error("autodiff must be :nore or :forward or :reverse, got $autodiff")
   end
 
-  if order < 0 || order > 1
-    error("Derivative order must be 0 or 1, got $order")
+  if order < 0 || order > 2
+    error("Derivative order must be 0, 1 or 2, got $order")
   elseif autodiff != :reverse && order == 0
     error("Zero order can be used only with reverse mode autodiff")
   end
-
-  @assert 0 <= order <= 3 "Derivative order must be 0 or 1 or 2 or 3, got $order"
 
   @assert chunksize >= 0 "chunksize must be non-negative, got $chunksize"
 
@@ -541,8 +539,21 @@ function BasicContMuvParameter{S<:VariableState}(
       ))
     end
 
-    # if order >= 2
-    # end
+    if order >= 2
+      for i in 9:11
+        if !isa(inargs[i], Function) && isa(inargs[i-6], Function)
+          outargs[i] = eval(codegen_internal_variable_method(
+            v -> -forward_autodiff_function(:hessian, fadclosure[i-8], false, chunksize)(v), fnames[i], 0
+          ))
+        end
+      end
+
+      if !isa(inargs[16], Function) && isa(inargs[5], Function)
+        outargs[16] = eval(codegen_internal_variable_method(
+          eval(codegen_forward_autodiff_uptofunction(:hessian, fadclosure[3], chunksize)), fnames[16], 0
+        ))
+      end
+    end
 
     # if order == 3
     # end

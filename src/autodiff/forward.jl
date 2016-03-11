@@ -30,6 +30,14 @@ function codegen_forward_autodiff_uptofunction(method::Symbol, f::Function, chun
         return ForwardDiff.value(allresults), result
       end
     end
+  elseif method == :hessian
+    @gensym forward_autodiff_uptofunction
+    quote
+      function $forward_autodiff_uptofunction(_x::Vector)
+        result, allresults = $(adfunction)(_x)
+        return ForwardDiff.value(allresults), ForwardDiff.gradient(allresults), -result
+      end
+    end
   else
     error("No support for generation of forward mode autodiff uptofunction for $method")
   end
