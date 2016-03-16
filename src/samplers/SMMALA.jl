@@ -4,6 +4,56 @@ abstract SMMALAState <: MCSamplerState
 
 ### SMMALA state subtypes
 
+## UnvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for univariate parameters
+
+type UnvSMMALAState <: SMMALAState
+  pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by SMMALA
+  tune::MCTunerState
+  ratio::Real
+  vmean::Real
+  pnewgivenold::Real
+  poldgivennew::Real
+  newinvtensor::Real
+  oldinvtensor::Real
+  cholinvtensor::Real
+  newfirstterm::Real
+  oldfirstterm::Real
+
+  function UnvSMMALAState(
+    pstate::ParameterState{Continuous, Univariate},
+    tune::MCTunerState,
+    ratio::Real,
+    vmean::Real,
+    pnewgivenold::Real,
+    poldgivennew::Real,
+    newinvtensor::Real,
+    oldinvtensor::Real,
+    cholinvtensor::Real,
+    newfirstterm::Real,
+    oldfirstterm::Real
+  )
+    if !isnan(ratio)
+      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+    end
+    new(
+      pstate,
+      tune,
+      ratio,
+      vmean,
+      pnewgivenold,
+      poldgivennew,
+      newinvtensor,
+      oldinvtensor,
+      cholinvtensor,
+      newfirstterm,
+      oldfirstterm
+    )
+  end
+end
+
+UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=VanillaMCTune()) =
+  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
 type MuvSMMALAState{N<:Real} <: SMMALAState
@@ -126,6 +176,13 @@ end
 
 ## Initialize SMMALA state
 
+function sampler_state(sampler::SMMALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate})
+  sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
+  sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
+  sstate
+end
+
 function sampler_state(sampler::SMMALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate})
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
@@ -136,6 +193,16 @@ end
 ### Reset SMMALA sampler
 
 ## Reset parameter state
+
+function reset!(
+  pstate::ParameterState{Continuous, Univariate},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::SMMALA
+)
+  pstate.value = x
+  parameter.uptotensorlogtarget!(pstate)
+end
 
 function reset!{N<:Real}(
   pstate::ParameterState{Continuous, Multivariate},
