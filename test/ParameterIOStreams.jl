@@ -38,7 +38,7 @@ end
 @test iostream.n == iostreamn
 @test length(iostream.diagnostickeys) == 0
 
-iostream.close()
+close(iostream)
 rm(filenames[1])
 
 iostreamsize = (2,)
@@ -61,7 +61,7 @@ end
 @test iostream.n == iostreamn
 @test length(iostream.diagnostickeys) == 1
 
-iostream.close()
+close(iostream)
 for i in (1, 7, 14); rm(filenames[i]); end
 
 iostreamsize = (3,)
@@ -78,7 +78,7 @@ end
 @test iostream.n == iostreamn
 @test length(iostream.diagnostickeys) == 1
 
-iostream.close()
+close(iostream)
 for i in [1, 4, 14]; rm(filenames[i]); end
 
 println("    Testing BasicContParamIOStream IO methods...")
@@ -91,10 +91,10 @@ iostreamn = length(nstatev)
 
 iostream = BasicContParamIOStream(iostreamsize, iostreamn, filepath=filepath)
 for v in nstatev
-  iostream.write(BasicContUnvParameterState(v))
+  write(iostream, BasicContUnvParameterState(v))
 end
 
-iostream.close()
+close(iostream)
 
 iostream = BasicContParamIOStream(iostreamsize, iostreamn, filepath=filepath, mode="r")
 nstate = read(iostream, Float64)
@@ -108,7 +108,7 @@ end
 @test size(nstate.diagnosticvalues) == (0, 0)
 @test nstate.n == iostream.n
 
-iostream.close()
+close(iostream)
 rm(filenames[1])
 
 println("      Interaction with ContUnvMarkovChain...")
@@ -124,7 +124,7 @@ nstatein.value = nstatev
 nstatein.diagnosticvalues = nstated
 write(iostream, nstatein)
 
-iostream.close()
+close(iostream)
 
 iostream = BasicContParamIOStream(iostreamsize, iostreamn, [:value], filepath=filepath, diagnostickeys=[:accept], mode="r")
 nstateout = read(iostream, Float32)
@@ -138,7 +138,7 @@ end
 @test nstateout.diagnosticvalues == nstatein.diagnosticvalues
 @test nstateout.n == nstatein.n
 
-iostream.close()
+close(iostream)
 for i in (1, 14); rm(filenames[i]); end
 
 println("      Interaction with BasicContMuvParameterState...")
@@ -155,10 +155,10 @@ iostream = BasicContParamIOStream(
 for i in 1:iostreamn
   state = BasicContMuvParameterState(nstatev[:, i], Symbol[], [:accept], [nstated[i]])
   state.gradloglikelihood = nstategll[:, i]
-  iostream.write(state)
+  write(iostream, state)
 end
 
-iostream.close()
+close(iostream)
 
 iostream = BasicContParamIOStream(
   iostreamsize, iostreamn, [:value, :gradloglikelihood], filepath=filepath, diagnostickeys=[:accept], mode="r"
@@ -176,7 +176,7 @@ end
 @test nstate.size == iostream.size[1]
 @test nstate.n == iostream.n
 
-iostream.close()
+close(iostream)
 for i in (1, 5, 14); rm(filenames[i]); end
 
 println("      Interaction with ContMuvMarkovChain...")
@@ -198,7 +198,7 @@ nstatein.logtarget = nstatelt
 nstatein.diagnosticvalues = nstated
 write(iostream, nstatein)
 
-iostream.close()
+close(iostream)
 
 iostream = BasicContParamIOStream(
   iostreamsize, iostreamn, [:value, :loglikelihood, :logtarget], filepath=filepath, diagnostickeys=[:accept], mode="r"
@@ -216,5 +216,5 @@ end
 @test nstateout.diagnosticvalues == nstatein.diagnosticvalues
 @test nstateout.n == nstatein.n
 
-iostream.close()
+close(iostream)
 for i in (1, 2, 4, 14); rm(filenames[i]); end

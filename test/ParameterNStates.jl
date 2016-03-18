@@ -50,7 +50,7 @@ state = BasicContUnvParameterState(statev, [:accept], [true])
 state.gradlogtarget = stateglt
 savei = 2
 
-nstate.copy(state, savei)
+copy!(nstate, state, savei)
 @test nstate.value[savei] == statev
 @test nstate.gradlogtarget[savei] == stateglt
 nstate.diagnosticvalues[savei] == true
@@ -74,7 +74,7 @@ state = BasicContUnvParameterState(statev, [:accept], [false])
 state.logtarget = statelt
 savei = 7
 
-nstate.copy(state, savei)
+copy!(nstate, state, savei)
 @test nstate.value[savei] == statev
 @test nstate.logtarget[savei] == statelt
 nstate.diagnosticvalues[savei] == false
@@ -140,7 +140,7 @@ state = BasicContMuvParameterState(statev, [:gradloglikelihood], [:accept], [fal
 state.gradloglikelihood = stategll
 savei = 3
 
-nstate.copy(state, savei)
+copy!(nstate, state, savei)
 @test nstate.value[:, savei] == statev
 @test nstate.gradloglikelihood[:, savei] == stategll
 nstate.diagnosticvalues[savei] == false
@@ -178,7 +178,7 @@ state.logtarget = statelt
 state.gradlogtarget = stateglt
 savei = 7
 
-nstate.copy(state, savei)
+copy!(nstate, state, savei)
 @test nstate.value[:, savei] == statev
 @test nstate.logtarget[savei] == statelt
 @test nstate.gradlogtarget[:, savei] == stateglt

@@ -10,31 +10,31 @@ function codegen_iterate_smmala(job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in SMMALA code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sampler.driftstep)
+  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_job.sstate.tune.step) : :(_job.sampler.driftstep)
 
   if job.tuner.verbose
-    push!(body, :($(job).sstate.tune.proposed += 1))
+    push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :($(job).sstate.vmean = $(job).pstate.value+0.5*$(stepsize)*$(job).sstate.oldfirstterm))
+  push!(body, :(_job.sstate.vmean = _job.pstate.value+0.5*$(stepsize)*_job.sstate.oldfirstterm))
 
-  push!(body, :($(job).sstate.cholinvtensor = chol($(stepsize)*$(job).sstate.oldinvtensor)))
+  push!(body, :(_job.sstate.cholinvtensor = chol($(stepsize)*_job.sstate.oldinvtensor)))
 
   if vform == Univariate
-    push!(body, :($(job).sstate.pstate.value = $(job).sstate.vmean+$(job).sstate.cholinvtensor*randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+_job.sstate.cholinvtensor*randn()))
   elseif vform == Multivariate
-    push!(body, :($(job).sstate.pstate.value = $(job).sstate.vmean+$(job).sstate.cholinvtensor'*randn($(job).pstate.size)))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+_job.sstate.cholinvtensor'*randn(_job.pstate.size)))
   end
 
-  push!(body, :($(job).parameter.uptotensorlogtarget!($(job).sstate.pstate)))
+  push!(body, :(_job.parameter.uptotensorlogtarget!(_job.sstate.pstate)))
 
   if vform == Univariate
     push!(
       body,
       :(
-        $(job).sstate.pnewgivenold = (
-          -log($(job).sstate.cholinvtensor)
-          -0.5*abs2($(job).sstate.vmean-$(job).sstate.pstate.value)*$(job).pstate.tensorlogtarget/$(stepsize)
+        _job.sstate.pnewgivenold = (
+          -log(_job.sstate.cholinvtensor)
+          -0.5*abs2(_job.sstate.vmean-_job.sstate.pstate.value)*_job.pstate.tensorlogtarget/$(stepsize)
         )
       )
     )
@@ -42,30 +42,30 @@ function codegen_iterate_smmala(job::BasicMCJob)
     push!(
       body,
       :(
-        $(job).sstate.pnewgivenold = (
-          -sum(log(diag($(job).sstate.cholinvtensor)))
+        _job.sstate.pnewgivenold = (
+          -sum(log(diag(_job.sstate.cholinvtensor)))
           -0.5*dot(
-            $(job).sstate.vmean-$(job).sstate.pstate.value,
-            $(job).pstate.tensorlogtarget*($(job).sstate.vmean-$(job).sstate.pstate.value)
+            _job.sstate.vmean-_job.sstate.pstate.value,
+            _job.pstate.tensorlogtarget*(_job.sstate.vmean-_job.sstate.pstate.value)
           )/$(stepsize)
         )
       )
     )
   end
 
-  push!(body, :($(job).sstate.newinvtensor = inv($(job).sstate.pstate.tensorlogtarget)))
+  push!(body, :(_job.sstate.newinvtensor = inv(_job.sstate.pstate.tensorlogtarget)))
 
-  push!(body, :($(job).sstate.newfirstterm = $(job).sstate.newinvtensor*$(job).sstate.pstate.gradlogtarget))
+  push!(body, :(_job.sstate.newfirstterm = _job.sstate.newinvtensor*_job.sstate.pstate.gradlogtarget))
 
-  push!(body, :($(job).sstate.vmean = $(job).sstate.pstate.value+0.5*$(stepsize)*$(job).sstate.newfirstterm))
+  push!(body, :(_job.sstate.vmean = _job.sstate.pstate.value+0.5*$(stepsize)*_job.sstate.newfirstterm))
 
   if vform == Univariate
     push!(
       body,
       :(
-        $(job).sstate.poldgivennew = (
-          -log(chol($(stepsize)*$(job).sstate.newinvtensor))
-          -0.5*abs2($(job).sstate.vmean-$(job).pstate.value)*$(job).sstate.pstate.tensorlogtarget/$(stepsize)
+        _job.sstate.poldgivennew = (
+          -log(chol($(stepsize)*_job.sstate.newinvtensor))
+          -0.5*abs2(_job.sstate.vmean-_job.pstate.value)*_job.sstate.pstate.tensorlogtarget/$(stepsize)
         )
       )
     )
@@ -73,11 +73,11 @@ function codegen_iterate_smmala(job::BasicMCJob)
     push!(
       body,
       :(
-        $(job).sstate.poldgivennew = (
-          -sum(log(diag(chol($(stepsize)*$(job).sstate.newinvtensor))))
+        _job.sstate.poldgivennew = (
+          -sum(log(diag(chol($(stepsize)*_job.sstate.newinvtensor))))
           -0.5*dot(
-            $(job).sstate.vmean-$(job).pstate.value,
-            $(job).sstate.pstate.tensorlogtarget*($(job).sstate.vmean-$(job).pstate.value)
+            _job.sstate.vmean-_job.pstate.value,
+            _job.sstate.pstate.tensorlogtarget*(_job.sstate.vmean-_job.pstate.value)
           )/$(stepsize)
         )
       )
@@ -87,73 +87,70 @@ function codegen_iterate_smmala(job::BasicMCJob)
   push!(
     body,
     :(
-      $(job).sstate.ratio =
-      $(job).sstate.pstate.logtarget+$(job).sstate.poldgivennew-$(job).pstate.logtarget-$(job).sstate.pnewgivenold
+      _job.sstate.ratio =
+      _job.sstate.pstate.logtarget+_job.sstate.poldgivennew-_job.pstate.logtarget-_job.sstate.pnewgivenold
     )
   )
 
   if vform == Univariate
-    push!(update, :($(job).pstate.value = $(job).sstate.pstate.value))
-    push!(update, :($(job).pstate.gradlogtarget = $(job).sstate.pstate.gradlogtarget))
+    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
+    push!(update, :(_job.pstate.gradlogtarget = _job.sstate.pstate.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :($(job).pstate.gradloglikelihood = $(job).sstate.pstate.gradloglikelihood))
+      push!(update, :(_job.pstate.gradloglikelihood = _job.sstate.pstate.gradloglikelihood))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :($(job).pstate.gradlogprior = $(job).sstate.pstate.gradlogprior))
+      push!(update, :(_job.pstate.gradlogprior = _job.sstate.pstate.gradlogprior))
     end
-    push!(update, :($(job).pstate.tensorlogtarget = $(job).sstate.pstate.tensorlogtarget))
+    push!(update, :(_job.pstate.tensorlogtarget = _job.sstate.pstate.tensorlogtarget))
     if in(:tensorloglikelihood, job.outopts[:monitor]) && job.parameter.tensorloglikelihood! != nothing
-      push!(update, :($(job).pstate.tensorloglikelihood = $(job).sstate.pstate.tensorloglikelihood))
+      push!(update, :(_job.pstate.tensorloglikelihood = _job.sstate.pstate.tensorloglikelihood))
     end
     if in(:tensorlogprior, job.outopts[:monitor]) && job.parameter.tensorlogprior! != nothing
-      push!(update, :($(job).pstate.tensorlogprior = $(job).sstate.pstate.tensorlogprior))
+      push!(update, :(_job.pstate.tensorlogprior = _job.sstate.pstate.tensorlogprior))
     end
-    push!(update, :($(job).sstate.oldinvtensor = $(job).sstate.newinvtensor))
-    push!(update, :($(job).sstate.oldfirstterm = $(job).sstate.newfirstterm))
+    push!(update, :(_job.sstate.oldinvtensor = _job.sstate.newinvtensor))
+    push!(update, :(_job.sstate.oldfirstterm = _job.sstate.newfirstterm))
   elseif vform == Multivariate
-    push!(update, :($(job).pstate.value = copy($(job).sstate.pstate.value)))
-    push!(update, :($(job).pstate.gradlogtarget = copy($(job).sstate.pstate.gradlogtarget)))
+    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
+    push!(update, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstate.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :($(job).pstate.gradloglikelihood = copy($(job).sstate.pstate.gradloglikelihood)))
+      push!(update, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstate.gradloglikelihood)))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :($(job).pstate.gradlogprior = copy($(job).sstate.pstate.gradlogprior)))
+      push!(update, :(_job.pstate.gradlogprior = copy(_job.sstate.pstate.gradlogprior)))
     end
-    push!(update, :($(job).pstate.tensorlogtarget = copy($(job).sstate.pstate.tensorlogtarget)))
+    push!(update, :(_job.pstate.tensorlogtarget = copy(_job.sstate.pstate.tensorlogtarget)))
     if in(:tensorloglikelihood, job.outopts[:monitor]) && job.parameter.tensorloglikelihood! != nothing
-      push!(update, :($(job).pstate.tensorloglikelihood = copy($(job).sstate.pstate.tensorloglikelihood)))
+      push!(update, :(_job.pstate.tensorloglikelihood = copy(_job.sstate.pstate.tensorloglikelihood)))
     end
     if in(:tensorlogprior, job.outopts[:monitor]) && job.parameter.tensorlogprior! != nothing
-      push!(update, :($(job).pstate.tensorlogprior = copy($(job).sstate.pstate.tensorlogprior)))
+      push!(update, :(_job.pstate.tensorlogprior = copy(_job.sstate.pstate.tensorlogprior)))
     end
-    push!(update, :($(job).sstate.oldinvtensor = copy($(job).sstate.newinvtensor)))
-    push!(update, :($(job).sstate.oldfirstterm = copy($(job).sstate.newfirstterm)))
+    push!(update, :(_job.sstate.oldinvtensor = copy(_job.sstate.newinvtensor)))
+    push!(update, :(_job.sstate.oldfirstterm = copy(_job.sstate.newfirstterm)))
   end
-  push!(update, :($(job).pstate.logtarget = $(job).sstate.pstate.logtarget))
+  push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :($(job).pstate.loglikelihood = $(job).sstate.pstate.loglikelihood))
+    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
   end
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :($(job).pstate.logprior = $(job).sstate.pstate.logprior))
+    push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
   end
   if in(:accept, job.outopts[:diagnostics])
-    push!(update, :($(job).pstate.diagnosticvalues[1] = true))
-    push!(noupdate, :($(job).pstate.diagnosticvalues[1] = false))
+    push!(update, :(_job.pstate.diagnosticvalues[1] = true))
+    push!(noupdate, :(_job.pstate.diagnosticvalues[1] = false))
   end
   if job.tuner.verbose
-    push!(update, :($(job).sstate.tune.accepted += 1))
+    push!(update, :(_job.sstate.tune.accepted += 1))
   end
 
-  push!(
-    body,
-    Expr(:if, :($(job).sstate.ratio > 0 || ($(job).sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...)
-  )
+  push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
 
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(burninbody, :(rate!($(job).sstate.tune)))
+    push!(burninbody, :(rate!(_job.sstate.tune)))
 
     if isa(job.tuner, AcceptanceRateMCTuner)
-      push!(burninbody, :(tune!($(job).sstate.tune, $(job).tuner)))
+      push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner)))
     end
 
     if job.tuner.verbose
@@ -162,20 +159,20 @@ function codegen_iterate_smmala(job::BasicMCJob)
 
       push!(burninbody, :(println(
         "Burnin iteration ",
-        $(fmt_iter)($(job).sstate.tune.totproposed),
+        $(fmt_iter)(_job.sstate.tune.totproposed),
         " of ",
-        $(job).range.burnin,
+        _job.range.burnin,
         ": ",
-        $(fmt_perc)(100*$(job).sstate.tune.rate),
+        $(fmt_perc)(100*_job.sstate.tune.rate),
         " % acceptance rate"
       )))
     end
 
-    push!(burninbody, :(reset_burnin!($(job).sstate.tune)))
+    push!(burninbody, :(reset_burnin!(_job.sstate.tune)))
 
     push!(body, Expr(
       :if,
-      :($(job).sstate.tune.totproposed <= $(job).range.burnin && mod($(job).sstate.tune.proposed, $(job).tuner.period) == 0),
+      :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
       Expr(:block, burninbody...)
     ))
   end
@@ -187,7 +184,7 @@ function codegen_iterate_smmala(job::BasicMCJob)
   @gensym iterate_smmala
 
   result = quote
-    function $iterate_smmala()
+    function $iterate_smmala(_job::BasicMCJob)
       $(body...)
     end
   end

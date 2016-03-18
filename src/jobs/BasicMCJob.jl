@@ -210,31 +210,31 @@ function codegen_resetplain_basicmcjob(job::BasicMCJob)
   body = []
 
   if job.resetpstate
-    push!(body, :(reset!($(job).pstate, _x, $(job).parameter, $(job).sampler)))
+    push!(body, :(reset!(_job.pstate, _x, _job.parameter, _job.sampler)))
   end
 
-  push!(body, :(reset!($(job).sstate, $(job).pstate, $(job).parameter, $(job).sampler, $(job).tuner)))
+  push!(body, :(reset!(_job.sstate, _job.pstate, _job.parameter, _job.sampler, _job.tuner)))
 
   if isa(job.output, VariableIOStream)
-    push!(body, :($(job).output.reset()))
-    push!(body, :($(job).output.mark()))
+    push!(body, :(reset(_job.output)))
+    push!(body, :(mark(_job.output)))
   end
 
-  push!(body, :($(job).count = 0))
+  push!(body, :(_job.count = 0))
 
   @gensym resetplain_basicmcjob
 
   if job.resetpstate
     vform = variate_form(job.pstate)
     if vform == Univariate
-      fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_x::Real)]
+      fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_job::BasicMCJob), :(_x::Real)]
     elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($resetplain_basicmcjob{N<:Real}), :(_x::Vector{N})]
+      fsignature = Union{Symbol, Expr}[:($resetplain_basicmcjob{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
     else
       error("It is not possible to define plain reset for given job")
     end
   else
-    fsignature = Union{Symbol, Expr}[resetplain_basicmcjob]
+    fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_job::BasicMCJob)]
   end
 
   Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
@@ -249,34 +249,30 @@ function codegen_reset_task_basicmcjob(job::BasicMCJob)
   if job.resetpstate
     vform = variate_form(job.pstate)
     if vform == Univariate
-      fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_x::Real)]
+      fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_job::BasicMCJob), :(_x::Real)]
     elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($reset_task_basicmcjob{N<:Real}), :(_x::Vector{N})]
+      fsignature = Union{Symbol, Expr}[:($reset_task_basicmcjob{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
     else
       error("It is not possible to define plain reset for given job")
     end
-    fbody = :($(job).task.storage[:reset](_x))
+    fbody = :(_job.task.storage[:reset](_job, _x))
   else
-    fsignature = Union{Symbol, Expr}[reset_task_basicmcjob]
-    fbody = :($(job).task.storage[:reset]())
+    fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_job::BasicMCJob)]
+    fbody = :(_job.task.storage[:reset](_job))
   end
 
   Expr(:function, Expr(:call, fsignature...), Expr(:block, fbody))
 end
 
-Base.reset(job::BasicMCJob) = job.reset!()
-Base.reset(job::BasicMCJob, x::Real) = job.reset!(x)
-Base.reset{N<:Real}(job::BasicMCJob, x::Vector{N}) = job.reset!(x)
-
 function codegen_save_basicmcjob(job::BasicMCJob)
   body = []
 
   if isa(job.output, VariableNState)
-    push!(body, :($(job).output.copy($(job).pstate, _i)))
+    push!(body, :(copy!(_job.output, _job.pstate, _i)))
   elseif isa(job.output, VariableIOStream)
-    push!(body, :($(job).output.write($(job).pstate)))
+    push!(body, :(write(_job.output, _job.pstate)))
     if job.outopts[:flush]
-      push!(body, :($(job).output.flush()))
+      push!(body, :(flush(_job.output)))
     end
   else
     error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
@@ -285,7 +281,7 @@ function codegen_save_basicmcjob(job::BasicMCJob)
   @gensym save_basicmcjob
 
   quote
-    function $save_basicmcjob(_i::Int)
+    function $save_basicmcjob(_job::BasicMCJob, _i::Int)
       $(body...)
     end
   end
@@ -299,40 +295,38 @@ function codegen_run_basicmcjob(job::BasicMCJob)
 
   if job.verbose
     fmt_iter = format_iteration(ndigits(job.range.nsteps))
-    push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", $(job).range.nsteps)))
+    push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))
   end
 
   if job.task == nothing
-    push!(forbody, :($(job).iterate!()))
+    push!(forbody, :(iterate(_job)))
   else
-    push!(forbody, :(consume($(job).task)))
+    push!(forbody, :(consume(_job.task)))
   end
 
-  push!(ifforbody, :($(job).count+=1))
+  push!(ifforbody, :(_job.count+=1))
   if job.save! != nothing
-    push!(ifforbody, :($(job).save!($(job).count)))
+    push!(ifforbody, :(save(_job, _job.count)))
   end
 
-  push!(forbody, Expr(:if, :(in(i, $(job).range.postrange)), Expr(:block, ifforbody...)))
+  push!(forbody, Expr(:if, :(in(i, _job.range.postrange)), Expr(:block, ifforbody...)))
 
-  push!(body, Expr(:for, :(i = 1:$(job).range.nsteps), Expr(:block, forbody...)))
+  push!(body, Expr(:for, :(i = 1:_job.range.nsteps), Expr(:block, forbody...)))
 
   if isa(job.output, VariableIOStream)
-    push!(body, :($(job).output.close()))
+    push!(body, :(close(_job.output)))
   end
 
   @gensym run_basicmcjob
 
   result = quote
-    function $run_basicmcjob()
+    function $run_basicmcjob(_job::BasicMCJob)
       $(body...)
     end
   end
 
   result
 end
-
-Base.run(job::BasicMCJob) = job.run!()
 
 function checkin(job::BasicMCJob)
   pindex = find(v::Variable -> isa(v, Parameter), job.model.vertices)

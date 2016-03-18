@@ -126,40 +126,49 @@ function codegen_close_basiccontparamiostream(iostream::BasicContParamIOStream, 
   for i in 1:14
     if iostream.(fnames[i]) != nothing
       f = fnames[i]
-      push!(body, :(close(getfield($(iostream), $(QuoteNode(f))))))
+      push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
     end
   end
 
   @gensym close_basiccontparamiostream
 
   quote
-    function $close_basiccontparamiostream()
+    function $close_basiccontparamiostream(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
 end
 
+close(iostream::BasicContParamIOStream) = iostream.close(iostream)
+
 function codegen_open_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
-  push!(body,:($(iostream).names = _names))
+  push!(body,:(_iostream.names = _names))
 
   for i in 1:14
     if iostream.(fnames[i]) != nothing
       f = fnames[i]
-      push!(body, :(setfield!($(iostream), $(QuoteNode(f)), open(_names[$i], _mode))))
+      push!(body, :(setfield!(_iostream, $(QuoteNode(f)), open(_names[$i], _mode))))
     end
   end
 
   @gensym open_basiccontparamiostream
 
   quote
-    function $open_basiccontparamiostream{S<:AbstractString}(_names::Vector{S}, _mode::AbstractString="w")
+    function $open_basiccontparamiostream{S<:AbstractString}(
+      _iostream::BasicContParamIOStream,
+      _names::Vector{S},
+      _mode::AbstractString="w"
+    )
       $(body...)
     end
   end
 end
+
+Base.open{S<:AbstractString}(iostream::BasicContParamIOStream, names::Vector{S}, mode::AbstractString="w") =
+  iostream.open(iostream, names, mode)
 
 function codegen_mark_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
@@ -168,18 +177,20 @@ function codegen_mark_basiccontparamiostream(iostream::BasicContParamIOStream, f
   for i in 1:14
     if iostream.(fnames[i]) != nothing
       f = fnames[i]
-      push!(body, :(mark(getfield($(iostream), $(QuoteNode(f))))))
+      push!(body, :(mark(getfield(_iostream, $(QuoteNode(f))))))
     end
   end
 
   @gensym mark_basiccontparamiostream
 
   quote
-    function $mark_basiccontparamiostream()
+    function $mark_basiccontparamiostream(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
 end
+
+Base.mark(iostream::BasicContParamIOStream) = iostream.mark(iostream)
 
 function codegen_reset_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
@@ -195,11 +206,13 @@ function codegen_reset_basiccontparamiostream(iostream::BasicContParamIOStream, 
   @gensym reset_basiccontparamiostream
 
   quote
-    function $reset_basiccontparamiostream()
+    function $reset_basiccontparamiostream(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
 end
+
+Base.reset(iostream::BasicContParamIOStream) = iostream.reset(iostream)
 
 function codegen_flush_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
@@ -215,11 +228,13 @@ function codegen_flush_basiccontparamiostream(iostream::BasicContParamIOStream, 
   @gensym flush_basiccontparamiostream
 
   quote
-    function $flush_basiccontparamiostream()
+    function $flush_basiccontparamiostream(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
 end
+
+Base.flush(iostream::BasicContParamIOStream) = iostream.flush(iostream)
 
 # To visually inspect code generation via codegen_write_basiccontparamiostream, try for example
 # using Lora
@@ -245,11 +260,17 @@ function codegen_write_basiccontparamiostream(iostream::BasicContParamIOStream, 
   @gensym write_basiccontparamiostream
 
   quote
-    function $write_basiccontparamiostream{F<:VariateForm}(_state::ParameterState{Continuous, F})
+    function $write_basiccontparamiostream{F<:VariateForm}(
+      _iostream::BasicContParamIOStream,
+      _state::ParameterState{Continuous, F}
+    )
       $(body...)
     end
   end
 end
+
+Base.write{F<:VariateForm}(iostream::BasicContParamIOStream, state::ParameterState{Continuous, F}) =
+  iostream.write(iostream, state)
 
 function Base.write(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState)
   fnames = fieldnames(BasicContParamIOStream)

@@ -140,6 +140,7 @@ export
   indices,
   is_directed,
   is_indexed,
+  iterate,
   job2dot,
   likelihood_model,
   logistic,

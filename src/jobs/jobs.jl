@@ -150,7 +150,7 @@ function initialize_output(state::BasicContMuvParameterState, n::Int, outopts::D
       diagnostickeys=outopts[:diagnostics],
       mode="w"
     )
-    output.mark()
+    mark(output)
   elseif outopts[:destination] == :none
     output = nothing
   else
@@ -165,8 +165,19 @@ function initialize_task!(job::MCJob)
   task_local_storage(:reset, job.resetplain!)
 
   while true
-    job.iterate!()
+    iterate(job)
   end
 end
 
+Base.close(job::MCJob) = job.close(job)
+
+Base.reset(job::MCJob) = job.reset!(job)
+Base.reset(job::MCJob, x::Real) = job.reset!(job, x)
+Base.reset{N<:Real}(job::MCJob, x::Vector{N}) = job.reset!(job, x)
+
+save(job::MCJob, i::Int) = job.save!(job, i)
+
+iterate(job::MCJob) = job.iterate!(job)
+
+Base.run(job::MCJob) = job.run!(job)
 Base.run{J<:MCJob}(job::Vector{J}) = map(run, job)

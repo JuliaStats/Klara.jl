@@ -10,96 +10,93 @@ function codegen_iterate_hmc(job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in HMC code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :($(job).sstate.tune.step) : :($(job).sampler.leapstep)
+  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_job.sstate.tune.step) : :(_job.sampler.leapstep)
 
   if job.tuner.verbose
-    push!(body, :($(job).sstate.tune.proposed += 1))
+    push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
   if vform == Univariate
-    push!(body, :($(job).sstate.momentum = randn()))
+    push!(body, :(_job.sstate.momentum = randn()))
   elseif vform == Multivariate
-    push!(body, :($(job).sstate.momentum = randn($(job).pstate.size)))
+    push!(body, :(_job.sstate.momentum = randn(_job.pstate.size)))
   end
 
-  push!(body, :($(job).sstate.oldhamiltonian = hamiltonian($(job).pstate.logtarget, $(job).sstate.momentum)))
+  push!(body, :(_job.sstate.oldhamiltonian = hamiltonian(_job.pstate.logtarget, _job.sstate.momentum)))
 
   if vform == Univariate
-    push!(body, :($(job).sstate.pstate.value = $(job).pstate.value))
-    push!(body, :($(job).sstate.pstate.gradlogtarget = $(job).pstate.gradlogtarget))
+    push!(body, :(_job.sstate.pstate.value = _job.pstate.value))
+    push!(body, :(_job.sstate.pstate.gradlogtarget = _job.pstate.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(body, :($(job).sstate.pstate.gradloglikelihood = $(job).pstate.gradloglikelihood))
+      push!(body, :(_job.sstate.pstate.gradloglikelihood = _job.pstate.gradloglikelihood))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(body, :($(job).sstate.pstate.gradlogprior = $(job).pstate.gradlogprior))
+      push!(body, :(_job.sstate.pstate.gradlogprior = _job.pstate.gradlogprior))
     end
   elseif vform == Multivariate
-    push!(body, :($(job).sstate.pstate.value = copy($(job).pstate.value)))
-    push!(body, :($(job).sstate.pstate.gradlogtarget = copy($(job).pstate.gradlogtarget)))
+    push!(body, :(_job.sstate.pstate.value = copy(_job.pstate.value)))
+    push!(body, :(_job.sstate.pstate.gradlogtarget = copy(_job.pstate.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(body, :($(job).sstate.pstate.gradloglikelihood = copy($(job).pstate.gradloglikelihood)))
+      push!(body, :(_job.sstate.pstate.gradloglikelihood = copy(_job.pstate.gradloglikelihood)))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(body, :($(job).sstate.pstate.gradlogprior = copy($(job).pstate.gradlogprior)))
+      push!(body, :(_job.sstate.pstate.gradlogprior = copy(_job.pstate.gradlogprior)))
     end
   end
 
   push!(body, :(
-    for i in 1:$(job).sampler.nleaps
-      leapfrog!($(job).sstate, $(job).parameter, $(stepsize))
+    for i in 1:_job.sampler.nleaps
+      leapfrog!(_job.sstate, _job.parameter, $(stepsize))
     end
   ))
 
-  push!(body, :($(job).parameter.logtarget!($(job).sstate.pstate)))
+  push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
-  push!(body, :($(job).sstate.newhamiltonian = hamiltonian($(job).sstate.pstate.logtarget, $(job).sstate.momentum)))
+  push!(body, :(_job.sstate.newhamiltonian = hamiltonian(_job.sstate.pstate.logtarget, _job.sstate.momentum)))
 
-  push!(body, :($(job).sstate.ratio = $(job).sstate.oldhamiltonian-$(job).sstate.newhamiltonian))
+  push!(body, :(_job.sstate.ratio = _job.sstate.oldhamiltonian-_job.sstate.newhamiltonian))
 
   if vform == Univariate
-    push!(update, :($(job).pstate.value = $(job).sstate.pstate.value))
-    push!(update, :($(job).pstate.gradlogtarget = $(job).sstate.pstate.gradlogtarget))
+    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
+    push!(update, :(_job.pstate.gradlogtarget = _job.sstate.pstate.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :($(job).pstate.gradloglikelihood = $(job).sstate.pstate.gradloglikelihood))
+      push!(update, :(_job.pstate.gradloglikelihood = _job.sstate.pstate.gradloglikelihood))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :($(job).pstate.gradlogprior = $(job).sstate.pstate.gradlogprior))
+      push!(update, :(_job.pstate.gradlogprior = _job.sstate.pstate.gradlogprior))
     end
   elseif vform == Multivariate
-    push!(update, :($(job).pstate.value = copy($(job).sstate.pstate.value)))
-    push!(update, :($(job).pstate.gradlogtarget = copy($(job).sstate.pstate.gradlogtarget)))
+    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
+    push!(update, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstate.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :($(job).pstate.gradloglikelihood = copy($(job).sstate.pstate.gradloglikelihood)))
+      push!(update, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstate.gradloglikelihood)))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :($(job).pstate.gradlogprior = copy($(job).sstate.pstate.gradlogprior)))
+      push!(update, :(_job.pstate.gradlogprior = copy(_job.sstate.pstate.gradlogprior)))
     end
   end
-  push!(update, :($(job).pstate.logtarget = $(job).sstate.pstate.logtarget))
+  push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :($(job).pstate.loglikelihood = $(job).sstate.pstate.loglikelihood))
+    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
   end
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :($(job).pstate.logprior = $(job).sstate.pstate.logprior))
+    push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
   end
   if in(:accept, job.outopts[:diagnostics])
-    push!(update, :($(job).pstate.diagnosticvalues[1] = true))
-    push!(noupdate, :($(job).pstate.diagnosticvalues[1] = false))
+    push!(update, :(_job.pstate.diagnosticvalues[1] = true))
+    push!(noupdate, :(_job.pstate.diagnosticvalues[1] = false))
   end
   if job.tuner.verbose
-    push!(update, :($(job).sstate.tune.accepted += 1))
+    push!(update, :(_job.sstate.tune.accepted += 1))
   end
 
-  push!(
-    body,
-    Expr(:if, :($(job).sstate.ratio > 0 || ($(job).sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...)
-  )
+  push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
 
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(burninbody, :(rate!($(job).sstate.tune)))
+    push!(burninbody, :(rate!(_job.sstate.tune)))
 
     if isa(job.tuner, AcceptanceRateMCTuner)
-      push!(burninbody, :(tune!($(job).sstate.tune, $(job).tuner)))
+      push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner)))
     end
 
     if job.tuner.verbose
@@ -108,22 +105,25 @@ function codegen_iterate_hmc(job::BasicMCJob)
 
       push!(burninbody, :(println(
         "Burnin iteration ",
-        $(fmt_iter)($(job).sstate.tune.totproposed),
+        $(fmt_iter)(_job.sstate.tune.totproposed),
         " of ",
-        $(job).range.burnin,
+        _job.range.burnin,
         ": ",
-        $(fmt_perc)(100*$(job).sstate.tune.rate),
+        $(fmt_perc)(100*_job.sstate.tune.rate),
         " % acceptance rate"
       )))
     end
 
-    push!(burninbody, :(reset_burnin!($(job).sstate.tune)))
+    push!(burninbody, :(reset_burnin!(_job.sstate.tune)))
 
-    push!(body, Expr(
-      :if,
-      :($(job).sstate.tune.totproposed <= $(job).range.burnin && mod($(job).sstate.tune.proposed, $(job).tuner.period) == 0),
-      Expr(:block, burninbody...)
-    ))
+    push!(
+      body,
+      Expr(
+        :if,
+        :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
+        Expr(:block, burninbody...)
+      )
+    )
   end
 
   if !job.plain
@@ -133,7 +133,7 @@ function codegen_iterate_hmc(job::BasicMCJob)
   @gensym iterate_hmc
 
   result = quote
-    function $iterate_hmc()
+    function $iterate_hmc(_job::BasicMCJob)
       $(body...)
     end
   end
