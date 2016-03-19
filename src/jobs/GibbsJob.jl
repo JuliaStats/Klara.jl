@@ -107,24 +107,24 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
-    instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen_close_gibbsjob(instance))
+    instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen(:close, instance))
 
     nodpjob = all(j -> j == nothing, instance.dpjob)
-    instance.resetplain! = nodpjob ? nothing : eval(codegen_resetplain_gibbsjob(instance))
+    instance.resetplain! = nodpjob ? nothing : eval(codegen(:resetplain, instance))
 
-    instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen_save_gibbsjob(instance))
+    instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen(:save, instance))
 
-    instance.iterate! = eval(codegen_iterate_gibbsjob(instance))
+    instance.iterate! = eval(codegen(:iterate, instance))
 
     if plain
       instance.task = nothing
       instance.reset! = nodpjob ? nothing : instance.resetplain!
     else
       instance.task = Task(() -> initialize_task!(instance))
-      instance.reset! = nodpjob ? nothing : eval(codegen_reset_task_gibbsjob(instance))
+      instance.reset! = nodpjob ? nothing : eval(codegen(:resettask, instance))
     end
 
-    instance.run! = eval(codegen_run_gibbsjob(instance))
+    instance.run! = eval(codegen(:run, instance))
 
     instance
   end
@@ -239,7 +239,9 @@ function GibbsJob(
   )
 end
 
-function codegen_close_gibbsjob(job::GibbsJob)
+codegen(f::Symbol, job::GibbsJob) = codegen(Val{f}, job)
+
+function codegen(::Type{Val{:close}}, job::GibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -248,16 +250,16 @@ function codegen_close_gibbsjob(job::GibbsJob)
     end
   end
 
-  @gensym close_gibbsjob
+  @gensym _close
 
   quote
-    function $close_gibbsjob(_job::GibbsJob)
+    function $_close(_job::GibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen_resetplain_gibbsjob(job::GibbsJob)
+function codegen(::Type{Val{:resetplain}}, job::GibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -270,21 +272,21 @@ function codegen_resetplain_gibbsjob(job::GibbsJob)
     end
   end
 
-  @gensym resetplain_gibbsjob
+  @gensym _resetplain
 
   quote
-    function $resetplain_gibbsjob(_job::GibbsJob)
+    function $_resetplain(_job::GibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen_reset_task_gibbsjob(job::GibbsJob)
-  @gensym reset_task_gibbsjob
-  Expr(:function, Expr(:call, reset_task_gibbsjob, :(_job::GibbsJob)), Expr(:block, :(_job.task.storage[:reset](_job))))
+function codegen(::Type{Val{:resettask}}, job::GibbsJob)
+  @gensym _reset
+  Expr(:function, Expr(:call, _reset, :(_job::GibbsJob)), Expr(:block, :(_job.task.storage[:reset](_job))))
 end
 
-function codegen_save_gibbsjob(job::GibbsJob)
+function codegen(::Type{Val{:save}}, job::GibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -300,16 +302,16 @@ function codegen_save_gibbsjob(job::GibbsJob)
     end
   end
 
-  @gensym save_gibbsjob
+  @gensym _save
 
   quote
-    function $save_gibbsjob(_job::GibbsJob, _i::Int)
+    function $_save(_job::GibbsJob, _i::Int)
       $(body...)
     end
   end
 end
 
-function codegen_iterate_gibbsjob(job::GibbsJob)
+function codegen(::Type{Val{:iterate}}, job::GibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -329,16 +331,16 @@ function codegen_iterate_gibbsjob(job::GibbsJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_gibbsjob
+  @gensym _iterate
 
   quote
-    function $iterate_gibbsjob(_job::GibbsJob)
+    function $_iterate(_job::GibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen_run_gibbsjob(job::GibbsJob)
+function codegen(::Type{Val{:run}}, job::GibbsJob)
   result::Expr
   ifforbody = []
   forbody = []
@@ -376,10 +378,10 @@ function codegen_run_gibbsjob(job::GibbsJob)
     push!(body, :(close(_job)))
   end
 
-  @gensym run_gibbsjob
+  @gensym _run
 
   result = quote
-    function $run_gibbsjob(_job::GibbsJob)
+    function $_run(_job::GibbsJob)
       $(body...)
     end
   end

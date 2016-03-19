@@ -80,21 +80,21 @@ type BasicMCJob{S<:VariableState} <: MCJob
 
     instance.count = 0
 
-    instance.resetplain! = eval(codegen_resetplain_basicmcjob(instance))
+    instance.resetplain! = eval(codegen(:resetplain, instance))
 
-    instance.save! = (instance.output == nothing) ? nothing : eval(codegen_save_basicmcjob(instance))
+    instance.save! = (instance.output == nothing) ? nothing : eval(codegen(:save, instance))
 
-    instance.iterate! = eval(codegen_iterate_basicmcjob(instance))
+    instance.iterate! = eval(codegen(:iterate, instance))
 
     if plain
       instance.task = nothing
       instance.reset! = instance.resetplain!
     else
       instance.task = Task(() -> initialize_task!(instance))
-      instance.reset! = eval(codegen_reset_task_basicmcjob(instance))
+      instance.reset! = eval(codegen(:resettask, instance))
     end
 
-    instance.run! = eval(codegen_run_basicmcjob(instance))
+    instance.run! = eval(codegen(:run, instance))
 
     instance
   end
@@ -203,9 +203,10 @@ function BasicMCJob(
 end
 
 # It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
-# In that case the iterate!() function will take a second variable (transformation) as input argument
 
-function codegen_resetplain_basicmcjob(job::BasicMCJob)
+codegen(f::Symbol, job::BasicMCJob) = codegen(Val{f}, job)
+
+function codegen(::Type{Val{:resetplain}}, job::BasicMCJob)
   fsignature::Vector{Union{Symbol, Expr}}
   body = []
 
@@ -222,49 +223,49 @@ function codegen_resetplain_basicmcjob(job::BasicMCJob)
 
   push!(body, :(_job.count = 0))
 
-  @gensym resetplain_basicmcjob
+  @gensym _resetplain
 
   if job.resetpstate
     vform = variate_form(job.pstate)
     if vform == Univariate
-      fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_job::BasicMCJob), :(_x::Real)]
+      fsignature = Union{Symbol, Expr}[_resetplain, :(_job::BasicMCJob), :(_x::Real)]
     elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($resetplain_basicmcjob{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
+      fsignature = Union{Symbol, Expr}[:($_resetplain{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
     else
       error("It is not possible to define plain reset for given job")
     end
   else
-    fsignature = Union{Symbol, Expr}[resetplain_basicmcjob, :(_job::BasicMCJob)]
+    fsignature = Union{Symbol, Expr}[_resetplain, :(_job::BasicMCJob)]
   end
 
   Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
 end
 
-function codegen_reset_task_basicmcjob(job::BasicMCJob)
+function codegen(::Type{Val{:resettask}}, job::BasicMCJob)
   fsignature::Vector{Union{Symbol, Expr}}
   fbody::Expr
 
-  @gensym reset_task_basicmcjob
+  @gensym _resettask
 
   if job.resetpstate
     vform = variate_form(job.pstate)
     if vform == Univariate
-      fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_job::BasicMCJob), :(_x::Real)]
+      fsignature = Union{Symbol, Expr}[_resettask, :(_job::BasicMCJob), :(_x::Real)]
     elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($reset_task_basicmcjob{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
+      fsignature = Union{Symbol, Expr}[:($_resettask{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
     else
       error("It is not possible to define plain reset for given job")
     end
     fbody = :(_job.task.storage[:reset](_job, _x))
   else
-    fsignature = Union{Symbol, Expr}[reset_task_basicmcjob, :(_job::BasicMCJob)]
+    fsignature = Union{Symbol, Expr}[_resettask, :(_job::BasicMCJob)]
     fbody = :(_job.task.storage[:reset](_job))
   end
 
   Expr(:function, Expr(:call, fsignature...), Expr(:block, fbody))
 end
 
-function codegen_save_basicmcjob(job::BasicMCJob)
+function codegen(::Type{Val{:save}}, job::BasicMCJob)
   body = []
 
   if isa(job.output, VariableNState)
@@ -278,16 +279,16 @@ function codegen_save_basicmcjob(job::BasicMCJob)
     error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
   end
 
-  @gensym save_basicmcjob
+  @gensym _save
 
   quote
-    function $save_basicmcjob(_job::BasicMCJob, _i::Int)
+    function $_save(_job::BasicMCJob, _i::Int)
       $(body...)
     end
   end
 end
 
-function codegen_run_basicmcjob(job::BasicMCJob)
+function codegen(::Type{Val{:run}}, job::BasicMCJob)
   result::Expr
   ifforbody = []
   forbody = []
@@ -317,10 +318,10 @@ function codegen_run_basicmcjob(job::BasicMCJob)
     push!(body, :(close(_job.output)))
   end
 
-  @gensym run_basicmcjob
+  @gensym _run
 
   result = quote
-    function $run_basicmcjob(_job::BasicMCJob)
+    function $_run(_job::BasicMCJob)
       $(body...)
     end
   end

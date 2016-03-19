@@ -125,6 +125,7 @@ export
   add_dimension,
   add_edge!,
   add_vertex!,
+  codegen,
   count!,
   dataset,
   datasets,

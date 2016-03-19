@@ -1,4 +1,4 @@
-function codegen_iterate_mala(job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{MALA}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -137,10 +137,10 @@ function codegen_iterate_mala(job::BasicMCJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_mala
+  @gensym _iterate
 
   result = quote
-    function $iterate_mala(_job::BasicMCJob)
+    function $_iterate(_job::BasicMCJob)
       $(body...)
     end
   end

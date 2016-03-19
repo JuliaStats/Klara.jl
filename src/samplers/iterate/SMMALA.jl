@@ -1,4 +1,4 @@
-function codegen_iterate_smmala(job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -181,10 +181,10 @@ function codegen_iterate_smmala(job::BasicMCJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_smmala
+  @gensym _iterate
 
   result = quote
-    function $iterate_smmala(_job::BasicMCJob)
+    function $_iterate(_job::BasicMCJob)
       $(body...)
     end
   end

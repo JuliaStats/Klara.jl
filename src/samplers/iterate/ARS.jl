@@ -1,4 +1,4 @@
-function codegen_iterate_ars(job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{ARS}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -72,10 +72,10 @@ function codegen_iterate_ars(job::BasicMCJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_ars
+  @gensym _iterate
 
   result = quote
-    function $iterate_ars(_job::BasicMCJob)
+    function $_iterate(_job::BasicMCJob)
       $(body...)
     end
   end

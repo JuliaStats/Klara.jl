@@ -54,7 +54,7 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
     instance.n = n
     instance.diagnostickeys = diagnostickeys
 
-    instance.copy = eval(codegen_copy_continuous_univariate_parameter_nstate(instance, monitor))
+    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -82,13 +82,15 @@ end
 
 typealias ContUnvMarkovChain BasicContUnvParameterNState
 
+codegen(f::Symbol, nstate::BasicContUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
+
 # To visually inspect code generation via codegen_copy_continuous_univariate_parameter_nstate, try for example
 # using Lora
 #
 # nstate = ContUnvMarkovChain(Float64, 4)
-# Lora.codegen_copy_continuous_univariate_parameter_nstate(nstate, [true; fill(false, 12)])
+# codegen(:copy, nstate, [true; fill(false, 12)])
 
-function codegen_copy_continuous_univariate_parameter_nstate(nstate::BasicContUnvParameterNState, monitor::Vector{Bool})
+function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monitor::Vector{Bool})
   body = []
   fnames = fieldnames(BasicContUnvParameterNState)
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
@@ -104,14 +106,10 @@ function codegen_copy_continuous_univariate_parameter_nstate(nstate::BasicContUn
     push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
   end
 
-  @gensym copy_continuous_univariate_parameter_nstate
+  @gensym _copy
 
   quote
-    function $copy_continuous_univariate_parameter_nstate(
-      _nstate::BasicContUnvParameterNState,
-      _state::BasicContUnvParameterState,
-      _i::Int
-    )
+    function $_copy(_nstate::BasicContUnvParameterNState, _state::BasicContUnvParameterState, _i::Int)
       $(body...)
     end
   end
@@ -219,7 +217,7 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
     instance.n = n
     instance.diagnostickeys = diagnostickeys
 
-    instance.copy = eval(codegen_copy_continuous_multivariate_parameter_nstate(instance, monitor))
+    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -251,16 +249,15 @@ end
 
 typealias ContMuvMarkovChain BasicContMuvParameterNState
 
+codegen(f::Symbol, nstate::BasicContMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
+
 # To visually inspect code generation via codegen_copy_continuous_multivariate_parameter_nstate, try for example
 # using Lora
 #
 # nstate = ContMuvMarkovChain(Float64, 2, 4)
-# Lora.codegen_copy_continuous_multivariate_parameter_nstate(nstate, [true; fill(false, 12)])
+# Lora.codegen(:copy, nstate, [true; fill(false, 12)])
 
-function codegen_copy_continuous_multivariate_parameter_nstate(
-  nstate::BasicContMuvParameterNState,
-  monitor::Vector{Bool}
-)
+function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monitor::Vector{Bool})
   body = []
   fnames = fieldnames(BasicContMuvParameterNState)
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
@@ -313,14 +310,10 @@ function codegen_copy_continuous_multivariate_parameter_nstate(
     push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
   end
 
-  @gensym copy_continuous_multivariate_parameter_nstate
+  @gensym _copy
 
   quote
-    function $copy_continuous_multivariate_parameter_nstate(
-      _nstate::BasicContMuvParameterNState,
-      _state::BasicContMuvParameterState,
-      _i::Int
-    )
+    function $_copy(_nstate::BasicContMuvParameterNState, _state::BasicContMuvParameterState, _i::Int)
       $(body...)
     end
   end

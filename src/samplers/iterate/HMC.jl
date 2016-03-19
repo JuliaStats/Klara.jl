@@ -1,4 +1,4 @@
-function codegen_iterate_hmc(job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -130,10 +130,10 @@ function codegen_iterate_hmc(job::BasicMCJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_hmc
+  @gensym _iterate
 
   result = quote
-    function $iterate_hmc(_job::BasicMCJob)
+    function $_iterate(_job::BasicMCJob)
       $(body...)
     end
   end

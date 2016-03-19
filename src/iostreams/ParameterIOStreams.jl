@@ -50,12 +50,12 @@ type BasicContParamIOStream <: ParameterIOStream{Continuous}
     instance.n = n
     instance.diagnostickeys = diagnostickeys
 
-    instance.open = eval(codegen_open_basiccontparamiostream(instance, fnames))
-    instance.close = eval(codegen_close_basiccontparamiostream(instance, fnames))
-    instance.mark = eval(codegen_mark_basiccontparamiostream(instance, fnames))
-    instance.reset = eval(codegen_reset_basiccontparamiostream(instance, fnames))
-    instance.flush = eval(codegen_flush_basiccontparamiostream(instance, fnames))
-    instance.write = eval(codegen_write_basiccontparamiostream(instance, fnames))
+    instance.open = eval(codegen(:open, instance, fnames))
+    instance.close = eval(codegen(:close, instance, fnames))
+    instance.mark = eval(codegen(:mark, instance, fnames))
+    instance.reset = eval(codegen(:reset, instance, fnames))
+    instance.flush = eval(codegen(:flush, instance, fnames))
+    instance.write = eval(codegen(:write, instance, fnames))
 
     instance
   end
@@ -119,29 +119,9 @@ function BasicContParamIOStream(
   )
 end
 
-function codegen_close_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
+codegen(f::Symbol, iostream::BasicContParamIOStream, fnames::Vector{Symbol}) = codegen(Val{f}, iostream, fnames)
 
-  for i in 1:14
-    if iostream.(fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
-    end
-  end
-
-  @gensym close_basiccontparamiostream
-
-  quote
-    function $close_basiccontparamiostream(_iostream::BasicContParamIOStream)
-      $(body...)
-    end
-  end
-end
-
-close(iostream::BasicContParamIOStream) = iostream.close(iostream)
-
-function codegen_open_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen(::Type{Val{:open}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -154,14 +134,10 @@ function codegen_open_basiccontparamiostream(iostream::BasicContParamIOStream, f
     end
   end
 
-  @gensym open_basiccontparamiostream
+  @gensym _open
 
   quote
-    function $open_basiccontparamiostream{S<:AbstractString}(
-      _iostream::BasicContParamIOStream,
-      _names::Vector{S},
-      _mode::AbstractString="w"
-    )
+    function $_open{S<:AbstractString}(_iostream::BasicContParamIOStream, _names::Vector{S}, _mode::AbstractString="w")
       $(body...)
     end
   end
@@ -170,7 +146,29 @@ end
 Base.open{S<:AbstractString}(iostream::BasicContParamIOStream, names::Vector{S}, mode::AbstractString="w") =
   iostream.open(iostream, names, mode)
 
-function codegen_mark_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen(::Type{Val{:close}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+  body = []
+  local f::Symbol
+
+  for i in 1:14
+    if iostream.(fnames[i]) != nothing
+      f = fnames[i]
+      push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
+    end
+  end
+
+  @gensym _close
+
+  quote
+    function $_close(_iostream::BasicContParamIOStream)
+      $(body...)
+    end
+  end
+end
+
+close(iostream::BasicContParamIOStream) = iostream.close(iostream)
+
+function codegen(::Type{Val{:mark}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -181,10 +179,10 @@ function codegen_mark_basiccontparamiostream(iostream::BasicContParamIOStream, f
     end
   end
 
-  @gensym mark_basiccontparamiostream
+  @gensym _mark
 
   quote
-    function $mark_basiccontparamiostream(_iostream::BasicContParamIOStream)
+    function $_mark(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
@@ -192,7 +190,7 @@ end
 
 Base.mark(iostream::BasicContParamIOStream) = iostream.mark(iostream)
 
-function codegen_reset_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen(::Type{Val{:reset}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -203,10 +201,10 @@ function codegen_reset_basiccontparamiostream(iostream::BasicContParamIOStream, 
     end
   end
 
-  @gensym reset_basiccontparamiostream
+  @gensym _reset
 
   quote
-    function $reset_basiccontparamiostream(_iostream::BasicContParamIOStream)
+    function $_reset(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
@@ -214,7 +212,7 @@ end
 
 Base.reset(iostream::BasicContParamIOStream) = iostream.reset(iostream)
 
-function codegen_flush_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen(::Type{Val{:flush}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol
 
@@ -225,10 +223,10 @@ function codegen_flush_basiccontparamiostream(iostream::BasicContParamIOStream, 
     end
   end
 
-  @gensym flush_basiccontparamiostream
+  @gensym _flush
 
   quote
-    function $flush_basiccontparamiostream(_iostream::BasicContParamIOStream)
+    function $_flush(_iostream::BasicContParamIOStream)
       $(body...)
     end
   end
@@ -243,7 +241,7 @@ Base.flush(iostream::BasicContParamIOStream) = iostream.flush(iostream)
 # Lora.codegen_write_basiccontparamiostream(iostream, fieldnames(BasicContParamIOStream))
 # close(iostream)
 
-function codegen_write_basiccontparamiostream(iostream::BasicContParamIOStream, fnames::Vector{Symbol})
+function codegen(::Type{Val{:write}}, iostream::BasicContParamIOStream, fnames::Vector{Symbol})
   body = []
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
@@ -257,13 +255,10 @@ function codegen_write_basiccontparamiostream(iostream::BasicContParamIOStream, 
     end
   end
 
-  @gensym write_basiccontparamiostream
+  @gensym _write
 
   quote
-    function $write_basiccontparamiostream{F<:VariateForm}(
-      _iostream::BasicContParamIOStream,
-      _state::ParameterState{Continuous, F}
-    )
+    function $_write{F<:VariateForm}(_iostream::BasicContParamIOStream, _state::ParameterState{Continuous, F})
       $(body...)
     end
   end

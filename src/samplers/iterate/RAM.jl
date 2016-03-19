@@ -1,4 +1,4 @@
-function codegen_iterate_ram(job::BasicMCJob)
+function codegen{N<:Real}(::Type{Val{:iterate}}, ::Type{RAM{N}}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
@@ -97,10 +97,10 @@ function codegen_iterate_ram(job::BasicMCJob)
     push!(body, :(produce()))
   end
 
-  @gensym iterate_ram
+  @gensym _iterate
 
   result = quote
-    function $iterate_ram(_job::BasicMCJob)
+    function $_iterate(_job::BasicMCJob)
       $(body...)
     end
   end
