@@ -422,7 +422,7 @@ function BasicContMuvParameter{S<:VariableState}(
   autodiff::Symbol=:none,
   order::Int=1,
   chunksize::Int=0,
-  init::Vector=fill(nothing, 3)
+  init::Vector=fill(Any[], 3)
 )
   inargs = (
     setpdf,
@@ -458,10 +458,8 @@ function BasicContMuvParameter{S<:VariableState}(
   end
 
   if nkeys > 0
-    if autodiff == :forward && vfarg
-      error("In the case of forward mode autodiff, if nkeys is not 0, then vfarg must be false")
-    elseif autodiff == :reverse
-      error("In the case of reverse mode autodiff, the current implementation supports only nkeys = 0")
+    if (autodiff == :forward || autodiff == :reverse) && vfarg
+      error("In the case of autodiff, if nkeys is not 0, then vfarg must be false")
     end
   elseif nkeys < 0
     "nkeys must be non-negative, got $nkeys"
@@ -479,29 +477,25 @@ function BasicContMuvParameter{S<:VariableState}(
 
   @assert chunksize >= 0 "chunksize must be non-negative, got $chunksize"
 
-  if autodiff != :reverse
-    @assert init == fill(nothing, 3) "init option is used only for reverse mode autodiff"
-  else
-    @assert length(init) == 3 "init must be a vector of length 3, got vector of length $(length(init))"
+  initarg = Array(Any, 3)
+  initlen = length(init)
+
+  if initlen == 1 || initlen == 2
+    if autodiff != :reverse
+      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
+    end
 
     for i in 1:3
-      if isa(inargs[i], Function)
-        if length(init[i]) != 1
-          "init element for $(fnames[i][1]) must be a tuple of length 1, got tuple of length $(length(init[i]))"
-        end
-      elseif isa(inargs[i], Expr)
-        if length(init[i]) != 2
-          "init element for $(fnames[i][1]) must be a tuple of length 2, got tuple of length $(length(init[i]))"
-        end
-        if !isa(init[i][1], Symbol)
-          "The first element of init for $(fnames[i][1]) must be a tuple, got element of type $(typeof(init[i][1]))"
-        end
-      else
-        if init[i] != nothing
-          "init element for $(fnames[i][1]) must be set to nothing, got init set to $(init[i])"
-        end
-      end
+      initarg[i] = (inargs[i+2] != nothing) ? init : Any[]
     end
+  elseif initlen == 3
+    if autodiff != :reverse
+      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
+    end
+
+    initarg = init
+  else
+    error("init must be a vector of length 1, 2 or 3, got vector of length $initlen")
   end
 
   parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
@@ -519,7 +513,7 @@ function BasicContMuvParameter{S<:VariableState}(
     for i in 3:5
       fadclosure[i-2] =
         if isa(inargs[i], Function)
-          nkeys == 0 ? inargs[i] : eval(codegen_internal_forward_autodiff_closure(parameter, inargs[i], nkeys))
+          nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
         else
           nothing
         end
@@ -554,49 +548,69 @@ function BasicContMuvParameter{S<:VariableState}(
         ))
       end
     end
-
-    # if order == 3
-    # end
   elseif autodiff == :reverse
+    local f::Function
+
     for i in 3:5
       if isa(inargs[i], Expr)
-        outargs[i] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[i], :Vector, init[i-2], 0, false)), fnames[i], 0
-        ))
+        #println("i = $i, initarg = $initarg")
+        if nkeys == 0
+          f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2][1], 0, false))
+        else
+          f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2], 0, false))
+          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+        end
+        outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
       end
     end
 
     for i in 6:8
       if !isa(inargs[i], Function)
         if isa(inargs[i-3], Function)
-          outargs[i] = eval(codegen_internal_variable_method(
-            ReverseDiffSource.rdiff(inargs[i-3], init[i-5], order=1, allorders=false), fnames[i], 0
-          ))
+          if nkeys == 0
+            f = ReverseDiffSource.rdiff(inargs[i-3], (initarg[i-5][1][2],), order=1, allorders=false)
+          else
+            f = ReverseDiffSource.rdiff(
+              inargs[i-3], (initarg[i-5][1][2], initarg[i-5][2][2]), ignore=[initarg[i-5][2][1]], order=1, allorders=false
+            )
+            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+          end
+
+          outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
         elseif isa(inargs[i-3], Expr)
-          outargs[i] = eval(codegen_internal_variable_method(
-            eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, init[i-5], 1, false)), fnames[i], 0
-          ))
+          if nkeys == 0
+            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5][1], 1, false))
+          else
+            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5], 1, false))
+            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+          end
+          outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
         end
       end
     end
 
     if !isa(inargs[15], Function)
       if isa(inargs[5], Function)
-        outargs[15] = eval(codegen_internal_variable_method(
-          ReverseDiffSource.rdiff(inargs[5], init[3], order=1, allorders=true), fnames[15], 0
-        ))
+        if nkeys == 0
+          f = ReverseDiffSource.rdiff(inargs[5], (initarg[3][1][2],), order=1, allorders=true)
+        else
+          f = ReverseDiffSource.rdiff(
+            inargs[5], (initarg[3][1][2], initarg[3][2][2]), ignore=[initarg[3][2][1]], order=1, allorders=true
+          )
+          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+        end
+
+        outargs[15] = eval(codegen_internal_variable_method(f, fnames[15], 0))
       elseif isa(inargs[5], Expr)
-        outargs[15] = eval(codegen_internal_variable_method(
-          eval(codegen_reverse_autodiff_function(inargs[5], :Vector, init[3], 1, true)), fnames[15], 0
-        ))
+        if nkeys == 0
+          f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3][1], 1, true))
+        else
+          f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3], 1, true))
+          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+        end
+        outargs[15] = eval(codegen_internal_variable_method(f, fnames[15], 0))
       end
     end
-
-    # if order >= 2
-    # end
-
-    # if order == 3
-    # end
   end
 
   BasicContMuvParameter!(parameter, outargs...)
@@ -681,7 +695,7 @@ function codegen_uptomethods_basiccontmuvparameter(parameter::BasicContMuvParame
   end
 end
 
-function codegen_internal_forward_autodiff_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Int)
+function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Int)
   fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
 
   @gensym internal_forward_autodiff_closure

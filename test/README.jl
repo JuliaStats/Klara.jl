@@ -169,12 +169,7 @@ chain = output(job)
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(
-  :p,
-  logtarget=plogtarget,
-  autodiff=:reverse,
-  init=[nothing, nothing, (ones(2),)]
-)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, ones(2))])
 
 model = likelihood_model(p, false)
 
@@ -192,12 +187,7 @@ run(job)
 
 chain = output(job)
 
-p = BasicContMuvParameter(
-  :p,
-  logtarget=:(-dot(z, z)),
-  autodiff=:reverse,
-  init=[nothing, nothing, (:z, ones(2))]
-)
+p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, ones(2))])
 
 model = likelihood_model(p, false)
 

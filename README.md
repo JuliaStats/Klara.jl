@@ -273,12 +273,7 @@ using Lora
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(
-  :p,
-  logtarget=plogtarget,
-  autodiff=:reverse,
-  init=[nothing, nothing, (ones(2),)]
-)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, ones(2))])
 
 model = likelihood_model(p, false)
 
@@ -297,12 +292,10 @@ run(job)
 chain = output(job)
 ```
 
-In this case the optional argument `autodiff=:reverse` enables computing the gradient via reverse mode AD using
-source transformation. Notice also the `init=[nothing, nothing, (ones(2),)]` optional argument, which allows passing the
-required input to the `init` optional argument of `rdiff()` of the ReverseDiffSource package. From the Lora side,
-`init` is a 3-element vector with the first, second and third arguments corresponding to the `init` arguments passed to
-`rdiff()` for the log-likelihood, log-prior and log-target. If some of these functions is on specified, then the
-respective `init` element is set to `nothing`.
+In this case the optional argument `autodiff=:reverse` enables computing the gradient via reverse mode AD using source
+transformation. Notice also the `init=[(:z, ones(2))]` optional argument, which allows passing the required input to the
+`init` optional argument of `rdiff()` of the ReverseDiffSource package. The `:z` symbol in the `init` argument refers to the
+symbol used as the input argument of `plogtarget`.
 
 Finally, it is possible to run reverse mode AD by passing an expression for the log-target (or log-likelihood or
 log-prior) instead of a function. An example follows where the log-target is specified via an expression:
@@ -310,12 +303,7 @@ log-prior) instead of a function. An example follows where the log-target is spe
 ```julia
 using Lora
 
-p = BasicContMuvParameter(
-  :p,
-  logtarget=:(-dot(z, z)),
-  autodiff=:reverse,
-  init=[nothing, nothing, (:z, ones(2))]
-)
+p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, ones(2))])
 
 model = likelihood_model(p, false)
 
