@@ -537,14 +537,14 @@ function BasicContMuvParameter{S<:VariableState}(
       for i in 9:11
         if !isa(inargs[i], Function) && isa(inargs[i-6], Function)
           outargs[i] = eval(codegen_internal_variable_method(
-            v -> -forward_autodiff_function(:hessian, fadclosure[i-8], false, chunksize)(v), fnames[i], 0
+            eval(codegen_forward_autodiff_target(:hessian, fadclosure[i-8], chunksize)), fnames[i], 0
           ))
         end
       end
 
       if !isa(inargs[16], Function) && isa(inargs[5], Function)
         outargs[16] = eval(codegen_internal_variable_method(
-          eval(codegen_forward_autodiff_uptofunction(:hessian, fadclosure[3], chunksize)), fnames[16], 0
+          eval(codegen_forward_autodiff_uptotarget(:hessian, fadclosure[3], chunksize)), fnames[16], 0
         ))
       end
     end
@@ -553,13 +553,13 @@ function BasicContMuvParameter{S<:VariableState}(
 
     for i in 3:5
       if isa(inargs[i], Expr)
-        #println("i = $i, initarg = $initarg")
         if nkeys == 0
           f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2][1], 0, false))
         else
           f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2], 0, false))
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
+
         outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
       end
     end
@@ -584,6 +584,7 @@ function BasicContMuvParameter{S<:VariableState}(
             f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5], 1, false))
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
+
           outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
         end
       end
@@ -608,7 +609,38 @@ function BasicContMuvParameter{S<:VariableState}(
           f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3], 1, true))
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
+
         outargs[15] = eval(codegen_internal_variable_method(f, fnames[15], 0))
+      end
+    end
+
+    if order >= 2
+      for i in 9:11
+        if !isa(inargs[i], Function)
+          if isa(inargs[i-6], Function) || isa(inargs[i-6], Expr)
+            if nkeys == 0
+              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], initarg[i-8][1]))
+            else
+              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], initarg[i-8]))
+              f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+            end
+
+            outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
+          end
+        end
+      end
+
+      if !isa(inargs[16], Function)
+        if isa(inargs[5], Function) || isa(inargs[5], Expr)
+          if nkeys == 0
+            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], initarg[3][1]))
+          else
+            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], initarg[3]))
+            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
+          end
+
+          outargs[16] = eval(codegen_internal_variable_method(f, fnames[16], 0))
+        end
       end
     end
   end

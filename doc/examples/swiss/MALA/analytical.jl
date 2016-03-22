@@ -9,13 +9,14 @@ covariates = (covariates.-mean(covariates, 1))./repmat(std(covariates, 1), ndata
 
 outcome = data[:, end]
 
-ploglikelihood =
-  quote
-    Xp = v[2]*p
-    dot(Xp, v[3])-sum(log(1+exp(Xp)))
-  end
+function ploglikelihood(p::Vector, v::Vector)
+  Xp = v[2]*p
+  dot(Xp, v[3])-sum(log(1+exp(Xp)))
+end
 
-plogprior = :(-0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1])))
+plogprior(p::Vector, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
+
+pgradlogtarget(p::Vector, v::Vector) = v[2]'*(v[3]-1./(1+exp(-v[2]*p)))-p/v[1]
 
 λ = Hyperparameter(:λ)
 
@@ -23,25 +24,21 @@ X = Data(:X)
 
 y = Data(:y)
 
-v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
-
-init = Any[(:p, v0[:p]), (:v, Any[v0[:λ], v0[:X], v0[:y], v0[:p]])]
-
 p = BasicContMuvParameter(
   :p,
   loglikelihood=ploglikelihood,
   logprior=plogprior,
-  nkeys=4,
-  autodiff=:reverse,
-  init=init,
-  order=2
+  gradlogtarget=pgradlogtarget,
+  nkeys=4
 )
 
 model = likelihood_model([λ, X, y, p], isindexed=false)
 
-sampler = SMMALA(0.02)
+sampler = MALA(0.1)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
@@ -52,3 +49,5 @@ run(job)
 chain = output(job)
 
 mean(chain)
+
+acceptance(chain)

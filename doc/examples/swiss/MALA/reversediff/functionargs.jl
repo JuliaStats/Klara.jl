@@ -9,13 +9,14 @@ covariates = (covariates.-mean(covariates, 1))./repmat(std(covariates, 1), ndata
 
 outcome = data[:, end]
 
-ploglikelihood =
-  quote
-    Xp = v[2]*p
-    dot(Xp, v[3])-sum(log(1+exp(Xp)))
-  end
+function ploglikelihood(p::Vector, v::Vector)
+  Xp = v[2]*p
+  dot(Xp, v[3])-sum(log(1+exp(Xp)))
+end
 
-plogprior = :(-0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1])))
+function plogprior(p::Vector, v::Vector)
+  -0.5*(dot(p, p)/v[1]+length(p)*log(6.283185307179586*v[1]))
+end
 
 λ = Hyperparameter(:λ)
 
@@ -27,19 +28,11 @@ v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
 init = Any[(:p, v0[:p]), (:v, Any[v0[:λ], v0[:X], v0[:y], v0[:p]])]
 
-p = BasicContMuvParameter(
-  :p,
-  loglikelihood=ploglikelihood,
-  logprior=plogprior,
-  nkeys=4,
-  autodiff=:reverse,
-  init=init,
-  order=2
-)
+p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, nkeys=4, autodiff=:reverse, init=init)
 
 model = likelihood_model([λ, X, y, p], isindexed=false)
 
-sampler = SMMALA(0.02)
+sampler = MALA(0.1)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
