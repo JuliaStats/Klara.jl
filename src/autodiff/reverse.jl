@@ -1,48 +1,49 @@
-codegen_reverse_autodiff_target(method::Symbol, f::Function, init) = codegen_reverse_autodiff_target(Val{method}, f, init)
+codegen_reverse_autodiff_target(method::Symbol, f::Function, fargtype::Symbol, init) =
+  codegen_reverse_autodiff_target(Val{method}, f, fargtype, init)
 
-function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Function, init::Tuple)
+function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Function, fargtype::Symbol, init::Tuple)
   adfunction = ReverseDiffSource.rdiff(f, (init[2],), order=2, allorders=false)
 
   @gensym reverse_autodiff_target
   quote
-    function $reverse_autodiff_target($(init[1])::Vector)
+    function $reverse_autodiff_target($(init[1])::$fargtype)
       -$(adfunction)($(init[1]))
     end
   end
 end
 
-function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Function, init::Vector)
+function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Function, fargtype::Symbol, init::Vector)
   adfunction = ReverseDiffSource.rdiff(f, (init[1][2], init[2][2]), ignore=[init[2][1]], order=2, allorders=false)
 
   @gensym reverse_autodiff_target
   quote
-    function $reverse_autodiff_target($(init[1][1])::Vector, $(init[2][1])::Vector)
+    function $reverse_autodiff_target($(init[1][1])::$fargtype, $(init[2][1])::Vector)
       -$(adfunction)($(init[1][1]), $(init[2][1]))
     end
   end
 end
 
-codegen_reverse_autodiff_uptotarget(method::Symbol, f::Function, init) =
-  codegen_reverse_autodiff_uptotarget(Val{method}, f, init)
+codegen_reverse_autodiff_uptotarget(method::Symbol, f::Function, fargtype::Symbol, init) =
+  codegen_reverse_autodiff_uptotarget(Val{method}, f, fargtype, init)
 
-function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, init::Tuple)
+function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, fargtype::Symbol, init::Tuple)
   adfunction = ReverseDiffSource.rdiff(f, (init[2],), order=2, allorders=true)
 
   @gensym reverse_autodiff_uptotarget
   quote
-    function $reverse_autodiff_uptotarget($(init[1])::Vector)
+    function $reverse_autodiff_uptotarget($(init[1])::$fargtype)
       v, g, h = $(adfunction)($(init[1]))
       return v, g, -h
     end
   end
 end
 
-function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, init::Vector)
+function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, fargtype::Symbol, init::Vector)
   adfunction = ReverseDiffSource.rdiff(f, (init[1][2], init[2][2]), ignore=[init[2][1]], order=2, allorders=true)
 
   @gensym reverse_autodiff_uptotarget
   quote
-    function $reverse_autodiff_uptotarget($(init[1][1])::Vector, $(init[2][1])::Vector)
+    function $reverse_autodiff_uptotarget($(init[1][1])::$fargtype, $(init[2][1])::Vector)
       v, g, h = $(adfunction)($(init[1][1]), $(init[2][1]))
       return v, g, -h
     end
@@ -83,13 +84,14 @@ function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Vect
   )
 end
 
-codegen_reverse_autodiff_target(method::Symbol, f::Expr, init) = codegen_reverse_autodiff_target(Val{method}, f, init)
+codegen_reverse_autodiff_target(method::Symbol, f::Expr, fargtype::Symbol, init) =
+  codegen_reverse_autodiff_target(Val{method}, f, fargtype, init)
 
-function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, init::Tuple)
+function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, fargtype::Symbol, init::Tuple)
   @gensym reverse_autodiff_target
   Expr(
     :function,
-    Expr(:call, reverse_autodiff_target, Expr(:(::), init[1], :Vector)),
+    Expr(:call, reverse_autodiff_target, Expr(:(::), init[1], fargtype)),
     Expr(
       :call,
       :-,
@@ -105,11 +107,11 @@ function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, init::T
   )
 end
 
-function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, init::Vector)
+function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, fargtype::Symbol, init::Vector)
   @gensym reverse_autodiff_target
   Expr(
     :function,
-    Expr(:call, reverse_autodiff_target, Expr(:(::), init[1][1], :Vector), Expr(:(::), init[2][1], :Vector)),
+    Expr(:call, reverse_autodiff_target, Expr(:(::), init[1][1], fargtype), Expr(:(::), init[2][1], :Vector)),
     Expr(
       :call,
       :-,
@@ -127,10 +129,10 @@ function codegen_reverse_autodiff_target(::Type{Val{:hessian}}, f::Expr, init::V
   )
 end
 
-codegen_reverse_autodiff_uptotarget(method::Symbol, f::Expr, init) =
-  codegen_reverse_autodiff_uptotarget(Val{method}, f, init)
+codegen_reverse_autodiff_uptotarget(method::Symbol, f::Expr, fargtype::Symbol, init) =
+  codegen_reverse_autodiff_uptotarget(Val{method}, f, fargtype, init)
 
-function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, init::Tuple)
+function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, fargtype::Symbol, init::Tuple)
   adfunction = eval(Expr(
     :call,
     :(ReverseDiffSource.rdiff),
@@ -142,14 +144,14 @@ function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, ini
 
   @gensym reverse_autodiff_uptotarget
   quote
-    function $reverse_autodiff_uptotarget($(init[1])::Vector)
+    function $reverse_autodiff_uptotarget($(init[1])::$fargtype)
       v, g, h = $(adfunction)($(init[1]))
       return v, g, -h
     end
   end
 end
 
-function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, init::Vector)
+function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, fargtype::Symbol, init::Vector)
   adfunction = eval(Expr(
     :call,
     :(ReverseDiffSource.rdiff),
@@ -163,7 +165,7 @@ function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Expr, ini
 
   @gensym reverse_autodiff_uptotarget
   quote
-    function $reverse_autodiff_uptotarget($(init[1][1])::Vector, $(init[2][1])::Vector)
+    function $reverse_autodiff_uptotarget($(init[1][1])::$fargtype, $(init[2][1])::Vector)
       v, g, h = $(adfunction)($(init[1][1]), $(init[2][1]))
       return v, g, -h
     end

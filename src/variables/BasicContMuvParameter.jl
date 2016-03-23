@@ -619,9 +619,9 @@ function BasicContMuvParameter{S<:VariableState}(
         if !isa(inargs[i], Function)
           if isa(inargs[i-6], Function) || isa(inargs[i-6], Expr)
             if nkeys == 0
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], initarg[i-8][1]))
+              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Vector, initarg[i-8][1]))
             else
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], initarg[i-8]))
+              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Vector, initarg[i-8]))
               f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
             end
 
@@ -633,9 +633,9 @@ function BasicContMuvParameter{S<:VariableState}(
       if !isa(inargs[16], Function)
         if isa(inargs[5], Function) || isa(inargs[5], Expr)
           if nkeys == 0
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], initarg[3][1]))
+            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Vector, initarg[3][1]))
           else
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], initarg[3]))
+            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Vector, initarg[3]))
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
