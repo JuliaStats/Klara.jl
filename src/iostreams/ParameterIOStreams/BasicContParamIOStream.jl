@@ -1,7 +1,3 @@
-### Abstract parameter IOStreams
-
-abstract ParameterIOStream{S<:ValueSupport} <: VariableIOStream
-
 ### BasicContParamIOStream
 
 type BasicContParamIOStream <: ParameterIOStream{Continuous}

@@ -66,6 +66,8 @@ export
   BasicContUnvParameter,
   BasicContUnvParameterNState,
   BasicContUnvParameterState,
+  BasicDiscMuvParameterState,
+  BasicDiscUnvParameterState,
   BasicMCJob,
   BasicMCRange,
   BasicMavVariableNState,
@@ -186,16 +188,25 @@ include("autodiff/reverse.jl")
 include("autodiff/forward.jl")
 
 include("states/VariableStates.jl")
-include("states/ParameterStates.jl")
-include("states/VariableNStates.jl")
-include("states/ParameterNStates.jl")
+include("states/ParameterStates/ParameterStates.jl")
+include("states/ParameterStates/BasicDiscUnvParameterState.jl")
+include("states/ParameterStates/BasicDiscMuvParameterState.jl")
+include("states/ParameterStates/BasicContUnvParameterState.jl")
+include("states/ParameterStates/BasicContMuvParameterState.jl")
+
+include("nstates/VariableNStates.jl")
+include("nstates/ParameterNStates/ParameterNStates.jl")
+include("nstates/ParameterNStates/BasicContUnvParameterNState.jl")
+include("nstates/ParameterNStates/BasicContMuvParameterNState.jl")
 
 include("iostreams/VariableIOStreams.jl")
-include("iostreams/ParameterIOStreams.jl")
+include("iostreams/ParameterIOStreams/ParameterIOStreams.jl")
+include("iostreams/ParameterIOStreams/BasicContParamIOStream.jl")
 
 include("variables/variables.jl")
-include("variables/BasicContUnvParameter.jl")
-include("variables/BasicContMuvParameter.jl")
+include("variables/parameters/parameters.jl")
+include("variables/parameters/BasicContUnvParameter.jl")
+include("variables/parameters/BasicContMuvParameter.jl")
 include("variables/dependencies.jl")
 
 include("models/GenericModel.jl")

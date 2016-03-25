@@ -1,67 +1,3 @@
-### Abstract parameter states
-
-abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
-
-value_support{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = S
-variate_form{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = F
-
-### Parameter state subtypes
-
-## BasicContUnvParameterState
-
-type BasicContUnvParameterState{N<:Real} <: ParameterState{Continuous, Univariate}
-  value::N
-  loglikelihood::N
-  logprior::N
-  logtarget::N
-  gradloglikelihood::N
-  gradlogprior::N
-  gradlogtarget::N
-  tensorloglikelihood::N
-  tensorlogprior::N
-  tensorlogtarget::N
-  dtensorloglikelihood::N
-  dtensorlogprior::N
-  dtensorlogtarget::N
-  diagnosticvalues::Vector
-  diagnostickeys::Vector{Symbol}
-end
-
-function BasicContUnvParameterState{N<:Real}(
-  value::N,
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
-)
-  v = convert(N, NaN)
-  BasicContUnvParameterState{N}(value, v, v, v, v, v, v, v, v, v, v, v, v, diagnosticvalues, diagnostickeys)
-end
-
-BasicContUnvParameterState{N<:Real}(
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
-) =
-  BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diagnosticvalues)
-
-value_support{N<:Real}(s::Type{BasicContUnvParameterState{N}}) = Continuous
-value_support{N<:Real}(s::BasicContUnvParameterState{N}) = Continuous
-
-variate_form{N<:Real}(s::Type{BasicContUnvParameterState{N}}) = Univariate
-variate_form{N<:Real}(s::BasicContUnvParameterState{N}) = Univariate
-
-Base.eltype{N<:Real}(::Type{BasicContUnvParameterState{N}}) = N
-Base.eltype{N<:Real}(s::BasicContUnvParameterState{N}) = N
-
-Base.(:(==)){S<:BasicContUnvParameterState}(z::S, w::S) =
-  reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)])
-
-Base.isequal{S<:BasicContUnvParameterState}(z::S, w::S) =
-  reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)])
-
-generate_empty(state::BasicContUnvParameterState) = BasicContUnvParameterState(state.diagnostickeys, eltype(state))
-
-## BasicContMuvParameterState
-
 type BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivariate}
   value::Vector{N}
   loglikelihood::N
@@ -152,12 +88,6 @@ variate_form{N<:Real}(s::BasicContMuvParameterState{N}) = Multivariate
 
 Base.eltype{N<:Real}(::Type{BasicContMuvParameterState{N}}) = N
 Base.eltype{N<:Real}(s::BasicContMuvParameterState{N}) = N
-
-Base.(:(==)){S<:BasicContMuvParameterState}(z::S, w::S) =
-  reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)])
-
-Base.isequal{S<:BasicContMuvParameterState}(z::S, w::S) =
-  reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)])
 
 generate_empty(
   state::BasicContMuvParameterState,
