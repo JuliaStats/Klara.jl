@@ -164,7 +164,7 @@ function BasicContMuvParameter!(
       parameter,
       setter,
       if isa(args[i], Function)
-        eval(codegen_setfield_basiccontmuvparameter(parameter, distribution, args[i]))
+        eval(codegen_setfield(parameter, distribution, args[i]))
       else
         nothing
       end
@@ -178,7 +178,7 @@ function BasicContMuvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         nothing
       end
@@ -192,14 +192,14 @@ function BasicContMuvParameter!(
     parameter,
       ppfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         if (
             isa(parameter.prior, ContinuousMultivariateDistribution) &&
             method_exists(f, (typeof(parameter.prior), Vector{eltype(parameter.prior)}))
           ) ||
           isa(args[2], Function)
-          eval(codegen_method_via_distribution_basiccontmuvparameter(parameter, :prior, f, spfield))
+          eval(codegen_method_via_distribution(parameter, :prior, f, spfield))
         else
           nothing
         end
@@ -218,16 +218,16 @@ function BasicContMuvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
-          eval(codegen_method_via_sum_basiccontmuvparameter(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_method_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
         elseif (
             isa(parameter.pdf, ContinuousMultivariateDistribution) &&
             method_exists(f, (typeof(parameter.pdf), Vector{eltype(parameter.pdf)}))
           ) ||
           isa(args[1], Function)
-          eval(codegen_method_via_distribution_basiccontmuvparameter(parameter, :pdf, f, stfield))
+          eval(codegen_method_via_distribution(parameter, :pdf, f, stfield))
         else
           nothing
         end
@@ -242,7 +242,7 @@ function BasicContMuvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         nothing
       end
@@ -256,7 +256,7 @@ function BasicContMuvParameter!(
       parameter,
       ppfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         nothing
       end
@@ -280,10 +280,10 @@ function BasicContMuvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        eval(codegen_method_basiccontmuvparameter(parameter, args[i]))
+        eval(codegen_method(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_method_via_sum_basiccontmuvparameter(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_method_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
         else
           nothing
         end
@@ -296,10 +296,10 @@ function BasicContMuvParameter!(
     parameter,
     :uptogradlogtarget!,
     if isa(args[15], Function)
-      eval(codegen_method_basiccontmuvparameter(parameter, args[15]))
+      eval(codegen_method(parameter, args[15]))
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
-        eval(codegen_uptomethods_basiccontmuvparameter(parameter, [:logtarget!, :gradlogtarget!]))
+        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!]))
       else
         nothing
       end
@@ -311,12 +311,12 @@ function BasicContMuvParameter!(
     parameter,
     :uptotensorlogtarget!,
     if isa(args[16], Function)
-      eval(codegen_method_basiccontmuvparameter(parameter, args[16]))
+      eval(codegen_method(parameter, args[16]))
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function)
-        eval(codegen_uptomethods_basiccontmuvparameter(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
+        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
       else
         nothing
       end
@@ -328,15 +328,13 @@ function BasicContMuvParameter!(
     parameter,
     :uptodtensorlogtarget!,
     if isa(args[17], Function)
-      eval(codegen_method_basiccontmuvparameter(parameter, args[17]))
+      eval(codegen_method(parameter, args[17]))
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function) &&
         isa(parameter.dtensorlogtarget!, Function)
-        eval(codegen_uptomethods_basiccontmuvparameter(
-          parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]
-        ))
+        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]))
       else
         nothing
       end
@@ -650,83 +648,6 @@ function BasicContMuvParameter{S<:VariableState}(
   parameter
 end
 
-function codegen_setfield_basiccontmuvparameter(parameter::BasicContMuvParameter, field::Symbol, f::Function)
-  @gensym codegen_setfield_basiccontmuvparameter
-  quote
-    function $codegen_setfield_basiccontmuvparameter(_state::BasicContMuvParameterState)
-      setfield!($(parameter), $(QuoteNode(field)), $(f)(_state, $(parameter).states))
-    end
-  end
-end
-
-function codegen_method_basiccontmuvparameter(parameter::BasicContMuvParameter, f::Function)
-  @gensym codegen_method_basiccontmuvparameter
-  quote
-    function $codegen_method_basiccontmuvparameter(_state::BasicContMuvParameterState)
-      $(f)(_state, $(parameter).states)
-    end
-  end
-end
-
-function codegen_method_via_distribution_basiccontmuvparameter(
-  parameter::BasicContMuvParameter,
-  distribution::Symbol,
-  f::Function,
-  field::Symbol
-)
-  @gensym codegen_method_via_distribution_basiccontmuvparameter
-  quote
-    function $codegen_method_via_distribution_basiccontmuvparameter(_state::BasicContMuvParameterState)
-      setfield!(_state, $(QuoteNode(field)), $(f)(getfield($(parameter), $(QuoteNode(distribution))), _state.value))
-    end
-  end
-end
-
-function codegen_method_via_sum_basiccontmuvparameter(
-  parameter::BasicContMuvParameter,
-  plfield::Symbol,
-  ppfield::Symbol,
-  stfield::Symbol,
-  slfield::Symbol,
-  spfield::Symbol
-)
-  body = []
-
-  push!(body, :(getfield($(parameter), $(QuoteNode(plfield)))(_state)))
-  push!(body, :(getfield($(parameter), $(QuoteNode(ppfield)))(_state)))
-  push!(body, :(setfield!(
-    _state,
-    $(QuoteNode(stfield)),
-    getfield(_state, $(QuoteNode(slfield)))+getfield(_state, $(QuoteNode(spfield)))))
-  )
-
-  @gensym codegen_method_via_sum_basiccontmuvparameter
-
-  quote
-    function $codegen_method_via_sum_basiccontmuvparameter(_state::BasicContMuvParameterState)
-      $(body...)
-    end
-  end
-end
-
-function codegen_uptomethods_basiccontmuvparameter(parameter::BasicContMuvParameter, fields::Vector{Symbol})
-  body = []
-  local f::Symbol
-
-  for i in 1:length(fields)
-    f = fields[i]
-    push!(body, :(getfield($(parameter), $(QuoteNode(f)))(_state)))
-  end
-
-  @gensym codegen_uptomethods_basiccontmuvparameter
-
-  quote
-    function $codegen_uptomethods_basiccontmuvparameter(_state::BasicContMuvParameterState)
-      $(body...)
-    end
-  end
-end
-
 function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Int)
   fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
 
@@ -739,11 +660,13 @@ function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::
   end
 end
 
-value_support(s::Type{BasicContMuvParameter}) = Continuous
-value_support(s::BasicContMuvParameter) = Continuous
+value_support{S<:VariableState}(::Type{BasicContMuvParameter{S}}) = Continuous
+value_support(::BasicContMuvParameter) = Continuous
 
-variate_form(s::Type{BasicContMuvParameter}) = Multivariate
-variate_form(s::BasicContMuvParameter) = Multivariate
+variate_form{S<:VariableState}(::Type{BasicContMuvParameter{S}}) = Multivariate
+variate_form(::BasicContMuvParameter) = Multivariate
+
+default_state_type(::BasicContMuvParameter) = BasicContMuvParameterState
 
 default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopts::Dict) =
   BasicContMuvParameterState(

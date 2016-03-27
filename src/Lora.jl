@@ -66,7 +66,12 @@ export
   BasicContUnvParameter,
   BasicContUnvParameterNState,
   BasicContUnvParameterState,
+  BasicDiscMuvParameter,
+  BasicDiscMuvParameterNState,
   BasicDiscMuvParameterState,
+  BasicDiscParamIOStream,
+  BasicDiscUnvParameter,
+  BasicDiscUnvParameterNState,
   BasicDiscUnvParameterState,
   BasicMCJob,
   BasicMCRange,
@@ -83,6 +88,8 @@ export
   Data,
   Dependence,
   Deterministic,
+  DiscMuvMarkovChain,
+  DiscUnvMarkovChain,
   GenericModel,
   GibbsJob,
   HMC,
@@ -196,17 +203,23 @@ include("states/ParameterStates/BasicContMuvParameterState.jl")
 
 include("nstates/VariableNStates.jl")
 include("nstates/ParameterNStates/ParameterNStates.jl")
+include("nstates/ParameterNStates/BasicDiscUnvParameterNState.jl")
+include("nstates/ParameterNStates/BasicDiscMuvParameterNState.jl")
 include("nstates/ParameterNStates/BasicContUnvParameterNState.jl")
 include("nstates/ParameterNStates/BasicContMuvParameterNState.jl")
 
 include("iostreams/VariableIOStreams.jl")
 include("iostreams/ParameterIOStreams/ParameterIOStreams.jl")
+include("iostreams/ParameterIOStreams/BasicDiscParamIOStream.jl")
 include("iostreams/ParameterIOStreams/BasicContParamIOStream.jl")
 
 include("variables/variables.jl")
 include("variables/parameters/parameters.jl")
+include("variables/parameters/BasicDiscUnvParameter.jl")
+include("variables/parameters/BasicDiscMuvParameter.jl")
 include("variables/parameters/BasicContUnvParameter.jl")
 include("variables/parameters/BasicContMuvParameter.jl")
+include("variables/parameters/codegen.jl")
 include("variables/dependencies.jl")
 
 include("models/GenericModel.jl")

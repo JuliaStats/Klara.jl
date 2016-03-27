@@ -17,14 +17,14 @@ function BasicDiscUnvParameterState{NI<:Integer, NR<:Real}(
   BasicDiscUnvParameterState{NI, NR}(value, v, v, v, diagnosticvalues, diagnostickeys)
 end
 
-value_support{NI<:Integer, NR<:Real}(s::Type{BasicDiscUnvParameterState{NI, NR}}) = Discrete
-value_support{NI<:Integer, NR<:Real}(s::BasicDiscUnvParameterState{NI, NR}) = Discrete
+value_support{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = Discrete
+value_support(::BasicDiscUnvParameterState) = Discrete
 
-variate_form{NI<:Integer, NR<:Real}(s::Type{BasicDiscUnvParameterState{NI, NR}}) = Univariate
-variate_form{NI<:Integer, NR<:Real}(s::BasicDiscUnvParameterState{NI, NR}) = Univariate
+variate_form{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = Univariate
+variate_form(::BasicDiscUnvParameterState) = Univariate
 
 Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(s::BasicDiscUnvParameterState{NI, NR}) = (NI, NR)
+Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterState{NI, NR}) = (NI, NR)
 
 generate_empty(state::BasicDiscUnvParameterState) =
   BasicDiscUnvParameterState(state.value, state.diagnostickeys, eltype(state)[2])

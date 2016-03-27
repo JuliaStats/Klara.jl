@@ -27,14 +27,14 @@ BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(
 ) =
   BasicDiscMuvParameterState(Array(NI, size), diagnostickeys, NR, diagnosticvalues)
 
-value_support{NI<:Integer, NR<:Real}(s::Type{BasicDiscMuvParameterState{NI, NR}}) = Discrete
-value_support{NI<:Integer, NR<:Real}(s::BasicDiscMuvParameterState{NI, NR}) = Discrete
+value_support{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = Discrete
+value_support(::BasicDiscMuvParameterState) = Discrete
 
-variate_form{NI<:Integer, NR<:Real}(s::Type{BasicDiscMuvParameterState{NI, NR}}) = Univariate
-variate_form{NI<:Integer, NR<:Real}(s::BasicDiscMuvParameterState{NI, NR}) = Univariate
+variate_form{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = Univariate
+variate_form(::BasicDiscMuvParameterState) = Univariate
 
 Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(s::BasicDiscMuvParameterState{NI, NR}) = (NI, NR)
+Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterState{NI, NR}) = (NI, NR)
 
 generate_empty(state::BasicDiscMuvParameterState) =
   BasicDiscMuvParameterState(state.size, state.diagnostickeys, eltype(state)...)

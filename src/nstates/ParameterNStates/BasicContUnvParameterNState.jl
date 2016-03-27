@@ -71,12 +71,6 @@ typealias ContUnvMarkovChain BasicContUnvParameterNState
 
 codegen(f::Symbol, nstate::BasicContUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 
-# To visually inspect code generation via codegen_copy_continuous_univariate_parameter_nstate, try for example
-# using Lora
-#
-# nstate = ContUnvMarkovChain(Float64, 4)
-# codegen(:copy, nstate, [true; fill(false, 12)])
-
 function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monitor::Vector{Bool})
   body = []
   fnames = fieldnames(BasicContUnvParameterNState)
@@ -102,10 +96,8 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monito
   end
 end
 
-Base.copy!(nstate::BasicContUnvParameterNState, state::BasicContUnvParameterState, i::Int) = nstate.copy(nstate, state, i)
-
 Base.eltype{N<:Real}(::Type{BasicContUnvParameterNState{N}}) = N
-Base.eltype{N<:Real}(s::BasicContUnvParameterNState{N}) = N
+Base.eltype{N<:Real}(::BasicContUnvParameterNState{N}) = N
 
 Base.(:(==)){S<:BasicContUnvParameterNState}(z::S, w::S) =
   reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:16]])
@@ -145,5 +137,3 @@ function Base.show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
     end
   end
 end
-
-Base.writemime{N<:Real}(io::IO, ::MIME"text/plain", nstate::BasicContUnvParameterNState{N}) = show(io, nstate)

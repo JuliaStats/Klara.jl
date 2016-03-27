@@ -86,12 +86,6 @@ typealias ContMuvMarkovChain BasicContMuvParameterNState
 
 codegen(f::Symbol, nstate::BasicContMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 
-# To visually inspect code generation via codegen_copy_continuous_multivariate_parameter_nstate, try for example
-# using Lora
-#
-# nstate = ContMuvMarkovChain(Float64, 2, 4)
-# Lora.codegen(:copy, nstate, [true; fill(false, 12)])
-
 function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monitor::Vector{Bool})
   body = []
   fnames = fieldnames(BasicContMuvParameterNState)
@@ -154,10 +148,8 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monito
   end
 end
 
-Base.copy!(nstate::BasicContMuvParameterNState, state::BasicContMuvParameterState, i::Int) = nstate.copy(nstate, state, i)
-
 Base.eltype{N<:Real}(::Type{BasicContMuvParameterNState{N}}) = N
-Base.eltype{N<:Real}(s::BasicContMuvParameterNState{N}) = N
+Base.eltype{N<:Real}(::BasicContMuvParameterNState{N}) = N
 
 Base.(:(==)){S<:BasicContMuvParameterNState}(z::S, w::S) =
   reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:17]])
@@ -198,5 +190,3 @@ function Base.show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
     end
   end
 end
-
-Base.writemime{N<:Real}(io::IO, ::MIME"text/plain", nstate::BasicContMuvParameterNState{N}) = show(io, nstate)

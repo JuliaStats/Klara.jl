@@ -32,13 +32,13 @@ BasicContUnvParameterState{N<:Real}(
 ) =
   BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diagnosticvalues)
 
-value_support{N<:Real}(s::Type{BasicContUnvParameterState{N}}) = Continuous
-value_support{N<:Real}(s::BasicContUnvParameterState{N}) = Continuous
+value_support{N<:Real}(::Type{BasicContUnvParameterState{N}}) = Continuous
+value_support(::BasicContUnvParameterState) = Continuous
 
-variate_form{N<:Real}(s::Type{BasicContUnvParameterState{N}}) = Univariate
-variate_form{N<:Real}(s::BasicContUnvParameterState{N}) = Univariate
+variate_form{N<:Real}(::Type{BasicContUnvParameterState{N}}) = Univariate
+variate_form(::BasicContUnvParameterState) = Univariate
 
 Base.eltype{N<:Real}(::Type{BasicContUnvParameterState{N}}) = N
-Base.eltype{N<:Real}(s::BasicContUnvParameterState{N}) = N
+Base.eltype{N<:Real}(::BasicContUnvParameterState{N}) = N
 
 generate_empty(state::BasicContUnvParameterState) = BasicContUnvParameterState(state.diagnostickeys, eltype(state))

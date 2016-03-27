@@ -13,7 +13,7 @@ type BasicUnvVariableState{N<:Number} <: VariableState{Univariate}
 end
 
 variate_form{N<:Number}(s::Type{BasicUnvVariableState{N}}) = Univariate
-variate_form{N<:Number}(s::BasicUnvVariableState{N}) = Univariate
+variate_form(::BasicUnvVariableState) = Univariate
 
 Base.eltype{N<:Number}(::Type{BasicUnvVariableState{N}}) = N
 Base.eltype{N<:Number}(s::BasicUnvVariableState{N}) = N
@@ -29,11 +29,11 @@ BasicMuvVariableState{N<:Number}(value::Vector{N}) = BasicMuvVariableState{N}(va
 
 BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array(N, size), size)
 
-variate_form{N<:Number}(s::Type{BasicMuvVariableState{N}}) = Multivariate
-variate_form{N<:Number}(s::BasicMuvVariableState{N}) = Multivariate
+variate_form{N<:Number}(::Type{BasicMuvVariableState{N}}) = Multivariate
+variate_form(::BasicMuvVariableState) = Multivariate
 
 Base.eltype{N<:Number}(::Type{BasicMuvVariableState{N}}) = N
-Base.eltype{N<:Number}(s::BasicMuvVariableState{N}) = N
+Base.eltype{N<:Number}(::BasicMuvVariableState{N}) = N
 
 ## BasicMavVariableState
 
@@ -46,8 +46,8 @@ BasicMavVariableState{N<:Number}(value::Matrix{N}) = BasicMavVariableState{N}(va
 
 BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64) = BasicMavVariableState{N}(Array(N, size...), size)
 
-variate_form{N<:Number}(s::Type{BasicMavVariableState{N}}) = Matrixvariate
-variate_form{N<:Number}(s::BasicMavVariableState{N}) = Matrixvariate
+variate_form{N<:Number}(::Type{BasicMavVariableState{N}}) = Matrixvariate
+variate_form(::BasicMavVariableState) = Matrixvariate
 
 Base.eltype{N<:Number}(::Type{BasicMavVariableState{N}}) = N
-Base.eltype{N<:Number}(s::BasicMavVariableState{N}) = N
+Base.eltype{N<:Number}(::BasicMavVariableState{N}) = N

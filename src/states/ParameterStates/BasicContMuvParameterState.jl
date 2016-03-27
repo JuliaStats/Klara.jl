@@ -80,14 +80,14 @@ BasicContMuvParameterState{N<:Real}(
 ) =
   BasicContMuvParameterState(fill(convert(N, NaN), size), monitor, diagnostickeys, diagnosticvalues)
 
-value_support{N<:Real}(s::Type{BasicContMuvParameterState{N}}) = Continuous
-value_support{N<:Real}(s::BasicContMuvParameterState{N}) = Continuous
+value_support{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Continuous
+value_support(::BasicContMuvParameterState) = Continuous
 
-variate_form{N<:Real}(s::Type{BasicContMuvParameterState{N}}) = Multivariate
-variate_form{N<:Real}(s::BasicContMuvParameterState{N}) = Multivariate
+variate_form{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Multivariate
+variate_form(::BasicContMuvParameterState) = Multivariate
 
 Base.eltype{N<:Real}(::Type{BasicContMuvParameterState{N}}) = N
-Base.eltype{N<:Real}(s::BasicContMuvParameterState{N}) = N
+Base.eltype{N<:Real}(::BasicContMuvParameterState{N}) = N
 
 generate_empty(
   state::BasicContMuvParameterState,

@@ -5,6 +5,8 @@ abstract VariableNState{F<:VariateForm}
 add_dimension(n::Number) = eltype(n)[n]
 add_dimension(a::Array, sa::Tuple=size(a)) = reshape(a, sa..., 1)
 
+Base.writemime(io::IO, ::MIME"text/plain", nstate::VariableNState) = show(io, nstate)
+
 ### Basic variable NState subtypes
 
 ## BasicUnvVariableNState
@@ -19,7 +21,7 @@ BasicUnvVariableNState{N<:Number}(value::Vector{N}) = BasicUnvVariableNState{N}(
 BasicUnvVariableNState{N<:Number}(n::Int, ::Type{N}=Float64) = BasicUnvVariableNState{N}(Array(N, n), n)
 
 Base.eltype{N<:Number}(::Type{BasicUnvVariableNState{N}}) = N
-Base.eltype{N<:Number}(s::BasicUnvVariableNState{N}) = N
+Base.eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Int) = (nstate.value[i] = state.value)
 
@@ -48,7 +50,7 @@ BasicMuvVariableNState{N<:Number}(size::Int, n::Int, ::Type{N}=Float64) =
   BasicMuvVariableNState{N}(Array(N, size, n), size, n)
 
 Base.eltype{N<:Number}(::Type{BasicMuvVariableNState{N}}) = N
-Base.eltype{N<:Number}(s::BasicMuvVariableNState{N}) = N
+Base.eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Int) =
   (nstate.value[1+(i-1)*state.size:i*state.size] = state.value)
@@ -80,7 +82,7 @@ BasicMavVariableNState{N<:Number}(size::Tuple, n::Int, ::Type{N}=Float64) =
   BasicMavVariableNState{N}(Array(N, size..., n), size, n)
 
 Base.eltype{N<:Number}(::Type{BasicMavVariableNState{N}}) = N
-Base.eltype{N<:Number}(s::BasicMavVariableNState{N}) = N
+Base.eltype{N<:Number}(::BasicMavVariableNState{N}) = N
 
 Base.copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Int, statelen::Int=prod(state.size)) =
   (nstate.value[1+(i-1)*statelen:i*statelen] = state.value)
@@ -94,5 +96,3 @@ function Base.show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
   println(io, indentation*"state size = $(nstate.size)")
   print(io, indentation*"number of states = $(nstate.n)")
 end
-
-Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMavVariableNState{N}) = show(io, nstate)

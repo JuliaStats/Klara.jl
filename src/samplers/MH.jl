@@ -54,7 +54,7 @@ MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> rand(Normal(x, 1.0)))
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(pstate::ParameterState{Continuous, F}, parameter::Parameter{Continuous, F}, sampler::MH)
+function initialize!{S<:ValueSupport, F<:VariateForm}(pstate::ParameterState{S, F}, parameter::Parameter{S, F}, sampler::MH)
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
 end
@@ -66,20 +66,15 @@ sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState) =
 
 ## Reset parameter state
 
-function reset!(
-  pstate::ParameterState{Continuous, Univariate},
-  x::Real,
-  parameter::Parameter{Continuous, Univariate},
-  sampler::MH
-)
+function reset!{S<:ValueSupport}(pstate::ParameterState{S, Univariate}, x, parameter::Parameter{S, Univariate}, sampler::MH)
   pstate.value = x
   parameter.logtarget!(pstate)
 end
 
-function reset!{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
-  parameter::Parameter{Continuous, Multivariate},
+function reset!{S<:ValueSupport}(
+  pstate::ParameterState{S, Multivariate},
+  x,
+  parameter::Parameter{S, Multivariate},
   sampler::MH
 )
   pstate.value = copy(x)
