@@ -16,12 +16,6 @@ end
 
 plogprior(p::Vector, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
 
-λ = Hyperparameter(:λ)
-
-X = Data(:X)
-
-y = Data(:y)
-
 p = BasicContMuvParameter(
   :p,
   loglikelihood=ploglikelihood,
@@ -31,17 +25,17 @@ p = BasicContMuvParameter(
   order=2
 )
 
-model = likelihood_model([λ, X, y, p], isindexed=false)
+model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
 sampler = SMMALA(0.02)
 
-mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+mcrange = BasicMCRange(nsteps=50000, burnin=10000)
 
 v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
-job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+job = BasicMCJob(model, sampler, mcrange, v0, tuner=AcceptanceRateMCTuner(0.5, verbose=true), outopts=outopts)
 
 run(job)
 

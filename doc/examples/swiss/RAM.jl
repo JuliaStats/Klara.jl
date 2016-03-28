@@ -16,14 +16,9 @@ end
 
 plogprior(p::Vector{Float64}, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
 
-λ = Hyperparameter(:λ)
-
-X = Data(:X)
-y = Data(:y)
-
 p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, nkeys=4)
 
-model = likelihood_model([λ, X, y, p], isindexed=false)
+model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
 sampler = RAM(ones(npars))
 
@@ -38,3 +33,5 @@ run(job)
 chain = output(job)
 
 mean(chain)
+
+acceptance(chain, diagnostics=false)

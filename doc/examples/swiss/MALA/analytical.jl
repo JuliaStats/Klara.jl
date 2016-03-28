@@ -18,12 +18,6 @@ plogprior(p::Vector, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
 
 pgradlogtarget(p::Vector, v::Vector) = v[2]'*(v[3]-1./(1+exp(-v[2]*p)))-p/v[1]
 
-λ = Hyperparameter(:λ)
-
-X = Data(:X)
-
-y = Data(:y)
-
 p = BasicContMuvParameter(
   :p,
   loglikelihood=ploglikelihood,
@@ -32,7 +26,7 @@ p = BasicContMuvParameter(
   nkeys=4
 )
 
-model = likelihood_model([λ, X, y, p], isindexed=false)
+model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
 sampler = MALA(0.1)
 

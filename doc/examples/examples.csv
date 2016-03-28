@@ -5,6 +5,6 @@ swiss/MALA/reversediff,expressionargs.jl,swiss,MALA with gradient computed via e
 swiss/MALA/reversediff,functionargs.jl,swiss,MALA with gradient computed via function-based reverse mode AD,Bayesian logistic regression,Swiss banknotes
 swiss/MALA,forwarddiff.jl,swiss,MALA with gradient computed via forward mode AD,Bayesian logistic regression,Swiss banknotes
 swiss/SMMALA,analytical.jl,swiss,SMMALA with analytical gradient and tensor,Bayesian logistic regression,Swiss banknotes
-swiss/SMMALA/reversediff,expressionargs.jl,swiss,MALA with gradient and tensor computed via expression-based reverse mode AD,Bayesian logistic regression,Swiss banknotes
-swiss/SMMALA/reversediff,functionargs.jl,swiss,MALA with gradient and tensor computed via function-based reverse mode AD,Bayesian logistic regression,Swiss banknotes
-swiss/SMMALA,forwarddiff.jl,swiss,MALA with gradient and tensor computed via forward mode AD,Bayesian logistic regression,Swiss banknotes
+swiss/SMMALA/reversediff,expressionargs.jl,swiss,SMMALA with gradient and tensor computed via expression-based reverse mode AD,Bayesian logistic regression,Swiss banknotes
+swiss/SMMALA/reversediff,functionargs.jl,swiss,SMMALA with gradient and tensor computed via function-based reverse mode AD,Bayesian logistic regression,Swiss banknotes
+swiss/SMMALA,forwarddiff.jl,swiss,SMMALA with gradient and tensor computed via forward mode AD,Bayesian logistic regression,Swiss banknotes
