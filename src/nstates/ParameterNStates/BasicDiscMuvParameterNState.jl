@@ -96,7 +96,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscMuvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicDiscMuvParameterNState, _state::BasicContMuvParameterState, _i::Int)
+    function $_copy(_nstate::BasicDiscMuvParameterNState, _state::BasicDiscMuvParameterState, _i::Int)
       $(body...)
     end
   end

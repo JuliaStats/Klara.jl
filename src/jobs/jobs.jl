@@ -111,6 +111,55 @@ function initialize_output(state::BasicMavVariableState, n::Int, outopts::Dict)
   output
 end
 
+function initialize_output(state::BasicDiscUnvParameterState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicDiscUnvParameterNState(n, outopts[:monitor], outopts[:diagnostics], eltype(state)...)
+  elseif outopts[:destination] == :iostream
+    output = BasicDiscParamIOStream(
+      (),
+      n,
+      outopts[:monitor],
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w"
+    )
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
+  end
+
+  output
+end
+
+function initialize_output(state::BasicDiscMuvParameterState, n::Int, outopts::Dict)
+  output::Union{VariableNState, VariableIOStream, Void}
+
+  if outopts[:destination] == :nstate
+    output = BasicDiscMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state))
+  elseif outopts[:destination] == :iostream
+    output = BasicDiscParamIOStream(
+      (state.size,),
+      n,
+      outopts[:monitor],
+      filepath=outopts[:filepath],
+      filesuffix=outopts[:filesuffix],
+      diagnostickeys=outopts[:diagnostics],
+      mode="w"
+    )
+    mark(output)
+  elseif outopts[:destination] == :none
+    output = nothing
+  else
+    error(":destination must be set to :nstate or :iostream or :none, got $(outopts[:destination])")
+  end
+
+  output
+end
+
 function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 

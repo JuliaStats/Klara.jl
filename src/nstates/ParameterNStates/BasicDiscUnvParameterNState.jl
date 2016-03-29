@@ -18,7 +18,7 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
   )
     instance = new()
 
-    t = [NI, fill(NR, 3)]
+    t = [NI; fill(NR, 3)]
     
     l = Array(Int, 4)
     for i in 1:4
@@ -88,7 +88,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscUnvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicDiscUnvParameterNState, _state::BasicContUnvParameterState, _i::Int)
+    function $_copy(_nstate::BasicDiscUnvParameterNState, _state::BasicDiscUnvParameterState, _i::Int)
       $(body...)
     end
   end
