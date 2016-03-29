@@ -139,7 +139,7 @@ function initialize_output(state::BasicDiscMuvParameterState, n::Int, outopts::D
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
-    output = BasicDiscMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state))
+    output = BasicDiscMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state)...)
   elseif outopts[:destination] == :iostream
     output = BasicDiscParamIOStream(
       (state.size,),
