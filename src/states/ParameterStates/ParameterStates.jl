@@ -1,6 +1,8 @@
-### Abstract parameter states
+### Abstract parameter state
 
 abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
+
+typealias ParameterStateVector{S<:ParameterState} Vector{S}
 
 value_support{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = S
 variate_form{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = F

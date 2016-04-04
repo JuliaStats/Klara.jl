@@ -48,7 +48,7 @@ function add_vertex!(m::GenericModel, v::Variable, n::Int=num_vertices(m)+1)
     v
 end
 
-function add_vertex!{V<:Variable}(m::GenericModel, vs::Vector{V}, n::Int=num_vertices(m)+1)
+function add_vertex!(m::GenericModel, vs::VariableVector, n::Int=num_vertices(m)+1)
   nvertices = n
   for v in vs
     add_vertex!(m, v, nvertices)
@@ -67,7 +67,7 @@ function set_vertex!(m::GenericModel, v::Variable)
   v
 end
 
-function set_vertex!{V<:Variable}(m::GenericModel, vs::Vector{V})
+function set_vertex!(m::GenericModel, vs::VariableVector)
   for v in vs
     set_vertex!(m, v)
   end
@@ -95,7 +95,7 @@ end
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
 
-function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
+function GenericModel(vs::VariableVector, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
 
   m = GenericModel(
@@ -122,12 +122,12 @@ function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}; isdire
   return m
 end
 
-function GenericModel{V<:Variable}(vs::Vector{V}, ds::Vector{Dependence}, isdirected::Bool)
+function GenericModel(vs::VariableVector, ds::Vector{Dependence}, isdirected::Bool)
   n = length(vs)
 
   m = GenericModel(
     isdirected,
-    Array(V, n),
+    Array(typeof(vs), n),
     Dependence[],
     Graphs.multivecs(Dependence, n),
     Graphs.multivecs(Dependence, n),

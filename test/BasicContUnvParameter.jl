@@ -143,7 +143,7 @@ pv = 3.79
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(μv)]
 
 p = BasicContUnvParameter(:p, 1, setpdf=(state, states) -> Normal(states[2].value), states=states)
-p.setpdf(states[1])
+setpdf!(p, states[1])
 
 distribution = Normal(μv)
 p.pdf == distribution
@@ -167,7 +167,7 @@ states[1].value = pv
 μv = 0.12
 states[2].value = μv
 
-p.setpdf(states[1])
+setpdf!(p, states[1])
 
 distribution = Normal(μv)
 p.pdf == distribution
@@ -193,7 +193,7 @@ pv = 3.55
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(σv)]
 
 p = BasicContUnvParameter(:p, 1, setprior=(state, states) -> Normal(0., states[2].value), states=states)
-p.setprior(states[1])
+setprior!(p, states[1])
 
 distribution = Normal(0., σv)
 p.prior == distribution
@@ -211,7 +211,7 @@ states[1].value = pv
 σv = 5.
 states[2].value = σv
 
-p.setprior(states[1])
+setprior!(p, states[1])
 
 distribution = Normal(0., σv)
 p.prior == distribution

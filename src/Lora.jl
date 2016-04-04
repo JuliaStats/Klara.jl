@@ -116,6 +116,8 @@ export
   ParameterIOStream,
   ParameterNState,
   ParameterState,
+  ParameterStateVector,
+  ParameterVector,
   RAM,
   Random,
   SMMALA,
@@ -128,6 +130,8 @@ export
   VariableIOStream,
   VariableNState,
   VariableState,
+  VariableStateVector,
+  VariableVector,
 
   ### Functions
   acceptance,
@@ -175,6 +179,8 @@ export
   sampler_state,
   save!,
   save,
+  setpdf!,
+  setprior!,
   sort_by_index,
   source,
   target,

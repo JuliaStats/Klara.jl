@@ -7,7 +7,7 @@
 
 ### BasicContUnvParameter
 
-type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate}
+type BasicContUnvParameter <: Parameter{Continuous, Univariate}
   key::Symbol
   index::Int
   pdf::Union{ContinuousUnivariateDistribution, Void}
@@ -29,7 +29,7 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
   uptogradlogtarget!::Union{Function, Void}
   uptotensorlogtarget!::Union{Function, Void}
   uptodtensorlogtarget!::Union{Function, Void}
-  states::Vector{S}
+  states::VariableStateVector
 
   function BasicContUnvParameter(
     key::Symbol,
@@ -53,7 +53,7 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
     uptoglt::Union{Function, Void},
     uptotlt::Union{Function, Void},
     uptodtlt::Union{Function, Void},
-    states::Vector{S}
+    states::VariableStateVector
   )
     args = (setpdf, setprior, ll, lp, lt, gll, glp, glt, tll, tlp, tlt, dtll, dtlp, dtlt, uptoglt, uptotlt, uptodtlt)
     fnames = fieldnames(BasicContUnvParameter)[5:21]
@@ -62,7 +62,7 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
     for i in 1:17
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
-        !(any([method_exists(args[i], (BasicContUnvParameterState, Vector{S})) for S in subtypes(VariableState)]))
+        !method_exists(args[i], (BasicContUnvParameterState, VariableStateVector))
         error("$(fnames[i]) has wrong signature")
       end
     end
@@ -93,55 +93,6 @@ type BasicContUnvParameter{S<:VariableState} <: Parameter{Continuous, Univariate
     )
   end
 end
-
-BasicContUnvParameter{S<:VariableState}(
-  key::Symbol,
-  index::Int,
-  pdf::Union{ContinuousUnivariateDistribution, Void},
-  prior::Union{ContinuousUnivariateDistribution, Void},
-  setpdf::Union{Function, Void},
-  setprior::Union{Function, Void},
-  ll::Union{Function, Void},
-  lp::Union{Function, Void},
-  lt::Union{Function, Void},
-  gll::Union{Function, Void},
-  glp::Union{Function, Void},
-  glt::Union{Function, Void},
-  tll::Union{Function, Void},
-  tlp::Union{Function, Void},
-  tlt::Union{Function, Void},
-  dtll::Union{Function, Void},
-  dtlp::Union{Function, Void},
-  dtlt::Union{Function, Void},
-  uptoglt::Union{Function, Void},
-  uptotlt::Union{Function, Void},
-  uptodtlt::Union{Function, Void},
-  states::Vector{S}
-) =
-  BasicContUnvParameter{S}(
-    key,
-    index,
-    pdf,
-    prior,
-    setpdf,
-    setprior,
-    ll,
-    lp,
-    lt,
-    gll,
-    glp,
-    glt,
-    tll,
-    tlp,
-    tlt,
-    dtll,
-    dtlp,
-    dtlt,
-    uptoglt,
-    uptotlt,
-    uptodtlt,
-    states
-  )
 
 function BasicContUnvParameter!(
   parameter::BasicContUnvParameter,
@@ -185,7 +136,7 @@ function BasicContUnvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         nothing
       end
@@ -199,14 +150,14 @@ function BasicContUnvParameter!(
     parameter,
       ppfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         if (
             isa(parameter.prior, ContinuousUnivariateDistribution) &&
             method_exists(f, (typeof(parameter.prior), eltype(parameter.prior)))
           ) ||
           isa(args[2], Function)
-          eval(codegen_method_via_distribution(parameter, :prior, f, spfield))
+          eval(codegen_closure_via_distribution(parameter, :prior, f, spfield))
         else
           nothing
         end
@@ -225,16 +176,16 @@ function BasicContUnvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
-          eval(codegen_method_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_closure_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
         elseif (
             isa(parameter.pdf, ContinuousUnivariateDistribution) &&
             method_exists(f, (typeof(parameter.pdf), eltype(parameter.pdf)))
           ) ||
           isa(args[1], Function)
-          eval(codegen_method_via_distribution(parameter, :pdf, f, stfield))
+          eval(codegen_closure_via_distribution(parameter, :pdf, f, stfield))
         else
           nothing
         end
@@ -249,7 +200,7 @@ function BasicContUnvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         nothing
       end
@@ -263,7 +214,7 @@ function BasicContUnvParameter!(
       parameter,
       ppfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         nothing
       end
@@ -287,10 +238,10 @@ function BasicContUnvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        eval(codegen_method(parameter, args[i]))
+        eval(codegen_closure(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_method_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_closure_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
         else
           nothing
         end
@@ -303,7 +254,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptogradlogtarget!,
     if isa(args[15], Function)
-      eval(codegen_method(parameter, args[15]))
+      eval(codegen_closure(parameter, args[15]))
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
         eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!]))
@@ -318,7 +269,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptotensorlogtarget!,
     if isa(args[16], Function)
-      eval(codegen_method(parameter, args[16]))
+      eval(codegen_closure(parameter, args[16]))
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
@@ -335,7 +286,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptodtensorlogtarget!,
     if isa(args[17], Function)
-      eval(codegen_method(parameter, args[17]))
+      eval(codegen_closure(parameter, args[17]))
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
@@ -349,7 +300,7 @@ function BasicContUnvParameter!(
   )
 end
 
-function BasicContUnvParameter{S<:VariableState}(
+function BasicContUnvParameter(
   key::Symbol,
   index::Int;
   pdf::Union{ContinuousUnivariateDistribution, Void}=nothing,
@@ -371,7 +322,7 @@ function BasicContUnvParameter{S<:VariableState}(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::Vector{S}=VariableState[]
+  states::VariableStateVector=VariableState[]
 )
   parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
 
@@ -402,7 +353,7 @@ end
 # The constructor below has not be split in autodiff-specific constructors on purpose
 # The rationale is that it allows to provide some order derivatives in closed form while compute others via AD
 
-function BasicContUnvParameter{S<:VariableState}(
+function BasicContUnvParameter(
   key::Symbol;
   index::Int=0,
   pdf::Union{ContinuousUnivariateDistribution, Void}=nothing,
@@ -424,7 +375,7 @@ function BasicContUnvParameter{S<:VariableState}(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::Vector{S}=VariableState[],
+  states::VariableStateVector=VariableState[],
   nkeys::Int=0,
   vfarg::Bool=false,
   autodiff::Symbol=:none,
@@ -514,7 +465,7 @@ function BasicContUnvParameter{S<:VariableState}(
 
   for i in 1:17
     if isa(inargs[i], Function)
-      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, vfarg))
+      outargs[i] = eval(codegen_internal_variable_method(inargs[i], :BasicContUnvParameterState, fnames[i], nkeys, vfarg))
     end
   end
 
@@ -532,14 +483,20 @@ function BasicContUnvParameter{S<:VariableState}(
     for i in 6:8
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_internal_variable_method(
-          forward_autodiff_function(:derivative, fadclosure[i-5], false, chunksize), fnames[i], 0
+          forward_autodiff_function(:derivative, fadclosure[i-5], false, chunksize),
+          :BasicContUnvParameterState,
+          fnames[i],
+          0
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_internal_variable_method(
-        eval(codegen_forward_autodiff_uptofunction(:derivative, fadclosure[3], chunksize)), fnames[15], 0
+        eval(codegen_forward_autodiff_uptofunction(:derivative, fadclosure[3], chunksize)),
+        :BasicContUnvParameterState,
+        fnames[15],
+        0
       ))
     end
   elseif autodiff == :reverse
@@ -554,7 +511,7 @@ function BasicContUnvParameter{S<:VariableState}(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
+        outargs[i] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[i], 0))
       end
     end
 
@@ -570,7 +527,7 @@ function BasicContUnvParameter{S<:VariableState}(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
+          outargs[i] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[i], 0))
         elseif isa(inargs[i-3], Expr)
           if nkeys == 0
             f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Real, initarg[i-5][1], 1, false))
@@ -579,7 +536,7 @@ function BasicContUnvParameter{S<:VariableState}(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
+          outargs[i] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[i], 0))
         end
       end
     end
@@ -595,7 +552,7 @@ function BasicContUnvParameter{S<:VariableState}(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_internal_variable_method(f, fnames[15], 0))
+        outargs[15] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[15], 0))
       elseif isa(inargs[5], Expr)
         if nkeys == 0
           f = eval(codegen_reverse_autodiff_function(inargs[5], :Real, initarg[3][1], 1, true))
@@ -604,7 +561,7 @@ function BasicContUnvParameter{S<:VariableState}(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_internal_variable_method(f, fnames[15], 0))
+        outargs[15] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[15], 0))
       end
     end
 
@@ -619,7 +576,7 @@ function BasicContUnvParameter{S<:VariableState}(
               f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
             end
 
-            outargs[i] = eval(codegen_internal_variable_method(f, fnames[i], 0))
+            outargs[i] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[i], 0))
           end
         end
       end
@@ -633,7 +590,7 @@ function BasicContUnvParameter{S<:VariableState}(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[16] = eval(codegen_internal_variable_method(f, fnames[16], 0))
+          outargs[16] = eval(codegen_internal_variable_method(f, :BasicContUnvParameterState, fnames[16], 0))
         end
       end
     end
@@ -656,10 +613,10 @@ function codegen_internal_autodiff_closure(parameter::BasicContUnvParameter, f::
   end
 end
 
-value_support{S<:VariableState}(::Type{BasicContUnvParameter{S}}) = Continuous
+value_support(::Type{BasicContUnvParameter}) = Continuous
 value_support(::BasicContUnvParameter) = Continuous
 
-variate_form{S<:VariableState}(::Type{BasicContUnvParameter{S}}) = Univariate
+variate_form(::Type{BasicContUnvParameter}) = Univariate
 variate_form(::BasicContUnvParameter) = Univariate
 
 default_state_type(::BasicContUnvParameter) = BasicContUnvParameterState
@@ -669,5 +626,5 @@ default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict)
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-Base.show{S<:VariableState}(io::IO, ::Type{BasicContUnvParameter{S}}) = print(io, "BasicContUnvParameter")
-Base.writemime{S<:VariableState}(io::IO, ::MIME"text/plain", t::Type{BasicContUnvParameter{S}}) = show(io, t)
+Base.show(io::IO, ::Type{BasicContUnvParameter}) = print(io, "BasicContUnvParameter")
+Base.writemime(io::IO, ::MIME"text/plain", t::Type{BasicContUnvParameter}) = show(io, t)

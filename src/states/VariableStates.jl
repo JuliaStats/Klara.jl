@@ -1,6 +1,8 @@
-### Abstract variable states
+### Abstract variable state
 
 abstract VariableState{F<:VariateForm}
+
+typealias VariableStateVector{S<:VariableState} Vector{S}
 
 variate_form{F<:VariateForm}(::Type{VariableState{F}}) = F
 

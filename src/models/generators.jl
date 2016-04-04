@@ -2,7 +2,7 @@
 
 ## likelihood_model represents a likelihood L(Vector{Parameter} | Vector{Data}, Vector{Hyperparameter})
 
-function likelihood_model{V<:Variable}(vs::Vector{V}; isdirected::Bool=true, isindexed::Bool=true)
+function likelihood_model(vs::VariableVector; isdirected::Bool=true, isindexed::Bool=true)
   m = GenericModel(vs, Dependence[], isdirected=isdirected, isindexed=isindexed)
 
   pindex = find(v::Variable -> isa(v, Parameter), m.vertices)

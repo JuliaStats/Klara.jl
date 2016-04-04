@@ -6,9 +6,11 @@ type Deterministic <: Sampleability end
 
 type Random <: Sampleability end
 
-### Variable
+### Abstract variable
 
 abstract Variable{S<:Sampleability}
+
+typealias VariableVector{V<:Variable} Vector{V}
 
 Base.eltype{S<:Sampleability}(::Type{Variable{S}}) = S
 
@@ -16,17 +18,17 @@ vertex_key(v::Variable) = v.key
 vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
-Base.keys{V<:Variable}(variables::Vector{V}) = Symbol[v.key for v in variables]
-indices{V<:Variable}(variables::Vector{V}) = Int[v.index for v in variables]
+Base.keys(variables::VariableVector) = Symbol[v.key for v in variables]
+indices(variables::VariableVector) = Int[v.index for v in variables]
 
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
 
-sort_by_index{V<:Variable}(vs::Vector{V}) = vs[[v.index for v in vs]]
+sort_by_index(vs::VariableVector) = vs[[v.index for v in vs]]
 
-function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=false)
+function codegen_internal_variable_method(f::Function, s::Symbol, r::Vector{Symbol}, nkeys::Int=0, vfarg::Bool=false)
   body::Expr
-  fargs::Union{Expr, Vector}
+  fargs::Vector
   rvalues::Expr
 
   if nkeys == 0
@@ -38,7 +40,7 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
       fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
     end
   else
-    error("nkeys must be positive")
+    error("nkeys must be non-negative, got $nkeys")
   end
 
   nr = length(r)
@@ -57,7 +59,7 @@ function codegen_internal_variable_method(f::Function, r::Vector{Symbol}, nkeys:
   @gensym internal_variable_method
 
   quote
-    function $internal_variable_method(_state, _states)
+    function $internal_variable_method(_state::$s, _states::VariableStateVector)
       $(body)
     end
   end
@@ -83,10 +85,10 @@ function default_state(v::Variable, v0, outopts::Dict=Dict())
   vstate
 end
 
-default_state{V<:Variable}(v::Vector{V}, v0::Vector, outopts::Vector) =
+default_state(v::VariableVector, v0::Vector, outopts::Vector) =
   VariableState[default_state(v[i], v0[i], outopts[i]) for i in 1:length(v0)]
 
-function default_state{V<:Variable}(v::Vector{V}, v0::Vector, outopts::Vector, dpindex::Vector{Int})
+function default_state(v::VariableVector, v0::Vector, outopts::Vector, dpindex::Vector{Int})
   opts = fill(Dict(), length(v0))
   for i in 1:length(dpindex)
     opts[dpindex[i]] = outopts[i]

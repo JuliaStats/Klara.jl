@@ -3,14 +3,14 @@
 # BasicMCJob is used for sampling a single parameter via serial Monte Carlo
 # It is the most elementary and typical Markov chain Monte Carlo (MCMC) job
 
-type BasicMCJob{S<:VariableState} <: MCJob
+type BasicMCJob <: MCJob
   model::GenericModel # Model of single parameter
   pindex::Int # Index of single parameter in model.vertices
   parameter::Parameter # Points to model.vertices[pindex] for faster access
   sampler::MCSampler
   tuner::MCTuner
   range::BasicMCRange
-  vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
+  vstate::VariableStateVector # Vector of variable states ordered according to variables in model.vertices
   pstate::ParameterState # Points to vstate[pindex] for faster access
   sstate::MCSamplerState # Internal state of MCSampler
   outopts::Dict # Options related to output
@@ -32,7 +32,7 @@ type BasicMCJob{S<:VariableState} <: MCJob
     sampler::MCSampler,
     tuner::MCTuner,
     range::BasicMCRange,
-    vstate::Vector{S},
+    vstate::VariableStateVector,
     outopts::Dict,
     resetpstate::Bool,
     plain::Bool,
@@ -100,28 +100,11 @@ type BasicMCJob{S<:VariableState} <: MCJob
   end
 end
 
-function BasicMCJob{S<:VariableState}(
-  model::GenericModel,
-  pindex::Int,
-  sampler::MCSampler,
-  tuner::MCTuner,
-  range::BasicMCRange,
-  vstate::Vector{S},
-  outopts::Dict,
-  resetpstate::Bool,
-  plain::Bool,
-  verbose::Bool,
-  check::Bool
-)
-  opts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
-  BasicMCJob{S}(model, pindex, sampler, tuner, range, vstate, opts, resetpstate, plain, verbose, check)
-end
-
-BasicMCJob{S<:VariableState}(
+BasicMCJob(
   model::GenericModel,
   sampler::MCSampler,
   range::BasicMCRange,
-  v0::Vector{S};
+  v0::VariableStateVector;
   pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),

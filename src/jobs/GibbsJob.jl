@@ -1,13 +1,13 @@
 ### GibbsJob
 
-type GibbsJob{S<:VariableState} <: MCJob
+type GibbsJob <: MCJob
   model::GenericModel
   dpindex::Vector{Int} # Indices of dependent variables (parameters and transformations) in model.vertices
   dependent::Vector{Union{Parameter, Transformation}} # Points to model.vertices[dpindex] for faster access
   dpjob::Vector{Union{BasicMCJob, Void}} # BasicMCJobs for parameters that will be sampled via Monte Carlo methods
   range::BasicMCRange
-  vstate::Vector{S} # Vector of variable states ordered according to variables in model.vertices
-  dpstate::Vector{VariableState} # Points to vstate[dpindex] for faster access
+  vstate::VariableStateVector # Vector of variable states ordered according to variables in model.vertices
+  dpstate::VariableStateVector # Points to vstate[dpindex] for faster access
   outopts::Vector # Options related to output
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Int # Number of dependent variables, i.e. length(dependent)
@@ -28,7 +28,7 @@ type GibbsJob{S<:VariableState} <: MCJob
     dpindex::Vector{Int},
     dpjob::Vector,
     range::BasicMCRange,
-    vstate::Vector{S},
+    vstate::VariableStateVector,
     outopts::Vector,
     imperative::Bool,
     plain::Bool,
@@ -39,7 +39,7 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.model = model
     instance.dpindex = dpindex
-    instance.dpjob = dpjob
+    instance.dpjob = isa(dpjob, Vector{Union{BasicMCJob, Void}}) ? dpjob : convert(Vector{Union{BasicMCJob, Void}}, dpjob)
     instance.vstate = vstate
 
     if check
@@ -48,9 +48,9 @@ type GibbsJob{S<:VariableState} <: MCJob
 
     instance.ndp = length(dpindex)
 
-    if imperative
-      instance.outopts = outopts
-    else
+    instance.outopts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
+    
+    if !imperative
       idxs = [
         model.ofkey[k]
         for k in keys(topological_sort_by_dfs(GenericModel(vertices(model), edges(model), is_directed(model))))
@@ -80,7 +80,7 @@ type GibbsJob{S<:VariableState} <: MCJob
           end
       end
 
-      instance.outopts = outopts[dpidxs]
+      instance.outopts = instance.outopts[dpidxs]
     end
 
     instance.range = range
@@ -130,28 +130,11 @@ type GibbsJob{S<:VariableState} <: MCJob
   end
 end
 
-function GibbsJob{S<:VariableState}(
-  model::GenericModel,
-  dpindex::Vector{Int},
-  dpjob::Vector,
-  range::BasicMCRange,
-  vstate::Vector{S},
-  outopts::Vector,
-  imperative::Bool,
-  plain::Bool,
-  verbose::Bool,
-  check::Bool
-)
-  job = isa(dpjob, Vector{Union{BasicMCJob, Void}}) ? dpjob : convert(Vector{Union{BasicMCJob, Void}}, dpjob)
-  opts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
-  GibbsJob{S}(model, dpindex, job, range, vstate, opts, imperative, plain, verbose, check)
-end
-
-GibbsJob{S<:VariableState}(
+GibbsJob(
   model::GenericModel,
   dpjob::Vector,
   range::BasicMCRange,
-  v0::Vector{S};
+  v0::VariableStateVector;
   dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
@@ -159,7 +142,7 @@ GibbsJob{S<:VariableState}(
   verbose::Bool=false,
   check::Bool=false
 ) =
-  GibbsJob{S}(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
+  GibbsJob(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
 
 function GibbsJob{S<:VariableState}(
   model::GenericModel,
@@ -319,7 +302,7 @@ function codegen(::Type{Val{:iterate}}, job::GibbsJob)
       if isa(job.dpjob[j], BasicMCJob)
         push!(body, :(run(_job.dpjob[$j])))
       else
-        push!(body, :(_job.dependent[$j].setpdf(_job.dpstate[$j])))
+        push!(body, :(setpdf!(_job.dependent[$j], _job.dpstate[$j])))
         push!(body, :(_job.dpstate[$j].value = rand(_job.dependent[$j].pdf)))
       end
     else

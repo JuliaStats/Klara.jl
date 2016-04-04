@@ -1,13 +1,13 @@
 function codegen_setfield(parameter::Parameter, field::Symbol, f::Function)
   @gensym setfield
   quote
-    function $setfield(_state::$(default_state_type(parameter)))
-      setfield!($(parameter), $(QuoteNode(field)), $(f)(_state, $(parameter).states))
+    function $setfield(_state::$(default_state_type(parameter)), _states::VariableStateVector)
+      setfield!($(parameter), $(QuoteNode(field)), $(f)(_state, _states))
     end
   end
 end
 
-function codegen_method(parameter::Parameter, f::Function)
+function codegen_closure(parameter::Parameter, f::Function)
   @gensym method
   quote
     function $method(_state::$(default_state_type(parameter)))
@@ -16,7 +16,7 @@ function codegen_method(parameter::Parameter, f::Function)
   end
 end
 
-function codegen_method_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
+function codegen_closure_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
   @gensym method_via_distribution
   quote
     function $method_via_distribution(_state::$(default_state_type(parameter)))
@@ -25,7 +25,7 @@ function codegen_method_via_distribution(parameter::Parameter, distribution::Sym
   end
 end
 
-function codegen_method_via_sum(
+function codegen_closure_via_sum(
   parameter::Parameter, plfield::Symbol, ppfield::Symbol, stfield::Symbol, slfield::Symbol, spfield::Symbol
 )
   body = []

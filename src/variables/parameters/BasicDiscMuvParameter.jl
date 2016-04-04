@@ -1,6 +1,6 @@
 ### BasicDiscMuvParameter
 
-type BasicDiscMuvParameter{S<:VariableState} <: Parameter{Discrete, Multivariate}
+type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
   key::Symbol
   index::Int
   pdf::Union{DiscreteMultivariateDistribution, Void}
@@ -10,7 +10,7 @@ type BasicDiscMuvParameter{S<:VariableState} <: Parameter{Discrete, Multivariate
   loglikelihood!::Union{Function, Void}
   logprior!::Union{Function, Void}
   logtarget!::Union{Function, Void}
-  states::Vector{S}
+  states::VariableStateVector
 
   function BasicDiscMuvParameter(
     key::Symbol,
@@ -22,7 +22,7 @@ type BasicDiscMuvParameter{S<:VariableState} <: Parameter{Discrete, Multivariate
     ll::Union{Function, Void},
     lp::Union{Function, Void},
     lt::Union{Function, Void},
-    states::Vector{S}
+    states::VariableStateVector
   )
     args = (setpdf, setprior, ll, lp, lt)
     fnames = fieldnames(BasicDiscMuvParameter)[5:9]
@@ -31,7 +31,7 @@ type BasicDiscMuvParameter{S<:VariableState} <: Parameter{Discrete, Multivariate
     for i in 1:5
       if isa(args[i], Function) &&
         isgeneric(args[i]) &&
-        !(any([method_exists(args[i], (BasicDiscMuvParameterState, Vector{S})) for S in subtypes(VariableState)]))
+        !method_exists(args[i], (BasicDiscMuvParameterState, VariableStateVector))
         error("$(fnames[i]) has wrong signature")
       end
     end
@@ -39,20 +39,6 @@ type BasicDiscMuvParameter{S<:VariableState} <: Parameter{Discrete, Multivariate
     new(key, index, pdf, prior, setpdf, setprior, ll, lp, lt, states)
   end
 end
-
-BasicDiscMuvParameter{S<:VariableState}(
-  key::Symbol,
-  index::Int,
-  pdf::Union{DiscreteMultivariateDistribution, Void},
-  prior::Union{DiscreteMultivariateDistribution, Void},
-  setpdf::Union{Function, Void},
-  setprior::Union{Function, Void},
-  ll::Union{Function, Void},
-  lp::Union{Function, Void},
-  lt::Union{Function, Void},
-  states::Vector{S}
-) =
-  BasicDiscMuvParameter{S}(key, index, pdf, prior, setpdf, setprior, ll, lp, lt, states)
 
 function BasicDiscMuvParameter!(
   parameter::BasicDiscMuvParameter,
@@ -82,7 +68,7 @@ function BasicDiscMuvParameter!(
     parameter,
     :loglikelihood!,
     if isa(args[3], Function)
-      eval(codegen_method(parameter, args[3]))
+      eval(codegen_closure(parameter, args[3]))
     else
       nothing
     end
@@ -93,14 +79,14 @@ function BasicDiscMuvParameter!(
     parameter,
     :logprior!,
     if isa(args[4], Function)
-      eval(codegen_method(parameter, args[4]))
+      eval(codegen_closure(parameter, args[4]))
     else
       if (
           isa(parameter.prior, DiscreteMultivariateDistribution) &&
           method_exists(logpdf, (typeof(parameter.prior), Vector{eltype(parameter.prior)}))
         ) ||
         isa(args[2], Function)
-        eval(codegen_method_via_distribution(parameter, :prior, logpdf, :logprior))
+        eval(codegen_closure_via_distribution(parameter, :prior, logpdf, :logprior))
       else
         nothing
       end
@@ -112,16 +98,16 @@ function BasicDiscMuvParameter!(
     parameter,
     :logtarget!,
     if isa(args[5], Function)
-      eval(codegen_method(parameter, args[5]))
+      eval(codegen_closure(parameter, args[5]))
     else
       if isa(args[3], Function) && isa(getfield(parameter, :logprior!), Function)
-        eval(codegen_method_via_sum(parameter, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))
+        eval(codegen_closure_via_sum(parameter, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))
       elseif (
           isa(parameter.pdf, DiscreteMultivariateDistribution) &&
           method_exists(logpdf, (typeof(parameter.pdf), Vector{eltype(parameter.pdf)}))
         ) ||
         isa(args[1], Function)
-        eval(codegen_method_via_distribution(parameter, :pdf, logpdf, :logtarget))
+        eval(codegen_closure_via_distribution(parameter, :pdf, logpdf, :logtarget))
       else
         nothing
       end
@@ -129,7 +115,7 @@ function BasicDiscMuvParameter!(
   )
 end
 
-function BasicDiscMuvParameter{S<:VariableState}(
+function BasicDiscMuvParameter(
   key::Symbol,
   index::Int;
   pdf::Union{DiscreteMultivariateDistribution, Void}=nothing,
@@ -139,14 +125,14 @@ function BasicDiscMuvParameter{S<:VariableState}(
   loglikelihood::Union{Function, Void}=nothing,
   logprior::Union{Function, Void}=nothing,
   logtarget::Union{Function, Void}=nothing,
-  states::Vector{S}=VariableState[]
+  states::VariableStateVector=VariableState[]
 )
   parameter = BasicDiscMuvParameter(key, index, pdf, prior, fill(nothing, 5)..., states)
   BasicDiscMuvParameter!(parameter, setpdf, setprior, loglikelihood, logprior, logtarget)
   parameter
 end
 
-function BasicDiscMuvParameter{S<:VariableState}(
+function BasicDiscMuvParameter(
   key::Symbol;
   index::Int=0,
   pdf::Union{DiscreteMultivariateDistribution, Void}=nothing,
@@ -156,7 +142,7 @@ function BasicDiscMuvParameter{S<:VariableState}(
   loglikelihood::Union{Function, Expr, Void}=nothing,
   logprior::Union{Function, Expr, Void}=nothing,
   logtarget::Union{Function, Expr, Void}=nothing,
-  states::Vector{S}=VariableState[],
+  states::VariableStateVector=VariableState[],
   nkeys::Int=0,
   vfarg::Bool=false
 )
@@ -174,7 +160,7 @@ function BasicDiscMuvParameter{S<:VariableState}(
 
   for i in 1:5
     if isa(inargs[i], Function)
-      outargs[i] = eval(codegen_internal_variable_method(inargs[i], fnames[i], nkeys, vfarg))
+      outargs[i] = eval(codegen_internal_variable_method(inargs[i], :BasicDiscMuvParameterState, fnames[i], nkeys, vfarg))
     end
   end
 
@@ -183,10 +169,10 @@ function BasicDiscMuvParameter{S<:VariableState}(
   parameter
 end
 
-value_support{S<:VariableState}(::Type{BasicDiscMuvParameter{S}}) = Discrete
+value_support(::Type{BasicDiscMuvParameter}) = Discrete
 value_support(::BasicDiscMuvParameter) = Discrete
 
-variate_form{S<:VariableState}(::Type{BasicDiscMuvParameter{S}}) = Multivariate
+variate_form(::Type{BasicDiscMuvParameter}) = Multivariate
 variate_form(::BasicDiscMuvParameter) = Multivariate
 
 default_state_type(::BasicDiscMuvParameter) = BasicDiscMuvParameterState
@@ -196,5 +182,5 @@ default_state{N<:Integer}(variable::BasicDiscMuvParameter, value::Vector{N}, out
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-Base.show{S<:VariableState}(io::IO, ::Type{BasicDiscMuvParameter{S}}) = print(io, "BasicDiscMuvParameter")
-Base.writemime{S<:VariableState}(io::IO, ::MIME"text/plain", t::Type{BasicDiscMuvParameter{S}}) = show(io, t)
+Base.show(io::IO, ::Type{BasicDiscMuvParameter}) = print(io, "BasicDiscMuvParameter")
+Base.writemime(io::IO, ::MIME"text/plain", t::Type{BasicDiscMuvParameter}) = show(io, t)

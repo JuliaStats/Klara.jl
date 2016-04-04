@@ -145,7 +145,7 @@ pv = [3.79, 4.64]
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(μv)]
 
 p = BasicContMuvParameter(:p, 1, setpdf=(state, states) -> MvNormal(states[2].value, 1.), states=states)
-p.setpdf(states[1])
+setpdf!(p, states[1])
 
 distribution = MvNormal(μv, 1.)
 p.pdf == distribution
@@ -169,7 +169,7 @@ states[1].value = pv
 μv = [0.12, 0.99]
 states[2].value = μv
 
-p.setpdf(states[1])
+setpdf!(p, states[1])
 
 distribution = MvNormal(μv, 1.)
 p.pdf == distribution
@@ -196,7 +196,7 @@ pvlen = length(pv)
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(σv)]
 
 p = BasicContMuvParameter(:p, 1, setprior=(state, states) -> MvNormal(zeros(pvlen), states[2].value), states=states)
-p.setprior(states[1])
+setprior!(p, states[1])
 
 distribution = MvNormal(zeros(pvlen), σv)
 p.prior == distribution
@@ -214,7 +214,7 @@ states[1].value = pv
 σv = [5., 4.]
 states[2].value = σv
 
-p.setprior(states[1])
+setprior!(p, states[1])
 
 distribution = MvNormal(zeros(pvlen), σv)
 p.prior == distribution
