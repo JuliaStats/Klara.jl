@@ -20,6 +20,26 @@ abstract HMCSampler <: MCSampler
 
 abstract LMCSampler <: MCSampler
 
+### Code generation of sampler fields
+
+function codegen_setfield(sampler::MCSampler, field::Symbol, f::Function)
+  @gensym setfield
+  quote
+    function $setfield(_state, _states::VariableStateVector)
+      setfield!($sampler, $(QuoteNode(field)), $(f)(_state, _states))
+    end
+  end
+end
+
+function codegen_proposal_method_via_distribution(sampler::MCSampler, distribution::Symbol, f::Function)
+  @gensym proposal_method_via_distribution
+  quote
+    function $proposal_method_via_distribution(_state, _states::VariableStateVector)
+      $(f)(getfield($sampler, $(QuoteNode(distribution))), _state.value)
+    end
+  end
+end
+
 tuner_state(sampler::MCSampler, tuner::VanillaMCTuner) = VanillaMCTune(0, 0, tuner.period)
 
 tuner_state(sampler::MHSampler, tuner::AcceptanceRateMCTuner) = AcceptanceRateMCTune(1., 0, 0, tuner.period)

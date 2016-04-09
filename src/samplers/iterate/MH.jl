@@ -13,18 +13,23 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_job.sstate.pstate.value = _job.sampler.randproposal(_job.pstate.value)))
+  push!(body, :(_job.sampler.setproposal(_job.pstate, _job.vstate)))
+
+  push!(body, :(_job.sstate.pstate.value =  rand(_job.sampler.proposal)))
+
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
-  if job.sampler.symmetric
-    push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
-  else
-    push!(body, :(_job.sstate.ratio = (
-      _job.sstate.pstate.logtarget
-      +_job.sampler.logproposal(_job.sstate.pstate.value, _job.pstate.value)
-      -_job.pstate.logtarget
-      -_job.sampler.logproposal(_job.pstate.value, _job.sstate.pstate.value)
-    )))
+  push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
+  if !(job.sampler.symmetric)
+    push!(body, :(_job.sstate.ratio -= logpdf(_job.sampler.proposal, _job.sstate.pstate)))
+    if !(job.sampler.normalised)
+      push!(body, :(_job.sstate.ratio -= lognormalise(_job.sampler.proposal)))
+    end
+    push!(body, :(_job.sampler.setproposal(_job.sstate.pstate, _job.vstate)))
+    push!(body, :(_job.sstate.ratio += logpdf(_job.sampler.logproposal, _job.pstate)))
+    if !(job.sampler.normalised)
+      push!(body, :(_job.sstate.ratio += lognormalise(_job.sampler.proposal)))
+    end
   end
 
   if vform == Univariate

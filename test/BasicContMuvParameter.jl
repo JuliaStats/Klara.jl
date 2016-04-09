@@ -28,7 +28,7 @@ println("    Testing BasicContMuvParameter constructors:")
 
 println("      Initialization via index and key fields...")
 
-p = BasicContMuvParameter(:p, 1)
+p = BasicContMuvParameter(:p, 1, signature=:low)
 
 for field in values(fields)
   @test getfield(p, field) == nothing
@@ -40,7 +40,7 @@ pv = [5.18, -7.76]
 μv = [6.11, -8.5]
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(μv)]
 
-p = BasicContMuvParameter(:p, 1, pdf=MvNormal(states[2].value, 1.), states=states)
+p = BasicContMuvParameter(:p, 1, signature=:low, pdf=MvNormal(states[2].value, 1.), states=states)
 
 distribution = MvNormal(μv, 1.)
 p.pdf == distribution
@@ -90,7 +90,7 @@ pvlen = length(pv)
 σv = [10., 2.]
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(σv)]
 
-p = BasicContMuvParameter(:p, 1, prior=MvNormal(zeros(pvlen), states[2].value), states=states)
+p = BasicContMuvParameter(:p, 1, signature=:low, prior=MvNormal(zeros(pvlen), states[2].value), states=states)
 
 distribution = MvNormal(zeros(pvlen), σv)
 p.prior == distribution
@@ -144,7 +144,7 @@ pv = [3.79, 4.64]
 μv = [5.4, 5.3]
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(μv)]
 
-p = BasicContMuvParameter(:p, 1, setpdf=(state, states) -> MvNormal(states[2].value, 1.), states=states)
+p = BasicContMuvParameter(:p, 1, signature=:low, setpdf=(state, states) -> MvNormal(states[2].value, 1.), states=states)
 setpdf!(p, states[1])
 
 distribution = MvNormal(μv, 1.)
@@ -195,7 +195,9 @@ pvlen = length(pv)
 σv = [2., 10.]
 states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(σv)]
 
-p = BasicContMuvParameter(:p, 1, setprior=(state, states) -> MvNormal(zeros(pvlen), states[2].value), states=states)
+p = BasicContMuvParameter(
+  :p, 1, signature=:low, setprior=(state, states) -> MvNormal(zeros(pvlen), states[2].value), states=states
+)
 setprior!(p, states[1])
 
 distribution = MvNormal(zeros(pvlen), σv)
@@ -260,7 +262,7 @@ lpf(state, states) =
     logdet(states[5].value)
   )[1]
 
-μ = BasicContMuvParameter(:μ, 1, loglikelihood=llf, logprior=lpf, states=states)
+μ = BasicContMuvParameter(:μ, 1, signature=:low, loglikelihood=llf, logprior=lpf, states=states)
 
 ld = MvNormal(μv, Σv)
 pd = MvNormal(μ0v, Σ0v)
@@ -300,6 +302,7 @@ states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(μv
 p = BasicContMuvParameter(
   :p,
   1,
+  signature=:low,
   logtarget=(state, states) -> state.logtarget = -(state.value-states[2].value)⋅(states[1].value-states[2].value),
   states=states
 )
@@ -349,6 +352,7 @@ gllf(state, states) = states[1].gradloglikelihood = (states[3].value\(states[2].
 μ = BasicContMuvParameter(
   :μ,
   1,
+  signature=:low,
   loglikelihood=llf,
   gradloglikelihood=gllf,
   prior=MvNormal(states[4].value, states[5].value),
@@ -485,7 +489,9 @@ gllf(state, states) = state.gradloglikelihood = (states[3].value\(states[2].valu
 
 glpf(state, states) = state.gradlogprior = -(states[5].value\(state.value-states[4].value))
 
-μ = BasicContMuvParameter(:μ, 1, loglikelihood=llf, logprior=lpf, gradloglikelihood=gllf, gradlogprior=glpf, states=states)
+μ = BasicContMuvParameter(
+  :μ, 1, signature=:low, loglikelihood=llf, logprior=lpf, gradloglikelihood=gllf, gradlogprior=glpf, states=states
+)
 
 ld = MvNormal(μv, Σv)
 pd = MvNormal(μ0v, Σ0v)
@@ -537,6 +543,7 @@ states = VariableState[BasicContMuvParameterState(pv), BasicMuvVariableState(μv
 p = BasicContMuvParameter(
   :p,
   1,
+  signature=:low,
   logtarget=(state, states) -> state.logtarget = -(state.value-states[2].value)⋅(states[1].value-states[2].value),
   gradlogtarget=(state, states) -> state.gradlogtarget = -2*(state.value-states[2].value),
   states=states

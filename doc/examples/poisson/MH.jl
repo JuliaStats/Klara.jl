@@ -1,17 +1,14 @@
 using Lora
 
-plogtarget(p::Int, v::Vector) = log(v[1]^p/factorial(p))
+plogtarget(p::Int, v::Vector) = p*log(v[1])-log(factorial(p))
 
 p = BasicDiscUnvParameter(:p, logtarget=plogtarget, nkeys=2)
 
 model = likelihood_model([Constant(:λ), p], isindexed=false)
 
-function prandproposal(i::Int)
-  s = (i == 0) ? [0, 1] : [i-1, i+1]
-  rand(s)
-end
+psetproposal(i::Int) = (i == 0) ? Binary(0, 1) : Binary(i-1, i+1)
 
-sampler = MH(prandproposal)
+sampler = MH(psetproposal)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 

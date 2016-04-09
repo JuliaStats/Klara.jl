@@ -150,7 +150,7 @@ function BasicContMuvParameter!(
             method_exists(f, (typeof(parameter.prior), Vector{eltype(parameter.prior)}))
           ) ||
           isa(args[2], Function)
-          eval(codegen_closure_via_distribution(parameter, :prior, f, spfield))
+          eval(codegen_target_closure_via_distribution(parameter, :prior, f, spfield))
         else
           nothing
         end
@@ -172,13 +172,13 @@ function BasicContMuvParameter!(
         eval(codegen_closure(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
-          eval(codegen_closure_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
         elseif (
             isa(parameter.pdf, ContinuousMultivariateDistribution) &&
             method_exists(f, (typeof(parameter.pdf), Vector{eltype(parameter.pdf)}))
           ) ||
           isa(args[1], Function)
-          eval(codegen_closure_via_distribution(parameter, :pdf, f, stfield))
+          eval(codegen_target_closure_via_distribution(parameter, :pdf, f, stfield))
         else
           nothing
         end
@@ -234,7 +234,7 @@ function BasicContMuvParameter!(
         eval(codegen_closure(parameter, args[i]))
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_closure_via_sum(parameter, plfield, ppfield, stfield, slfield, spfield))
+          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
         else
           nothing
         end
@@ -250,7 +250,7 @@ function BasicContMuvParameter!(
       eval(codegen_closure(parameter, args[15]))
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
-        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!]))
+        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!]))
       else
         nothing
       end
@@ -267,7 +267,7 @@ function BasicContMuvParameter!(
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function)
-        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
+        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
       else
         nothing
       end
@@ -285,7 +285,7 @@ function BasicContMuvParameter!(
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function) &&
         isa(parameter.dtensorlogtarget!, Function)
-        eval(codegen_uptomethods(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]))
+        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]))
       else
         nothing
       end
@@ -293,9 +293,13 @@ function BasicContMuvParameter!(
   )
 end
 
+BasicContMuvParameter(key::Symbol, index::Int=0; signature::Symbol=:high, args...) =
+  BasicContMuvParameter(key, Val{signature}, index; args...)
+
 function BasicContMuvParameter(
   key::Symbol,
-  index::Int;
+  ::Type{Val{:low}},
+  index::Int=0;
   pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -344,8 +348,9 @@ function BasicContMuvParameter(
 end
 
 function BasicContMuvParameter(
-  key::Symbol;
-  index::Int=0,
+  key::Symbol,
+  ::Type{Val{:high}},
+  index::Int=0;
   pdf::Union{ContinuousMultivariateDistribution, Void}=nothing,
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -453,7 +458,7 @@ function BasicContMuvParameter(
 
   for i in 1:17
     if isa(inargs[i], Function)
-      outargs[i] = eval(codegen_internal_variable_method(inargs[i], :BasicContMuvParameterState, fnames[i], nkeys, vfarg))
+      outargs[i] = eval(codegen_lowlevel_variable_method(inargs[i], fnames[i], :BasicContMuvParameterState, nkeys, vfarg))
     end
   end
 
@@ -470,39 +475,46 @@ function BasicContMuvParameter(
 
     for i in 6:8
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-        outargs[i] = eval(codegen_internal_variable_method(
-          forward_autodiff_function(:gradient, fadclosure[i-5], false, chunksize), :BasicContMuvParameterState, fnames[i], 0
+        outargs[i] = eval(codegen_lowlevel_variable_method(
+          forward_autodiff_function(:gradient, fadclosure[i-5], false, chunksize),
+          fnames[i],
+          :BasicContMuvParameterState,
+          0,
+          false
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
-      outargs[15] = eval(codegen_internal_variable_method(
+      outargs[15] = eval(codegen_lowlevel_variable_method(
         eval(codegen_forward_autodiff_uptofunction(:gradient, fadclosure[3], chunksize)),
-        :BasicContMuvParameterState,
         fnames[15],
-        0
+        :BasicContMuvParameterState,
+        0,
+        false
       ))
     end
 
     if order >= 2
       for i in 9:11
         if !isa(inargs[i], Function) && isa(inargs[i-6], Function)
-          outargs[i] = eval(codegen_internal_variable_method(
+          outargs[i] = eval(codegen_lowlevel_variable_method(
             eval(codegen_forward_autodiff_target(:hessian, fadclosure[i-8], chunksize)),
-            :BasicContMuvParameterState,
             fnames[i],
-            0
+            :BasicContMuvParameterState,
+            0,
+            false
           ))
         end
       end
 
       if !isa(inargs[16], Function) && isa(inargs[5], Function)
-        outargs[16] = eval(codegen_internal_variable_method(
+        outargs[16] = eval(codegen_lowlevel_variable_method(
           eval(codegen_forward_autodiff_uptotarget(:hessian, fadclosure[3], chunksize)),
-          :BasicContMuvParameterState,
           fnames[16],
-          0
+          :BasicContMuvParameterState,
+          0,
+          false
         ))
       end
     end
@@ -518,7 +530,7 @@ function BasicContMuvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[i] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[i], 0))
+        outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContMuvParameterState, 0, false))
       end
     end
 
@@ -534,7 +546,7 @@ function BasicContMuvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[i], 0))
+          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContMuvParameterState, 0, false))
         elseif isa(inargs[i-3], Expr)
           if nkeys == 0
             f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5][1], 1, false))
@@ -543,7 +555,7 @@ function BasicContMuvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[i], 0))
+          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContMuvParameterState, 0, false))
         end
       end
     end
@@ -559,7 +571,7 @@ function BasicContMuvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[15], 0))
+        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContMuvParameterState, 0, false))
       elseif isa(inargs[5], Expr)
         if nkeys == 0
           f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3][1], 1, true))
@@ -568,7 +580,7 @@ function BasicContMuvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[15], 0))
+        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContMuvParameterState, 0, false))
       end
     end
 
@@ -583,7 +595,7 @@ function BasicContMuvParameter(
               f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
             end
 
-            outargs[i] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[i], 0))
+            outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContMuvParameterState, 0, false))
           end
         end
       end
@@ -597,7 +609,7 @@ function BasicContMuvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[16] = eval(codegen_internal_variable_method(f, :BasicContMuvParameterState, fnames[16], 0))
+          outargs[16] = eval(codegen_lowlevel_variable_method(f, fnames[16], :BasicContMuvParameterState, 0, false))
         end
       end
     end

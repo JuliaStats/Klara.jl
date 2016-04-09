@@ -19,6 +19,7 @@ import Base:
   mark,
   mean,
   open,
+  rand,
   read!,
   read,
   reset,
@@ -26,6 +27,15 @@ import Base:
   show,
   write,
   writemime
+
+import Distributions:
+  @check_args,
+  @distr_support,
+  failprob,
+  logpdf,
+  params,
+  pdf,
+  succprob
 
 import ForwardDiff
 
@@ -82,6 +92,7 @@ export
   BasicUnvVariableNState,
   BasicUnvVariableState,
   BasicVariableIOStream,
+  Binary,
   Constant,
   ContMuvMarkovChain,
   ContUnvMarkovChain,
@@ -147,6 +158,7 @@ export
   edges,
   erf_rate_score,
   ess,
+  failprob,
   iact,
   in_degree,
   in_edges,
@@ -159,6 +171,7 @@ export
   likelihood_model,
   logistic,
   logistic_rate_score,
+  logpdf,
   lzv,
   make_edge,
   mcse,
@@ -171,6 +184,8 @@ export
   out_neighbors,
   output,
   qzv,
+  params,
+  pdf,
   rate!,
   reset!,
   reset_burnin!,
@@ -183,6 +198,7 @@ export
   setprior!,
   sort_by_index,
   source,
+  succprob,
   target,
   topological_sort_by_dfs,
   tune!,
@@ -191,14 +207,18 @@ export
   vertex_key,
   vertices
 
+include("stats/logistic.jl")
+
+include("distributions/Binary.jl")
+
+include("autodiff/reverse.jl")
+include("autodiff/forward.jl")
+
 include("format.jl")
 
 include("data.jl")
 
-include("stats/logistic.jl")
-
-include("autodiff/reverse.jl")
-include("autodiff/forward.jl")
+include("codegen.jl")
 
 include("states/VariableStates.jl")
 include("states/ParameterStates/ParameterStates.jl")
@@ -225,7 +245,6 @@ include("variables/parameters/BasicDiscUnvParameter.jl")
 include("variables/parameters/BasicDiscMuvParameter.jl")
 include("variables/parameters/BasicContUnvParameter.jl")
 include("variables/parameters/BasicContMuvParameter.jl")
-include("variables/parameters/codegen.jl")
 include("variables/dependencies.jl")
 
 include("models/GenericModel.jl")

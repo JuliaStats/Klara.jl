@@ -28,7 +28,7 @@ println("    Testing BasicContUnvParameter constructors:")
 
 println("      Initialization via index and key fields...")
 
-p = BasicContUnvParameter(:p, 1)
+p = BasicContUnvParameter(:p, 1, signature=:low)
 
 for field in values(fields)
   @test getfield(p, field) == nothing
@@ -40,7 +40,7 @@ pv = 5.18
 μv = 6.11
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(μv)]
 
-p = BasicContUnvParameter(:p, 1, pdf=Normal(states[2].value), states=states)
+p = BasicContUnvParameter(:p, 1, signature=:low, pdf=Normal(states[2].value), states=states)
 
 distribution = Normal(μv)
 p.pdf == distribution
@@ -89,7 +89,7 @@ pv = 1.25
 σv = 10.
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(σv)]
 
-p = BasicContUnvParameter(:p, 1, prior=Normal(0., states[2].value), states=states)
+p = BasicContUnvParameter(:p, 1, signature=:low, prior=Normal(0., states[2].value), states=states)
 
 distribution = Normal(0., σv)
 p.prior == distribution
@@ -142,7 +142,7 @@ pv = 3.79
 μv = 5.4
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(μv)]
 
-p = BasicContUnvParameter(:p, 1, setpdf=(state, states) -> Normal(states[2].value), states=states)
+p = BasicContUnvParameter(:p, 1, signature=:low, setpdf=(state, states) -> Normal(states[2].value), states=states)
 setpdf!(p, states[1])
 
 distribution = Normal(μv)
@@ -192,7 +192,7 @@ pv = 3.55
 σv = 2.
 states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(σv)]
 
-p = BasicContUnvParameter(:p, 1, setprior=(state, states) -> Normal(0., states[2].value), states=states)
+p = BasicContUnvParameter(:p, 1, signature=:low, setprior=(state, states) -> Normal(0., states[2].value), states=states)
 setprior!(p, states[1])
 
 distribution = Normal(0., σv)
@@ -246,7 +246,7 @@ llf(state, states) =
 lpf(state, states) =
   state.logprior = -0.5*((state.value-states[4].value)^2/(states[5].value^2)+log(2*pi))-log(states[5].value)
 
-μ = BasicContUnvParameter(:μ, 1, loglikelihood=llf, logprior=lpf, states=states)
+μ = BasicContUnvParameter(:μ, 1, signature=:low, loglikelihood=llf, logprior=lpf, states=states)
 
 ld = Normal(μv, σv)
 pd = Normal(μ0v, σ0v)
@@ -285,6 +285,7 @@ states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(μv
 p = BasicContUnvParameter(
   :p,
   1,
+  signature=:low,
   logtarget=(state, states) -> state.logtarget = -(state.value-states[2].value)^2,
   states=states
 )
@@ -328,6 +329,7 @@ gllf(state, states) = state.gradloglikelihood = (states[2].value-state.value)/(s
 μ = BasicContUnvParameter(
   :μ,
   1,
+  signature=:low,
   loglikelihood=llf,
   gradloglikelihood=gllf,
   prior=Normal(states[4].value, states[5].value),
@@ -455,7 +457,9 @@ gllf(state, states) = state.gradloglikelihood = (states[2].value-state.value)/(s
 
 glpf(state, states) = state.gradlogprior = -(state.value-states[4].value)/(states[5].value^2)
 
-μ = BasicContUnvParameter(:μ, 1, loglikelihood=llf, logprior=lpf, gradloglikelihood=gllf, gradlogprior=glpf, states=states)
+μ = BasicContUnvParameter(
+  :μ, 1, signature=:low, loglikelihood=llf, logprior=lpf, gradloglikelihood=gllf, gradlogprior=glpf, states=states
+)
 
 ld = Normal(μv, σv)
 pd = Normal(μ0v, σ0v)
@@ -507,6 +511,7 @@ states = VariableState[BasicContUnvParameterState(pv), BasicUnvVariableState(μv
 p = BasicContUnvParameter(
   :p,
   1,
+  signature=:low,
   logtarget=(state, states) -> state.logtarget = -(state.value-states[2].value)^2,
   gradlogtarget=(state, states) -> state.gradlogtarget = -2*(state.value-states[2].value),
   states=states

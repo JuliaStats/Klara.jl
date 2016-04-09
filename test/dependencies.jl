@@ -4,7 +4,7 @@ using Lora
 
 println("    Testing conversion of dependencies to edges compatible with Graphs...")
 
-θ = BasicContUnvParameter(:θ, 1)
+θ = BasicContUnvParameter(:θ, 1, signature=:low)
 x = Data(:x, 1)
 
 dxθ = Dependence(1, x, θ)

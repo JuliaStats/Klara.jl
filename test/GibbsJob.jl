@@ -7,12 +7,14 @@ using Lora
 p1 = BasicContUnvParameter(
   :p1,
   2,
+  signature=:low,
   setpdf=(state, states) -> Normal(states[1].value*states[3].value, sqrt(1-abs2(states[1].value)))
 )
 
 p2 = BasicContUnvParameter(
   :p2,
   3,
+  signature=:low,
   setpdf=(state, states) -> Normal(states[1].value*states[2].value, sqrt(1-abs2(states[1].value)))
 )
 

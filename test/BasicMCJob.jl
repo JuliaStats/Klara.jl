@@ -5,7 +5,9 @@ using Lora
 
 # Example 1: multivariate parameter
 
-p = BasicContMuvParameter(:p, 1, logtarget=(state, states) -> state.logtarget = -dot(state.value, state.value))
+p = BasicContMuvParameter(
+  :p, 1, signature=:low, logtarget=(state, states) -> state.logtarget = -dot(state.value, state.value)
+)
 model = likelihood_model([p])
 
 sampler = MH([1., 1.])
@@ -45,7 +47,7 @@ acceptance(chain)
 
 # using Lora
 
-p = BasicContUnvParameter(:p, 1, logtarget=(state, states) -> state.logtarget = -abs2(state.value))
+p = BasicContUnvParameter(:p, 1, signature=:low, logtarget=(state, states) -> state.logtarget = -abs2(state.value))
 model = likelihood_model([p])
 
 sampler = MH()
