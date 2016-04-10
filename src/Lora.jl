@@ -171,12 +171,14 @@ export
   likelihood_model,
   logistic,
   logistic_rate_score,
+  lognormalise,
   logpdf,
   lzv,
   make_edge,
   mcse,
   mcvar,
   model2dot,
+  normalise,
   num_edges,
   num_vertices,
   out_degree,
@@ -210,6 +212,7 @@ export
 include("stats/logistic.jl")
 
 include("distributions/Binary.jl")
+include("distributions/TruncatedNormal.jl")
 
 include("autodiff/reverse.jl")
 include("autodiff/forward.jl")

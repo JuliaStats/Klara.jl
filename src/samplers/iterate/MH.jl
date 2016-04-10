@@ -21,12 +21,12 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
   if !(job.sampler.symmetric)
-    push!(body, :(_job.sstate.ratio -= logpdf(_job.sampler.proposal, _job.sstate.pstate)))
+    push!(body, :(_job.sstate.ratio -= logpdf(_job.sampler.proposal, _job.sstate.pstate.value)))
     if !(job.sampler.normalised)
       push!(body, :(_job.sstate.ratio -= lognormalise(_job.sampler.proposal)))
     end
     push!(body, :(_job.sampler.setproposal(_job.sstate.pstate, _job.vstate)))
-    push!(body, :(_job.sstate.ratio += logpdf(_job.sampler.logproposal, _job.pstate)))
+    push!(body, :(_job.sstate.ratio += logpdf(_job.sampler.proposal, _job.pstate.value)))
     if !(job.sampler.normalised)
       push!(body, :(_job.sstate.ratio += lognormalise(_job.sampler.proposal)))
     end

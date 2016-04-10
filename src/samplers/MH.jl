@@ -28,15 +28,14 @@ type MH <: MHSampler
   normalised::Bool # If normalised=true then the proposal distribution is normalised, else it is non-normalised
   proposal::Union{Distribution, Void} # Proposal distribution
   setproposal::Function # Function for setting the proposal distribution
-  logproposal::Union{Distribution, Void} # logpdf of asymmetric proposal. For symmetric proposals, logproposal=nothing
 
   function MH(symmetric::Bool, normalised::Bool, setproposal::Function)
     instance = new()
     
     instance.symmetric = symmetric
     instance.normalised = normalised
+    instance.proposal = nothing
     instance.setproposal = eval(codegen_setfield(instance, :proposal, setproposal))   
-    instance.logproposal = symmetric ? nothing : eval(codegen_proposal_method_via_distribution(instance, :proposal, logpdf))
             
     instance
   end
