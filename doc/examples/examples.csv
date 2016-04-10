@@ -1,5 +1,6 @@
 Directory,Filename,Motivation,Model description,Dataset,Dataset description
-poisson,MH.jl,Metropolis-Hastings over discrete sample space,Poisson distribution,-,-
+Poisson,MH.jl,Metropolis-Hastings over discrete sample space,Poisson distribution,-,-
+Gamma,MH.jl,Metropolis-Hastings when the target and proposal have differing support,Gamma distribution,-,-
 swiss,RAM.jl,Random adaptive Metropolis,Bayesian logistic regression,swiss,Swiss banknotes
 swiss/MALA,analytical.jl,MALA with analytical gradient,Bayesian logistic regression,swiss,Swiss banknotes
 swiss/MALA/reversediff,expressionargs.jl,MALA with gradient computed via expression-based reverse mode AD,Bayesian logistic regression,swiss,Swiss banknotes
