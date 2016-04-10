@@ -102,10 +102,10 @@ end
 
 ## Initialize MALA state
 
-sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
+sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}, vstate::VariableStateVector) =
   UnvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
 
-sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
+sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}, vstate::VariableStateVector) =
   MuvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state

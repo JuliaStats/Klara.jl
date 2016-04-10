@@ -176,14 +176,24 @@ end
 
 ## Initialize SMMALA state
 
-function sampler_state(sampler::SMMALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate})
+function sampler_state(
+  sampler::SMMALA,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::VariableStateVector
+)
   sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
 
-function sampler_state(sampler::SMMALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate})
+function sampler_state(
+  sampler::SMMALA,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::VariableStateVector
+)
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget

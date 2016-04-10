@@ -3,19 +3,21 @@
 # MHState holds the internal state ("local variables") of the Metropolis-Hastings sampler
 
 type MHState <: MCSamplerState
+  proposal::Distribution # Proposal distribution
   pstate::ParameterState # Parameter state used internally by MH
   tune::MCTunerState
   ratio::Real # Acceptance ratio
 
-  function MHState(pstate::ParameterState, tune::MCTunerState, ratio::Real)
+  function MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState, ratio::Real)
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio)
+    new(proposal, pstate, tune, ratio)
   end
 end
 
-MHState(pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) = MHState(pstate, tune, NaN)
+MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) =
+  MHState(proposal, pstate, tune, NaN)
 
 ### Metropolis-Hastings (MH) sampler
 
@@ -23,22 +25,10 @@ MHState(pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) = MHState(ps
 # For symmetric proposals, the proposal correction factor equals 1, so the logproposal field is set to nothing
 # For non-normalised proposals, the lognormalise() method is used for calculating the proposal correction factor
 
-type MH <: MHSampler
+immutable MH <: MHSampler
   symmetric::Bool # If symmetric=true then the proposal distribution is symmetric, else it is asymmetric
   normalised::Bool # If normalised=true then the proposal distribution is normalised, else it is non-normalised
-  proposal::Union{Distribution, Void} # Proposal distribution
   setproposal::Function # Function for setting the proposal distribution
-
-  function MH(symmetric::Bool, normalised::Bool, setproposal::Function)
-    instance = new()
-    
-    instance.symmetric = symmetric
-    instance.normalised = normalised
-    instance.proposal = nothing
-    instance.setproposal = eval(codegen_setfield(instance, :proposal, setproposal))   
-            
-    instance
-  end
 end
 
 MH(setproposal::Function; signature::Symbol=:high, args...) = MH(setproposal, Val{signature}; args...)
@@ -67,8 +57,8 @@ end
 
 ## Initialize MHState
 
-sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState) =
-  MHState(generate_empty(pstate), tuner_state(sampler, tuner))
+sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState, vstate::VariableStateVector) =
+  MHState(sampler.setproposal(pstate, vstate), generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state
 

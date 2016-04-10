@@ -104,10 +104,10 @@ end
 
 ## Initialize HMC state
 
-sampler_state(sampler::HMC, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
+sampler_state(sampler::HMC, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}, vstate::VariableStateVector) =
   UnvHMCState(generate_empty(pstate), tuner_state(sampler, tuner))
 
-sampler_state(sampler::HMC, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
+sampler_state(sampler::HMC, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}, vstate::VariableStateVector) =
   MuvHMCState(generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state

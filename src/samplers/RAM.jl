@@ -124,7 +124,7 @@ end
 
 ## Initialize MuvRAMState
 
-sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}) =
+sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}, vstate::VariableStateVector) =
   UnvRAMState(
     generate_empty(pstate),
     tuner_state(sampler, tuner),
@@ -132,7 +132,7 @@ sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, U
     NaN
   )
 
-sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}) =
+sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}, vstate::VariableStateVector) =
   MuvRAMState(
     generate_empty(pstate),
     tuner_state(sampler, tuner),

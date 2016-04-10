@@ -41,7 +41,7 @@ end
 
 ## Initialize ARSState
 
-sampler_state(sampler::ARS, tuner::MCTuner, pstate::ParameterState) =
+sampler_state(sampler::ARS, tuner::MCTuner, pstate::ParameterState, vstate::VariableStateVector) =
   ARSState(generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state
