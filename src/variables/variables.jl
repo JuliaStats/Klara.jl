@@ -107,16 +107,16 @@ dotshape(variable::Data) = "box"
 
 ## Transformation
 
-type Transformation{S<:VariableState} <: Variable{Deterministic}
+type Transformation <: Variable{Deterministic}
   key::Symbol
   index::Int
   transform::Function
-  states::Vector{S}
+  states::VariableStateVector
 end
 
 Transformation(key::Symbol, index::Int, transform::Function=()->()) = Transformation(key, index, transform, VariableState[])
 
-Transformation{S<:VariableState}(key::Symbol, transform::Function=()->(), states::Vector{S}=VariableState[]) =
+Transformation(key::Symbol, transform::Function=()->(), states::VariableStateVector=VariableState[]) =
   Transformation(key, 0, transform, states)
 
 default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableState(value)

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg
+  version="1.1"
+  id="Layer_1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  x="0px"
+  y="0px"
+	width="500px"
+  height="500px"
+  viewBox="0 0 500 500"
+  enable-background="new 0 0 500 500"
+  xml:space="preserve"
+>
+  <defs>
+    <marker
+      id="FirstTriangle"
+      viewBox="0 0 10 10"
+      refX="1"
+      refY="5"
+      markerWidth="3"
+      markerHeight="3"
+      orient="auto"
+    >
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#398A30" />
+    </marker>
+
+    <marker
+      id="SecondTriangle"
+      viewBox="0 0 10 10"
+      refX="1"
+      refY="5"
+      markerWidth="3"
+      markerHeight="3"
+      orient="auto"
+    >
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#85569E" />
+    </marker>
+
+    <marker
+      id="ThirdTriangle"
+      viewBox="0 0 10 10"
+      refX="1"
+      refY="5"
+      markerWidth="3"
+      markerHeight="3"
+      orient="auto"
+    >
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#BD3B3C" />
+    </marker>
+  </defs>
+
+  <g>
+    <!-- <circle cx="250" cy="128.756443" r="100" stroke="#398A30" stroke-width="5" fill="#69AB63" /> -->
+    <polygon
+      points="
+        206.611626,218.85333
+        152.507209,151.008536
+        171.816852,66.407463
+        250.0,28.756443
+        328.183148,66.407463
+        347.492791,151.008536
+        293.388374,218.85333
+      "
+      style="fill:#69AB63; stroke:#398A30; stroke-width:5"
+    />
+
+    <circle cx="390" cy="371.243557" r="100" fill="#A880BF" stroke="#85569E" stroke-width="5" />
+
+    <circle cx="110" cy="371.243557" r="100" fill="#D46466" stroke="#BD3B3C" stroke-width="5" />
+  </g>
+
+  <g>
+    <line
+      x1="299"
+      y1="213.626933"
+      x2="331.75"
+      y2="270.351597"
+      stroke="#398A30"
+      stroke-width="5"
+      marker-end="url(#FirstTriangle)"
+    />
+
+    <line
+      x1="289"
+      y1="371.243557"
+      x2="226.25"
+      y2="371.243557"
+      stroke="#85569E"
+      stroke-width="5"
+      marker-end="url(#SecondTriangle)"
+    />
+
+    <line
+      x1="159"
+      y1="286.373067"
+      x2="193.406"
+      y2="226.78"
+      stroke="#BD3B3C"
+      stroke-width="5"
+      marker-end="url(#ThirdTriangle)"
+    />
+  </g>
+</svg>
