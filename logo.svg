@@ -65,42 +65,42 @@
         347.492791,151.008536
         293.388374,218.85333
       "
-      style="fill:#69AB63; stroke:#398A30; stroke-width:5"
+      style="fill:#69AB63; stroke:#398A30; stroke-width:10"
     />
 
-    <circle cx="390" cy="371.243557" r="100" fill="#A880BF" stroke="#85569E" stroke-width="5" />
+    <circle cx="390" cy="371.243557" r="100" fill="#A880BF" stroke="#85569E" stroke-width="10" />
 
-    <circle cx="110" cy="371.243557" r="100" fill="#D46466" stroke="#BD3B3C" stroke-width="5" />
+    <circle cx="110" cy="371.243557" r="100" fill="#D46466" stroke="#BD3B3C" stroke-width="10" />
   </g>
 
   <g>
     <line
       x1="299"
       y1="213.626933"
-      x2="331.75"
-      y2="270.351597"
+      x2="323.5"
+      y2="256.062178"
       stroke="#398A30"
-      stroke-width="5"
+      stroke-width="10"
       marker-end="url(#FirstTriangle)"
     />
 
     <line
       x1="289"
       y1="371.243557"
-      x2="226.25"
+      x2="242"
       y2="371.243557"
       stroke="#85569E"
-      stroke-width="5"
+      stroke-width="10"
       marker-end="url(#SecondTriangle)"
     />
 
     <line
       x1="159"
       y1="286.373067"
-      x2="193.406"
-      y2="226.78"
+      x2="185.25"
+      y2="240.907"
       stroke="#BD3B3C"
-      stroke-width="5"
+      stroke-width="10"
       marker-end="url(#ThirdTriangle)"
     />
   </g>

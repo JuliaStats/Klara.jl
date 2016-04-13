@@ -47,11 +47,11 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'rst/html/index'
 
 # General information about the project.
 project = u'Lora.jl'
-copyright = u'2014, JuliaStats Team'
+copyright = u'2016, JuliaStats Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -130,7 +130,7 @@ html_sidebars = juliadoc.default_sidebars()
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = '../../../logo.svg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -222,9 +222,9 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('user_guide/index_latex',
-    'JuliaLoraUserGuide.tex',
-    u'Lora.jl User Guide',
+  ('rst/latex/index',
+    'LoraUserGuide.tex',
+    u'Lora User Guide',
     u'JuliaStats Team',
     'manual'
   ),
@@ -232,7 +232,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = 'figures/logo.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.

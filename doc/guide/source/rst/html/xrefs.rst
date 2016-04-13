@@ -1,6 +1,6 @@
 References
 ------------------------------------------------------------------------------------------
 
-.. bibliography:: xrefs.bib
+.. bibliography:: ../../bib/xrefs.bib
   :style: plain
   :cited:

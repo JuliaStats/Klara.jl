@@ -1,4 +1,4 @@
 .buildpath
 .project
-doc/sphinx/build
+doc/guide/build
 tmp
