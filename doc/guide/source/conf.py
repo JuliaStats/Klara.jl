@@ -47,7 +47,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'rst/index'
+master_doc = 'index'
 
 # General information about the project.
 project = u'Lora'
@@ -222,7 +222,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('rst/texindex',
+  ('texindex',
     'LoraUserGuide.tex',
     u'Lora User Guide',
     u'JuliaStats Team',

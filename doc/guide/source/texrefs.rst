@@ -2,6 +2,6 @@
 
   .. rubric:: References
 
-.. bibliography:: ../bib/refs.bib
+.. bibliography:: bib/refs.bib
   :style: plain
   :cited:
