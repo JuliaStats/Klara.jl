@@ -1,0 +1,43 @@
+.. _states:
+
+Variable States
+==========================================================================================
+
+.. _rationale:
+
+Rationale behind states
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Being geared towards statistics, *Lora* variables include parameters, data, transformations and constants, the specifics of
+which will be delineated in the next chapter. A variable, be it stochastic or deterministic, can take a value, that is it
+can have a *state*. Variables and their states are maintained in two distinct type systems in *Lora*.
+
+The functionality of a variable is enclosed by its type instance. For a example, a typical parameter consists of its
+probability distribution, log-likelihood or log-prior fields.
+
+It is possible to store the value of a multivariate variable in a vector. However, it might be required to save additional
+information. For example, the value of a parameter's log-likelihood and associated gradient might be of interest. Variable
+state types exist to accommodate such states that comprise two or more entities.
+
+From an object-oriented programming (OOP) standpoint, variable types correspond to methods while variable state types
+constitute data members. *Lora* does not merge the functional and data components into a single type, which would had been
+the analogous of a class in OOP terms. The main reasoning behind Lora's compartmentalization of variables and their states is
+code reusability. For instance, it becomes possible for different variables to share the same state type; more generally,
+adhering to Julia's multiple dispatch is facilitated.
+
+Moreover, keeping states separate from variables helps cater to user-specific problems. Existing functionality can be
+deployed on user-defined states tailored to the problem at hand.
+
+.. _builtin_states:
+
+Built-in states
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To be written soon.
+
+.. _BasicDiscUnvParameterState:
+
+BasicDiscUnvParameterState
+------------------------------------------------------------------------------------------
+
+To be written soon.
