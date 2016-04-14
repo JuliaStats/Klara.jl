@@ -47,10 +47,10 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'rst/html/index'
+master_doc = 'rst/index'
 
 # General information about the project.
-project = u'Lora.jl'
+project = u'Lora'
 copyright = u'2016, JuliaStats Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -130,7 +130,7 @@ html_sidebars = juliadoc.default_sidebars()
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '../../../logo.svg'
+html_logo = 'figures/logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -222,7 +222,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('rst/latex/index',
+  ('rst/texindex',
     'LoraUserGuide.tex',
     u'Lora User Guide',
     u'JuliaStats Team',

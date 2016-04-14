@@ -1,10 +1,10 @@
-.. _user_guide_index_html:
-    
-Lora User Guide
+.. _user_guide_index_latex:
+
+User Guide
 ==========================================================================================
 
 .. toctree::
    :maxdepth: 2
 
-   ../intro
-   xrefs
+   01
+   texrefs
