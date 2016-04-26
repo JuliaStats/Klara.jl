@@ -191,6 +191,9 @@ html_static_path = ['.static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Lorajldoc'
 
+# If true, figures, tables and code-blocks are automatically numbered if they have a caption
+numfig = True
+
 
 # -- Options for LaTeX output ---------------------------------------------
 

@@ -8,9 +8,9 @@ Variable States
 Rationale behind states
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Being geared towards statistics, *Lora* variables include parameters, data, transformations and constants, the specifics of
+Being geared towards statistics, ``Lora`` variables include parameters, data, transformations and constants, the specifics of
 which will be delineated in the next chapter. A variable, be it stochastic or deterministic, can take a value, that is it
-can have a *state*. Variables and their states are maintained in two distinct type systems in *Lora*.
+can have a *state*. Variables and their states are maintained in two distinct type systems in ``Lora``.
 
 The functionality of a variable is enclosed by its type instance. For a example, a typical parameter consists of its
 probability distribution, log-likelihood or log-prior fields.
@@ -20,7 +20,7 @@ information. For example, the value of a parameter's log-likelihood and associat
 state types exist to accommodate such states that comprise two or more entities.
 
 From an object-oriented programming (OOP) standpoint, variable types correspond to methods while variable state types
-constitute data members. *Lora* does not merge the functional and data components into a single type, which would had been
+constitute data members. ``Lora`` does not merge the functional and data components into a single type, which would had been
 the analogous of a class in OOP terms. The main reasoning behind Lora's compartmentalization of variables and their states is
 code reusability. For instance, it becomes possible for different variables to share the same state type; more generally,
 adhering to Julia's multiple dispatch is facilitated.
@@ -33,7 +33,41 @@ deployed on user-defined states tailored to the problem at hand.
 Built-in states
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To be written soon.
+The state type system comprises two abstract and other non-abstract types. The two abstract types are ``VariableState`` and
+its sub-type ``ParameterState``. :numref:`_builtin_states_listing` displays the hierarchy of built-in state types. The
+non-abstract states put forward sensible defaults aimed at covering conventional use-cases. ``Lora``'s existing functionality
+relies on these defaults, yet it is possible to extend the package by defining custom state types.
+
+Variable states are categorized as univariate or multivariate. Parameter states are further classified as discrete or
+continuous. To make these distinctions, parametric abstract state types are employed by importing the ``VariateForm`` and
+``ValueSupport`` classification scheme from ``Distributions``. Every sub-class is designated a unique non-abstract state
+type; for instance, ``BasicContMuvParameterState`` hosts a continuous multivariate parameter state.
+
+The most common field, appearing in all built-in non-abstract state types, is called ``value``. For example, in the context
+of MCMC, ``value`` would hold the current or proposed state at each iteration of the sampler. Each state type and its
+associated methods will be elaborated in the following sections.
+
+.. code-block:: none
+  :name: _builtin_states_listing
+  :caption: Built-in state types in ``Lora``
+
+  VariableState
+  |
+  +-- BasicUnvVariableState
+  |
+  +-- BasicMuvVariableState
+  |
+  +-- BasicMavVariableState
+  |    
+  +-- ParameterState
+      |  
+      +-- BasicDiscUnvParameterState
+      |
+      +-- BasicDiscMuvParameterState
+      |
+      +-- BasicContUnvParameterState
+      |
+      +-- BasicContMuvParameterState
 
 .. _BasicDiscUnvParameterState:
 
