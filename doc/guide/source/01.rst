@@ -13,7 +13,7 @@ The Julia ``Lora`` package provides an interoperable generic engine for a breadt
 The idea that there exists no unique optimal MCMC methodology for all purposes has been a development cornerstone. Along
 these lines, interest is in providing a wealth of Monte Carlo strategies and options, letting the user decide which
 algorithm suits their use case. Such "agnostic" approach to coding permeates ``Lora`` from top to bottom, offering a variety
-of methods and detailed configuration, ultimately leading to rich functionality. ``Lora``'s wide range of functionality makes
+of methods and detailed configuration, ultimately leading to rich functionality. ``Lora``’s wide range of functionality makes
 itself useful in applications and as a test bed for comparative methodological research. It also gives the flexibility to
 connect ``Lora`` with various other packages, exploiting different levels of ongoing developments in them.
 
@@ -35,14 +35,14 @@ thanks to the duality of higher and lower level APIs.
 Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A summary of ``Lora``'s main features follows:
+A summary of ``Lora``’s main features follows:
 
 * *Graph-based model specification*. Representing the model as a graph widens the scope of accommodated models and enables
   exploiting graph algorithms from the ``Graphs`` package.
 
 * *Diverse options for defining model parameters*. Parameters can be defined on the basis of a log-target or they can be
   introduced in a Bayesian fashion via their log-likelihood and log-prior. Parameter targets, likelihoods and priors can be
-  specified via functions or distributions. ``Lora``'s integration with the ``Distributions`` package facilitates
+  specified via functions or distributions. ``Lora``’s integration with the ``Distributions`` package facilitates
   parameter definition via distributions.
 
 * *Job-centric simulations*. The concept of MCMC simulation has been separated from that of model specification. Job types
@@ -81,7 +81,7 @@ A summary of ``Lora``'s main features follows:
 Preliminary exposition of graph models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``Lora``'s graph model is presented concisely in the current section as a smooth introduction to subsequent elaborate
+``Lora``’s graph model is presented concisely in the current section as a smooth introduction to subsequent elaborate
 chapters. A single model type, named ``GenericModel``, serves as the sole entry point for defining any graph model in
 ``Lora``. ``GenericModel`` has been inspired by and operates on par with ``GenericGraph``, a versatile graph type of the
 ``Graphs`` package.

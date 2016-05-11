@@ -33,15 +33,15 @@ deployed on user-defined states tailored to the problem at hand.
 Built-in states
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The state type system comprises two abstract and other non-abstract types. The two abstract types are ``VariableState`` and
-its sub-type ``ParameterState``. :numref:`_builtin_states_listing` displays the hierarchy of built-in state types. The
-non-abstract states put forward sensible defaults aimed at covering conventional use-cases. ``Lora``'s existing functionality
+The state type system comprises two abstract and other non-abstract types. :numref:`_builtin_states_listing` displays the
+hierarchy of built-in state types. The two abstract types are ``VariableState`` and its sub-type ``ParameterState``. The
+non-abstract states put forward sensible defaults aimed at covering conventional use-cases. ``Lora``’s existing functionality
 relies on these defaults, yet it is possible to extend the package by defining custom state types.
 
 Variable states are categorized as univariate or multivariate. Parameter states are further classified as discrete or
 continuous. To make these distinctions, parametric abstract state types are employed by importing the ``VariateForm`` and
-``ValueSupport`` classification scheme from ``Distributions``. Every sub-class is designated a unique non-abstract state
-type; for instance, ``BasicContMuvParameterState`` hosts a continuous multivariate parameter state.
+``ValueSupport`` classification scheme from ``Distributions``. Every possible category is designated a unique non-abstract
+state type; for instance, ``BasicContMuvParameterState`` hosts a continuous multivariate parameter state.
 
 The most common field, appearing in all built-in non-abstract state types, is called ``value``. For example, in the context
 of MCMC, ``value`` would hold the current or proposed state at each iteration of the sampler. Each state type and its
@@ -68,6 +68,48 @@ associated methods will be elaborated in the following sections.
       +-- BasicContUnvParameterState
       |
       +-- BasicContMuvParameterState
+
+.. _abstract_states:
+
+Abstract states
+------------------------------------------------------------------------------------------
+
+The type system of ``VariateForm`` and ``ValueSupport`` from ``Distributions``
+(see :numref:`_variateform_valuesupport_types` and associated
+`documentation <http://distributionsjl.readthedocs.io/en/latest/types.html>`_ in ``Distributions``) is used for
+parameterizing abstract states in ``Lora``.
+
+.. code-block:: julia
+  :name: _variateform_valuesupport_types
+  :caption: ``VariateForm`` and ``ValueSupport`` type system from ``Distributions`` package
+  
+  abstract VariateForm
+  type Univariate    <: VariateForm end
+  type Multivariate  <: VariateForm end
+  type Matrixvariate <: VariateForm end
+
+  abstract ValueSupport
+  type Discrete   <: ValueSupport end
+  type Continuous <: ValueSupport end
+
+``VariableState`` is the root of ``Lora``’s variable state type hierarchy. It is defined as
+
+.. code-block:: julia
+
+  abstract VariableState{F<:VariateForm}
+
+Being parameterized by ``VariateForm``, the abstract type ``VariableState`` enables distinguishing between univariate,
+multivariate and matrixvariate variable states.
+
+``ParameterState`` is the root of ``Lora``’s parameter state types and an abstract sub-type of ``VariableState``. It is
+defined as
+
+.. code-block:: julia
+
+  abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
+
+As seen from its parameterization, ``ParameterState`` makes it possible to organize parameter states by both the support of
+state space and the variate form.
 
 .. _BasicDiscUnvParameterState:
 
