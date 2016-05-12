@@ -49,7 +49,7 @@ associated methods will be elaborated in the following sections.
 
 .. code-block:: none
   :name: _builtin_states_listing
-  :caption: Built-in state types in ``Lora``
+  :caption: State type hierarchy in ``Lora``
 
   VariableState
   |
@@ -72,7 +72,7 @@ associated methods will be elaborated in the following sections.
 .. _abstract_states:
 
 Abstract states
-------------------------------------------------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The type system of ``VariateForm`` and ``ValueSupport`` from ``Distributions``
 (see :numref:`_variateform_valuesupport_types` and associated
@@ -99,7 +99,7 @@ parameterizing abstract states in ``Lora``.
   abstract VariableState{F<:VariateForm}
 
 Being parameterized by ``VariateForm``, the abstract type ``VariableState`` enables distinguishing between univariate,
-multivariate and matrixvariate variable states.
+multivariate and matrix-variate variable states.
 
 ``ParameterState`` is the root of ``Lora``’s parameter state types and an abstract sub-type of ``VariableState``. It is
 defined as
@@ -111,9 +111,114 @@ defined as
 As seen from its parameterization, ``ParameterState`` makes it possible to organize parameter states by both the support of
 state space and the variate form.
 
-.. _BasicDiscUnvParameterState:
+.. _basic_variable_states:
 
-BasicDiscUnvParameterState
+Basic variable states
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+``Lora`` ships with three so-called basic variable state types, namely ``BasicUnvVariableState``, ``BasicMuvVariableState``
+and ``BasicMavVariableState``. These three types are used for encapsulating minimal information, that is the ``value`` of a
+variable state and possibly the associated ``size`` of ``value``.
+
+Each of these three basic state types corresponds to a specific variate form, whereas none of them is parameterized by the
+support of state space. Instead, each of them is parameterized by the type of ``Number`` of their ``value`` field, see
+:numref:`_my_table`.
+
+.. table:: Basic variable states in ``Lora``
+   :name: _my_table
+   
+   +--------------------------------------+----------------+---------------------+
+   | State type                           | ``value`` type | ``size`` type       |
+   +======================================+================+=====================+
+   | ``BasicUnvVariableState{N<:Number}`` | ``N``          |                     |
+   +--------------------------------------+----------------+---------------------+
+   | ``BasicMuvVariableState{N<:Number}`` | ``Vector{N}``  | ``Int``             |
+   +--------------------------------------+----------------+---------------------+
+   | ``BasicMavVariableState{N<:Number}`` | ``Matrix{N}``  | ``Tuple{Int, Int}`` |
+   +--------------------------------------+----------------+---------------------+
+
+In what follows, constructors are provided for the three basic variable types.
+
+BasicUnvVariableState
 ------------------------------------------------------------------------------------------
 
-To be written soon.
+.. function:: BasicUnvVariableState{N<:Number}(value::N)
+
+   Construct a basic univariate variable state with some ``value``.
+   
+   Examples
+   
+   .. code-block:: julia
+   
+     state = BasicUnvVariableState(1.)
+     # Lora.BasicUnvVariableState{Float64}(1.0)
+     
+     state.value
+     # 1.0
+     
+BasicMuvVariableState
+------------------------------------------------------------------------------------------
+
+.. function:: BasicMuvVariableState{N<:Number}(value::Vector{N})
+
+   Construct a basic multivariate variable state with some ``value``.
+   
+   Examples
+   
+   .. code-block:: julia
+   
+     state = BasicMuvVariableState([1, 2])
+     # Lora.BasicMuvVariableState{Int64}([1,2], 2)
+     
+     state.value
+     #  2-element Array{Int64,1}:
+     #   1
+     #   2
+     
+     state.size
+     # 2
+
+.. function:: BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
+
+   Construct a basic multivariate variable state with a ``value`` of specified ``size`` and element type.
+   
+   Examples
+   
+   .. code-block:: julia
+   
+     BasicMuvVariableState(3, Float32)
+     # Lora.BasicMuvVariableState{Float32}(Float32[8.06805f-37,1.0f-45], 2)
+    
+BasicMavVariableState
+------------------------------------------------------------------------------------------
+
+.. function:: BasicMavVariableState{N<:Number}(value::Matrix{N})
+
+   Construct a basic matrix-variate variable state with some ``value``.
+   
+   Examples
+   
+   .. code-block:: julia
+   
+     state = BasicMavVariableState(eye(2))
+     # Lora.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
+     
+     state.value
+     #  2x2 Array{Float64,2}:
+     #   1.0  0.0
+     #   0.0  1.0
+      
+     state.size
+     # (2, 2)
+
+.. function:: BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64)
+
+   Construct a basic matrix-variate variable state with a ``value`` of specified ``size`` and element type.
+   
+   Examples
+   
+   .. code-block:: julia
+   
+     BasicMavVariableState((3, 2), Int16)
+     # Lora.BasicMavVariableState{Int16}(3x2 Array{Int16, 2}, (3, 2))
+    
