@@ -1,5 +1,8 @@
-### Abstract parameter state
+"""
+abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
 
+Root of parameter state type hierarchy
+"""
 abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
 
 typealias ParameterStateVector{S<:ParameterState} Vector{S}

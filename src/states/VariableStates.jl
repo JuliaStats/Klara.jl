@@ -1,16 +1,35 @@
-### Abstract variable state
+"""
+abstract VariableState{F<:VariateForm}
 
+Root of variable state type hierarchy
+"""
 abstract VariableState{F<:VariateForm}
 
 typealias VariableStateVector{S<:VariableState} Vector{S}
 
 variate_form{F<:VariateForm}(::Type{VariableState{F}}) = F
 
-### Basic variable state subtypes
+"""
+Basic univariate variable state type
 
-## BasicUnvVariableState
+# Constructors
 
+* BasicUnvVariableState{N<:Number}(value::N)
+
+  Construct a basic univariate variable state with some ``value``.
+
+# Examples
+
+```julia
+julia> state = BasicUnvVariableState(1.)
+Lora.BasicUnvVariableState{Float64}(1.0)
+
+julia> state.value
+1.0
+```
+"""
 type BasicUnvVariableState{N<:Number} <: VariableState{Univariate}
+  "Scalar value of basic univariate variable state"
   value::N
 end
 
@@ -20,10 +39,38 @@ variate_form(::BasicUnvVariableState) = Univariate
 Base.eltype{N<:Number}(::Type{BasicUnvVariableState{N}}) = N
 Base.eltype{N<:Number}(s::BasicUnvVariableState{N}) = N
 
-## BasicMuvVariableState
+"""
+Basic multivariate variable state type
 
+# Constructors
+
+* BasicMuvVariableState{N<:Number}(value::Vector{N})
+
+  Construct a basic multivariate variable state with some `value`.
+
+* BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
+
+  Construct a basic multivariate variable state with a `value` of specified `size` and element type.
+
+# Examples
+
+```julia
+julia> state = BasicMuvVariableState([1, 2])
+Lora.BasicMuvVariableState{Int64}([1,2],2)
+
+julia> state.value
+2-element Array{Int64,1}:
+ 1
+ 2
+
+julia> state.size
+2
+```
+"""
 type BasicMuvVariableState{N<:Number} <: VariableState{Multivariate}
+  "Vector value of basic multivariate variable state"
   value::Vector{N}
+  "Integer representing the length of vector value of basic multivariate variable state"
   size::Int
 end
 
@@ -39,8 +86,40 @@ Base.eltype{N<:Number}(::BasicMuvVariableState{N}) = N
 
 ## BasicMavVariableState
 
+"""
+Basic matrix-variate variable state type
+
+# Constructors
+
+* BasicMavVariableState{N<:Number}(value::Matrix{N})
+
+  Construct a basic matrix-variate variable state with some `value`.
+
+* BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64)
+
+  Construct a basic matrix-variate variable state with a `value` of specified `size` and element type.
+
+# Examples
+
+```julia
+julia> state = BasicMavVariableState(eye(2))
+Lora.BasicMavVariableState{Float64}(2x2 Array{Float64,2}:
+ 1.0  0.0
+ 0.0  1.0,(2,2))
+
+julia> state.value
+2x2 Array{Float64,2}:
+ 1.0  0.0
+ 0.0  1.0
+
+julia> state.size
+(2,2)
+```
+"""
 type BasicMavVariableState{N<:Number} <: VariableState{Matrixvariate}
+  "Matrix value of basic matrix-variate variable state"
   value::Matrix{N}
+  "Tuple containing the dimensions of matrix value of basic matrix-variate variable state"
   size::Tuple{Int, Int}
 end
 
