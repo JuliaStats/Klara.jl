@@ -144,80 +144,80 @@ BasicUnvVariableState
 
 .. function:: BasicUnvVariableState{N<:Number}(value::N)
 
-Construct a basic univariate variable state with some ``value``.
+  Construct a basic univariate variable state with some ``value``.
    
-Examples:
+  Examples:
    
-.. code-block:: julia
+  .. code-block:: julia
    
-  state = BasicUnvVariableState(1.)
-  # Lora.BasicUnvVariableState{Float64}(1.0)
+    state = BasicUnvVariableState(1.)
+    # Lora.BasicUnvVariableState{Float64}(1.0)
      
-  state.value
-  # 1.0
+    state.value
+    # 1.0
      
 BasicMuvVariableState
 ------------------------------------------------------------------------------------------
 
 .. function:: BasicMuvVariableState{N<:Number}(value::Vector{N})
 
-Construct a basic multivariate variable state with some ``value``.
+  Construct a basic multivariate variable state with some ``value``.
    
-Examples:
+  Examples:
    
-.. code-block:: julia
+  .. code-block:: julia
    
-  state = BasicMuvVariableState([1, 2])
-  # Lora.BasicMuvVariableState{Int64}([1,2], 2)
+    state = BasicMuvVariableState([1, 2])
+    # Lora.BasicMuvVariableState{Int64}([1,2], 2)
      
-  state.value
-  #  2-element Array{Int64,1}:
-  #   1
-  #   2
+    state.value
+    #  2-element Array{Int64,1}:
+    #   1
+    #   2
      
-  state.size
-  # 2
+    state.size
+    # 2
 
 .. function:: BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
 
-Construct a basic multivariate variable state with a ``value`` of specified ``size`` and element type.
+  Construct a basic multivariate variable state with a ``value`` of specified ``size`` and element type.
    
-Examples:
+  Examples:
    
-.. code-block:: julia
+  .. code-block:: julia
    
-  BasicMuvVariableState(3, Float32)
-  # Lora.BasicMuvVariableState{Float32}(Float32[8.06805f-37,1.0f-45], 2)
+    BasicMuvVariableState(3, Float32)
+    # Lora.BasicMuvVariableState{Float32}(Float32[8.06805f-37,1.0f-45], 2)
     
 BasicMavVariableState
 ------------------------------------------------------------------------------------------
 
 .. function:: BasicMavVariableState{N<:Number}(value::Matrix{N})
 
-Construct a basic matrix-variate variable state with some ``value``.
+  Construct a basic matrix-variate variable state with some ``value``.
+  
+  Examples:
    
-Examples:
+  .. code-block:: julia
    
-.. code-block:: julia
-   
-  state = BasicMavVariableState(eye(2))
-  # Lora.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
+    state = BasicMavVariableState(eye(2))
+    # Lora.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
      
-  state.value
-  #  2x2 Array{Float64,2}:
-  #   1.0  0.0
-  #   0.0  1.0
+    state.value
+    #  2x2 Array{Float64,2}:
+    #   1.0  0.0
+    #   0.0  1.0
       
-  state.size
-  # (2, 2)
+    state.size
+    # (2, 2)
 
 .. function:: BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64)
 
-Construct a basic matrix-variate variable state with a ``value`` of specified ``size`` and element type.
+  Construct a basic matrix-variate variable state with a ``value`` of specified ``size`` and element type.
    
-Examples:
+  Examples:
    
-.. code-block:: julia
+  .. code-block:: julia
    
-  BasicMavVariableState((3, 2), Float32)
-  # Lora.BasicMavVariableState{Int16}(3x2 Array{Float32, 2}, (3, 2))
+    BasicMavVariableState((3, 2), Float32)
+    # Lora.BasicMavVariableState{Int16}(3x2 Array{Float32, 2}, (3, 2))
