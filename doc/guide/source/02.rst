@@ -122,20 +122,20 @@ variable state and possibly the associated ``size`` of ``value``.
 
 Each of these three basic state types corresponds to a specific variate form, whereas none of them is parameterized by the
 support of state space. Instead, each of them is parameterized by the type of ``Number`` of their ``value`` field, see
-:numref:`_my_table`.
+:numref:`_variable_states`.
 
-.. table:: Basic variable states in ``Lora``
-   :name: _my_table
+.. table:: Basic variable states in ``Lora``.
+   :name: _variable_states
    
-   +--------------------------------------+----------------+---------------------+
-   | State type                           | ``value`` type | ``size`` type       |
-   +======================================+================+=====================+
-   | ``BasicUnvVariableState{N<:Number}`` | ``N``          |                     |
-   +--------------------------------------+----------------+---------------------+
-   | ``BasicMuvVariableState{N<:Number}`` | ``Vector{N}``  | ``Int``             |
-   +--------------------------------------+----------------+---------------------+
-   | ``BasicMavVariableState{N<:Number}`` | ``Matrix{N}``  | ``Tuple{Int, Int}`` |
-   +--------------------------------------+----------------+---------------------+
+   +----------------------------------+----------------+-----------------+
+   | Variable state type              | ``value`` type | ``size`` type   |
+   +==================================+================+=================+
+   | BasicUnvVariableState{N<:Number} | N              | ✗               |
+   +----------------------------------+----------------+-----------------+
+   | BasicMuvVariableState{N<:Number} | Vector{N}      | Int             |
+   +----------------------------------+----------------+-----------------+
+   | BasicMavVariableState{N<:Number} | Matrix{N}      | Tuple{Int, Int} |
+   +----------------------------------+----------------+-----------------+
 
 In what follows, constructors are provided for the three basic variable types.
 
@@ -221,3 +221,130 @@ BasicMavVariableState
    
     BasicMavVariableState((3, 2), Float32)
     # Lora.BasicMavVariableState{Int16}(3x2 Array{Float32, 2}, (3, 2))
+
+.. _basic_parameter_states:
+
+Basic parameter states
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Four basic parameter state types are made available by ``Lora``, namely the discrete univariate
+``BasicDiscUnvParameterState``, discrete multivariate ``BasicDiscMuvParameterState``, continuous univariate
+``BasicContUnvParameterState`` and continuous multivariate ``BasicContMuvParameterState``, see :numref:`_parameter_states`.
+
+.. table:: Basic parameter states in ``Lora``.
+   :name: _parameter_states
+   
+   +---------------------------------------------------+--------------+--------------+
+   | Parameter state type                              | ValueSupport | VariateForm  |
+   +===================================================+==============+==============+
+   | BasicDiscUnvParameterState{NI<:Integer, NR<:Real} | Discrete     | Univariate   |
+   +---------------------------------------------------+--------------+--------------+
+   | BasicDiscMuvParameterState{NI<:Integer, NR<:Real} | Discrete     | Multivariate |
+   +---------------------------------------------------+--------------+--------------+
+   | BasicContUnvParameterState{NR<:Real}              | Continuous   | Univariate   |
+   +---------------------------------------------------+--------------+--------------+
+   | BasicContMuvParameterState{NR<:Real}              | Continuous   | Multivariate |
+   +---------------------------------------------------+--------------+--------------+
+ 
+Both basic parameter states and basic variable states contain the state's ``value`` and value's ``size``. Additionally, basic
+parameter states contain fields that hold information about the target distribution of the associated parameter and about
+sampling diagnostics, see :numref:`_parameter_state_fields`.
+
+The discrete states ``BasicDiscUnvParameterState`` and ``BasicDiscMuvParameterState`` are parameterized by the element type
+``NI<:Integer`` of state ``value`` and by the element type ``NR<:Real`` of target-related fields. On the other hand, the
+continuous states ``BasicContUnvParameterState`` and ``BasicContMuvParameterState`` are parameterized by the common element
+type ``NR<:Real`` of state ``value`` and of target-related fields.
+
+A parameter is characterized by its target, that is by its possibly unnormalized distribution. A target is specified via a
+``Distribution`` or via a possibly unnormalized probability distribution ``function`` (PDF). Either way, the
+``state.logtarget`` field of a parameter ``state`` stores the logarithm of the associated PDF evaluated at ``state.value``.
+
+A posterior target is proportional to a likelihood times a prior. Thus, if a parameter is specified via its posterior target,
+the ``state.loglikelihood`` and ``state.logprior`` fields of the associated parameter ``state`` enable storing the logarithm
+of the likelihood function and prior PDF evaluated at ``state.value``. Apparently, ``state.logtarget`` is equal to the sum of
+``state.loglikelihood`` and ``state.logprior``.
+
+.. tabularcolumns:: |p{3cm}|p{2.4cm}|p{2.4cm}|p{2.4cm}|p{2.4cm}|
+.. table:: Fields of basic parameter state types in ``Lora``. All four types are parameterized by ``NI<:Integer`` or
+   ``NR<:Real``.
+   :name: _parameter_state_fields
+   
+   +----------------------+----------------+----------------+----------------+----------------+
+   |                      | Basic[S/F]ParameterState{P}                                       |
+   +======================+================+================+================+================+
+   | S<:ValueSupport      | Discrete       | Discrete       | Continuous     | Continuous     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | F<:VariateForm       | Univariate     | Multivariate   | Univariate     | Multivariate   |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | P (Parameters)       | NI, NR         | NI, NR         | NR             | NR             |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | Field                | Field type                                                        |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | value                | NI             |Vector{NI}      | NR             | Vector{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | loglikelihood        | NR             | NR             | NR             | NR             |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | logprior             | NR             | NR             | NR             | NR             |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | logtarget            | NR             | NR             | NR             | NR             |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | gradloglikelihood    | ✗              | ✗              | NR             | Vector{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | gradlogprior         | ✗              | ✗              | NR             | Vector{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | gradlogtarget        | ✗              | ✗              | NR             | Vector{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | tensorloglikelihood  | ✗              | ✗              | NR             | Matrix{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | tensorlogprior       | ✗              | ✗              | NR             | Matrix{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | tensorlogtarget      | ✗              | ✗              | NR             | Matrix{NR}     |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | dtensorloglikelihood | ✗              | ✗              | NR             | Array{NR, 3}   |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | dtensorlogprior      | ✗              | ✗              | NR             | Array{NR, 3}   |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | dtensorlogtarget     | ✗              | ✗              | NR             | Array{NR, 3}   |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | diagnosticvalues     | Vector         | Vector         | Vector         | Vector         |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | size                 | ✗              | Int            | ✗              | Int            |
+   +----------------------+----------------+----------------+----------------+----------------+
+   | diagnostickeys       | Vector{Symbol} | Vector{Symbol} | Vector{Symbol} | Vector{Symbol} |
+   +----------------------+----------------+----------------+----------------+----------------+
+
+The rest of target-related fields, prefixed by `grad`, `tensor` and `dtensor`, appear only in continuous parameter states and
+correspond to first, second and third degree derivatives of the target. Such target derivatives are utilized by various
+MCMC algorithms.
+
+Fields starting with `grad` store the gradient of the prefixed function. For example, ``state.gradlogtarget`` stores the
+gradient of the log-target evaluated at ``state.value``.
+
+Fields starting with `tensor` refer to the metric tensor of the prefixed function. It is noted that the concept of metric
+tensor is used in an information theoretic context referring to distance between distributions :cite:`gir:cal:rie`. For
+instance, ``state.tensorloglikelihood`` can be used for saving the expected Fisher information matrix, which is equal to the
+negative expected value of the second-order derivative of the log-likelihood evaluated at ``state.value``. Moreover,
+``state.tensorlogprior`` can be utilized for storing the negative Hessian of the log-prior evaluated at ``state.value``. As
+for ``state.dtensorlogtarget``, it is the metric tensor of the log-target, which equals the sum of
+``state.tensorloglikelihood`` and ``state.tensorlogprior``.
+
+Fields prefixed by `dtensor` store all first-order derivatives of the metric tensor referred by the respective
+`tensor`-prefixed field, thus yielding third-order derivatives of the target. For example, ``state.dtensorlogtarget`` saves
+all first-order derivatives of ``state.tensorlogtarget`` evaluated at ``state.value``.
+
+``state.diagnosticvalues`` is a ``Vector`` used for storing diagnostics pertaining to the sampling of a parameter ``state``.
+The ``state.diagnosticvalues`` are labeled by an accordingly ordered ``Vector{Symbol}`` of ``state.diagnostickeys``.
+Conceptually, ``state.diagnostickeys`` and ``state.diagnosticvalues`` can be seen as the keys and values of a dictionary of
+diagnostics but are maintained in two separate vectors to improve MCMC performance. The two vectors are interfaced with a
+``diagnostics()`` function, which zips them together and returns the resulting dictionary.
+
+.. function:: diagnostics(state::ParameterState)
+
+  Return the dictionary of ``state`` diagnostics arising from ``state.diagnostickeys`` and ``state.diagnosticvalues``.
+
+The constructors of ``Lora``’s basic parameter state types are elucidated in the remaining of this section.
+
+BasicDiscUnvParameterState
+------------------------------------------------------------------------------------------
+
+To be written up soon.
