@@ -347,4 +347,30 @@ The constructors of ``Lora``’s basic parameter state types are elucidated in t
 BasicDiscUnvParameterState
 ------------------------------------------------------------------------------------------
 
-To be written up soon.
+.. function:: BasicDiscUnvParameterState{NI, NR}(value::NI, <optional arguments>)
+
+  Construct a basic discrete univariate parameter state with some ``value``.
+  
+  The parameterization is set as ``NI<:Integer``, ``NR<:Real``.
+  
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``::Type{NR}=Float64``: the element type of target-related fields.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+  
+  Examples:
+   
+  .. code-block:: julia
+   
+    state = BasicDiscUnvParameterState(2, [:accept], Float64, [true])
+    # Lora.BasicDiscUnvParameterState{Int64,Float64}(
+    #   2, NaN, NaN, NaN, Bool[true], [:accept]
+    # )
+     
+    state.value
+    # 2
+    
+    diagnostics(state)
+    # Dict{Symbol, Bool} with 1 entry:
+    #  :accept => true

@@ -2,7 +2,9 @@ tests =
   [
     "common",
     "VariableStates",
-    "ParameterStates",
+    "BasicDiscUnvParameterState",
+    "BasicContUnvParameterState",
+    "BasicContMuvParameterState",
     "VariableNStates",
     "ParameterNStates",
     "VariableIOStreams",
@@ -13,10 +15,6 @@ tests =
     "dependencies",
     "GenericModel",
     "generators"
-    # "tuners",
-    # "VanillaMCTuner",
-    # "AcceptanceRateMCTuner",
-    # "MH"
   ]
 
 println("Running tests:")
