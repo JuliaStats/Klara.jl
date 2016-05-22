@@ -168,10 +168,10 @@ BasicMuvVariableState
   .. code-block:: julia
    
     state = BasicMuvVariableState([1, 2])
-    # Lora.BasicMuvVariableState{Int64}([1,2], 2)
+    # Lora.BasicMuvVariableState{Int64}([1, 2], 2)
      
     state.value
-    #  2-element Array{Int64,1}:
+    #  2-element Array{Int64, 1}:
     #   1
     #   2
      
@@ -187,7 +187,7 @@ BasicMuvVariableState
   .. code-block:: julia
    
     BasicMuvVariableState(3, Float32)
-    # Lora.BasicMuvVariableState{Float32}(Float32[8.06805f-37,1.0f-45], 2)
+    # Lora.BasicMuvVariableState{Float32}(3-element Array{Float32, 1}, 2)
     
 BasicMavVariableState
 ------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ BasicMavVariableState
     # Lora.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
      
     state.value
-    #  2x2 Array{Float64,2}:
+    #  2x2 Array{Float64, 2}:
     #   1.0  0.0
     #   0.0  1.0
       
@@ -364,7 +364,7 @@ BasicDiscUnvParameterState
   .. code-block:: julia
    
     state = BasicDiscUnvParameterState(2, [:accept], Float64, [true])
-    # Lora.BasicDiscUnvParameterState{Int64,Float64}(
+    # Lora.BasicDiscUnvParameterState{Int64, Float64}(
     #   2, NaN, NaN, NaN, Bool[true], [:accept]
     # )
      
@@ -374,3 +374,242 @@ BasicDiscUnvParameterState
     diagnostics(state)
     # Dict{Symbol, Bool} with 1 entry:
     #  :accept => true
+
+BasicDiscMuvParameterState
+------------------------------------------------------------------------------------------
+
+.. function:: BasicDiscMuvParameterState{NI, NR}(value::Vector{NI}, <optional arguments>)
+
+  Construct a basic discrete multivariate parameter state with some ``value``.
+  
+  The parameterization is set as ``NI<:Integer``, ``NR<:Real``.
+  
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``::Type{NR}=Float64``: the element type of target-related fields.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+  
+  Examples:
+   
+  .. code-block:: julia
+   
+    state = BasicDiscMuvParameterState(Int64[0, 1], [:accept], Float64, [false])
+    # Lora.BasicDiscMuvParameterState{Int64, Float64}(
+    #   [0, 1], NaN, NaN, NaN, Bool[false], 2, [:accept]
+    # )
+     
+    state.value
+    # 2-element Array{Int64, 1}:
+    #  0
+    #  1
+    
+    diagnostics(state)
+    # Dict{Symbol, Bool} with 1 entry:
+    #  :accept => false
+
+.. function:: BasicDiscMuvParameterState{NI, NR}(size::Int, <optional arguments>)
+
+  Construct a basic discrete multivariate parameter state with with a ``value`` of specified ``size``.
+  
+  The parameterization is set as ``NI<:Integer``, ``NR<:Real``.
+  
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``::Type{NI}=Int``: the element type of the state value.
+  * ``::Type{NR}=Float64``: the element type of target-related fields.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+  
+  Examples:
+   
+  .. code-block:: julia
+  
+    BasicDiscMuvParameterState(3, [:accept], Int32, Float32, [true])
+    # Lora.BasicDiscMuvParameterState{Int32, Float32}(
+    #   3-element Array{Int32, 1}, NaN32, NaN32, NaN32, Bool[true], 3, [:accept]
+    # )
+
+BasicContUnvParameterState
+------------------------------------------------------------------------------------------
+
+.. function:: BasicContUnvParameterState{N<:Real}(value::N, <optional arguments>)
+
+  Construct a basic continuous univariate parameter state with some ``value``.
+  
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+  
+  Examples:
+   
+  .. code-block:: julia
+   
+    state = BasicContUnvParameterState(-1.25, [:accept], [false])
+    # Lora.BasicContUnvParameterState{Float64}(
+    #   -1.25,
+    #   NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,
+    #   Bool[false], [:accept]
+    # )
+     
+    state.value
+    # -1.25
+    
+    diagnostics(state)
+    # Dict{Symbol, Bool} with 1 entry:
+    #  :accept => false
+
+.. function:: BasicContUnvParameterState{N<:Real}(<optional arguments>)
+
+  Construct a basic continuous univariate parameter state with an uninitialized ``value`` (``NaN``).
+  
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  *  ::Type{N}=Float64:: the element type of the state value.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+  
+  Examples:
+   
+  .. code-block:: julia
+   
+    BasicContUnvParameterState()
+    # Lora.BasicContUnvParameterState{Float64}(
+    #   NaN,
+    #   NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,
+    #   Any[], Symbol[]
+    # )
+
+BasicContMuvParameterState
+------------------------------------------------------------------------------------------
+
+.. function:: BasicContMuvParameterState{N<:Real}(value::Vector{N}, <optional arguments>)
+
+  Construct a basic continuous multivariate parameter state with some ``value``.
+
+  Optional arguments:
+  
+  * ``monitor::Vector{Bool}=fill(false, 9)``: 9-element Boolean vector indicating which of the target-related fields are
+    stored by the state.  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+  Examples:
+   
+  .. code-block:: julia
+   
+    state = BasicContMuvParameterState(ones(Float32, 2))
+    # Lora.BasicContMuvParameterState{Float32}(
+    #   Float32[1.0f0, 1.0f0],
+    #   NaN32, NaN32, NaN32,
+    #   Float32[], Float32[], Float32[],
+    #   0x0 Array{Float32, 2}, 0x0 Array{Float32, 2}, 0x0 Array{Float32, 2},
+    #   0x0x0 Array{Float32, 3}, 0x0x0 Array{Float32, 3}, 0x0x0 Array{Float32, 3},
+    #   Any[], 2, Symbol[]
+    # )
+
+    state.value
+    # 2-element Array{Float32,1}:
+    #  1.0
+    #  1.0
+
+    size(state.gradloglikelihood)
+    # (0,)
+
+    size(state.gradlogtarget)
+    # (0,)
+
+    diagnostics(state)
+    # Dict{Symbol,Any} with 0 entries
+      
+.. function:: BasicContMuvParameterState{N<:Real}(value::Vector{N}, monitor::Vector{Symbol}, <optional arguments>)
+
+  Construct a basic continuous multivariate parameter state with some ``value`` and tracked target-related fields specified
+  by ``monitor``.
+
+  Optional arguments:
+  
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+  Examples:
+   
+  .. code-block:: julia
+   
+    state = BasicContMuvParameterState(
+      zeros(Float64, 2), [:logtarget, :gradlogtarget]
+    )
+    # Lora.BasicContMuvParameterState{Float64}(
+    #   [0.0, 0.0],
+    #   NaN, NaN, NaN,
+    #   Float64[], Float64[], 2-element Array{Float64, 1},
+    #   0x0 Array{Float64, 2}, 0x0 Array{Float64, 2}, 0x0 Array{Float64, 2},
+    #   0x0x0 Array{Float64, 3}, 0x0x0 Array{Float64, 3}, 0x0x0 Array{Float64, 3},
+    #   Any[], 2, Symbol[]
+    # )
+
+    size(state.gradloglikelihood)
+    # (0,)
+
+    size(state.gradlogtarget)
+    # (2,)
+
+.. function:: BasicContMuvParameterState{N<:Real}(size::Int, <optional arguments>)
+
+  Construct a basic continuous multivariate parameter state with a ``value`` of specified ``size``.
+
+  Optional arguments:
+
+  * ``monitor::Vector{Bool}=fill(false, 9)``: 9-element Boolean vector indicating which of the target-related fields are
+    stored by the state.
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``::Type{N}=Float64``: the element type of the state value.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+  Examples:
+   
+  .. code-block:: julia
+
+    state = BasicContMuvParameterState(3)
+    # Lora.BasicContMuvParameterState{Float64}(
+    #   3-element Array{Float64, 1},
+    #   NaN, NaN, NaN,
+    #   Float64[], Float64[], Float64[],
+    #   0x0 Array{Float64, 2}, 0x0 Array{Float64, 2}, 0x0 Array{Float64, 2},
+    #   0x0x0 Array{Float64, 3}, 0x0x0 Array{Float64, 3}, 0x0x0 Array{Float64, 3},
+    #   Any[], 3, Symbol[]
+    # )
+    
+    state.size
+    # 3
+
+    diagnostics(state)
+    # Dict{Symbol,Any} with 0 entries
+    
+.. function:: BasicContMuvParameterState{N<:Real}(size::Int, monitor::Vector{Symbol}, <optional arguments>)
+
+  Construct a basic continuous multivariate parameter state with a ``value`` of specified ``size`` and tracked target-related
+  fields specified by ``monitor``.
+
+  Optional arguments:
+
+  * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+  * ``::Type{N}=Float64``: the element type of the state value.
+  * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+  Examples:
+   
+  .. code-block:: julia
+
+    BasicContMuvParameterState(
+      3, [:loglikelihood, :logtarget], [:accept], Float16, [true]
+    )
+    # Lora.BasicContMuvParameterState{Float16}(
+    #   3-element Array{Float16, 1}
+    #   NaN16, NaN16, NaN16,
+    #   Float16[], Float16[], Float16[],
+    #   0x0 Array{Float16, 2}, 0x0 Array{Float16, 2}, 0x0 Array{Float16, 2},
+    #   0x0x0 Array{Float16, 3}, 0x0x0 Array{Float16, 3}, 0x0x0 Array{Float16, 3},
+    #   Bool[true], 3, [:accept]
+    # )

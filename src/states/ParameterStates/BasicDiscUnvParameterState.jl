@@ -3,11 +3,11 @@ Basic discrete univariate parameter state type
 
 # Constructors
 
-* BasicDiscUnvParameterState{NI<:Integer, NR<:Real}(value::NI, <optional arguments>)
+## BasicDiscUnvParameterState{NI<:Integer, NR<:Real}(value::NI, <optional arguments>)
 
-  Construct a basic discrete univariate parameter state with some ``value``.
+Construct a basic discrete univariate parameter state with some ``value``.
 
-# Optional arguments:
+### Optional arguments:
   
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{NR}=Float64``: the element type of target-related fields.

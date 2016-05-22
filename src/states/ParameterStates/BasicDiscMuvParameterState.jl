@@ -1,10 +1,59 @@
+"""
+Basic discrete multivariate parameter state type
+
+# Constructors
+
+## BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(value::Vector{NI}, <optional arguments>)
+
+Construct a basic discrete multivariate parameter state with some ``value``.
+
+###  Optional arguments:
+  
+* ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+* ``::Type{NR}=Float64``: the element type of target-related fields.
+* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+## BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(size::Int, <optional arguments>)
+
+Construct a basic discrete multivariate parameter state with with a ``value`` of specified ``size``.
+
+###  Optional arguments:
+  
+* ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
+* ``::Type{NI}=Int``: the element type of the state value.
+* ``::Type{NR}=Float64``: the element type of target-related fields.
+* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+
+# Examples
+
+```julia
+julia> state = BasicDiscMuvParameterState(Int64[0, 1], [:accept], Float64, [false])
+Lora.BasicDiscMuvParameterState{Int64,Float64}([0,1],NaN,NaN,NaN,Bool[false],2,[:accept])
+
+julia> state.value
+2-element Array{Int64,1}:
+ 0
+ 1
+
+julia> diagnostics(state)
+Dict{Symbol,Bool} with 1 entry:
+  :accept => false
+```
+"""
 type BasicDiscMuvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discrete, Multivariate}
+  "Vector value of basic discrete multivariate parameter state"
   value::Vector{NI}
+  "Value of log-likelihood at the state's value"
   loglikelihood::NR
+  "Value of log-prior at the state's value"
   logprior::NR
+  "Value of log-target at the state's value"
   logtarget::NR
+  "Diagnostic values associated with the sampling of the state"
   diagnosticvalues::Vector
+  "Integer representing the length of vector value of basic discrete multivariate parameter state"
   size::Int
+  "Diagnostic keys associated with the sampling of the state"
   diagnostickeys::Vector{Symbol}
 end
 

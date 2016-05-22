@@ -36,11 +36,16 @@ end
 for i in 11:13
   @test size(s.(fnames[i])) == (0, 0, 0)
 end
+@test s.diagnosticvalues == []
 @test s.size == length(v)
+@test s.diagnostickeys == Symbol[]
+
+@test diagnostics(s) == Dict{Symbol, Any}()
 
 v = Float16[0.24, 5.5, -6.3]
+dv = [false]
 ssize = length(v)
-s = BasicContMuvParameterState(v, [:gradlogtarget], [:accept], [false])
+s = BasicContMuvParameterState(v, [:gradlogtarget], [:accept], dv)
 
 @test eltype(s) == Float16
 @test s.value == v
@@ -57,14 +62,17 @@ end
 for i in 11:13
   @test size(s.(fnames[i])) == (0, 0, 0)
 end
-@test s.diagnosticvalues == [false]
+@test s.diagnosticvalues == dv
 @test s.size == ssize
 @test s.diagnostickeys == [:accept]
 
-ssize = 4
-s = BasicContMuvParameterState(ssize, Symbol[], Symbol[], BigFloat)
+@test diagnostics(s) == Dict(:accept => dv[1])
+  
+ssize = 3
+s = BasicContMuvParameterState(ssize)
 
-@test isa(s.value, Vector{BigFloat})
+@test eltype(s) == Float64
+@test isa(s.value, Vector{Float64})
 @test length(s.value) == ssize
 for i in 2:4
   @test isnan(s.(fnames[i]))
@@ -79,8 +87,37 @@ for i in 11:13
   @test size(s.(fnames[i])) == (0, 0, 0)
 end
 @test s.diagnosticvalues == []
+@test s.size == ssize
 @test s.diagnostickeys == Symbol[]
 
-z = BasicContMuvParameterState(Float64[-0.12, 12.15])
+@test diagnostics(s) == Dict{Symbol, Any}()
+
+dv = [true]  
+ssize = 5
+s = BasicContMuvParameterState(ssize, [:tensorlogtarget], [:accept], BigFloat, dv)
+
+@test eltype(s) == BigFloat
+@test isa(s.value, Vector{BigFloat})
+@test length(s.value) == ssize
+@test size(s.tensorlogtarget) == (ssize, ssize)
+for i in 2:4
+  @test isnan(s.(fnames[i]))
+end
+for i in 5:7
+  @test length(s.(fnames[i])) == 0
+end
+for i in 8:9
+  @test size(s.(fnames[i])) == (0, 0)
+end
+for i in 11:13
+  @test size(s.(fnames[i])) == (0, 0, 0)
+end
+@test s.diagnosticvalues == dv
+@test s.size == ssize
+@test s.diagnostickeys == [:accept]
+
+@test diagnostics(s) == Dict(:accept => dv[1])
+  
+z = BasicContMuvParameterState(Float64[-0.12, 12.15], [:gradloglikelihood], [:accept], [false])
 w = deepcopy(z)
 @test isequal(z, w)

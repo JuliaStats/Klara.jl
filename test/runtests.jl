@@ -3,6 +3,7 @@ tests =
     "common",
     "VariableStates",
     "BasicDiscUnvParameterState",
+    "BasicDiscMuvParameterState",
     "BasicContUnvParameterState",
     "BasicContMuvParameterState",
     "VariableNStates",

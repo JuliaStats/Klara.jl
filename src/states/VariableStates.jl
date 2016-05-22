@@ -14,9 +14,9 @@ Basic univariate variable state type
 
 # Constructors
 
-* BasicUnvVariableState{N<:Number}(value::N)
+## BasicUnvVariableState{N<:Number}(value::N)
 
-  Construct a basic univariate variable state with some ``value``.
+Construct a basic univariate variable state with some ``value``.
 
 # Examples
 
@@ -44,13 +44,13 @@ Basic multivariate variable state type
 
 # Constructors
 
-* BasicMuvVariableState{N<:Number}(value::Vector{N})
+## BasicMuvVariableState{N<:Number}(value::Vector{N})
 
-  Construct a basic multivariate variable state with some `value`.
+Construct a basic multivariate variable state with some ``value``.
 
-* BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
+## BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
 
-  Construct a basic multivariate variable state with a `value` of specified `size` and element type.
+Construct a basic multivariate variable state with a ``value`` of specified ``size`` and element type.
 
 # Examples
 
@@ -84,20 +84,18 @@ variate_form(::BasicMuvVariableState) = Multivariate
 Base.eltype{N<:Number}(::Type{BasicMuvVariableState{N}}) = N
 Base.eltype{N<:Number}(::BasicMuvVariableState{N}) = N
 
-## BasicMavVariableState
-
 """
 Basic matrix-variate variable state type
 
 # Constructors
 
-* BasicMavVariableState{N<:Number}(value::Matrix{N})
+## BasicMavVariableState{N<:Number}(value::Matrix{N})
 
-  Construct a basic matrix-variate variable state with some `value`.
+Construct a basic matrix-variate variable state with some ``value``.
 
-* BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64)
+## BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64)
 
-  Construct a basic matrix-variate variable state with a `value` of specified `size` and element type.
+Construct a basic matrix-variate variable state with a ``value`` of specified ``size`` and element type.
 
 # Examples
 
