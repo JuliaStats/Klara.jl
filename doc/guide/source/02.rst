@@ -9,8 +9,8 @@ Rationale behind states
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Being geared towards statistics, ``Lora`` variables include parameters, data, transformations and constants, the specifics of
-which will be delineated in the next chapter. A variable, be it stochastic or deterministic, can take a value, that is it
-can have a *state*. Variables and their states are maintained in two distinct type systems in ``Lora``.
+which will be delineated in :ref:`variables`. A variable, be it stochastic or deterministic, can take a value, that is it can
+have a *state*. Variables and their states are maintained in two distinct type systems in ``Lora``.
 
 The functionality of a variable is enclosed by its type instance. For a example, a typical parameter consists of its
 probability distribution, log-likelihood or log-prior fields.
