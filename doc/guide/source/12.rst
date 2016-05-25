@@ -1,0 +1,6 @@
+.. _autodiff:
+
+Automatic Differentiation
+==========================================================================================
+
+To be written up soon.
