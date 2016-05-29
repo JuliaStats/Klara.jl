@@ -19,11 +19,7 @@ model = GenericModel([ρ, p1, p2], [ρ p1; ρ p2; p1 p2], isindexed=false)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
-v0 = Dict(
-  :ρ=>BasicUnvVariableState(0.8),
-  :p1=>BasicContUnvParameterState(5.1),
-  :p2=>BasicContUnvParameterState(2.3)
-)
+v0 = Dict(:ρ=>0.8, :p1=>5.1, :p2=>2.3)
 
 job = GibbsJob(model, Dict(), mcrange, v0)
 

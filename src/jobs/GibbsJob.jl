@@ -301,6 +301,7 @@ function codegen(::Type{Val{:iterate}}, job::GibbsJob)
     if isa(job.dependent[j], Parameter)
       if isa(job.dpjob[j], BasicMCJob)
         push!(body, :(run(_job.dpjob[$j])))
+        push!(body, :(_job.dpstate[$j] = _job.dpjob[$j].pstate))
       else
         push!(body, :(setpdf!(_job.dependent[$j], _job.dpstate[$j])))
         push!(body, :(_job.dpstate[$j].value = rand(_job.dependent[$j].pdf)))
