@@ -1,4 +1,4 @@
-type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Continuous, Multivariate}
+type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Multivariate}
   value::Matrix{NI}
   loglikelihood::Vector{NR}
   logprior::Vector{NR}
