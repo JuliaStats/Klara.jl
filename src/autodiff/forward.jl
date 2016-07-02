@@ -1,13 +1,25 @@
-function forward_autodiff_function(method::Symbol, f::Function, allresults::Bool=false, chunksize::Int=0)
-  args = Any[f]
-  if allresults
-    push!(args, ForwardDiff.AllResults)
+function codegen_forward_autodiff_function(::Type{Val{:derivative}}, f::Function)
+  @gensym forward_autodiff_function
+  quote
+    function $forward_autodiff_function(_x::Real)
+      getfield(ForwardDiff, :derivative)($f, _x)
+    end
   end
+end
+  
+function codegen_forward_autodiff_function(::Type{Val{:gradient}}, f::Function, chunksize::Int=0)
+  body = 
+    if chunksize == 0
+      :(getfield(ForwardDiff, :gradient)($f, _x))
+    else
+      :(getfield(ForwardDiff, :gradient)($f, _x, Chunk{$chunksize}()))
+    end
 
-  if chunksize == 0
-    getfield(ForwardDiff, method)(args...)
-  else
-    getfield(ForwardDiff, method)(args..., chunk_size=chunksize)
+  @gensym forward_autodiff_function
+  quote
+    function $forward_autodiff_function(_x::Vector)
+      $body
+    end
   end
 end
 
@@ -15,39 +27,46 @@ codegen_forward_autodiff_target(method::Symbol, f::Function, chunksize::Int=0) =
   codegen_forward_autodiff_target(Val{method}, f, chunksize)
 
 function codegen_forward_autodiff_target(::Type{Val{:hessian}}, f::Function, chunksize::Int=0)
-  adfunction = forward_autodiff_function(:hessian, f, false, chunksize)
+  body = 
+    if chunksize == 0
+      :(-getfield(ForwardDiff, :hessian)($f, _x))
+    else
+      :(-getfield(ForwardDiff, :hessian)($f, _x, Chunk{$chunksize}()))
+    end
 
   @gensym forward_autodiff_target
   quote
     function $forward_autodiff_target(_x::Vector)
-      -$(adfunction)(_x)
+      $body
     end
   end
 end
 
-codegen_forward_autodiff_uptofunction(method::Symbol, f::Function, chunksize::Int=0) =
-  codegen_forward_autodiff_uptofunction(Val{method}, f, chunksize)
-
-function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Function, chunksize::Int=0)
-  adfunction = forward_autodiff_function(:derivative, f, true, chunksize)
-
+function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Function)
   @gensym forward_autodiff_uptofunction
   quote
     function $forward_autodiff_uptofunction(_x::Real)
-      result, allresults = $(adfunction)(_x)
-      return ForwardDiff.value(allresults), result
+      result = ForwardDiff.DerivativeResult(_x)
+      getfield(ForwardDiff, :derivative)(result, $f, _x)
+      return ForwardDiff.value(result), ForwardDiff.derivative(result)
     end
   end
 end
 
 function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Function, chunksize::Int=0)
-  adfunction = forward_autodiff_function(:gradient, f, true, chunksize)
-
+  adfcall = 
+    if chunksize == 0
+      :(getfield(ForwardDiff, :gradient!)(result, $f, _x))
+    else
+      :(getfield(ForwardDiff, :gradient!)(result, $f, _x, Chunk{$chunksize}()))
+    end
+    
   @gensym forward_autodiff_uptofunction
   quote
     function $forward_autodiff_uptofunction(_x::Vector)
-      result, allresults = $(adfunction)(_x)
-      return ForwardDiff.value(allresults), result
+      result = ForwardDiff.GradientResult(_x)
+      $adfcall
+      return ForwardDiff.value(result), ForwardDiff.gradient(result)
     end
   end
 end
@@ -56,13 +75,19 @@ codegen_forward_autodiff_uptotarget(method::Symbol, f::Function, chunksize::Int=
   codegen_forward_autodiff_uptotarget(Val{method}, f, chunksize)
 
 function codegen_forward_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, chunksize::Int=0)
-  adfunction = forward_autodiff_function(:hessian, f, true, chunksize)
+  adfcall = 
+    if chunksize == 0
+      :(getfield(ForwardDiff, :hessian!)(result, $f, _x))
+    else
+      :(getfield(ForwardDiff, :hessian!)(result, $f, _x, Chunk{$chunksize}()))
+    end
 
   @gensym forward_autodiff_uptotarget
   quote
     function $forward_autodiff_uptotarget(_x::Vector)
-      result, allresults = $(adfunction)(_x)
-      return ForwardDiff.value(allresults), ForwardDiff.gradient(allresults), -result
+      result = ForwardDiff.HessianResult(_x)
+      $adfcall
+      return ForwardDiff.value(result), ForwardDiff.gradient(result), -ForwardDiff.hessian(result)
     end
   end
 end

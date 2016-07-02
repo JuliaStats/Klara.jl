@@ -488,22 +488,20 @@ function BasicContUnvParameter(
     for i in 6:8
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          forward_autodiff_function(:derivative, fadclosure[i-5], false, chunksize),
+          eval(codegen_forward_autodiff_function(Val{:derivative}, fadclosure[i-5])),
           fnames[i],
           :BasicContUnvParameterState,
-          0,
-          false
+          0
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_forward_autodiff_uptofunction(:derivative, fadclosure[3], chunksize)),
+        eval(codegen_forward_autodiff_uptofunction(Val{:derivative}, fadclosure[3])),
         fnames[15],
         :BasicContUnvParameterState,
-        0,
-        false
+        0
       ))
     end
   elseif autodiff == :reverse
@@ -518,7 +516,7 @@ function BasicContUnvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0, false))
+        outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0))
       end
     end
 
@@ -534,7 +532,7 @@ function BasicContUnvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0, false))
+          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0))
         elseif isa(inargs[i-3], Expr)
           if nkeys == 0
             f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Real, initarg[i-5][1], 1, false))
@@ -543,7 +541,7 @@ function BasicContUnvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0, false))
+          outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0))
         end
       end
     end
@@ -559,7 +557,7 @@ function BasicContUnvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContUnvParameterState, 0, false))
+        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContUnvParameterState, 0))
       elseif isa(inargs[5], Expr)
         if nkeys == 0
           f = eval(codegen_reverse_autodiff_function(inargs[5], :Real, initarg[3][1], 1, true))
@@ -568,7 +566,7 @@ function BasicContUnvParameter(
           f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
         end
 
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContUnvParameterState, 0, false))
+        outargs[15] = eval(codegen_lowlevel_variable_method(f, fnames[15], :BasicContUnvParameterState, 0))
       end
     end
 
@@ -583,7 +581,7 @@ function BasicContUnvParameter(
               f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
             end
 
-            outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0, false))
+            outargs[i] = eval(codegen_lowlevel_variable_method(f, fnames[i], :BasicContUnvParameterState, 0))
           end
         end
       end
@@ -597,7 +595,7 @@ function BasicContUnvParameter(
             f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
           end
 
-          outargs[16] = eval(codegen_lowlevel_variable_method(f, fnames[16], :BasicContUnvParameterState, 0, false))
+          outargs[16] = eval(codegen_lowlevel_variable_method(f, fnames[16], :BasicContUnvParameterState, 0))
         end
       end
     end

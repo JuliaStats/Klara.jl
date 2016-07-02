@@ -3,7 +3,7 @@ function codegen_lowlevel_variable_method(
   r::Vector{Symbol},
   statetype::Union{Symbol, Void},
   nkeys::Int,
-  vfarg::Bool
+  vfarg::Bool=false
 )
   body::Expr
   fargs::Vector
