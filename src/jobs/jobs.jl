@@ -2,6 +2,8 @@
 
 abstract MCJob
 
+abstract GibbsJob <: MCJob
+
 # Set defaults for possibly unspecified output options
 
 function augment_variable_outopts!(outopts::Dict)
@@ -45,7 +47,7 @@ augment_parameter_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_para
 # initialize_output() needs to be defined for custom variable state or NState input arguments
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
 
-function initialize_output(state::BasicUnvVariableState, n::Int, outopts::Dict)
+function initialize_output(state::BasicUnvVariableState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -67,7 +69,7 @@ function initialize_output(state::BasicUnvVariableState, n::Int, outopts::Dict)
   output
 end
 
-function initialize_output(state::BasicMuvVariableState, n::Int, outopts::Dict)
+function initialize_output(state::BasicMuvVariableState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -89,7 +91,7 @@ function initialize_output(state::BasicMuvVariableState, n::Int, outopts::Dict)
   output
 end
 
-function initialize_output(state::BasicMavVariableState, n::Int, outopts::Dict)
+function initialize_output(state::BasicMavVariableState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -111,7 +113,7 @@ function initialize_output(state::BasicMavVariableState, n::Int, outopts::Dict)
   output
 end
 
-function initialize_output(state::BasicDiscUnvParameterState, n::Int, outopts::Dict)
+function initialize_output(state::BasicDiscUnvParameterState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -135,7 +137,7 @@ function initialize_output(state::BasicDiscUnvParameterState, n::Int, outopts::D
   output
 end
 
-function initialize_output(state::BasicDiscMuvParameterState, n::Int, outopts::Dict)
+function initialize_output(state::BasicDiscMuvParameterState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -160,7 +162,7 @@ function initialize_output(state::BasicDiscMuvParameterState, n::Int, outopts::D
   output
 end
 
-function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::Dict)
+function initialize_output(state::BasicContUnvParameterState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -184,7 +186,7 @@ function initialize_output(state::BasicContUnvParameterState, n::Int, outopts::D
   output
 end
 
-function initialize_output(state::BasicContMuvParameterState, n::Int, outopts::Dict)
+function initialize_output(state::BasicContMuvParameterState, n::Integer, outopts::Dict)
   output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
@@ -224,7 +226,7 @@ Base.reset(job::MCJob) = job.reset!(job)
 Base.reset(job::MCJob, x::Real) = job.reset!(job, x)
 Base.reset{N<:Real}(job::MCJob, x::Vector{N}) = job.reset!(job, x)
 
-save(job::MCJob, i::Int) = job.save!(job, i)
+save(job::MCJob, i::Integer) = job.save!(job, i)
 
 iterate(job::MCJob) = job.iterate!(job)
 

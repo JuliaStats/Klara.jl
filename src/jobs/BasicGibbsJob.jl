@@ -1,8 +1,8 @@
-### GibbsJob
+### BasicGibbsJob
 
-type GibbsJob <: MCJob
+type BasicGibbsJob <: GibbsJob
   model::GenericModel
-  dpindex::Vector{Int} # Indices of dependent variables (parameters and transformations) in model.vertices
+  dpindex::IntegerVector # Indices of dependent variables (parameters and transformations) in model.vertices
   dependent::Vector{Union{Parameter, Transformation}} # Points to model.vertices[dpindex] for faster access
   dpjob::Vector{Union{BasicMCJob, Void}} # BasicMCJobs for parameters that will be sampled via Monte Carlo methods
   range::BasicMCRange
@@ -10,8 +10,8 @@ type GibbsJob <: MCJob
   dpstate::VariableStateVector # Points to vstate[dpindex] for faster access
   outopts::Vector # Options related to output
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
-  ndp::Int # Number of dependent variables, i.e. length(dependent)
-  count::Int # Current number of post-burnin iterations
+  ndp::Integer # Number of dependent variables, i.e. length(dependent)
+  count::Integer # Current number of post-burnin iterations
   imperative::Bool # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
@@ -23,9 +23,9 @@ type GibbsJob <: MCJob
   iterate!::Function
   run!::Function
 
-  function GibbsJob(
+  function BasicGibbsJob(
     model::GenericModel,
-    dpindex::Vector{Int},
+    dpindex::IntegerVector,
     dpjob::Vector,
     range::BasicMCRange,
     vstate::VariableStateVector,
@@ -49,7 +49,7 @@ type GibbsJob <: MCJob
     instance.ndp = length(dpindex)
 
     instance.outopts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
-    
+
     if !imperative
       idxs = [
         model.ofkey[k]
@@ -130,26 +130,26 @@ type GibbsJob <: MCJob
   end
 end
 
-GibbsJob(
+BasicGibbsJob(
   model::GenericModel,
   dpjob::Vector,
   range::BasicMCRange,
   v0::VariableStateVector;
-  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
   plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 ) =
-  GibbsJob(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
 
-function GibbsJob{S<:VariableState}(
+function BasicGibbsJob{S<:VariableState}(
   model::GenericModel,
   dpjob::Dict,
   range::BasicMCRange,
   v0::Dict{Symbol, S};
-  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
   imperative::Bool=true,
   plain::Bool=true,
@@ -172,15 +172,15 @@ function GibbsJob{S<:VariableState}(
     vstate[model.ofkey[k]] = v
   end
 
-  GibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, verbose, check)
 end
 
-function GibbsJob(
+function BasicGibbsJob(
   model::GenericModel,
   dpjob::Vector,
   range::BasicMCRange,
   v0::Vector;
-  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
   imperative::Bool=true,
   plain::Bool=true,
@@ -188,15 +188,15 @@ function GibbsJob(
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, outopts, dpindex)
-  GibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, verbose, check)
 end
 
-function GibbsJob(
+function BasicGibbsJob(
   model::GenericModel,
   dpjob::Dict,
   range::BasicMCRange,
   v0::Dict;
-  dpindex::Vector{Int}=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
   imperative::Bool=true,
   plain::Bool=true,
@@ -208,7 +208,7 @@ function GibbsJob(
     vstate[k] = default_state(model[k], v, get!(outopts, k, Dict()))
   end
 
-  GibbsJob(
+  BasicGibbsJob(
     model,
     dpjob,
     range,
@@ -222,9 +222,9 @@ function GibbsJob(
   )
 end
 
-codegen(f::Symbol, job::GibbsJob) = codegen(Val{f}, job)
+codegen(f::Symbol, job::BasicGibbsJob) = codegen(Val{f}, job)
 
-function codegen(::Type{Val{:close}}, job::GibbsJob)
+function codegen(::Type{Val{:close}}, job::BasicGibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -236,13 +236,13 @@ function codegen(::Type{Val{:close}}, job::GibbsJob)
   @gensym _close
 
   quote
-    function $_close(_job::GibbsJob)
+    function $_close(_job::BasicGibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen(::Type{Val{:resetplain}}, job::GibbsJob)
+function codegen(::Type{Val{:resetplain}}, job::BasicGibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -258,18 +258,18 @@ function codegen(::Type{Val{:resetplain}}, job::GibbsJob)
   @gensym _resetplain
 
   quote
-    function $_resetplain(_job::GibbsJob)
+    function $_resetplain(_job::BasicGibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen(::Type{Val{:resettask}}, job::GibbsJob)
+function codegen(::Type{Val{:resettask}}, job::BasicGibbsJob)
   @gensym _reset
-  Expr(:function, Expr(:call, _reset, :(_job::GibbsJob)), Expr(:block, :(_job.task.storage[:reset](_job))))
+  Expr(:function, Expr(:call, _reset, :(_job::BasicGibbsJob)), Expr(:block, :(_job.task.storage[:reset](_job))))
 end
 
-function codegen(::Type{Val{:save}}, job::GibbsJob)
+function codegen(::Type{Val{:save}}, job::BasicGibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -288,13 +288,13 @@ function codegen(::Type{Val{:save}}, job::GibbsJob)
   @gensym _save
 
   quote
-    function $_save(_job::GibbsJob, _i::Int)
+    function $_save(_job::BasicGibbsJob, _i::Integer)
       $(body...)
     end
   end
 end
 
-function codegen(::Type{Val{:iterate}}, job::GibbsJob)
+function codegen(::Type{Val{:iterate}}, job::BasicGibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -318,13 +318,13 @@ function codegen(::Type{Val{:iterate}}, job::GibbsJob)
   @gensym _iterate
 
   quote
-    function $_iterate(_job::GibbsJob)
+    function $_iterate(_job::BasicGibbsJob)
       $(body...)
     end
   end
 end
 
-function codegen(::Type{Val{:run}}, job::GibbsJob)
+function codegen(::Type{Val{:run}}, job::BasicGibbsJob)
   result::Expr
   ifforbody = []
   forbody = []
@@ -365,7 +365,7 @@ function codegen(::Type{Val{:run}}, job::GibbsJob)
   @gensym _run
 
   result = quote
-    function $_run(_job::GibbsJob)
+    function $_run(_job::BasicGibbsJob)
       $(body...)
     end
   end
@@ -373,11 +373,13 @@ function codegen(::Type{Val{:run}}, job::GibbsJob)
   result
 end
 
-function checkin(job::GibbsJob)
+function checkin(job::BasicGibbsJob)
   dpindex = find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), job.model.vertices)
   ndp = length(dpindex)
 
-  @assert ndp > 0 "The model has neither parameters nor transformations, but at least one of them is required in a GibbsJob"
+  if ndp <= 0
+    error("The model has neither parameters nor transformations, but at least one of them is required in a BasicGibbsJob")
+  end
 
   ndpindex = length(job.dpindex)
 
@@ -425,19 +427,19 @@ function checkin(job::GibbsJob)
   end
 end
 
-num_dp(job::GibbsJob) = job.ndp
-num_dptransforms(job::GibbsJob) = count(v -> isa(v, Transformation), job.dependent)
-num_randdp(job::GibbsJob) = count(v -> isa(v, Parameter), job.dependent)
-num_randdp_viamcmc(job::GibbsJob) = count(j -> j != nothing, job.dpjob)
-num_radndp_viadistribution(job::GibbsJob) = num_dp(job)-num_dptransforms(job)-num_randdp_viamcmc(job)
+num_dp(job::BasicGibbsJob) = job.ndp
+num_dptransforms(job::BasicGibbsJob) = count(v -> isa(v, Transformation), job.dependent)
+num_randdp(job::BasicGibbsJob) = count(v -> isa(v, Parameter), job.dependent)
+num_randdp_viamcmc(job::BasicGibbsJob) = count(j -> j != nothing, job.dpjob)
+num_radndp_viadistribution(job::BasicGibbsJob) = num_dp(job)-num_dptransforms(job)-num_randdp_viamcmc(job)
 
-dpkeys(job::GibbsJob) = Symbol[dp.key for dp in job.dependent]
+dpkeys(job::BasicGibbsJob) = Symbol[dp.key for dp in job.dependent]
 
-output(job::GibbsJob) = job.output
+output(job::BasicGibbsJob) = job.output
 
-Dict(job::GibbsJob, field::Symbol=:output) = Dict(zip(dpkeys(job), getfield(job, field)))
+Dict(job::BasicGibbsJob, field::Symbol=:output) = Dict(zip(dpkeys(job), getfield(job, field)))
 
-function Base.show(io::IO, job::GibbsJob)
+function Base.show(io::IO, job::BasicGibbsJob)
   ndptransforms = num_dptransforms(job)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
@@ -447,7 +449,7 @@ function Base.show(io::IO, job::GibbsJob)
 
   indentation = "  "
 
-  println(io, "GibbsJob:")
+  println(io, "BasicGibbsJob:")
   print(io, string(
     indentation,
     "$(num_dp(job)) dependent variables: ",
@@ -463,15 +465,15 @@ function Base.show(io::IO, job::GibbsJob)
   print(io, indentation*"imperative = $(job.imperative) ($isimperative)")
 end
 
-Base.writemime(io::IO, ::MIME"text/plain", job::GibbsJob) = show(io, job)
+Base.writemime(io::IO, ::MIME"text/plain", job::BasicGibbsJob) = show(io, job)
 
-function job2dot(stream::IOStream, job::GibbsJob)
+function job2dot(stream::IOStream, job::BasicGibbsJob)
   graphkeyword, edgesign = is_directed(job.model) ? ("digraph", "->") : ("graph", "--")
   dotindentation, dotspacing = "  ", " "
 
-  write(stream, "$graphkeyword GibbsJob {\n")
+  write(stream, "$graphkeyword BasicGibbsJob {\n")
 
-  invdpindex = Dict{Symbol, Int}(zip(keys(job.model.vertices[job.dpindex]), 1:job.ndp))
+  invdpindex = Dict{Symbol, Integer}(zip(keys(job.model.vertices[job.dpindex]), 1:job.ndp))
 
   for v in vertices(job.model)
     vstring = string(dotindentation, v.key, dotspacing, "[shape=", dotshape(v))
@@ -500,7 +502,7 @@ function job2dot(stream::IOStream, job::GibbsJob)
   write(stream, "}\n")
 end
 
-function job2dot(filename::AbstractString, job::GibbsJob, mode::AbstractString="w")
+function job2dot(filename::AbstractString, job::BasicGibbsJob, mode::AbstractString="w")
   stream = open(filename, mode)
   job2dot(stream, job)
   close(stream)

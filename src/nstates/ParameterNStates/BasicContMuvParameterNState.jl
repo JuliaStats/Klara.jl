@@ -13,14 +13,14 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
   dtensorlogprior::Array{N, 4}
   dtensorlogtarget::Array{N, 4}
   diagnosticvalues::Matrix
-  size::Int
-  n::Int
+  size::Integer
+  n::Integer
   diagnostickeys::Vector{Symbol}
   copy::Function
 
   function BasicContMuvParameterNState(
-    size::Int,
-    n::Int,
+    size::Integer,
+    n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 12)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{N}=Float64,
@@ -30,19 +30,19 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
 
     fnames = fieldnames(BasicContMuvParameterNState)
     for i in 2:4
-      l = (monitor[i] == false ? zero(Int) : n)
+      l = (monitor[i] == false ? zero(Integer) : n)
       setfield!(instance, fnames[i], Array(N, l))
     end
     for i in (1, 5, 6, 7)
-      s, l = (monitor[i] == false ? (zero(Int), zero(Int)) : (size, n))
+      s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
       setfield!(instance, fnames[i], Array(N, s, l))
     end
     for i in 8:10
-      s, l = (monitor[i] == false ? (zero(Int), zero(Int)) : (size, n))
+      s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
       setfield!(instance, fnames[i], Array(N, s, s, l))
     end
     for i in 11:13
-      s, l = (monitor[i] == false ? (zero(Int), zero(Int)) : (size, n))
+      s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
       setfield!(instance, fnames[i], Array(N, s, s, s, l))
     end
 
@@ -59,8 +59,8 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
 end
 
 BasicContMuvParameterNState{N<:Real}(
-  size::Int,
-  n::Int,
+  size::Integer,
+  n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 12)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
@@ -69,8 +69,8 @@ BasicContMuvParameterNState{N<:Real}(
   BasicContMuvParameterNState{N}(size, n, monitor, diagnostickeys, N, diagnosticvalues)
 
 function BasicContMuvParameterNState{N<:Real}(
-  size::Int,
-  n::Int,
+  size::Integer,
+  n::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
@@ -90,7 +90,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monito
   body = []
   fnames = fieldnames(BasicContMuvParameterNState)
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
-  statelen::Int
+  statelen::Integer
 
   for j in 2:4
     if monitor[j]
@@ -142,7 +142,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicContMuvParameterNState, _state::BasicContMuvParameterState, _i::Int)
+    function $_copy(_nstate::BasicContMuvParameterNState, _state::BasicContMuvParameterState, _i::Integer)
       $(body...)
     end
   end

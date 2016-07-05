@@ -7,15 +7,15 @@ abstract VariableIOStream
 type BasicVariableIOStream <: VariableIOStream
   stream::IOStream
   size::Tuple
-  n::Int
+  n::Integer
 end
 
-BasicVariableIOStream(size::Tuple, n::Int, filename::AbstractString, mode::AbstractString="w") =
+BasicVariableIOStream(size::Tuple, n::Integer, filename::AbstractString, mode::AbstractString="w") =
   BasicVariableIOStream(open(filename, mode), size, n)
 
 BasicVariableIOStream(
   size::Tuple,
-  n::Int;
+  n::Integer;
   filepath::AbstractString="",
   filesuffix::AbstractString="csv",
   mode::AbstractString="w"

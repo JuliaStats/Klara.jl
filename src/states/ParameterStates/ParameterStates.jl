@@ -5,6 +5,13 @@ Root of parameter state type hierarchy
 """
 abstract ParameterState{S<:ValueSupport, F<:VariateForm} <: VariableState{F}
 
+typealias DiscreteParameterState{F<:VariateForm} ParameterState{Discrete, F}
+typealias ContinuousParameterState{F<:VariateForm} ParameterState{Continuous, F}
+
+typealias UnivariateParameterState{S<:ValueSupport} ParameterState{S, Univariate}
+typealias MultivariateParameterState{S<:ValueSupport} ParameterState{S, Multivariate}
+typealias MatrixvariateParameterState{S<:ValueSupport} ParameterState{S, Matrixvariate}
+
 typealias ParameterStateVector{S<:ParameterState} Vector{S}
 
 value_support{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = S

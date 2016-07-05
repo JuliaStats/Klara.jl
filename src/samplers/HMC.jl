@@ -29,16 +29,16 @@ type UnvHMCState <: HMCState
   end
 end
 
-UnvHMCState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=VanillaMCTune()) =
+UnvHMCState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
   UnvHMCState(pstate, tune, NaN, NaN, NaN, NaN)
 
 ## MuvHMCState holds the internal state ("local variables") of the HMC sampler for multivariate parameters
 
-type MuvHMCState{N<:Real} <: HMCState
+type MuvHMCState <: HMCState
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by HMC
   tune::MCTunerState
   ratio::Real
-  momentum::Vector{N}
+  momentum::RealVector
   oldhamiltonian::Real
   newhamiltonian::Real
 
@@ -46,7 +46,7 @@ type MuvHMCState{N<:Real} <: HMCState
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
-    momentum::Vector{N},
+    momentum::RealVector,
     oldhamiltonian::Real,
     newhamiltonian::Real
   )
@@ -57,36 +57,23 @@ type MuvHMCState{N<:Real} <: HMCState
   end
 end
 
-MuvHMCState{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  tune::MCTunerState,
-  ratio::Real,
-  momentum::Vector{N},
-  oldhamiltonian::Real,
-  newhamiltonian::Real
-) =
-  MuvHMCState{N}(pstate, tune, ratio, momentum, oldhamiltonian, newhamiltonian)
-
-MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=VanillaMCTune()) =
+MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune()) =
   MuvHMCState(pstate, tune, NaN, Array(eltype(pstate), pstate.size), NaN, NaN)
-
-Base.eltype{N<:Real}(::Type{MuvHMCState{N}}) = N
-Base.eltype{N<:Real}(s::MuvHMCState{N}) = N
 
 ### Hamiltonian Monte Carlo (HMC)
 
 immutable HMC <: HMCSampler
-  nleaps::Int
+  nleaps::Integer
   leapstep::Real
 
-  function HMC(nleaps::Int, leapstep::Real)
+  function HMC(nleaps::Integer, leapstep::Real)
     @assert nleaps > 0 "Number of leapfrog steps is not positive"
     @assert leapstep > 0 "Leapfrog step is not positive"
     new(nleaps, leapstep)
   end
 end
 
-HMC(; nleaps::Int=10, leapstep::Real=0.1) = HMC(nleaps, leapstep)
+HMC(; nleaps::Integer=10, leapstep::Real=0.1) = HMC(nleaps, leapstep)
 
 ### Initialize HMC sampler
 
@@ -122,9 +109,9 @@ function reset!(
   parameter.uptogradlogtarget!(pstate)
 end
 
-function reset!{N<:Real}(
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
+  x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
   sampler::HMC
 )
@@ -136,7 +123,7 @@ end
 
 hamiltonian(logtarget::Real, momentum::Real) = -logtarget+0.5*abs2(momentum)
 
-hamiltonian{N<:Real}(logtarget::Real, momentum::Vector{N}) = -logtarget+0.5*dot(momentum, momentum)
+hamiltonian(logtarget::Real, momentum::RealVector) = -logtarget+0.5*dot(momentum, momentum)
 
 ### Perform leapfrog iteration
 

@@ -4,25 +4,25 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
   logprior::Vector{NR}
   logtarget::Vector{NR}
   diagnosticvalues::Matrix
-  n::Int
+  n::Integer
   diagnostickeys::Vector{Symbol}
   copy::Function
 
   function BasicDiscUnvParameterNState(
-    n::Int,
+    n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 3)],
     diagnostickeys::Vector{Symbol}=Symbol[],
-    ::Type{NI}=Int,
+    ::Type{NI}=Int64,
     ::Type{NR}=Float64,
     diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
   )
     instance = new()
 
     t = [NI; fill(NR, 3)]
-    
-    l = Array(Int, 4)
+
+    l = Array(Integer, 4)
     for i in 1:4
-      l[i] = (monitor[i] == false ? zero(Int) : n)
+      l[i] = (monitor[i] == false ? zero(Integer) : n)
     end
 
     fnames = fieldnames(BasicDiscUnvParameterNState)
@@ -42,20 +42,20 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
 end
 
 BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
-  n::Int,
+  n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 3)],
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int,
+  ::Type{NI}=Int64,
   ::Type{NR}=Float64,
   diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 ) =
   BasicDiscUnvParameterNState{NI, NR}(n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
 function BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
-  n::Int,
+  n::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int, 
+  ::Type{NI}=Int64,
   ::Type{NR}=Float64,
   diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
@@ -88,7 +88,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscUnvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicDiscUnvParameterNState, _state::BasicDiscUnvParameterState, _i::Int)
+    function $_copy(_nstate::BasicDiscUnvParameterNState, _state::BasicDiscUnvParameterState, _i::Integer)
       $(body...)
     end
   end

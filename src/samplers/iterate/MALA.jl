@@ -10,58 +10,35 @@ function codegen(::Type{Val{:iterate}}, ::Type{MALA}, job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in MALA code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_job.sstate.tune.step) : :(_job.sampler.driftstep)
-
   if job.tuner.verbose
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_job.sstate.vmean = _job.pstate.value+0.5*$(stepsize)*_job.pstate.gradlogtarget))
+  push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
 
   if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+sqrt($(stepsize))*randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn()))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+sqrt($(stepsize))*randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn(_job.pstate.size)))
   end
 
   push!(body, :(_job.parameter.uptogradlogtarget!(_job.sstate.pstate)))
 
-  if vform == Univariate
-    push!(
-      body,
-      :(_job.sstate.pnewgivenold = -0.5*(abs2(_job.sstate.vmean-_job.sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
-    )
-  elseif vform == Multivariate
-    push!(
-      body,
-      :(
-        _job.sstate.pnewgivenold =
-        sum(-0.5*(abs2(_job.sstate.vmean-_job.sstate.pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
-      )
-    )
-  end
-
-  push!(body, :(_job.sstate.vmean = _job.sstate.pstate.value+0.5*$(stepsize)*_job.sstate.pstate.gradlogtarget))
+  push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
 
   if vform == Univariate
-    push!(
-      body,
-      :(_job.sstate.poldgivennew = -0.5*(abs2(_job.sstate.vmean-_job.pstate.value)/$(stepsize)+log(2*pi*$(stepsize))))
-    )
+    push!(body, :(_job.sstate.ratio += 0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step)))
   elseif vform == Multivariate
-    push!(
-      body,
-      :(_job.sstate.poldgivennew = sum(-0.5*(abs2(_job.sstate.vmean-_job.pstate.value)/$(stepsize)+log(2*pi*$(stepsize)))))
-    )
+    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
   end
 
-  push!(
-    body,
-    :(
-      _job.sstate.ratio =
-      _job.sstate.pstate.logtarget+_job.sstate.poldgivennew-_job.pstate.logtarget-_job.sstate.pnewgivenold
-    )
-  )
+  push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
+
+  if vform == Univariate
+    push!(body, :(_job.sstate.ratio -= 0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step)))
+  elseif vform == Multivariate
+    push!(body, :(_job.sstate.ratio -= sum(0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step))))
+  end
 
   if vform == Univariate
     push!(update, :(_job.pstate.value = _job.sstate.pstate.value))

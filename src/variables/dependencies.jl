@@ -1,7 +1,7 @@
 ### Dependence
 
 immutable Dependence{S<:Variable, T<:Variable}
-  index::Int
+  index::Integer
   source::S
   target::T
 end

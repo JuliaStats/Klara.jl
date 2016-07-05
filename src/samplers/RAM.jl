@@ -33,7 +33,7 @@ end
 
 UnvRAMState(
   pstate::ParameterState{Continuous, Univariate},
-  tune::MCTunerState=VanillaMCTune(),
+  tune::MCTunerState=BasicMCTune(),
   S::Real=NaN,
   SST::Real=abs2(S)
 ) =
@@ -41,22 +41,22 @@ UnvRAMState(
 
 ## MuvRAMState holds the internal state ("local variables") of the RAM sampler for multivariate parameters
 
-type MuvRAMState{N<:Real} <: RAMState
+type MuvRAMState <: RAMState
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by RAM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
-  S::Matrix{N}
-  SST::Matrix{N}
-  randnsample::Vector{N}
+  S::RealMatrix
+  SST::RealMatrix
+  randnsample::RealVector
   η::Real
 
   function MuvRAMState(
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
-    S::Matrix{N},
-    SST::Matrix{N},
-    randnsample::Vector{N},
+    S::RealMatrix,
+    SST::RealMatrix,
+    randnsample::RealVector,
     η::Real
   )
     if !isnan(ratio)
@@ -66,36 +66,22 @@ type MuvRAMState{N<:Real} <: RAMState
   end
 end
 
-MuvRAMState{N<:Real}(
+MuvRAMState(
   pstate::ParameterState{Continuous, Multivariate},
-  tune::MCTunerState,
-  ratio::Real,
-  S::Matrix{N},
-  SST::Matrix{N},
-  randnsample::Vector{N},
-  η::Real
-) =
-  MuvRAMState{N}(pstate, tune, ratio, S, SST, randnsample, η)
-
-MuvRAMState{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  tune::MCTunerState=VanillaMCTune(),
-  S::Matrix{N}=Array(eltype(pstate), pstate.size, pstate.size),
-  SST::Matrix{N}=S*S'
+  tune::MCTunerState=BasicMCTune(),
+  S::RealMatrix=Array(eltype(pstate), pstate.size, pstate.size),
+  SST::RealMatrix=S*S'
 ) =
   MuvRAMState(pstate, tune, NaN, S, SST, Array(eltype(pstate), pstate.size), NaN)
 
-Base.eltype{N<:Real}(::Type{MuvRAMState{N}}) = N
-Base.eltype{N<:Real}(s::MuvRAMState{N}) = N
-
 ### Robust adaptive Metropolis (RAM) sampler
 
-immutable RAM{N<:Real} <: MHSampler
-  S0::Matrix{N} # Initial adaptation matrix
+immutable RAM <: MHSampler
+  S0::RealMatrix # Initial adaptation matrix
   targetrate::Real # Target acceptance rate
   γ::Real # Exponent for scaling stepsize η
 
-  function RAM(S0::Matrix{N}, targetrate::Real, γ::Real)
+  function RAM(S0::RealMatrix, targetrate::Real, γ::Real)
     @assert all(i -> i > 0, diag(S0)) "All diagonal elements of initial adaptation matrix must be positive"
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1"
     @assert 0.5 < γ <= 1 "Exponent of stepsize must be greater than 0.5 and less or equal to 1"
@@ -103,11 +89,11 @@ immutable RAM{N<:Real} <: MHSampler
   end
 end
 
-RAM{N<:Real}(S0::Matrix{N}, targetrate::Real=0.234, γ::Real=0.7) = RAM{N}(S0, targetrate, γ)
+RAM(S0::RealMatrix; targetrate::Real=0.234, γ::Real=0.7) = RAM(S0, targetrate, γ)
 
-RAM{N<:Real}(S0::Vector{N}, targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
+RAM(S0::RealVector, targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
 
-RAM(S0::Real=1., n::Int=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate, γ)
+RAM(S0::Real=1., n::Integer=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate, γ)
 
 ### Initialize RAM sampler
 
@@ -152,9 +138,9 @@ function reset!(
   parameter.logtarget!(pstate)
 end
 
-function reset!{N<:Real}(
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
+  x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
   sampler::RAM
 )

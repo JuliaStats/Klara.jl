@@ -1,13 +1,12 @@
 using Lora
 
-data, header = dataset("swiss")
-
-covariates = data[:, 1:end-1]
+covariates, = dataset("swiss", "measurements")
 ndata, npars = size(covariates)
 
 covariates = (covariates.-mean(covariates, 1))./repmat(std(covariates, 1), ndata, 1)
 
-outcome = data[:, end]
+outcome, = dataset("swiss", "status")
+outcome = vec(outcome)
 
 function ploglikelihood(p::Vector{Float64}, v::Vector)
   Xp = v[2]*p

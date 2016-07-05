@@ -15,7 +15,7 @@ end
 
 acceptance(v::AbstractArray, region) = mapslices(acceptance, v, region)
 
-function acceptance{S<:ValueSupport}(s::ParameterNState{S, Univariate}; key::Symbol=:accept, diagnostics::Bool=true)
+function acceptance(s::UnivariateParameterNState; key::Symbol=:accept, diagnostics::Bool=true)
   if diagnostics
     return acceptance(convert(Array{Bool, 2}, s.diagnosticvalues[findfirst(s.diagnostickeys, key), :]))
   else
@@ -25,7 +25,7 @@ end
 
 acceptance(s::VariableNState{Univariate}) = acceptance(s.value)
 
-function acceptance{S<:ValueSupport}(s::ParameterNState{S, Multivariate}; key::Symbol=:accept, diagnostics::Bool=true)
+function acceptance(s::MultivariateParameterNState; key::Symbol=:accept, diagnostics::Bool=true)
   if diagnostics
     return acceptance(convert(Array{Bool, 2}, s.diagnosticvalues[findfirst(s.diagnostickeys, key), :]))
   else

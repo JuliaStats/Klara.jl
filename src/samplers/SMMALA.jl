@@ -10,9 +10,7 @@ type UnvSMMALAState <: SMMALAState
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   ratio::Real
-  vmean::Real
-  pnewgivenold::Real
-  poldgivennew::Real
+  μ::Real
   newinvtensor::Real
   oldinvtensor::Real
   cholinvtensor::Real
@@ -23,9 +21,7 @@ type UnvSMMALAState <: SMMALAState
     pstate::ParameterState{Continuous, Univariate},
     tune::MCTunerState,
     ratio::Real,
-    vmean::Real,
-    pnewgivenold::Real,
-    poldgivennew::Real,
+    μ::Real,
     newinvtensor::Real,
     oldinvtensor::Real,
     cholinvtensor::Real,
@@ -35,116 +31,56 @@ type UnvSMMALAState <: SMMALAState
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(
-      pstate,
-      tune,
-      ratio,
-      vmean,
-      pnewgivenold,
-      poldgivennew,
-      newinvtensor,
-      oldinvtensor,
-      cholinvtensor,
-      newfirstterm,
-      oldfirstterm
-    )
+    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
-UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=VanillaMCTune()) =
-  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
+  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
-type MuvSMMALAState{N<:Real} <: SMMALAState
+type MuvSMMALAState <: SMMALAState
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   ratio::Real
-  vmean::Vector{N}
-  pnewgivenold::Real
-  poldgivennew::Real
-  newinvtensor::Matrix{N}
-  oldinvtensor::Matrix{N}
-  cholinvtensor::Matrix{N}
-  newfirstterm::Vector{N}
-  oldfirstterm::Vector{N}
+  μ::RealVector
+  newinvtensor::RealMatrix
+  oldinvtensor::RealMatrix
+  cholinvtensor::RealLowerTriangular
+  newfirstterm::RealVector
+  oldfirstterm::RealVector
 
   function MuvSMMALAState(
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
-    vmean::Vector{N},
-    pnewgivenold::Real,
-    poldgivennew::Real,
-    newinvtensor::Matrix{N},
-    oldinvtensor::Matrix{N},
-    cholinvtensor::Matrix{N},
-    newfirstterm::Vector{N},
-    oldfirstterm::Vector{N}
+    μ::RealVector,
+    newinvtensor::RealMatrix,
+    oldinvtensor::RealMatrix,
+    cholinvtensor::RealLowerTriangular,
+    newfirstterm::RealVector,
+    oldfirstterm::RealVector
   )
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(
-      pstate,
-      tune,
-      ratio,
-      vmean,
-      pnewgivenold,
-      poldgivennew,
-      newinvtensor,
-      oldinvtensor,
-      cholinvtensor,
-      newfirstterm,
-      oldfirstterm
-    )
+    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
-MuvSMMALAState{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  tune::MCTunerState,
-  ratio::Real,
-  vmean::Vector{N},
-  pnewgivenold::Real,
-  poldgivennew::Real,
-  newinvtensor::Matrix{N},
-  oldinvtensor::Matrix{N},
-  cholinvtensor::Matrix{N},
-  newfirstterm::Vector{N},
-  oldfirstterm::Vector{N}
-) =
-  MuvSMMALAState{N}(
-    pstate,
-    tune,
-    ratio,
-    vmean,
-    pnewgivenold,
-    poldgivennew,
-    newinvtensor,
-    oldinvtensor,
-    cholinvtensor,
-    newfirstterm,
-    oldfirstterm
-  )
-
-MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=VanillaMCTune()) =
+MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune()) =
   MuvSMMALAState(
     pstate,
     tune,
     NaN,
     Array(eltype(pstate), pstate.size),
-    NaN,
-    NaN,
     Array(eltype(pstate), pstate.size, pstate.size),
     Array(eltype(pstate), pstate.size, pstate.size),
-    Array(eltype(pstate), pstate.size, pstate.size),
+    RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
     Array(eltype(pstate), pstate.size),
     Array(eltype(pstate), pstate.size)
   )
-
-Base.eltype{N<:Real}(::Type{MuvSMMALAState{N}}) = N
-Base.eltype{N<:Real}(s::MuvSMMALAState{N}) = N
 
 ### Metropolis-adjusted Langevin Algorithm (SMMALA)
 
@@ -214,9 +150,9 @@ function reset!(
   parameter.uptotensorlogtarget!(pstate)
 end
 
-function reset!{N<:Real}(
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
+  x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
   sampler::SMMALA
 )

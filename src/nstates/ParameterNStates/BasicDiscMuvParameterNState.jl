@@ -1,29 +1,29 @@
-type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Multivariate}
+type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Continuous, Multivariate}
   value::Matrix{NI}
   loglikelihood::Vector{NR}
   logprior::Vector{NR}
   logtarget::Vector{NR}
   diagnosticvalues::Matrix
-  size::Int
-  n::Int
+  size::Integer
+  n::Integer
   diagnostickeys::Vector{Symbol}
   copy::Function
 
   function BasicDiscMuvParameterNState(
-    size::Int,
-    n::Int,
+    size::Integer,
+    n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 3)],
     diagnostickeys::Vector{Symbol}=Symbol[],
-    ::Type{NI}=Int,
+    ::Type{NI}=Int64,
     ::Type{NR}=Float64,
     diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
   )
     instance = new()
-    
+
     fnames = fieldnames(BasicDiscMuvParameterNState)
-    setfield!(instance, fnames[1], Array(NI, (monitor[1] == false ? (zero(Int), zero(Int)) : (size, n))...))
+    setfield!(instance, fnames[1], Array(NI, (monitor[1] == false ? (zero(Integer), zero(Integer)) : (size, n))...))
     for i in 2:4
-      l = (monitor[i] == false ? zero(Int) : n)
+      l = (monitor[i] == false ? zero(Integer) : n)
       setfield!(instance, fnames[i], Array(NR, l))
     end
 
@@ -40,22 +40,22 @@ type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
 end
 
 BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
-  size::Int,
-  n::Int,
+  size::Integer,
+  n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 3)],
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int,
+  ::Type{NI}=Int64,
   ::Type{NR}=Float64,
   diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 ) =
   BasicDiscMuvParameterNState{NI, NR}(size, n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
 function BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
-  size::Int,
-  n::Int,
+  size::Integer,
+  n::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int,
+  ::Type{NI}=Int64,
   ::Type{NR}=Float64,
   diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
@@ -81,7 +81,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscMuvParameterNState, monito
       :(getfield(_nstate, $(QuoteNode(f)))[1+(_i-1)*_state.size:_i*_state.size] = getfield(_state, $(QuoteNode(f))))
     )
   end
-  
+
   for j in 2:4
     if monitor[j]
       f = fnames[j]
@@ -96,7 +96,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscMuvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicDiscMuvParameterNState, _state::BasicDiscMuvParameterState, _i::Int)
+    function $_copy(_nstate::BasicDiscMuvParameterNState, _state::BasicDiscMuvParameterState, _i::Integer)
       $(body...)
     end
   end

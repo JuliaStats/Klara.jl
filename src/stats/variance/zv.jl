@@ -49,7 +49,7 @@ end
 
 function qzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
   nsamples, npars = size(chain)
-  k = convert(Int, npars*(npars+3)/2)
+  k = convert(Integer, npars*(npars+3)/2)
   l = 2*npars+1
 
   qz = Array(N, nsamples, k)

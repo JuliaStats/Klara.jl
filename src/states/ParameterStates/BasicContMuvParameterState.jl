@@ -10,7 +10,7 @@ Construct a basic continuous multivariate parameter state with some ``value``.
 ###  Optional arguments:
 
 * ``monitor::Vector{Bool}=fill(false, 9)``: 9-element Boolean vector indicating which of the target-related fields are
-stored by the state.  
+stored by the state.
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
@@ -20,11 +20,11 @@ Construct a basic continuous multivariate parameter state with some ``value`` an
 ``monitor``.
 
 ###  Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
-## BasicContMuvParameterState{N<:Real}(size::Int, <optional arguments>)
+## BasicContMuvParameterState{N<:Real}(size::Integer, <optional arguments>)
 
 Construct a basic continuous multivariate parameter state with a ``value`` of specified ``size``.
 
@@ -36,7 +36,7 @@ stored by the state.
 * ``::Type{N}=Float64``: the element type of the state value.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
-## BasicContMuvParameterState{N<:Real}(size::Int, monitor::Vector{Symbol}, <optional arguments>)
+## BasicContMuvParameterState{N<:Real}(size::Integer, monitor::Vector{Symbol}, <optional arguments>)
 
 Construct a basic continuous multivariate parameter state with a ``value`` of specified ``size`` and tracked target-related
 fields specified by ``monitor``.
@@ -89,7 +89,7 @@ type BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivari
   "Diagnostic values associated with the sampling of the state"
   diagnosticvalues::Vector
   "Integer representing the length of vector value of basic continuous multivariate parameter state"
-  size::Int
+  size::Integer
   "Diagnostic keys associated with the sampling of the state"
   diagnostickeys::Vector{Symbol}
 end
@@ -104,9 +104,9 @@ function BasicContMuvParameterState{N<:Real}(
 
   s = length(value)
 
-  l = Array(Int, 9)
+  l = Array(Integer, 9)
   for i in 1:9
-    l[i] = (monitor[i] == false ? zero(Int) : s)
+    l[i] = (monitor[i] == false ? zero(Integer) : s)
   end
 
   BasicContMuvParameterState{N}(
@@ -140,7 +140,7 @@ function BasicContMuvParameterState{N<:Real}(
 end
 
 BasicContMuvParameterState{N<:Real}(
-  size::Int,
+  size::Integer,
   monitor::Vector{Bool}=fill(false, 9),
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
@@ -149,7 +149,7 @@ BasicContMuvParameterState{N<:Real}(
   BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diagnosticvalues)
 
 BasicContMuvParameterState{N<:Real}(
-  size::Int,
+  size::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,

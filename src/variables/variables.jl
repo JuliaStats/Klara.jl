@@ -19,7 +19,7 @@ vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
 Base.keys(variables::VariableVector) = Symbol[v.key for v in variables]
-indices(variables::VariableVector) = Int[v.index for v in variables]
+indices(variables::VariableVector) = Integer[v.index for v in variables]
 
 Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
 Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
@@ -49,7 +49,7 @@ end
 default_state(v::VariableVector, v0::Vector, outopts::Vector) =
   VariableState[default_state(v[i], v0[i], outopts[i]) for i in 1:length(v0)]
 
-function default_state(v::VariableVector, v0::Vector, outopts::Vector, dpindex::Vector{Int})
+function default_state(v::VariableVector, v0::Vector, outopts::Vector, dpindex::IntegerVector)
   opts = fill(Dict(), length(v0))
   for i in 1:length(dpindex)
     opts[dpindex[i]] = outopts[i]
@@ -66,7 +66,7 @@ Base.writemime(io::IO, ::MIME"text/plain", v::Variable) = show(io, v)
 
 type Constant <: Variable{Deterministic}
   key::Symbol
-  index::Int
+  index::Integer
 end
 
 Constant(key::Symbol) = Constant(key, 0)
@@ -88,11 +88,11 @@ typealias Hyperparameter Constant
 
 type Data <: Variable{Deterministic}
   key::Symbol
-  index::Int
+  index::Integer
   update::Union{Function, Void}
 end
 
-Data(key::Symbol, index::Int) = Data(key, index, nothing)
+Data(key::Symbol, index::Integer) = Data(key, index, nothing)
 Data(key::Symbol, update::Union{Function, Void}) = Data(key, 0, update)
 Data(key::Symbol) = Data(key, 0, nothing)
 
@@ -109,12 +109,13 @@ dotshape(variable::Data) = "box"
 
 type Transformation <: Variable{Deterministic}
   key::Symbol
-  index::Int
+  index::Integer
   transform::Function
   states::VariableStateVector
 end
 
-Transformation(key::Symbol, index::Int, transform::Function=()->()) = Transformation(key, index, transform, VariableState[])
+Transformation(key::Symbol, index::Integer, transform::Function=()->()) =
+  Transformation(key, index, transform, VariableState[])
 
 Transformation(key::Symbol, transform::Function=()->(), states::VariableStateVector=VariableState[]) =
   Transformation(key, 0, transform, states)

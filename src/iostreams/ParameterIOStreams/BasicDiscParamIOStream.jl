@@ -8,7 +8,7 @@ type BasicDiscParamIOStream <: ParameterIOStream{Discrete}
   diagnosticvalues::Union{IOStream, Void}
   names::Vector{AbstractString}
   size::Tuple
-  n::Int
+  n::Integer
   diagnostickeys::Vector{Symbol}
   open::Function
   close::Function
@@ -19,7 +19,7 @@ type BasicDiscParamIOStream <: ParameterIOStream{Discrete}
 
   function BasicDiscParamIOStream(
     size::Tuple,
-    n::Int,
+    n::Integer,
     streams::Vector{Union{IOStream, Void}},
     diagnostickeys::Vector{Symbol}=Symbol[],
     filenames::Vector{AbstractString}=[(streams[i] == nothing) ? "" : streams[i].name[7:end-1] for i in 1:5]
@@ -50,7 +50,7 @@ end
 
 function BasicDiscParamIOStream(
   size::Tuple,
-  n::Int,
+  n::Integer,
   filenames::Vector{AbstractString},
   diagnostickeys::Vector{Symbol}=Symbol[],
   mode::AbstractString="w"
@@ -67,7 +67,7 @@ end
 
 function BasicDiscParamIOStream(
   size::Tuple,
-  n::Int;
+  n::Integer;
   monitor::Vector{Bool}=[true; fill(false, 3)],
   filepath::AbstractString="",
   filesuffix::AbstractString="csv",
@@ -87,7 +87,7 @@ end
 
 function BasicDiscParamIOStream(
   size::Tuple,
-  n::Int,
+  n::Integer,
   monitor::Vector{Symbol};
   filepath::AbstractString="",
   filesuffix::AbstractString="csv",
@@ -286,7 +286,7 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
 end
 
 function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR})
-  nstate::Union{ParameterNState{Discrete, Univariate}, ParameterNState{Discrete, Multivariate}}
+  nstate::DiscreteParameterNState
   fnames = fieldnames(BasicDiscParamIOStream)
   l = length(iostream.size)
 

@@ -10,68 +10,37 @@ type UnvMALAState <: MALAState
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
-  vmean::Real
-  pnewgivenold::Real
-  poldgivennew::Real
+  μ::Real
 
-  function UnvMALAState(
-    pstate::ParameterState{Continuous, Univariate},
-    tune::MCTunerState,
-    ratio::Real,
-    vmean::Real,
-    pnewgivenold::Real,
-    poldgivennew::Real
-  )
+  function UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState, ratio::Real, μ::Real)
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
+    new(pstate, tune, ratio, μ)
   end
 end
 
-UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=VanillaMCTune()) =
-  UnvMALAState(pstate, tune, NaN, NaN, NaN, NaN)
+UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
+  UnvMALAState(pstate, tune, NaN, NaN)
 
 ## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
-type MuvMALAState{N<:Real} <: MALAState
+type MuvMALAState <: MALAState
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
-  vmean::Vector{N}
-  pnewgivenold::Real
-  poldgivennew::Real
+  μ::RealVector
 
-  function MuvMALAState(
-    pstate::ParameterState{Continuous, Multivariate},
-    tune::MCTunerState,
-    ratio::Real,
-    vmean::Vector{N},
-    pnewgivenold::Real,
-    poldgivennew::Real
-  )
+  function MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState, ratio::Real, μ::RealVector)
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
+    new(pstate, tune, ratio, μ)
   end
 end
 
-MuvMALAState{N<:Real}(
-  pstate::ParameterState{Continuous, Multivariate},
-  tune::MCTunerState,
-  ratio::Real,
-  vmean::Vector{N},
-  pnewgivenold::Real,
-  poldgivennew::Real
-) =
-  MuvMALAState{N}(pstate, tune, ratio, vmean, pnewgivenold, poldgivennew)
-
-MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=VanillaMCTune()) =
-  MuvMALAState(pstate, tune, NaN, Array(eltype(pstate), pstate.size), NaN, NaN)
-
-Base.eltype{N<:Real}(::Type{MuvMALAState{N}}) = N
-Base.eltype{N<:Real}(s::MuvMALAState{N}) = N
+MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune()) =
+  MuvMALAState(pstate, tune, NaN, Array(eltype(pstate), pstate.size))
 
 ### Metropolis-adjusted Langevin Algorithm (MALA)
 
@@ -120,9 +89,9 @@ function reset!(
   parameter.uptogradlogtarget!(pstate)
 end
 
-function reset!{N<:Real}(
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
+  x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
   sampler::MALA
 )

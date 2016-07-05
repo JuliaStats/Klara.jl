@@ -48,7 +48,7 @@ Basic multivariate variable state type
 
 Construct a basic multivariate variable state with some ``value``.
 
-## BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64)
+## BasicMuvVariableState{N<:Number}(size::Integer, ::Type{N}=Float64)
 
 Construct a basic multivariate variable state with a ``value`` of specified ``size`` and element type.
 
@@ -71,12 +71,12 @@ type BasicMuvVariableState{N<:Number} <: VariableState{Multivariate}
   "Vector value of basic multivariate variable state"
   value::Vector{N}
   "Integer representing the length of vector value of basic multivariate variable state"
-  size::Int
+  size::Integer
 end
 
 BasicMuvVariableState{N<:Number}(value::Vector{N}) = BasicMuvVariableState{N}(value, length(value))
 
-BasicMuvVariableState{N<:Number}(size::Int, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array(N, size), size)
+BasicMuvVariableState{N<:Number}(size::Integer, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array(N, size), size)
 
 variate_form{N<:Number}(::Type{BasicMuvVariableState{N}}) = Multivariate
 variate_form(::BasicMuvVariableState) = Multivariate
@@ -118,7 +118,7 @@ type BasicMavVariableState{N<:Number} <: VariableState{Matrixvariate}
   "Matrix value of basic matrix-variate variable state"
   value::Matrix{N}
   "Tuple containing the dimensions of matrix value of basic matrix-variate variable state"
-  size::Tuple{Int, Int}
+  size::Tuple{Integer, Integer}
 end
 
 BasicMavVariableState{N<:Number}(value::Matrix{N}) = BasicMavVariableState{N}(value, size(value))

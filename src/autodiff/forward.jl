@@ -6,9 +6,9 @@ function codegen_forward_autodiff_function(::Type{Val{:derivative}}, f::Function
     end
   end
 end
-  
-function codegen_forward_autodiff_function(::Type{Val{:gradient}}, f::Function, chunksize::Int=0)
-  body = 
+
+function codegen_forward_autodiff_function(::Type{Val{:gradient}}, f::Function, chunksize::Integer=0)
+  body =
     if chunksize == 0
       :(getfield(ForwardDiff, :gradient)($f, _x))
     else
@@ -23,11 +23,11 @@ function codegen_forward_autodiff_function(::Type{Val{:gradient}}, f::Function, 
   end
 end
 
-codegen_forward_autodiff_target(method::Symbol, f::Function, chunksize::Int=0) =
+codegen_forward_autodiff_target(method::Symbol, f::Function, chunksize::Integer=0) =
   codegen_forward_autodiff_target(Val{method}, f, chunksize)
 
-function codegen_forward_autodiff_target(::Type{Val{:hessian}}, f::Function, chunksize::Int=0)
-  body = 
+function codegen_forward_autodiff_target(::Type{Val{:hessian}}, f::Function, chunksize::Integer=0)
+  body =
     if chunksize == 0
       :(-getfield(ForwardDiff, :hessian)($f, _x))
     else
@@ -53,14 +53,14 @@ function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Func
   end
 end
 
-function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Function, chunksize::Int=0)
-  adfcall = 
+function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Function, chunksize::Integer=0)
+  adfcall =
     if chunksize == 0
       :(getfield(ForwardDiff, :gradient!)(result, $f, _x))
     else
       :(getfield(ForwardDiff, :gradient!)(result, $f, _x, Chunk{$chunksize}()))
     end
-    
+
   @gensym forward_autodiff_uptofunction
   quote
     function $forward_autodiff_uptofunction(_x::Vector)
@@ -71,11 +71,11 @@ function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Functi
   end
 end
 
-codegen_forward_autodiff_uptotarget(method::Symbol, f::Function, chunksize::Int=0) =
+codegen_forward_autodiff_uptotarget(method::Symbol, f::Function, chunksize::Integer=0) =
   codegen_forward_autodiff_uptotarget(Val{method}, f, chunksize)
 
-function codegen_forward_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, chunksize::Int=0)
-  adfcall = 
+function codegen_forward_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, chunksize::Integer=0)
+  adfcall =
     if chunksize == 0
       :(getfield(ForwardDiff, :hessian!)(result, $f, _x))
     else

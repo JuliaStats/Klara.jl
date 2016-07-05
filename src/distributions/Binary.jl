@@ -7,12 +7,12 @@ immutable Binary <: DiscreteUnivariateDistribution
     # @check_args(Binary, a < b && zero(p) <= p <= one(p)) # Possibly a bug in Distributions, this line is not working
     new(a, b, p)
   end
-  
+
   function Binary(a::Real, b::Real)
     # @check_args(Binary, a < b) # Possibly a bug in Distributions, this line is not working
     new(a, b, 0.5)
   end
-  
+
   Binary() = new(0, 1, 0.5)
 end
 

@@ -13,7 +13,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_job.sstate.proposal = _job.sampler.setproposal(_job.pstate, _job.vstate)))
+  push!(body, :(_job.sstate.proposal = _job.sampler.setproposal(_job.pstate)))
 
   push!(body, :(_job.sstate.pstate.value =  rand(_job.sstate.proposal)))
 
@@ -25,7 +25,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
     if !(job.sampler.normalised)
       push!(body, :(_job.sstate.ratio -= lognormalise(_job.sstate.proposal)))
     end
-    push!(body, :(_job.sstate.proposal = _job.sampler.setproposal(_job.sstate.pstate, _job.vstate)))
+    push!(body, :(_job.sstate.proposal = _job.sampler.setproposal(_job.sstate.pstate)))
     push!(body, :(_job.sstate.ratio += logpdf(_job.sstate.proposal, _job.pstate.value)))
     if !(job.sampler.normalised)
       push!(body, :(_job.sstate.ratio += lognormalise(_job.sstate.proposal)))

@@ -4,7 +4,7 @@ type GenericModel <: AbstractGraph{Variable, Dependence}
   edges::Vector{Dependence}            # An indexable container of edges (dependencies)
   finclist::Vector{Vector{Dependence}} # Forward incidence list
   binclist::Vector{Vector{Dependence}} # Backward incidence list
-  ofkey::Dict{Symbol, Int}             # Dictionary storing index of vertex (variable) of corresponding key
+  ofkey::Dict{Symbol, Integer}             # Dictionary storing index of vertex (variable) of corresponding key
 end
 
 @graph_implements GenericModel vertex_list edge_list
@@ -37,18 +37,18 @@ in_edges(v::Variable, m::GenericModel) = m.binclist[vertex_index(v, m)]
 in_degree(v::Variable, m::GenericModel) = length(in_edges(v, m))
 in_neighbors(v::Variable, m::GenericModel) = Graphs.SourceIterator(m, in_edges(v, m))
 
-function add_vertex!(m::GenericModel, v::Variable, n::Int=num_vertices(m)+1)
+function add_vertex!(m::GenericModel, v::Variable, n::Integer=num_vertices(m)+1)
     push!(m.vertices, v)
 
-    push!(m.finclist, Int[])
-    push!(m.binclist, Int[])
+    push!(m.finclist, Integer[])
+    push!(m.binclist, Integer[])
 
     m.ofkey[v.key] = n
 
     v
 end
 
-function add_vertex!(m::GenericModel, vs::VariableVector, n::Int=num_vertices(m)+1)
+function add_vertex!(m::GenericModel, vs::VariableVector, n::Integer=num_vertices(m)+1)
   nvertices = n
   for v in vs
     add_vertex!(m, v, nvertices)
@@ -59,8 +59,8 @@ end
 function set_vertex!(m::GenericModel, v::Variable)
   m.vertices[v.index] = v
 
-  push!(m.finclist, Int[])
-  push!(m.binclist, Int[])
+  push!(m.finclist, Integer[])
+  push!(m.binclist, Integer[])
 
   m.ofkey[v.key] = v.index
 
@@ -95,7 +95,7 @@ end
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
 
-function GenericModel(vs::VariableVector, ds::Vector{Dependence}; isdirected::Bool=true, isindexed::Bool=true)
+function GenericModel(vs::VariableVector, ds::Vector{Dependence}=Dependence[]; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
 
   m = GenericModel(
@@ -104,7 +104,7 @@ function GenericModel(vs::VariableVector, ds::Vector{Dependence}; isdirected::Bo
     Dependence[],
     Graphs.multivecs(Dependence, n),
     Graphs.multivecs(Dependence, n),
-    Dict{Symbol, Int}()
+    Dict{Symbol, Integer}()
   )
   if isindexed
     add_vertex!(m, sort_by_index(vs), 1)
@@ -131,7 +131,7 @@ function GenericModel(vs::VariableVector, ds::Vector{Dependence}, isdirected::Bo
     Dependence[],
     Graphs.multivecs(Dependence, n),
     Graphs.multivecs(Dependence, n),
-    Dict{Symbol, Int}()
+    Dict{Symbol, Integer}()
   )
 
   set_vertex!(m, vs)
@@ -161,7 +161,7 @@ function GenericModel(vs::Dict{Symbol, DataType}, ds::Dict{Symbol, Symbol}, isdi
 end
 
 function Base.convert(::Type{GenericGraph}, m::GenericModel)
-  dict = Dict{KeyVertex{Symbol}, Int}()
+  dict = Dict{KeyVertex{Symbol}, Integer}()
   for v in values(m.ofkey)
     dict[convert(KeyVertex, m.vertices[v])] = m.vertices[v].index
   end

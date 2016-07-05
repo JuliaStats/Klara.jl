@@ -2,7 +2,7 @@
 
 type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
   key::Symbol
-  index::Int
+  index::Integer
   pdf::Union{DiscreteMultivariateDistribution, Void}
   prior::Union{DiscreteMultivariateDistribution, Void}
   setpdf::Union{Function, Void}
@@ -14,7 +14,7 @@ type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
 
   function BasicDiscMuvParameter(
     key::Symbol,
-    index::Int,
+    index::Integer,
     pdf::Union{DiscreteMultivariateDistribution, Void},
     prior::Union{DiscreteMultivariateDistribution, Void},
     setpdf::Union{Function, Void},
@@ -29,8 +29,8 @@ type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
     instance.key = key
     instance.index = index
     instance.pdf = pdf
-    instance.prior = prior  
-  
+    instance.prior = prior
+
     args = (setpdf, setprior, ll, lp, lt)
     fnames = fieldnames(BasicDiscMuvParameter)[5:9]
 
@@ -65,8 +65,8 @@ type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
       else
         nothing
       end
-    )  
-  
+    )
+
     # Define logprior!
     setfield!(
       instance,
@@ -100,18 +100,18 @@ type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
         end
       end
     )
-    
+
     instance
   end
 end
 
-BasicDiscMuvParameter(key::Symbol, index::Int=0; signature::Symbol=:high, args...) =
+BasicDiscMuvParameter(key::Symbol, index::Integer=0; signature::Symbol=:high, args...) =
   BasicDiscMuvParameter(key, Val{signature}, index; args...)
 
 BasicDiscMuvParameter(
   key::Symbol,
   ::Type{Val{:low}},
-  index::Int=0;
+  index::Integer=0;
   pdf::Union{DiscreteMultivariateDistribution, Void}=nothing,
   prior::Union{DiscreteMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -126,7 +126,7 @@ BasicDiscMuvParameter(
 function BasicDiscMuvParameter(
   key::Symbol,
   ::Type{Val{:high}},
-  index::Int=0;
+  index::Integer=0;
   pdf::Union{DiscreteMultivariateDistribution, Void}=nothing,
   prior::Union{DiscreteMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
@@ -135,7 +135,7 @@ function BasicDiscMuvParameter(
   logprior::Union{Function, Expr, Void}=nothing,
   logtarget::Union{Function, Expr, Void}=nothing,
   states::VariableStateVector=VariableState[],
-  nkeys::Int=0,
+  nkeys::Integer=0,
   vfarg::Bool=false
 )
   inargs = (setpdf, setprior, loglikelihood, logprior, logtarget)
@@ -150,7 +150,9 @@ function BasicDiscMuvParameter(
 
   for i in 1:5
     if isa(inargs[i], Function)
-      outargs[i] = eval(codegen_lowlevel_variable_method(inargs[i], fnames[i], :BasicDiscMuvParameterState, nkeys, vfarg))
+      outargs[i] = eval(
+        codegen_lowlevel_variable_method(inargs[i], :BasicDiscMuvParameterState, true, fnames[i], nkeys, vfarg)
+      )
     end
   end
 

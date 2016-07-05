@@ -1,4 +1,4 @@
-function codegen{N<:Real}(::Type{Val{:iterate}}, ::Type{RAM{N}}, job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []

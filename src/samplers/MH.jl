@@ -2,13 +2,13 @@
 
 # MHState holds the internal state ("local variables") of the Metropolis-Hastings sampler
 
-type MHState <: MCSamplerState
-  proposal::Distribution # Proposal distribution
-  pstate::ParameterState # Parameter state used internally by MH
+type MHState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState
+  proposal::Distribution{F, S} # Proposal distribution
+  pstate::ParameterState{S, F} # Parameter state used internally by MH
   tune::MCTunerState
   ratio::Real # Acceptance ratio
 
-  function MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState, ratio::Real)
+  function MHState(proposal::Distribution{F, S}, pstate::ParameterState{S, F}, tune::MCTunerState, ratio::Real)
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
@@ -16,7 +16,15 @@ type MHState <: MCSamplerState
   end
 end
 
-MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) =
+MHState{S<:ValueSupport, F<:VariateForm}(
+  proposal::Distribution{F, S},
+  pstate::ParameterState{S, F},
+  tune::MCTunerState,
+  ratio::Real
+) =
+  MHState{S, F}(proposal, pstate, tune, ratio)
+
+MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState=BasicMCTune()) =
   MHState(proposal, pstate, tune, NaN)
 
 ### Metropolis-Hastings (MH) sampler
@@ -36,8 +44,13 @@ MH(setproposal::Function; signature::Symbol=:high, args...) = MH(setproposal, Va
 MH(setproposal::Function, ::Type{Val{:low}}; symmetric::Bool=true, normalised::Bool=true) =
   MH(symmetric, normalised, setproposal)
 
-MH(setproposal::Function, ::Type{Val{:high}}; symmetric::Bool=true, normalised::Bool=true, nkeys::Int=0, vfarg::Bool=false) =
-  MH(symmetric, normalised, eval(codegen_lowlevel_variable_method(setproposal, Symbol[], nothing, nkeys, vfarg)))
+MH(
+  setproposal::Function,
+  ::Type{Val{:high}};
+  symmetric::Bool=true,
+  normalised::Bool=true
+) =
+  MH(symmetric, normalised, eval(codegen_lowlevel_variable_method(setproposal, nothing, false, Symbol[], 0)))
 
 # Random-walk Metropolis, i.e. Metropolis with a normal proposal distribution
 
@@ -58,21 +71,16 @@ end
 ## Initialize MHState
 
 sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState, vstate::VariableStateVector) =
-  MHState(sampler.setproposal(pstate, vstate), generate_empty(pstate), tuner_state(sampler, tuner))
+  MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(sampler, tuner))
 
 ## Reset parameter state
 
-function reset!{S<:ValueSupport}(pstate::ParameterState{S, Univariate}, x, parameter::Parameter{S, Univariate}, sampler::MH)
+function reset!(pstate::UnivariateParameterState, x::Real, parameter::UnivariateParameter, sampler::MH)
   pstate.value = x
   parameter.logtarget!(pstate)
 end
 
-function reset!{S<:ValueSupport}(
-  pstate::ParameterState{S, Multivariate},
-  x,
-  parameter::Parameter{S, Multivariate},
-  sampler::MH
-)
+function reset!(pstate::MultivariateParameterState, x::RealVector, parameter::MultivariateParameter, sampler::MH)
   pstate.value = copy(x)
   parameter.logtarget!(pstate)
 end

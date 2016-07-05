@@ -50,7 +50,7 @@ function codegen_reverse_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function,
   end
 end
 
-function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Tuple, order::Int, allorders::Bool=true)
+function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Tuple, order::Integer, allorders::Bool=true)
   @gensym reverse_autodiff_function
   Expr(
     :function,
@@ -66,7 +66,7 @@ function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Tupl
   )
 end
 
-function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Vector, order::Int, allorders::Bool=true)
+function codegen_reverse_autodiff_function(f::Expr, fargtype::Symbol, init::Vector, order::Integer, allorders::Bool=true)
   @gensym reverse_autodiff_function
   Expr(
     :function,

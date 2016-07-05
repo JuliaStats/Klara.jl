@@ -10,31 +10,31 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in SMMALA code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_job.sstate.tune.step) : :(_job.sampler.driftstep)
-
   if job.tuner.verbose
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_job.sstate.vmean = _job.pstate.value+0.5*$(stepsize)*_job.sstate.oldfirstterm))
+  push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
 
-  push!(body, :(_job.sstate.cholinvtensor = chol($(stepsize)*_job.sstate.oldinvtensor)))
+  push!(body, :(_job.sstate.cholinvtensor = chol(_job.sstate.tune.step*_job.sstate.oldinvtensor, Val{:L})))
 
   if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+_job.sstate.cholinvtensor*randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.cholinvtensor*randn()))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.vmean+_job.sstate.cholinvtensor'*randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.cholinvtensor*randn(_job.pstate.size)))
   end
 
   push!(body, :(_job.parameter.uptotensorlogtarget!(_job.sstate.pstate)))
+
+  push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
 
   if vform == Univariate
     push!(
       body,
       :(
-        _job.sstate.pnewgivenold = (
-          -log(_job.sstate.cholinvtensor)
-          -0.5*abs2(_job.sstate.vmean-_job.sstate.pstate.value)*_job.pstate.tensorlogtarget/$(stepsize)
+        _job.sstate.ratio += (
+          log(_job.sstate.cholinvtensor)
+          +0.5*abs2(_job.sstate.pstate.value-_job.sstate.μ)*_job.pstate.tensorlogtarget/_job.sstate.tune.step
         )
       )
     )
@@ -42,12 +42,12 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     push!(
       body,
       :(
-        _job.sstate.pnewgivenold = (
-          -sum(log(diag(_job.sstate.cholinvtensor)))
-          -0.5*dot(
-            _job.sstate.vmean-_job.sstate.pstate.value,
-            _job.pstate.tensorlogtarget*(_job.sstate.vmean-_job.sstate.pstate.value)
-          )/$(stepsize)
+        _job.sstate.ratio += (
+          sum(log(diag(_job.sstate.cholinvtensor)))
+          +0.5*dot(
+            _job.sstate.pstate.value-_job.sstate.μ,
+            _job.pstate.tensorlogtarget*(_job.sstate.pstate.value-_job.sstate.μ)
+          )/_job.sstate.tune.step
         )
       )
     )
@@ -57,15 +57,17 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.newfirstterm = _job.sstate.newinvtensor*_job.sstate.pstate.gradlogtarget))
 
-  push!(body, :(_job.sstate.vmean = _job.sstate.pstate.value+0.5*$(stepsize)*_job.sstate.newfirstterm))
+  push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
+
+  push!(body, :(_job.sstate.cholinvtensor = chol(_job.sstate.tune.step*_job.sstate.newinvtensor, Val{:L})))
 
   if vform == Univariate
     push!(
       body,
       :(
-        _job.sstate.poldgivennew = (
-          -log(chol($(stepsize)*_job.sstate.newinvtensor))
-          -0.5*abs2(_job.sstate.vmean-_job.pstate.value)*_job.sstate.pstate.tensorlogtarget/$(stepsize)
+        _job.sstate.ratio -= (
+          log(_job.sstate.cholinvtensor)
+          +0.5*abs2(_job.pstate.value-_job.sstate.μ)*_job.sstate.pstate.tensorlogtarget/_job.sstate.tune.step
         )
       )
     )
@@ -73,24 +75,16 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     push!(
       body,
       :(
-        _job.sstate.poldgivennew = (
-          -sum(log(diag(chol($(stepsize)*_job.sstate.newinvtensor))))
-          -0.5*dot(
-            _job.sstate.vmean-_job.pstate.value,
-            _job.sstate.pstate.tensorlogtarget*(_job.sstate.vmean-_job.pstate.value)
-          )/$(stepsize)
+        _job.sstate.ratio -= (
+          sum(log(diag(_job.sstate.cholinvtensor)))
+          +0.5*dot(
+            _job.pstate.value-_job.sstate.μ,
+            _job.sstate.pstate.tensorlogtarget*(_job.pstate.value-_job.sstate.μ)
+          )/_job.sstate.tune.step
         )
       )
     )
   end
-
-  push!(
-    body,
-    :(
-      _job.sstate.ratio =
-      _job.sstate.pstate.logtarget+_job.sstate.poldgivennew-_job.pstate.logtarget-_job.sstate.pnewgivenold
-    )
-  )
 
   if vform == Univariate
     push!(update, :(_job.pstate.value = _job.sstate.pstate.value))

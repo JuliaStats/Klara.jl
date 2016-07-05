@@ -9,7 +9,7 @@ type ARSState <: MCSamplerState
   weight::Real
 end
 
-ARSState(pstate::ParameterState, tune::MCTunerState=VanillaMCTune()) = ARSState(pstate, tune, NaN, NaN)
+ARSState(pstate::ParameterState, tune::MCTunerState=BasicMCTune()) = ARSState(pstate, tune, NaN, NaN)
 
 ### Acceptance-rejection sampler (ARS)
 
@@ -56,9 +56,9 @@ function reset!(
   parameter.logtarget!(pstate)
 end
 
-function reset!{N<:Real}(
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
-  x::Vector{N},
+  x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
   sampler::ARS
 )

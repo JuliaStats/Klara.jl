@@ -8,7 +8,7 @@ model = likelihood_model([Constant(:λ), p], isindexed=false)
 
 psetproposal(i::Int) = (i == 0) ? Binary(0, 1) : Binary(i-1, i+1)
 
-sampler = MH(psetproposal)
+sampler = MH(psetproposal, symmetric=false)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 

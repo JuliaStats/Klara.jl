@@ -17,7 +17,7 @@ type BasicContParamIOStream <: ParameterIOStream{Continuous}
   diagnosticvalues::Union{IOStream, Void}
   names::Vector{AbstractString}
   size::Tuple
-  n::Int
+  n::Integer
   diagnostickeys::Vector{Symbol}
   open::Function
   close::Function
@@ -28,7 +28,7 @@ type BasicContParamIOStream <: ParameterIOStream{Continuous}
 
   function BasicContParamIOStream(
     size::Tuple,
-    n::Int,
+    n::Integer,
     streams::Vector{Union{IOStream, Void}},
     diagnostickeys::Vector{Symbol}=Symbol[],
     filenames::Vector{AbstractString}=[(streams[i] == nothing) ? "" : streams[i].name[7:end-1] for i in 1:14]
@@ -59,7 +59,7 @@ end
 
 function BasicContParamIOStream(
   size::Tuple,
-  n::Int,
+  n::Integer,
   filenames::Vector{AbstractString},
   diagnostickeys::Vector{Symbol}=Symbol[],
   mode::AbstractString="w"
@@ -76,7 +76,7 @@ end
 
 function BasicContParamIOStream(
   size::Tuple,
-  n::Int;
+  n::Integer;
   monitor::Vector{Bool}=[true; fill(false, 12)],
   filepath::AbstractString="",
   filesuffix::AbstractString="csv",
@@ -96,7 +96,7 @@ end
 
 function BasicContParamIOStream(
   size::Tuple,
-  n::Int,
+  n::Integer,
   monitor::Vector{Symbol};
   filepath::AbstractString="",
   filesuffix::AbstractString="csv",
@@ -334,7 +334,7 @@ function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicCont
 end
 
 function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
-  nstate::Union{ParameterNState{Continuous, Univariate}, ParameterNState{Continuous, Multivariate}}
+  nstate::ContinuousParameterNState
   fnames = fieldnames(BasicContParamIOStream)
   l = length(iostream.size)
 

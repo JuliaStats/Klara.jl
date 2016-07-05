@@ -8,19 +8,19 @@ Basic discrete multivariate parameter state type
 Construct a basic discrete multivariate parameter state with some ``value``.
 
 ###  Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{NR}=Float64``: the element type of target-related fields.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
-## BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(size::Int, <optional arguments>)
+## BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(size::Integer, <optional arguments>)
 
 Construct a basic discrete multivariate parameter state with with a ``value`` of specified ``size``.
 
 ###  Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
-* ``::Type{NI}=Int``: the element type of the state value.
+* ``::Type{NI}=Integer``: the element type of the state value.
 * ``::Type{NR}=Float64``: the element type of target-related fields.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
@@ -52,7 +52,7 @@ type BasicDiscMuvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discret
   "Diagnostic values associated with the sampling of the state"
   diagnosticvalues::Vector
   "Integer representing the length of vector value of basic discrete multivariate parameter state"
-  size::Int
+  size::Integer
   "Diagnostic keys associated with the sampling of the state"
   diagnostickeys::Vector{Symbol}
 end
@@ -68,9 +68,9 @@ function BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(
 end
 
 BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(
-  size::Int,
+  size::Integer,
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int,
+  ::Type{NI}=Int64,
   ::Type{NR}=Float64,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =

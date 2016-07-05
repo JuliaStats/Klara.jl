@@ -1,12 +1,14 @@
-Directory,Filename,Motivation,Model description,Dataset,Dataset description
-Poisson,MH.jl,Metropolis-Hastings over discrete sample space,Poisson distribution,-,-
-Gamma,MH.jl,Metropolis-Hastings when the target and proposal have differing support,Gamma distribution,-,-
-swiss,RAM.jl,Random adaptive Metropolis,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/MALA,analytical.jl,MALA with analytical gradient,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/MALA/reversediff,expressionargs.jl,MALA with gradient computed via expression-based reverse mode AD,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/MALA/reversediff,functionargs.jl,MALA with gradient computed via function-based reverse mode AD,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/MALA,forwarddiff.jl,MALA with gradient computed via forward mode AD,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/SMMALA,analytical.jl,SMMALA with analytical gradient and tensor,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/SMMALA/reversediff,expressionargs.jl,SMMALA with gradient and tensor computed via expression-based reverse mode AD,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/SMMALA/reversediff,functionargs.jl,SMMALA with gradient and tensor computed via function-based reverse mode AD,Bayesian logistic regression,swiss,Swiss banknotes
-swiss/SMMALA,forwarddiff.jl,SMMALA with gradient and tensor computed via forward mode AD,Bayesian logistic regression,swiss,Swiss banknotes
+Example directory,Filename,Motivation,Model description,Data directory,Data description
+doc/examples/Poisson,MH.jl,Metropolis-Hastings over discrete sample space,Poisson distribution,-,-
+doc/examples/Gamma,MH.jl,Metropolis-Hastings when the target and proposal have differing support,Gamma distribution,-,-
+doc/examples/BivariateNormal,Gibbs.jl,Gibbs for sampling from a bivariate normal distribution,Bivariate normal distribution,-,-
+doc/examples/swiss,RAM.jl,Random adaptive Metropolis,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/MALA,analytical.jl,MALA with analytical gradient,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/MALA/reversediff,expressionargs.jl,MALA with gradient computed via expression-based reverse mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/MALA/reversediff,functionargs.jl,MALA with gradient computed via function-based reverse mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/MALA,forwarddiff.jl,MALA with gradient computed via forward mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/SMMALA,analytical.jl,SMMALA with analytical gradient and tensor,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/SMMALA/reversediff,expressionargs.jl,SMMALA with gradient and tensor computed via expression-based reverse mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/SMMALA/reversediff,functionargs.jl,SMMALA with gradient and tensor computed via function-based reverse mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/swiss/SMMALA,forwarddiff.jl,SMMALA with gradient and tensor computed via forward mode AD,Bayesian logistic regression,data/swiss,Swiss banknotes
+doc/examples/rats,Gibbs.jl,Gibbs for sampling from a normal hierarchical model,Normal hierarchical model,data/rats,Weights of rats

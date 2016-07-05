@@ -3,6 +3,7 @@ module Lora
 using Distributions
 using Formatting
 using Graphs
+using PDMats
 using StatsBase
 
 import Base:
@@ -65,9 +66,11 @@ import ReverseDiffSource
 
 export
   ### Types
+  # AMWG,
+  # AMWGJob,
+  # AMWGState,
   ARS,
   ARSState,
-  AcceptanceRateMCTune,
   AcceptanceRateMCTuner,
   BasicContMuvParameter,
   BasicContMuvParameterNState,
@@ -83,8 +86,10 @@ export
   BasicDiscUnvParameter,
   BasicDiscUnvParameterNState,
   BasicDiscUnvParameterState,
+  BasicGibbsJob,
   BasicMCJob,
   BasicMCRange,
+  BasicMCTune,
   BasicMavVariableNState,
   BasicMavVariableState,
   BasicMuvVariableNState,
@@ -96,17 +101,24 @@ export
   Constant,
   ContMuvMarkovChain,
   ContUnvMarkovChain,
+  ContinuousParameter,
+  ContinuousParameterNState,
+  ContinuousParameterState,
   Data,
   Dependence,
   Deterministic,
   DiscMuvMarkovChain,
   DiscUnvMarkovChain,
+  DiscreteParameter,
+  DiscreteParameterNState,
+  DiscreteParameterState,
   GenericModel,
   GibbsJob,
   HMC,
   HMCSampler,
   HMCState,
   Hyperparameter,
+  IntegerVector,
   LMCSampler,
   MALA,
   MALAState,
@@ -120,6 +132,13 @@ export
   MHSampler,
   MHState,
   MarkovChain,
+  MatrixvariateParameter,
+  MatrixvariateParameterNState,
+  MatrixvariateParameterState,
+  MultivariateParameter,
+  MultivariateParameterNState,
+  MultivariateParameterState,
+  MuvAMWGState,
   MuvHMCState,
   MuvMALAState,
   MuvSMMALAState,
@@ -131,11 +150,21 @@ export
   ParameterVector,
   RAM,
   Random,
+  RealMatrix,
+  RealVector,
+  RobertsRosenthalMCTune,
+  RobertsRosenthalMCTuner,
   SMMALA,
   SMMALAState,
   Sampleability,
   Transformation,
-  VanillaMCTune,
+  UnivariateParameter,
+  UnivariateParameterNState,
+  UnivariateParameterState,
+  UnvAMWGState,
+  UnvHMCState,
+  UnvMALAState,
+  UnvSMMALAState,
   VanillaMCTuner,
   Variable,
   VariableIOStream,
@@ -158,6 +187,7 @@ export
   edges,
   erf_rate_score,
   ess,
+  examples,
   failprob,
   iact,
   in_degree,
@@ -209,6 +239,14 @@ export
   vertex_key,
   vertices
 
+include("base.jl")
+
+include("format.jl")
+
+include("data.jl")
+
+include("codegen.jl")
+
 include("stats/logistic.jl")
 
 include("distributions/Binary.jl")
@@ -216,12 +254,6 @@ include("distributions/TruncatedNormal.jl")
 
 include("autodiff/reverse.jl")
 include("autodiff/forward.jl")
-
-include("format.jl")
-
-include("data.jl")
-
-include("codegen.jl")
 
 include("states/VariableStates.jl")
 include("states/ParameterStates/ParameterStates.jl")
@@ -259,6 +291,7 @@ include("ranges/BasicMCRange.jl")
 include("tuners/tuners.jl")
 include("tuners/VanillaMCTuner.jl")
 include("tuners/AcceptanceRateMCTuner.jl")
+include("tuners/RobertsRosenthalMCTuner.jl")
 
 include("samplers/samplers.jl")
 include("samplers/ARS.jl")
@@ -267,10 +300,12 @@ include("samplers/RAM.jl")
 include("samplers/HMC.jl")
 include("samplers/MALA.jl")
 include("samplers/SMMALA.jl")
+include("samplers/AMWG.jl")
 
 include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
-include("jobs/GibbsJob.jl")
+include("jobs/BasicGibbsJob.jl")
+# include("jobs/AMWGJob.jl")
 
 include("samplers/iterate/ARS.jl")
 include("samplers/iterate/MH.jl")

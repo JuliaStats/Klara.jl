@@ -5,7 +5,7 @@
 
 type BasicMCJob <: MCJob
   model::GenericModel # Model of single parameter
-  pindex::Int # Index of single parameter in model.vertices
+  pindex::Integer # Index of single parameter in model.vertices
   parameter::Parameter # Points to model.vertices[pindex] for faster access
   sampler::MCSampler
   tuner::MCTuner
@@ -15,7 +15,7 @@ type BasicMCJob <: MCJob
   sstate::MCSamplerState # Internal state of MCSampler
   outopts::Dict # Options related to output
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
-  count::Int # Current number of post-burnin iterations
+  count::Integer # Current number of post-burnin iterations
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
@@ -28,7 +28,7 @@ type BasicMCJob <: MCJob
 
   function BasicMCJob(
     model::GenericModel,
-    pindex::Int,
+    pindex::Integer,
     sampler::MCSampler,
     tuner::MCTuner,
     range::BasicMCRange,
@@ -105,7 +105,7 @@ BasicMCJob(
   sampler::MCSampler,
   range::BasicMCRange,
   v0::VariableStateVector;
-  pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
@@ -120,7 +120,7 @@ function BasicMCJob{S<:VariableState}(
   sampler::MCSampler,
   range::BasicMCRange,
   v0::Dict{Symbol, S};
-  pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
@@ -140,7 +140,7 @@ function BasicMCJob(
   sampler::MCSampler,
   range::BasicMCRange,
   v0::Vector;
-  pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
@@ -157,7 +157,7 @@ function BasicMCJob(
   sampler::MCSampler,
   range::BasicMCRange,
   v0::Dict;
-  pindex::Int=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
@@ -265,7 +265,7 @@ function codegen(::Type{Val{:save}}, job::BasicMCJob)
   @gensym _save
 
   quote
-    function $_save(_job::BasicMCJob, _i::Int)
+    function $_save(_job::BasicMCJob, _i::Integer)
       $(body...)
     end
   end

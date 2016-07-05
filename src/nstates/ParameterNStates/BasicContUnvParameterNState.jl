@@ -13,12 +13,12 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
   dtensorlogprior::Vector{N}
   dtensorlogtarget::Vector{N}
   diagnosticvalues::Matrix
-  n::Int
+  n::Integer
   diagnostickeys::Vector{Symbol}
   copy::Function
 
   function BasicContUnvParameterNState(
-    n::Int,
+    n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 12)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{N}=Float64,
@@ -26,9 +26,9 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
   )
     instance = new()
 
-    l = Array(Int, 13)
+    l = Array(Integer, 13)
     for i in 1:13
-      l[i] = (monitor[i] == false ? zero(Int) : n)
+      l[i] = (monitor[i] == false ? zero(Integer) : n)
     end
 
     fnames = fieldnames(BasicContUnvParameterNState)
@@ -48,7 +48,7 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
 end
 
 BasicContUnvParameterNState{N<:Real}(
-  n::Int,
+  n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 12)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
@@ -57,7 +57,7 @@ BasicContUnvParameterNState{N<:Real}(
   BasicContUnvParameterNState{N}(n, monitor, diagnostickeys, N, diagnosticvalues)
 
 function BasicContUnvParameterNState{N<:Real}(
-  n::Int,
+  n::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
@@ -90,7 +90,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monito
   @gensym _copy
 
   quote
-    function $_copy(_nstate::BasicContUnvParameterNState, _state::BasicContUnvParameterState, _i::Int)
+    function $_copy(_nstate::BasicContUnvParameterNState, _state::BasicContUnvParameterState, _i::Integer)
       $(body...)
     end
   end

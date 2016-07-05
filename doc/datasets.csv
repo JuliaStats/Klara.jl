@@ -1,3 +1,5 @@
-"Dataset","Rows","Columns","Description"
-"swiss",200,5,"Swiss banknotes"
-"vaso",39,3,"Vasoconstriction"
+Data directory,Data basename,Data description,Dataset,Dataset description,Rows,Columns
+data/swiss,swiss,Swiss banknotes,covariates.csv,Banknote measurements,200,4
+data/swiss,swiss,Swiss banknotes,status.csv,Banknote status,200,1
+data/rats,rats,Weights of rats,age.csv,Rat age,30,5
+data/rats,rats,Weights of rats,weight.csv,Rat weight,5,1

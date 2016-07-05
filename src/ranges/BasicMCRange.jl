@@ -4,7 +4,7 @@
 # It is the most elementary and typical Markov chain Monte Carlo (MCMC) range
 # It contains nagivational info (burnin, thinning, number of steps)
 
-immutable BasicMCRange{T<:Int} <: MCRange{T}
+immutable BasicMCRange{T<:Integer} <: MCRange{T}
   burnin::T
   thinning::T
   nsteps::T
@@ -26,11 +26,11 @@ immutable BasicMCRange{T<:Int} <: MCRange{T}
   end
 end
 
-BasicMCRange{T<:Int}(postrange::StepRange{T, T}) = BasicMCRange{T}(postrange)
+BasicMCRange{T<:Integer}(postrange::StepRange{T, T}) = BasicMCRange{T}(postrange)
 
-BasicMCRange{T<:Int}(postrange::UnitRange{T}) = BasicMCRange{T}(first(postrange):1:last(postrange))
+BasicMCRange{T<:Integer}(postrange::UnitRange{T}) = BasicMCRange{T}(first(postrange):1:last(postrange))
 
-BasicMCRange{T<:Int}(; burnin::T=0, thinning::T=1, nsteps::T=100) = BasicMCRange{T}((burnin+1):thinning:nsteps)
+BasicMCRange{T<:Integer}(; burnin::T=0, thinning::T=1, nsteps::T=100) = BasicMCRange{T}((burnin+1):thinning:nsteps)
 
 Base.show(io::IO, r::BasicMCRange) =
   print(io, "BasicMCRange: number of steps = $(r.nsteps), burnin = $(r.burnin), thinning = $(r.thinning)")
