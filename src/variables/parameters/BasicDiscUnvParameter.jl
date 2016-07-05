@@ -47,8 +47,7 @@ type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
         instance,
         setter,
         if isa(args[i], Function)
-          (_state::default_state_type(instance), _states::VariableStateVector) ->
-            setfield!(instance, distribution, args[i](_state, _states))
+          eval(codegen_setfield(instance, distribution, args[i]))
         else
           nothing
         end
@@ -60,7 +59,7 @@ type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :loglikelihood!,
       if isa(args[3], Function)
-        _state::default_state_type(instance) -> args[3](_state, instance.states)
+        eval(codegen_closure(instance, args[3]))
       else
         nothing
       end
@@ -71,11 +70,11 @@ type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :logprior!,
       if isa(args[4], Function)
-        _state::default_state_type(instance) -> args[4](_state, instance.states)
+        eval(codegen_closure(instance, args[4]))
       else
         if (isa(prior, DiscreteUnivariateDistribution) && method_exists(logpdf, (typeof(prior), eltype(prior)))) ||
           isa(args[2], Function)
-          _state::default_state_type(instance) -> _state.logprior = logpdf(instance.prior, _state.value)
+          eval(codegen_target_closure_via_distribution(instance, :prior, logpdf, :logprior))
         else
           nothing
         end
@@ -87,17 +86,13 @@ type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :logtarget!,
       if isa(args[5], Function)
-        _state::default_state_type(instance) -> args[5](_state, instance.states)
+        eval(codegen_closure(instance, args[5]))
       else
         if isa(args[3], Function) && isa(getfield(parameter, :logprior!), Function)
-          function (_state::default_state_type(instance))
-            instance.loglikelihood!(_state)
-            instance.logprior!(_state)
-            _state.logtarget = _state.loglikelihood + _state.logprior
-          end
+          eval(codegen_sumtarget_closure(instance, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))
         elseif (isa(pdf, DiscreteUnivariateDistribution) && method_exists(logpdf, (typeof(pdf), eltype(pdf)))) ||
           isa(args[1], Function)
-          _state::default_state_type(instance) -> _state.logtarget = logpdf(instance.pdf, _state.value)
+          eval(codegen_target_closure_via_distribution(instance, :pdf, logpdf, :logtarget))
         else
           nothing
         end
