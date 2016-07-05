@@ -86,28 +86,43 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
 
 immutable SMMALA <: LMCSampler
   driftstep::Real
+  transform::Union{Function, Void} # Function for transforming metric tensor to a positive-definite matrix
 
-  function SMMALA(driftstep::Real)
+  function SMMALA(driftstep::Real, transform::Union{Function, Void})
     @assert driftstep > 0 "Drift step is not positive"
-    new(driftstep)
+    new(driftstep, transform)
   end
 end
 
-SMMALA() = SMMALA(1.)
+SMMALA(driftstep::Real=1.) = SMMALA(driftstep, nothing)
 
 ### Initialize SMMALA sampler
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
-  pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
+function initialize!(
+  pstate::ParameterState{Continuous, Univariate},
+  parameter::Parameter{Continuous, Univariate},
   sampler::SMMALA
 )
   parameter.uptotensorlogtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
-  @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+  @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
+end
+
+function initialize!(
+  pstate::ParameterState{Continuous, Multivariate},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::SMMALA
+)
+  parameter.uptotensorlogtarget!(pstate)
+  if sampler.transform != nothing
+    pstate.tensorlogtarget = sampler.transform(pstate.tensorlogtarget)
+  end
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+  @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
 end
 
 ## Initialize SMMALA state

@@ -16,7 +16,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
 
-  push!(body, :(_job.sstate.cholinvtensor = chol(_job.sstate.tune.step*_job.sstate.oldinvtensor, Val{:L})))
+  push!(body, :(_job.sstate.cholinvtensor = sqrt(_job.sstate.tune.step)*chol(_job.sstate.oldinvtensor, Val{:L})))
 
   if vform == Univariate
     push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.cholinvtensor*randn()))
@@ -25,6 +25,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
   end
 
   push!(body, :(_job.parameter.uptotensorlogtarget!(_job.sstate.pstate)))
+
+  if vform == Multivariate && job.sampler.transform != nothing
+    push!(body, :(_job.sstate.pstate.tensorlogtarget = _job.sampler.transform(_job.sstate.pstate.tensorlogtarget)))
+  end
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
 
@@ -59,7 +63,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
 
-  push!(body, :(_job.sstate.cholinvtensor = chol(_job.sstate.tune.step*_job.sstate.newinvtensor, Val{:L})))
+  push!(body, :(_job.sstate.cholinvtensor = sqrt(_job.sstate.tune.step)*chol(_job.sstate.newinvtensor, Val{:L})))
 
   if vform == Univariate
     push!(

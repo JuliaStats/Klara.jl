@@ -91,9 +91,9 @@ end
 
 RAM(S0::RealMatrix; targetrate::Real=0.234, γ::Real=0.7) = RAM(S0, targetrate, γ)
 
-RAM(S0::RealVector, targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
+RAM(S0::RealVector; targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
 
-RAM(S0::Real=1., n::Integer=1, targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate, γ)
+RAM(S0::Real=1., n::Integer=1; targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate=targetrate, γ=γ)
 
 ### Initialize RAM sampler
 
@@ -105,7 +105,7 @@ function initialize!{F<:VariateForm}(
   sampler::RAM
 )
   parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 end
 
 ## Initialize MuvRAMState

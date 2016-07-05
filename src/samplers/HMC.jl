@@ -63,17 +63,17 @@ MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState
 ### Hamiltonian Monte Carlo (HMC)
 
 immutable HMC <: HMCSampler
-  nleaps::Integer
   leapstep::Real
+  nleaps::Integer
 
-  function HMC(nleaps::Integer, leapstep::Real)
-    @assert nleaps > 0 "Number of leapfrog steps is not positive"
+  function HMC(leapstep::Real, nleaps::Integer)
     @assert leapstep > 0 "Leapfrog step is not positive"
-    new(nleaps, leapstep)
+    @assert nleaps > 0 "Number of leapfrog steps is not positive"
+    new(leapstep, nleaps)
   end
 end
 
-HMC(; nleaps::Integer=10, leapstep::Real=0.1) = HMC(nleaps, leapstep)
+HMC(leapstep::Real=0.1) = HMC(leapstep, 10)
 
 ### Initialize HMC sampler
 
@@ -85,8 +85,8 @@ function initialize!{F<:VariateForm}(
   sampler::HMC
 )
   parameter.uptogradlogtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
 end
 
 ## Initialize HMC state

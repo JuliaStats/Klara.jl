@@ -65,8 +65,8 @@ function initialize!{F<:VariateForm}(
   sampler::MALA
 )
   parameter.uptogradlogtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
 end
 
 ## Initialize MALA state

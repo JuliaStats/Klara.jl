@@ -36,7 +36,7 @@ function initialize!{F<:VariateForm}(
   sampler::ARS
 )
   parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 end
 
 ## Initialize ARSState

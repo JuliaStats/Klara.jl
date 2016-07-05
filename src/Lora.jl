@@ -228,6 +228,7 @@ export
   save,
   setpdf!,
   setprior!,
+  softabs,
   sort_by_index,
   source,
   succprob,
@@ -323,5 +324,7 @@ include("stats/variance/zv.jl")
 
 include("stats/convergence/ess.jl")
 include("stats/convergence/iact.jl")
+
+include("stats/metrics.jl")
 
 end

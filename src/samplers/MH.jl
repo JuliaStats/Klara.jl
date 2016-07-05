@@ -65,7 +65,7 @@ MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> Normal(x, 1.0), signature=:high)
 
 function initialize!{S<:ValueSupport, F<:VariateForm}(pstate::ParameterState{S, F}, parameter::Parameter{S, F}, sampler::MH)
   parameter.logtarget!(pstate)
-  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of parameter support"
+  @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 end
 
 ## Initialize MHState
