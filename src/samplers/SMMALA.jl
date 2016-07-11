@@ -13,7 +13,8 @@ type UnvSMMALAState <: SMMALAState
   μ::Real
   newinvtensor::Real
   oldinvtensor::Real
-  cholinvtensor::Real
+  newcholinvtensor::Real
+  oldcholinvtensor::Real
   newfirstterm::Real
   oldfirstterm::Real
 
@@ -24,19 +25,20 @@ type UnvSMMALAState <: SMMALAState
     μ::Real,
     newinvtensor::Real,
     oldinvtensor::Real,
-    cholinvtensor::Real,
+    newcholinvtensor::Real,
+    oldcholinvtensor::Real,
     newfirstterm::Real,
     oldfirstterm::Real
   )
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
+    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, newcholinvtensor, oldcholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
 UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
-  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
@@ -47,7 +49,8 @@ type MuvSMMALAState <: SMMALAState
   μ::RealVector
   newinvtensor::RealMatrix
   oldinvtensor::RealMatrix
-  cholinvtensor::RealLowerTriangular
+  newcholinvtensor::RealLowerTriangular
+  oldcholinvtensor::RealLowerTriangular
   newfirstterm::RealVector
   oldfirstterm::RealVector
 
@@ -58,14 +61,15 @@ type MuvSMMALAState <: SMMALAState
     μ::RealVector,
     newinvtensor::RealMatrix,
     oldinvtensor::RealMatrix,
-    cholinvtensor::RealLowerTriangular,
+    newcholinvtensor::RealLowerTriangular,
+    oldcholinvtensor::RealLowerTriangular,
     newfirstterm::RealVector,
     oldfirstterm::RealVector
   )
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
+    new(pstate, tune, ratio, μ, newinvtensor, oldinvtensor, newcholinvtensor, oldcholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
@@ -77,6 +81,7 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
     Array(eltype(pstate), pstate.size),
     Array(eltype(pstate), pstate.size, pstate.size),
     Array(eltype(pstate), pstate.size, pstate.size),
+    RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
     RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
     Array(eltype(pstate), pstate.size),
     Array(eltype(pstate), pstate.size)
@@ -135,6 +140,7 @@ function sampler_state(
 )
   sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  sstate.oldcholinvtensor = sqrt(sstate.tune.step)*chol(sstate.oldinvtensor, :L)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -147,6 +153,7 @@ function sampler_state(
 )
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  sstate.oldcholinvtensor = sqrt(sstate.tune.step)*chol(sstate.oldinvtensor, Val{:L})
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -177,15 +184,29 @@ end
 
 ## Reset sampler state
 
-function reset!{F<:VariateForm}(
+function reset!(
   sstate::SMMALAState,
-  pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
+  pstate::ParameterState{Continuous, Univariate},
+  parameter::Parameter{Continuous, Univariate},
   sampler::SMMALA,
   tuner::MCTuner
 )
   reset!(sstate.tune, sampler, tuner)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  sstate.oldcholinvtensor = sqrt(sstate.tune.step)*chol(sstate.oldinvtensor, :L)
+  sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
+end
+
+function reset!(
+  sstate::SMMALAState,
+  pstate::ParameterState{Continuous, Multivariate},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::SMMALA,
+  tuner::MCTuner
+)
+  reset!(sstate.tune, sampler, tuner)
+  sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  sstate.oldcholinvtensor = sqrt(sstate.tune.step)*chol(sstate.oldinvtensor, Val{:L})
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
 end
 
