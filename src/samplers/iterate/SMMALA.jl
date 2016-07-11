@@ -17,9 +17,15 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
   push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
 
   if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.oldcholinvtensor*randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.oldcholinvtensor*randn()))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.oldcholinvtensor*randn(_job.pstate.size)))
+    push!(
+      body,
+      :(
+        _job.sstate.pstate.value =
+          _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.oldcholinvtensor*randn(_job.pstate.size)
+      )
+    )
   end
 
   push!(body, :(_job.parameter.uptotensorlogtarget!(_job.sstate.pstate)))
@@ -35,8 +41,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       body,
       :(
         _job.sstate.ratio += (
-          log(_job.sstate.oldcholinvtensor)
-          +0.5*abs2(_job.sstate.pstate.value-_job.sstate.μ)*_job.pstate.tensorlogtarget/_job.sstate.tune.step
+          0.5*(
+            log(_job.sstate.tune.step*_job.sstate.oldinvtensor)
+            +abs2(_job.sstate.pstate.value-_job.sstate.μ)*_job.pstate.tensorlogtarget/_job.sstate.tune.step
+          )
         )
       )
     )
@@ -45,11 +53,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       body,
       :(
         _job.sstate.ratio += (
-          sum(log(diag(_job.sstate.oldcholinvtensor)))
-          +0.5*dot(
-            _job.sstate.pstate.value-_job.sstate.μ,
-            _job.pstate.tensorlogtarget*(_job.sstate.pstate.value-_job.sstate.μ)
-          )/_job.sstate.tune.step
+          0.5*(
+            logdet(_job.sstate.tune.step*_job.sstate.oldinvtensor)
+            +dot(
+              _job.sstate.pstate.value-_job.sstate.μ,
+              _job.pstate.tensorlogtarget*(_job.sstate.pstate.value-_job.sstate.μ)
+            )/_job.sstate.tune.step
+          )
         )
       )
     )
@@ -61,15 +71,17 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
 
-  push!(body, :(_job.sstate.newcholinvtensor = sqrt(_job.sstate.tune.step)*chol(_job.sstate.newinvtensor, Val{:L})))
+  push!(body, :(_job.sstate.newcholinvtensor = _job.sstate.sqrttunestep*chol(_job.sstate.newinvtensor, Val{:L})))
 
   if vform == Univariate
     push!(
       body,
       :(
         _job.sstate.ratio -= (
-          log(_job.sstate.newcholinvtensor)
-          +0.5*abs2(_job.pstate.value-_job.sstate.μ)*_job.sstate.pstate.tensorlogtarget/_job.sstate.tune.step
+          0.5*(
+            log(_job.sstate.tune.step*_job.sstate.newinvtensor)
+            +abs2(_job.pstate.value-_job.sstate.μ)*_job.sstate.pstate.tensorlogtarget/_job.sstate.tune.step
+          )
         )
       )
     )
@@ -78,11 +90,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       body,
       :(
         _job.sstate.ratio -= (
-          sum(log(diag(_job.sstate.newcholinvtensor)))
-          +0.5*dot(
-            _job.pstate.value-_job.sstate.μ,
-            _job.sstate.pstate.tensorlogtarget*(_job.pstate.value-_job.sstate.μ)
-          )/_job.sstate.tune.step
+          0.5*(
+            logdet(_job.sstate.tune.step*_job.sstate.newinvtensor)
+            +dot(
+              _job.pstate.value-_job.sstate.μ,
+              _job.sstate.pstate.tensorlogtarget*(_job.pstate.value-_job.sstate.μ)
+            )/_job.sstate.tune.step
+          )
         )
       )
     )
@@ -149,6 +163,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
 
     if isa(job.tuner, AcceptanceRateMCTuner)
       push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner)))
+      push!(burninbody, :(_job.sstate.sqrttunestep = sqrt(_job.sstate.tune.step)))
     end
 
     if job.tuner.verbose
