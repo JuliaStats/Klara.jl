@@ -10,7 +10,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in SMMALA code generation")
   end
 
-  if job.tuner.verbose
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
@@ -152,7 +152,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     push!(update, :(_job.pstate.diagnosticvalues[1] = true))
     push!(noupdate, :(_job.pstate.diagnosticvalues[1] = false))
   end
-  if job.tuner.verbose
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
     push!(update, :(_job.sstate.tune.accepted += 1))
   end
 
