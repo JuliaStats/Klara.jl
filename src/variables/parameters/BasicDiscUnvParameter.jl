@@ -163,7 +163,7 @@ value_support(::BasicDiscUnvParameter) = Discrete
 variate_form(::Type{BasicDiscUnvParameter}) = Univariate
 variate_form(::BasicDiscUnvParameter) = Univariate
 
-default_state_type(::BasicDiscUnvParameter) = :BasicDiscUnvParameterState
+default_state_type(::BasicDiscUnvParameter) = BasicDiscUnvParameterState
 
 default_state{N<:Integer}(variable::BasicDiscUnvParameter, value::N, outopts::Dict) =
   BasicDiscUnvParameterState(

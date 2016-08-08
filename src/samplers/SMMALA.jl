@@ -14,8 +14,7 @@ type UnvSMMALAState <: SMMALAState
   μ::Real
   newinvtensor::Real
   oldinvtensor::Real
-  newcholinvtensor::Real
-  oldcholinvtensor::Real
+  cholinvtensor::Real
   newfirstterm::Real
   oldfirstterm::Real
 
@@ -27,8 +26,7 @@ type UnvSMMALAState <: SMMALAState
     μ::Real,
     newinvtensor::Real,
     oldinvtensor::Real,
-    newcholinvtensor::Real,
-    oldcholinvtensor::Real,
+    cholinvtensor::Real,
     newfirstterm::Real,
     oldfirstterm::Real
   )
@@ -36,24 +34,12 @@ type UnvSMMALAState <: SMMALAState
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
       @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     end
-    new(
-      pstate,
-      tune,
-      sqrttunestep,
-      ratio,
-      μ,
-      newinvtensor,
-      oldinvtensor,
-      newcholinvtensor,
-      oldcholinvtensor,
-      newfirstterm,
-      oldfirstterm
-    )
+    new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
 UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
-  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
@@ -65,8 +51,7 @@ type MuvSMMALAState <: SMMALAState
   μ::RealVector
   newinvtensor::RealMatrix
   oldinvtensor::RealMatrix
-  newcholinvtensor::RealLowerTriangular
-  oldcholinvtensor::RealLowerTriangular
+  cholinvtensor::RealLowerTriangular
   newfirstterm::RealVector
   oldfirstterm::RealVector
 
@@ -78,8 +63,7 @@ type MuvSMMALAState <: SMMALAState
     μ::RealVector,
     newinvtensor::RealMatrix,
     oldinvtensor::RealMatrix,
-    newcholinvtensor::RealLowerTriangular,
-    oldcholinvtensor::RealLowerTriangular,
+    cholinvtensor::RealLowerTriangular,
     newfirstterm::RealVector,
     oldfirstterm::RealVector
   )
@@ -87,19 +71,7 @@ type MuvSMMALAState <: SMMALAState
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
       @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     end
-    new(
-      pstate,
-      tune,
-      sqrttunestep,
-      ratio,
-      μ,
-      newinvtensor,
-      oldinvtensor,
-      newcholinvtensor,
-      oldcholinvtensor,
-      newfirstterm,
-      oldfirstterm
-    )
+    new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
 
@@ -112,7 +84,6 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
     Array(eltype(pstate), pstate.size),
     Array(eltype(pstate), pstate.size, pstate.size),
     Array(eltype(pstate), pstate.size, pstate.size),
-    RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
     RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
     Array(eltype(pstate), pstate.size),
     Array(eltype(pstate), pstate.size)
@@ -172,7 +143,7 @@ function sampler_state(
   sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.oldcholinvtensor = chol(sstate.oldinvtensor, :L)
+  sstate.cholinvtensor = chol(sstate.oldinvtensor, :L)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -186,7 +157,7 @@ function sampler_state(
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.oldcholinvtensor = chol(sstate.oldinvtensor, Val{:L})
+  sstate.cholinvtensor = chol(sstate.oldinvtensor, Val{:L})
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -227,7 +198,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.oldcholinvtensor = chol(sstate.oldinvtensor, :L)
+  sstate.cholinvtensor = chol(sstate.oldinvtensor, :L)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
 end
 
@@ -241,7 +212,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.oldcholinvtensor = chol(sstate.oldinvtensor, Val{:L})
+  sstate.cholinvtensor = chol(sstate.oldinvtensor, Val{:L})
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
 end
 

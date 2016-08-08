@@ -640,7 +640,7 @@ value_support(::BasicContMuvParameter) = Continuous
 variate_form(::Type{BasicContMuvParameter}) = Multivariate
 variate_form(::BasicContMuvParameter) = Multivariate
 
-default_state_type(::BasicContMuvParameter) = :BasicContMuvParameterState
+default_state_type(::BasicContMuvParameter) = BasicContMuvParameterState
 
 default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopts::Dict) =
   BasicContMuvParameterState(

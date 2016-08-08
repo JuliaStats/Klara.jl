@@ -18,7 +18,7 @@ typealias ParameterVector{P<:Parameter} Vector{P}
 function codegen_setfield(parameter::Parameter, field::Symbol, f::Function)
   @gensym setfield
   quote
-    function $setfield($(Expr(:(::), :_state, default_state_type(parameter))), _states::VariableStateVector)
+    function $setfield(_state::$(default_state_type(parameter)), _states::VariableStateVector)
       setfield!($parameter, $(QuoteNode(field)), $f(_state, _states))
     end
   end
@@ -27,7 +27,7 @@ end
 function codegen_closure(parameter::Parameter, f::Function)
   @gensym closure
   quote
-    function $closure($(Expr(:(::), :_state, default_state_type(parameter))))
+    function $closure(_state::$(default_state_type(parameter)))
       $(f)(_state, $(parameter).states)
     end
   end
@@ -36,7 +36,7 @@ end
 function codegen_target_closure_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
   @gensym target_closure_via_distribution
   quote
-    function $target_closure_via_distribution($(Expr(:(::), :_state, default_state_type(parameter))))
+    function $target_closure_via_distribution(_state::$(default_state_type(parameter)))
       setfield!(_state, $(QuoteNode(field)), $(f)(getfield($parameter, $(QuoteNode(distribution))), _state.value))
     end
   end
@@ -58,7 +58,7 @@ function codegen_sumtarget_closure(
   @gensym sumtarget_closure
 
   quote
-    function $sumtarget_closure($(Expr(:(::), :_state, default_state_type(parameter))))
+    function $sumtarget_closure(_state::$(default_state_type(parameter)))
       $(body...)
     end
   end
@@ -76,7 +76,7 @@ function codegen_uptotarget_closures(parameter::Parameter, fields::Vector{Symbol
   @gensym uptotarget_closures
 
   quote
-    function $uptotarget_closures($(Expr(:(::), :_state, default_state_type(parameter))))
+    function $uptotarget_closures(_state::$(default_state_type(parameter)))
       $(body...)
     end
   end

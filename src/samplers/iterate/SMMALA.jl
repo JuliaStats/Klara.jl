@@ -17,14 +17,11 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
   push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
 
   if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.oldcholinvtensor*randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn()))
   elseif vform == Multivariate
     push!(
       body,
-      :(
-        _job.sstate.pstate.value =
-          _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.oldcholinvtensor*randn(_job.pstate.size)
-      )
+      :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn(_job.pstate.size))
     )
   end
 
@@ -70,8 +67,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
   push!(body, :(_job.sstate.newfirstterm = _job.sstate.newinvtensor*_job.sstate.pstate.gradlogtarget))
 
   push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
-
-  push!(body, :(_job.sstate.newcholinvtensor = _job.sstate.sqrttunestep*chol(_job.sstate.newinvtensor, Val{:L})))
 
   if vform == Univariate
     push!(
@@ -119,7 +114,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       push!(update, :(_job.pstate.tensorlogprior = _job.sstate.pstate.tensorlogprior))
     end
     push!(update, :(_job.sstate.oldinvtensor = _job.sstate.newinvtensor))
-    push!(update, :(_job.sstate.oldcholinvtensor = _job.sstate.newcholinvtensor))
+    push!(update, :(_job.sstate.cholinvtensor = chol(_job.sstate.newinvtensor, :L)))
     push!(update, :(_job.sstate.oldfirstterm = _job.sstate.newfirstterm))
   elseif vform == Multivariate
     push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
@@ -138,7 +133,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       push!(update, :(_job.pstate.tensorlogprior = copy(_job.sstate.pstate.tensorlogprior)))
     end
     push!(update, :(_job.sstate.oldinvtensor = copy(_job.sstate.newinvtensor)))
-    push!(update, :(_job.sstate.oldcholinvtensor = copy(_job.sstate.newcholinvtensor)))
+    push!(update, :(_job.sstate.cholinvtensor = chol(_job.sstate.newinvtensor, Val{:L})))
     push!(update, :(_job.sstate.oldfirstterm = copy(_job.sstate.newfirstterm)))
   end
   push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
