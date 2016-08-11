@@ -95,7 +95,7 @@ end
 add_edge!(m::GenericModel, d::Dependence) = add_edge!(m, source(d, m), target(d, m), d)
 add_edge!(m::GenericModel, u::Variable, v::Variable) = add_edge!(m, u, v, make_edge(m, u, v))
 
-function GenericModel(vs::VariableVector, ds::Vector{Dependence}=Dependence[]; isdirected::Bool=true, isindexed::Bool=true)
+function GenericModel(vs::VariableVector, ds::DependenceVector=Dependence[]; isdirected::Bool=true, isindexed::Bool=true)
   n = length(vs)
 
   m = GenericModel(

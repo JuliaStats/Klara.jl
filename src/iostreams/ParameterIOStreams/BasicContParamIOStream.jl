@@ -68,7 +68,7 @@ function BasicContParamIOStream(
   BasicContParamIOStream(
     size,
     n,
-    [isempty(filenames[i]) ? nothing : open(filenames[i], mode) for i in 1:14],
+    Union{IOStream, Void}[isempty(filenames[i]) ? nothing : open(filenames[i], mode) for i in 1:14],
     diagnostickeys,
     filenames
   )

@@ -105,6 +105,7 @@ export
   ContinuousParameterState,
   Data,
   Dependence,
+  DependenceVector,
   Deterministic,
   DiscMuvMarkovChain,
   DiscUnvMarkovChain,
