@@ -1,3 +1,8 @@
+### Reference:
+### Matti Vihola
+### Robust Adaptive Metropolis Algorithm with Coerced Acceptance Rate
+### Statistics and Computing, 2012, 22 (5), pp 997-1008
+
 ### Abstract RAM state
 
 abstract RAMState <: MCSamplerState

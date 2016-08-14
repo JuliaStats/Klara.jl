@@ -10,12 +10,12 @@ type BasicMCTune <: MCTunerState
   rate::Real # Observed acceptance rate over current tuning period
 
   function BasicMCTune(step::Real, accepted::Integer, proposed::Integer, totproposed::Integer, rate::Real)
-    @assert step > 0 "Stepsize of MCMC iteration should be positive"
+    @assert (step > 0 || isnan(step)) "Stepsize of MCMC iteration should be positive or not a number (NaN)"
     @assert accepted >= 0 "Number of accepted MCMC samples should be non-negative"
     @assert proposed >= 0 "Number of proposed MCMC samples should be non-negative"
     @assert totproposed >= 0 "Total number of proposed MCMC samples should be non-negative"
     if !isnan(rate)
-      @assert 0 < rate < 1 "Observed acceptance rate should be between 0 and 1"
+      @assert 0 <= rate <= 1 "Observed acceptance rate should be in [0, 1]"
     end
     new(step, accepted, proposed, totproposed, rate)
   end
