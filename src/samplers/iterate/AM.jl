@@ -1,12 +1,12 @@
-function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   result::Expr
   update = []
   noupdate = []
   body = []
 
   vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in MH code generation")
+  if vform != Multivariate
+    error("Only multivariate parameter states allowed in MH code generation")
   end
 
   push!(body, :(_job.sstate.count += 1))
@@ -15,22 +15,35 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.randnsample = randn()))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.randnsample = randn(_job.pstate.size)))
-  end
+  push!(
+    body,
+    :(
+      if _job.sstate.count > _job.sampler.t0
+        covariance!(
+          _job.sstate.C,
+          _job.sstate.C,
+          _job.sstate.count-2,
+          _job.pstate.value,
+          _job.sstate.lastmean,
+          _job.sstate.secondlastmean,
+          _job.pstate.size,
+          _job.sampler.sd,
+          _job.sampler.ε
+        )
+      end
+    )
+  )
 
-  push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sstate.S*_job.sstate.randnsample))
+  # Once fully migrated to Julia 0.5 or higher, use LinAlg.lowrankupdate instead of chol in order to reduce complexity
+  push!(body, :(_job.sstate.cholC = chol(_job.sstate.C, Val{:L})))
+
+  push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sstate.cholC*randn(_job.pstate.size)))
+
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
 
-  if vform == Univariate
-    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
-  elseif vform == Multivariate
-    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
-  end
+  push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
   push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
     push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
@@ -47,6 +60,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
   end
 
   push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+
+  push!(body, :(_job.sstate.secondlastmean = copy(_job.sstate.lastmean)))
+
+  push!(body, :(mean!(_job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
 
   if job.tuner.verbose
     fmt_iter = format_iteration(ndigits(job.range.burnin))
@@ -67,32 +84,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
         reset_burnin!(_job.sstate.tune)
       end
     ))
-  end
-
-  if vform == Univariate
-    push!(body, :(_job.sstate.η = min(1, _job.sstate.count^(-_job.sampler.γ))))
-
-    push!(body, :(_job.sstate.SST = _job.sstate.η*(min(1, exp(_job.sstate.ratio))-_job.sampler.targetrate)))
-
-    push!(body, :(_job.sstate.SST = abs2(_job.sstate.S)*(1+_job.sstate.SST)))
-
-    push!(body, :(_job.sstate.S = chol(_job.sstate.SST)))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.η = min(1, _job.pstate.size*_job.sstate.count^(-_job.sampler.γ))))
-
-    push!(
-      body,
-      :(
-        _job.sstate.SST = (
-          _job.sstate.randnsample*_job.sstate.randnsample'/dot(_job.sstate.randnsample, _job.sstate.randnsample)*
-          _job.sstate.η*(min(1, exp(_job.sstate.ratio))-_job.sampler.targetrate)
-        )
-      )
-    )
-
-    push!(body, :(_job.sstate.SST = _job.sstate.S*(eye(_job.pstate.size)+_job.sstate.SST)*_job.sstate.S'))
-
-    push!(body, :(_job.sstate.S = chol(_job.sstate.SST)'))
   end
 
   if !job.plain

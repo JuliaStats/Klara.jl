@@ -19,6 +19,7 @@ type UnvRAMState <: RAMState
   SST::Real
   randnsample::Real
   η::Real
+  count::Integer
 
   function UnvRAMState(
     pstate::ParameterState{Continuous, Univariate},
@@ -27,12 +28,13 @@ type UnvRAMState <: RAMState
     S::Real,
     SST::Real,
     randnsample::Real,
-    η::Real
+    η::Real,
+    count::Integer
   )
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, S, SST, randnsample, η)
+    new(pstate, tune, ratio, S, SST, randnsample, η, count)
   end
 end
 
@@ -42,7 +44,7 @@ UnvRAMState(
   S::Real=NaN,
   SST::Real=abs2(S)
 ) =
-  UnvRAMState(pstate, tune, NaN, S, SST, NaN, NaN)
+  UnvRAMState(pstate, tune, NaN, S, SST, NaN, NaN, 0)
 
 ## MuvRAMState holds the internal state ("local variables") of the RAM sampler for multivariate parameters
 
@@ -54,6 +56,7 @@ type MuvRAMState <: RAMState
   SST::RealMatrix
   randnsample::RealVector
   η::Real
+  count::Integer
 
   function MuvRAMState(
     pstate::ParameterState{Continuous, Multivariate},
@@ -62,12 +65,13 @@ type MuvRAMState <: RAMState
     S::RealMatrix,
     SST::RealMatrix,
     randnsample::RealVector,
-    η::Real
+    η::Real,
+    count::Integer
   )
     if !isnan(ratio)
       @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
     end
-    new(pstate, tune, ratio, S, SST, randnsample, η)
+    new(pstate, tune, ratio, S, SST, randnsample, η, count)
   end
 end
 
@@ -77,7 +81,7 @@ MuvRAMState(
   S::RealMatrix=Array(eltype(pstate), pstate.size, pstate.size),
   SST::RealMatrix=S*S'
 ) =
-  MuvRAMState(pstate, tune, NaN, S, SST, Array(eltype(pstate), pstate.size), NaN)
+  MuvRAMState(pstate, tune, NaN, S, SST, Array(eltype(pstate), pstate.size), NaN, 0)
 
 ### Robust adaptive Metropolis (RAM) sampler
 
@@ -127,7 +131,7 @@ sampler_state(sampler::RAM, tuner::MCTuner, pstate::ParameterState{Continuous, M
   MuvRAMState(
     generate_empty(pstate),
     tuner_state(sampler, tuner),
-    sampler.S0,
+    copy(sampler.S0),
     Array(eltype(pstate), pstate.size, pstate.size)
   )
 

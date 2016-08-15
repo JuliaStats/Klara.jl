@@ -18,6 +18,7 @@ import Base:
   keys,
   mark,
   mean,
+  mean!,
   open,
   rand,
   read!,
@@ -65,6 +66,8 @@ import ReverseDiffSource
 
 export
   ### Types
+  AM,
+  AMState,
   # AMWG,
   # AMWGJob,
   # AMWGState,
@@ -138,6 +141,7 @@ export
   MultivariateParameter,
   MultivariateParameterNState,
   MultivariateParameterState,
+  MuvAMState,
   MuvAMWGState,
   MuvHMCState,
   MuvMALAState,
@@ -180,6 +184,7 @@ export
   add_vertex!,
   codegen,
   count!,
+  covariance!,
   dataset,
   datasets,
   diagnostics,
@@ -297,6 +302,7 @@ include("tuners/RobertsRosenthalMCTuner.jl")
 include("samplers/samplers.jl")
 include("samplers/ARS.jl")
 include("samplers/MH.jl")
+include("samplers/AM.jl")
 include("samplers/RAM.jl")
 include("samplers/HMC.jl")
 include("samplers/MALA.jl")
@@ -310,6 +316,7 @@ include("jobs/BasicGibbsJob.jl")
 
 include("samplers/iterate/ARS.jl")
 include("samplers/iterate/MH.jl")
+include("samplers/iterate/AM.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/HMC.jl")
 include("samplers/iterate/MALA.jl")
@@ -317,10 +324,13 @@ include("samplers/iterate/SMMALA.jl")
 include("samplers/iterate/iterate.jl")
 
 include("stats/acceptance.jl")
+
 include("stats/mean.jl")
 
 include("stats/variance/mcvar.jl")
 include("stats/variance/zv.jl")
+
+include("stats/covariance.jl")
 
 include("stats/convergence/ess.jl")
 include("stats/convergence/iact.jl")
