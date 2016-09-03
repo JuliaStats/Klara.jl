@@ -34,7 +34,6 @@ job = BasicGibbsJob(
   vstate,
   outopts,
   true,
-  true,
   false,
   false
 )

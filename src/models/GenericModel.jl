@@ -1,13 +1,11 @@
-type GenericModel <: AbstractGraph{Variable, Dependence}
+type GenericModel
   is_directed::Bool
   vertices::Vector{Variable}           # An indexable container of vertices (variables)
   edges::Vector{Dependence}            # An indexable container of edges (dependencies)
   finclist::Vector{Vector{Dependence}} # Forward incidence list
   binclist::Vector{Vector{Dependence}} # Backward incidence list
-  ofkey::Dict{Symbol, Integer}             # Dictionary storing index of vertex (variable) of corresponding key
+  ofkey::Dict{Symbol, Integer}         # Dictionary storing index of vertex (variable) of corresponding key
 end
-
-@graph_implements GenericModel vertex_list edge_list
 
 Base.getindex(m::GenericModel, k::Symbol) = m.vertices[m.ofkey[k]]
 
@@ -31,11 +29,9 @@ indices(m::GenericModel) = indices(m.vertices)
 
 out_edges(v::Variable, m::GenericModel) = m.finclist[vertex_index(v, m)]
 out_degree(v::Variable, m::GenericModel) = length(out_edges(v, m))
-out_neighbors(v::Variable, m::GenericModel) = Graphs.TargetIterator(m, out_edges(v, m))
 
 in_edges(v::Variable, m::GenericModel) = m.binclist[vertex_index(v, m)]
 in_degree(v::Variable, m::GenericModel) = length(in_edges(v, m))
-in_neighbors(v::Variable, m::GenericModel) = Graphs.SourceIterator(m, in_edges(v, m))
 
 function add_vertex!(m::GenericModel, v::Variable, n::Integer=num_vertices(m)+1)
     push!(m.vertices, v)
@@ -102,8 +98,8 @@ function GenericModel(vs::VariableVector, ds::DependenceVector=Dependence[]; isd
     isdirected,
     Variable[],
     Dependence[],
-    Graphs.multivecs(Dependence, n),
-    Graphs.multivecs(Dependence, n),
+    multivecs(Dependence, n),
+    multivecs(Dependence, n),
     Dict{Symbol, Integer}()
   )
   if isindexed
@@ -129,8 +125,8 @@ function GenericModel(vs::VariableVector, ds::Vector{Dependence}, isdirected::Bo
     isdirected,
     Array(typeof(vs), n),
     Dependence[],
-    Graphs.multivecs(Dependence, n),
-    Graphs.multivecs(Dependence, n),
+    multivecs(Dependence, n),
+    multivecs(Dependence, n),
     Dict{Symbol, Integer}()
   )
 
@@ -158,36 +154,6 @@ function GenericModel(vs::Dict{Symbol, DataType}, ds::Dict{Symbol, Symbol}, isdi
   end
 
   return m
-end
-
-function Base.convert(::Type{GenericGraph}, m::GenericModel)
-  dict = Dict{KeyVertex{Symbol}, Integer}()
-  for v in values(m.ofkey)
-    dict[convert(KeyVertex, m.vertices[v])] = m.vertices[v].index
-  end
-
-  Graph{KeyVertex{Symbol}, Edge{KeyVertex{Symbol}}}(
-    is_directed(m),
-    convert(Vector{KeyVertex}, m.vertices),
-    convert(Vector{Edge}, m.edges),
-    Vector{Edge{KeyVertex{Symbol}}}[convert(Vector{Edge}, i) for i in m.finclist],
-    Vector{Edge{KeyVertex{Symbol}}}[convert(Vector{Edge}, i) for i in m.binclist],
-    dict
-  )
-end
-
-function topological_sort_by_dfs(m::GenericModel)
-  g = convert(GenericGraph, m)
-  ngvs = num_vertices(g)
-  mvs = Array(Variable, ngvs)
-
-  gvs = topological_sort_by_dfs(g)
-
-  for i in 1:ngvs
-    mvs[i] = m.vertices[gvs[i].index]
-  end
-
-  mvs
 end
 
 function Base.show(io::IO, model::GenericModel)

@@ -2,7 +2,6 @@ module Lora
 
 using Distributions
 using Formatting
-using Graphs
 using StatsBase
 
 import Base:
@@ -40,37 +39,12 @@ import Distributions:
 
 import ForwardDiff
 
-import Graphs:
-  add_edge!,
-  add_vertex!,
-  edge_index,
-  edges,
-  in_degree,
-  in_edges,
-  in_neighbors,
-  is_directed,
-  make_edge,
-  num_edges,
-  num_vertices,
-  out_degree,
-  out_edges,
-  out_neighbors,
-  revedge,
-  source,
-  target,
-  topological_sort_by_dfs,
-  vertex_index,
-  vertices
-
 import ReverseDiffSource
 
 export
   ### Types
   AM,
   AMState,
-  # AMWG,
-  # AMWGJob,
-  # AMWGState,
   ARS,
   ARSState,
   AcceptanceRateMCTuner,
@@ -213,6 +187,7 @@ export
   mcse,
   mcvar,
   model2dot,
+  multivecs,
   normalise,
   num_edges,
   num_vertices,
@@ -220,9 +195,9 @@ export
   out_edges,
   out_neighbors,
   output,
-  qzv,
   params,
   pdf,
+  qzv,
   rate!,
   reset!,
   reset_burnin!,
@@ -238,7 +213,6 @@ export
   source,
   succprob,
   target,
-  topological_sort_by_dfs,
   tune!,
   tuner_state,
   vertex_index,
@@ -312,7 +286,6 @@ include("samplers/AMWG.jl")
 include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
 include("jobs/BasicGibbsJob.jl")
-# include("jobs/AMWGJob.jl")
 
 include("samplers/iterate/ARS.jl")
 include("samplers/iterate/MH.jl")

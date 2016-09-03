@@ -21,9 +21,6 @@ is_indexed(v::Variable) = v.index > 0 ? true : false
 Base.keys(variables::VariableVector) = Symbol[v.key for v in variables]
 indices(variables::VariableVector) = Integer[v.index for v in variables]
 
-Base.convert(::Type{KeyVertex}, v::Variable) = KeyVertex{Symbol}(v.index, v.key)
-Base.convert(::Type{Vector{KeyVertex}}, v::Vector{Variable}) = KeyVertex{Symbol}[convert(KeyVertex, i) for i in v]
-
 sort_by_index(vs::VariableVector) = vs[[v.index for v in vs]]
 
 function default_state(v::Variable, v0, outopts::Dict=Dict())

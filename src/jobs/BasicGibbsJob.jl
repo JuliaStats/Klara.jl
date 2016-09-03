@@ -12,7 +12,6 @@ type BasicGibbsJob <: GibbsJob
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Integer # Number of dependent variables, i.e. length(dependent)
   count::Integer # Current number of post-burnin iterations
-  imperative::Bool # If imperative=true then traverse graph imperatively, else declaratively via topological sorting
   plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
   task::Union{Task, Void}
   verbose::Bool
@@ -30,7 +29,6 @@ type BasicGibbsJob <: GibbsJob
     range::BasicMCRange,
     vstate::VariableStateVector,
     outopts::Vector,
-    imperative::Bool,
     plain::Bool,
     verbose::Bool,
     check::Bool
@@ -50,41 +48,7 @@ type BasicGibbsJob <: GibbsJob
 
     instance.outopts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
 
-    if !imperative
-      idxs = [
-        model.ofkey[k]
-        for k in keys(topological_sort_by_dfs(GenericModel(vertices(model), edges(model), is_directed(model))))
-      ]
-      instance.dpindex = intersect(idxs, dpindex)
-
-      dpidxs = map(x -> findfirst(dpindex, x), instance.dpindex)
-
-      instance.dpjob = Array(Union{BasicMCJob, Void}, instance.ndp)
-      for i in 1:instance.ndp
-        idpjob = dpjob[dpidxs[i]]
-        instance.dpjob[i] =
-          if isa(idpjob, BasicMCJob)
-            BasicMCJob(
-              instance.model,
-              instance.dpindex[i],
-              idpjob.sampler,
-              idpjob.tuner,
-              idpjob.range,
-              instance.vstate,
-              idpjob.outopts,
-              idpjob.plain,
-              false
-            )
-          else
-            nothing
-          end
-      end
-
-      instance.outopts = instance.outopts[dpidxs]
-    end
-
     instance.range = range
-    instance.imperative = imperative
     instance.plain = plain
     instance.verbose = verbose
 
@@ -137,12 +101,11 @@ BasicGibbsJob(
   v0::VariableStateVector;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
-  imperative::Bool=true,
   plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 ) =
-  BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, plain, verbose, check)
 
 function BasicGibbsJob{S<:VariableState}(
   model::GenericModel,
@@ -151,7 +114,6 @@ function BasicGibbsJob{S<:VariableState}(
   v0::Dict{Symbol, S};
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
-  imperative::Bool=true,
   plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
@@ -172,7 +134,7 @@ function BasicGibbsJob{S<:VariableState}(
     vstate[model.ofkey[k]] = v
   end
 
-  BasicGibbsJob(model, dpindex, jobs, range, vstate, opts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, jobs, range, vstate, opts, plain, verbose, check)
 end
 
 function BasicGibbsJob(
@@ -182,13 +144,12 @@ function BasicGibbsJob(
   v0::Vector;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
-  imperative::Bool=true,
   plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, outopts, dpindex)
-  BasicGibbsJob(model, dpindex, dpjob, range, vstate, outopts, imperative, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, vstate, outopts, plain, verbose, check)
 end
 
 function BasicGibbsJob(
@@ -198,7 +159,6 @@ function BasicGibbsJob(
   v0::Dict;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
-  imperative::Bool=true,
   plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
@@ -215,7 +175,6 @@ function BasicGibbsJob(
     vstate,
     dpindex=dpindex,
     outopts=outopts,
-    imperative=imperative,
     plain=plain,
     verbose=verbose,
     check=check
@@ -444,7 +403,6 @@ function Base.show(io::IO, job::BasicGibbsJob)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
 
-  isimperative = job.imperative ? "imperative graph traversal" : "declarative graph traversal via topologically sorted nodes"
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
 
   indentation = "  "
@@ -462,7 +420,6 @@ function Base.show(io::IO, job::BasicGibbsJob)
   print(io, "\n"*indentation)
   show(io, job.range)
   println(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
-  print(io, indentation*"imperative = $(job.imperative) ($isimperative)")
 end
 
 Base.writemime(io::IO, ::MIME"text/plain", job::BasicGibbsJob) = show(io, job)

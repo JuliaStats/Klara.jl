@@ -10,10 +10,8 @@ tests =
     "ParameterNStates",
     "VariableIOStreams",
     "ParameterIOStreams",
-    "variables",
     "BasicContUnvParameter",
     "BasicContMuvParameter",
-    "dependencies",
     "GenericModel",
     "generators"
   ]
