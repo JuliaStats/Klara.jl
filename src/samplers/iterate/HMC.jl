@@ -3,6 +3,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
   update = []
   noupdate = []
   burninbody = []
+  ifburninbody = []
   body = []
 
   vform = variate_form(job.pstate)
@@ -10,9 +11,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in HMC code generation")
   end
 
-  stepsize = isa(job.tuner, AcceptanceRateMCTuner) ? :(_job.sstate.tune.step) : :(_job.sampler.leapstep)
+  if isa(job.tuner, DualAveragingMCTuner)
+    push!(body, :(_job.sstate.count += 1))
+  end
 
-  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) ||
+    isa(job.tuner, AcceptanceRateMCTuner) ||
+    (isa(job.tuner, DualAveragingMCTuner) && job.tuner.verbose)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
@@ -44,9 +49,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
     end
   end
 
+  if isa(job.tuner, DualAveragingMCTuner)
+    push!(body, :(_job.sstate.nleaps = max(1, Int(round(_job.sstate.tune.λ/_job.sstate.tune.step)))))
+  end
+
   push!(body, :(
-    for i in 1:_job.sampler.nleaps
-      leapfrog!(_job.sstate, _job.parameter, $(stepsize))
+    for i in 1:_job.sstate.nleaps
+      leapfrog!(_job.sstate, _job.parameter)
     end
   ))
 
@@ -54,7 +63,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.newhamiltonian = hamiltonian(_job.sstate.pstate.logtarget, _job.sstate.momentum)))
 
-  push!(body, :(_job.sstate.ratio = _job.sstate.oldhamiltonian-_job.sstate.newhamiltonian))
+  push!(body, :(_job.sstate.ratio = _job.sstate.newhamiltonian-_job.sstate.oldhamiltonian))
+
+  push!(body, :(_job.sstate.a = min(1., exp(_job.sstate.ratio))))
 
   if vform == Univariate
     push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
@@ -86,11 +97,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
     push!(update, :(_job.pstate.diagnosticvalues[1] = true))
     push!(noupdate, :(_job.pstate.diagnosticvalues[1] = false))
   end
-  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) ||
+    isa(job.tuner, AcceptanceRateMCTuner) ||
+    (isa(job.tuner, DualAveragingMCTuner) && job.tuner.verbose)
     push!(update, :(_job.sstate.tune.accepted += 1))
   end
 
-  push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+  push!(body, Expr(:if, :(rand() < _job.sstate.a), Expr(:block, update...), noupdate...))
 
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
     push!(burninbody, :(rate!(_job.sstate.tune)))
@@ -122,6 +135,39 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
         :if,
         :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
         Expr(:block, burninbody...)
+      )
+    )
+  elseif isa(job.tuner, DualAveragingMCTuner)
+    push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner, _job.sstate.count, _job.sstate.a)))
+
+    if job.tuner.verbose
+      fmt_iter = format_iteration(ndigits(job.tuner.nadapt))
+      fmt_perc = format_percentage()
+
+      push!(ifburninbody, :(rate!(_job.sstate.tune)))
+
+      push!(ifburninbody, :(println(
+        "Burnin iteration ",
+        $(fmt_iter)(_job.sstate.tune.totproposed),
+        " of ",
+        _job.tuner.nadapt,
+        ": ",
+        $(fmt_perc)(100*_job.sstate.tune.rate),
+        " % acceptance rate"
+      )))
+
+      push!(ifburninbody, :(reset_burnin!(_job.sstate.tune)))
+
+      push!(burninbody, Expr(:if, :(mod(_job.sstate.tune.proposed, _job.tuner.period) == 0), Expr(:block, ifburninbody...)))
+    end
+
+    push!(
+      body,
+      Expr(
+        :if,
+        :(_job.sstate.count <= _job.tuner.nadapt),
+        Expr(:block, burninbody...),
+        :(_job.sstate.tune.step = _job.sstate.tune.εbar)
       )
     )
   end

@@ -89,14 +89,17 @@ export
   DiscreteParameter,
   DiscreteParameterNState,
   DiscreteParameterState,
+  DualAveragingMCTuner,
   GenericModel,
   GibbsJob,
   HMC,
   HMCSampler,
+  HMCSamplerState,
   HMCState,
   Hyperparameter,
   IntegerVector,
   LMCSampler,
+  LMCSamplerState,
   MALA,
   MALAState,
   MCJob,
@@ -107,6 +110,7 @@ export
   MCTunerState,
   MH,
   MHSampler,
+  MHSamplerState,
   MHState,
   MarkovChain,
   MatrixvariateParameter,
@@ -127,6 +131,7 @@ export
   ParameterStateVector,
   ParameterVector,
   RAM,
+  RAMState,
   Random,
   RealMatrix,
   RealVector,
@@ -271,7 +276,7 @@ include("ranges/BasicMCRange.jl")
 include("tuners/tuners.jl")
 include("tuners/VanillaMCTuner.jl")
 include("tuners/AcceptanceRateMCTuner.jl")
-include("tuners/RobertsRosenthalMCTuner.jl")
+include("tuners/DualAveragingMCTuner.jl")
 
 include("samplers/samplers.jl")
 include("samplers/ARS.jl")
@@ -279,9 +284,9 @@ include("samplers/MH.jl")
 include("samplers/AM.jl")
 include("samplers/RAM.jl")
 include("samplers/HMC.jl")
+# include("samplers/NUTS.jl")
 include("samplers/MALA.jl")
 include("samplers/SMMALA.jl")
-include("samplers/AMWG.jl")
 
 include("jobs/jobs.jl")
 include("jobs/BasicMCJob.jl")
@@ -292,6 +297,7 @@ include("samplers/iterate/MH.jl")
 include("samplers/iterate/AM.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/HMC.jl")
+# include("samplers/iterate/NUTS.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/SMMALA.jl")
 include("samplers/iterate/iterate.jl")

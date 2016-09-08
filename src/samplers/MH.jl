@@ -2,7 +2,7 @@
 
 # MHState holds the internal state ("local variables") of the Metropolis-Hastings sampler
 
-type MHState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState
+type MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
   proposal::Distribution{F, S} # Proposal distribution
   pstate::ParameterState{S, F} # Parameter state used internally by MH
   tune::MCTunerState
@@ -10,7 +10,7 @@ type MHState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState
 
   function MHState(proposal::Distribution{F, S}, pstate::ParameterState{S, F}, tune::MCTunerState, ratio::Real)
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
     new(proposal, pstate, tune, ratio)
   end
@@ -24,7 +24,11 @@ MHState{S<:ValueSupport, F<:VariateForm}(
 ) =
   MHState{S, F}(proposal, pstate, tune, ratio)
 
-MHState(proposal::Distribution, pstate::ParameterState, tune::MCTunerState=BasicMCTune()) =
+MHState{S<:ValueSupport, F<:VariateForm}(
+  proposal::Distribution{F, S},
+  pstate::ParameterState{S, F},
+  tune::MCTunerState=BasicMCTune()
+) =
   MHState(proposal, pstate, tune, NaN)
 
 ### Metropolis-Hastings (MH) sampler
@@ -70,8 +74,14 @@ end
 
 ## Initialize MHState
 
-sampler_state(sampler::MH, tuner::MCTuner, pstate::ParameterState, vstate::VariableStateVector) =
-  MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(sampler, tuner))
+sampler_state{S<:ValueSupport, F<:VariateForm}(
+  parameter::Parameter{S, F},
+  sampler::MH,
+  tuner::MCTuner,
+  pstate::ParameterState{S, F},
+  vstate::VariableStateVector
+) =
+  MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
 
@@ -84,6 +94,15 @@ function reset!(pstate::MultivariateParameterState, x::RealVector, parameter::Mu
   pstate.value = copy(x)
   parameter.logtarget!(pstate)
 end
+
+reset!{S<:ValueSupport, F<:VariateForm}(
+  sstate::MHState{S, F},
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
+) =
+  reset!(sstate.tune, sampler, tuner)
 
 function Base.show(io::IO, sampler::MH)
   issymmetric = sampler.symmetric ? "symmetric" : "non-symmmetric"

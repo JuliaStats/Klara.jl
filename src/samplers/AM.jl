@@ -5,13 +5,13 @@
 
 ### Abstract AM state
 
-abstract AMState <: MCSamplerState
+abstract AMState{F<:VariateForm} <: MHSamplerState{F}
 
 ### AM state subtypes
 
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
-type MuvAMState <: AMState
+type MuvAMState <: AMState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by AM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
@@ -32,7 +32,7 @@ type MuvAMState <: AMState
     count::Integer
   )
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
     new(pstate, tune, ratio, lastmean, secondlastmean, C, cholC, count)
   end
@@ -84,10 +84,16 @@ end
 
 ## Initialize AM state
 
-sampler_state(sampler::AM, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}, vstate::VariableStateVector) =
+sampler_state(
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::AM,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::VariableStateVector
+) =
   MuvAMState(
     generate_empty(pstate),
-    tuner_state(sampler, tuner),
+    tuner_state(parameter, sampler, tuner),
     copy(pstate.value),
     copy(sampler.C0),
     RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size))
@@ -118,6 +124,7 @@ function reset!(
   sstate.lastmean = copy(pstate.value)
   sstate.C = copy(sampler.C0)
   sstate.cholC = chol(sstate.C, Val{:L})
+  sstate.count = 0
 end
 
 function covariance!(

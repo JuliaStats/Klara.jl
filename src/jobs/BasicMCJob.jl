@@ -71,7 +71,7 @@ type BasicMCJob <: MCJob
     end
     initialize!(instance.pstate, instance.parameter, sampler)
 
-    instance.sstate = sampler_state(sampler, tuner, instance.pstate, instance.vstate)
+    instance.sstate = sampler_state(instance.parameter, sampler, tuner, instance.pstate, instance.vstate)
 
     instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
     augment_parameter_outopts!(instance.outopts)

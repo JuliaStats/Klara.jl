@@ -2,14 +2,26 @@
 
 # ARSState holds the internal state ("local variables") of the acceptance-rejection sampler
 
-type ARSState <: MCSamplerState
-  pstate::ParameterState # Parameter state used internally by ARS
+type ARSState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState{F}
+  pstate::ParameterState{S, F} # Parameter state used internally by ARS
   tune::MCTunerState
   logproposal::Real
   weight::Real
 end
 
-ARSState(pstate::ParameterState, tune::MCTunerState=BasicMCTune()) = ARSState(pstate, tune, NaN, NaN)
+ARSState{S<:ValueSupport, F<:VariateForm}(
+  pstate::ParameterState{S, F},
+  tune::MCTunerState,
+  logproposal::Real,
+  weight::Real
+) =
+  ARSState{S, F}(pstate, tune, logproposal, weight)
+
+ARSState{S<:ValueSupport, F<:VariateForm}(
+  pstate::ParameterState{S, F},
+  tune::MCTunerState=BasicMCTune()
+) =
+  ARSState(pstate, tune, NaN, NaN)
 
 ### Acceptance-rejection sampler (ARS)
 
@@ -41,8 +53,14 @@ end
 
 ## Initialize ARSState
 
-sampler_state(sampler::ARS, tuner::MCTuner, pstate::ParameterState, vstate::VariableStateVector) =
-  ARSState(generate_empty(pstate), tuner_state(sampler, tuner))
+sampler_state{S<:ValueSupport, F<:VariateForm}(
+  parameter::Parameter{S, F},
+  sampler::ARS,
+  tuner::MCTuner,
+  pstate::ParameterState{S, F},
+  vstate::VariableStateVector
+) =
+  ARSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
 
@@ -65,6 +83,15 @@ function reset!(
   pstate.value = copy(x)
   parameter.logtarget!(pstate)
 end
+
+reset!{S<:ValueSupport, F<:VariateForm}(
+  sstate::ARSState{S, F},
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
+) =
+  reset!(sstate.tune, sampler, tuner)
 
 Base.show(io::IO, sampler::ARS) =
   print(io, "ARS sampler: proposal scale = $(sampler.proposalscale), jump scale = $(sampler.jumpscale)")

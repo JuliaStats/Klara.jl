@@ -1,12 +1,12 @@
 ### Abstract MALA state
 
-abstract MALAState <: MCSamplerState
+abstract MALAState{F<:VariateForm} <: LMCSamplerState{F}
 
 ### MALA state subtypes
 
 ## UnvMALAState holds the internal state ("local variables") of the MALA sampler for univariate parameters
 
-type UnvMALAState <: MALAState
+type UnvMALAState <: MALAState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
@@ -14,7 +14,7 @@ type UnvMALAState <: MALAState
 
   function UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState, ratio::Real, μ::Real)
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
     new(pstate, tune, ratio, μ)
   end
@@ -25,7 +25,7 @@ UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=
 
 ## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
-type MuvMALAState <: MALAState
+type MuvMALAState <: MALAState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
@@ -33,7 +33,7 @@ type MuvMALAState <: MALAState
 
   function MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState, ratio::Real, μ::RealVector)
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
     new(pstate, tune, ratio, μ)
   end
@@ -71,11 +71,23 @@ end
 
 ## Initialize MALA state
 
-sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Univariate}, vstate::VariableStateVector) =
-  UnvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
+sampler_state(
+  parameter::Parameter{Continuous, Univariate},
+  sampler::MALA,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::VariableStateVector
+) =
+  UnvMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
-sampler_state(sampler::MALA, tuner::MCTuner, pstate::ParameterState{Continuous, Multivariate}, vstate::VariableStateVector) =
-  MuvMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
+sampler_state(
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::MALA,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::VariableStateVector
+) =
+  MuvMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
 

@@ -1,12 +1,12 @@
 ### Abstract SMMALA state
 
-abstract SMMALAState <: MCSamplerState
+abstract SMMALAState{F<:VariateForm} <: LMCSamplerState{F}
 
 ### SMMALA state subtypes
 
 ## UnvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for univariate parameters
 
-type UnvSMMALAState <: SMMALAState
+type UnvSMMALAState <: SMMALAState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   sqrttunestep::Real
@@ -31,9 +31,9 @@ type UnvSMMALAState <: SMMALAState
     oldfirstterm::Real
   )
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
-      @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
@@ -43,7 +43,7 @@ UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerStat
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
-type MuvSMMALAState <: SMMALAState
+type MuvSMMALAState <: SMMALAState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   sqrttunestep::Real
@@ -68,9 +68,9 @@ type MuvSMMALAState <: SMMALAState
     oldfirstterm::RealVector
   )
     if !isnan(ratio)
-      @assert 0 < ratio < 1 "Acceptance ratio should be between 0 and 1"
-      @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+      @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
@@ -135,12 +135,13 @@ end
 ## Initialize SMMALA state
 
 function sampler_state(
+  parameter::Parameter{Continuous, Univariate},
   sampler::SMMALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
-  sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
+  sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
   sstate.cholinvtensor = chol(sstate.oldinvtensor, :L)
@@ -149,12 +150,13 @@ function sampler_state(
 end
 
 function sampler_state(
+  parameter::Parameter{Continuous, Multivariate},
   sampler::SMMALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
 )
-  sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(sampler, tuner))
+  sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
   sstate.cholinvtensor = chol(sstate.oldinvtensor, Val{:L})
@@ -189,7 +191,7 @@ end
 ## Reset sampler state
 
 function reset!(
-  sstate::SMMALAState,
+  sstate::UnvSMMALAState,
   pstate::ParameterState{Continuous, Univariate},
   parameter::Parameter{Continuous, Univariate},
   sampler::SMMALA,
@@ -203,7 +205,7 @@ function reset!(
 end
 
 function reset!(
-  sstate::SMMALAState,
+  sstate::MuvSMMALAState,
   pstate::ParameterState{Continuous, Multivariate},
   parameter::Parameter{Continuous, Multivariate},
   sampler::SMMALA,
