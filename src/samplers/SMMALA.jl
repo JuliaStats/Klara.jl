@@ -33,7 +33,9 @@ type UnvSMMALAState <: SMMALAState{Univariate}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+    if !isnan(sqrttunestep)
+      @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+    end
     new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end
@@ -70,7 +72,9 @@ type MuvSMMALAState <: SMMALAState{Multivariate}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+    if !isnan(sqrttunestep)
+      @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
+    end
     new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
   end
 end

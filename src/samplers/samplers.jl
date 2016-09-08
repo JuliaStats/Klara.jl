@@ -82,6 +82,8 @@ function initialize_step!(
   initialize_step!(sstate, parameter, sampler, tuner)
 end
 
+tuner_state(parameter::Parameter, sampler::MCSampler, tuner::VanillaMCTuner) = BasicMCTune(NaN, 0, 0, tuner.period)
+
 tuner_state(parameter::Parameter, sampler::MHSampler, tuner::VanillaMCTuner) = BasicMCTune(1., 0, 0, tuner.period)
 
 tuner_state(parameter::Parameter, sampler::HMCSampler, tuner::VanillaMCTuner) =
