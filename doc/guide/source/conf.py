@@ -260,7 +260,7 @@ latex_logo = 'figures/logo.png'
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index',
-      'lorajl',
+      'klarajl',
       u'Klara.jl Documentation',
       [u'JuliaStats Team'],
       1
