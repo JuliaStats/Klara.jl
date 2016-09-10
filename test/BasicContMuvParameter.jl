@@ -1,6 +1,6 @@
 using Base.Test
 using Distributions
-using Lora
+using Klara
 
 fields = Dict{Symbol, Symbol}(
   :pdf=>:pdf,

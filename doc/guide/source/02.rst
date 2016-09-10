@@ -8,9 +8,9 @@ Variable States
 Rationale behind states
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Being geared towards statistics, ``Lora`` variables include parameters, data, transformations and constants, the specifics of
+Being geared towards statistics, ``Klara`` variables include parameters, data, transformations and constants, the specifics of
 which will be delineated in :ref:`variables`. A variable, be it stochastic or deterministic, can take a value, that is it can
-have a *state*. Variables and their states are maintained in two distinct type systems in ``Lora``.
+have a *state*. Variables and their states are maintained in two distinct type systems in ``Klara``.
 
 The functionality of a variable is enclosed by its type instance. For a example, a typical parameter consists of its
 probability distribution, log-likelihood or log-prior fields.
@@ -20,8 +20,8 @@ information. For example, the value of a parameter's log-likelihood and associat
 state types exist to accommodate such states that comprise two or more entities.
 
 From an object-oriented programming (OOP) standpoint, variable types correspond to methods while variable state types
-constitute data members. ``Lora`` does not merge the functional and data components into a single type, which would had been
-the analogous of a class in OOP terms. The main reasoning behind Lora's compartmentalization of variables and their states is
+constitute data members. ``Klara`` does not merge the functional and data components into a single type, which would had been
+the analogous of a class in OOP terms. The main reasoning behind Klara's compartmentalization of variables and their states is
 code reusability. For instance, it becomes possible for different variables to share the same state type; more generally,
 adhering to Julia's multiple dispatch is facilitated.
 
@@ -35,7 +35,7 @@ Built-in states
 
 The state type system comprises two abstract and other non-abstract types. :numref:`_builtin_states_listing` displays the
 hierarchy of built-in state types. The two abstract types are ``VariableState`` and its sub-type ``ParameterState``. The
-non-abstract states put forward sensible defaults aimed at covering conventional use-cases. ``Lora``’s existing functionality
+non-abstract states put forward sensible defaults aimed at covering conventional use-cases. ``Klara``’s existing functionality
 relies on these defaults, yet it is possible to extend the package by defining custom state types.
 
 Variable states are categorized as univariate or multivariate. Parameter states are further classified as discrete or
@@ -49,7 +49,7 @@ associated methods will be elaborated in the following sections.
 
 .. code-block:: none
   :name: _builtin_states_listing
-  :caption: State type hierarchy in ``Lora``
+  :caption: State type hierarchy in ``Klara``
 
   VariableState
   |
@@ -77,7 +77,7 @@ Abstract states
 The type system of ``VariateForm`` and ``ValueSupport`` from ``Distributions``
 (see :numref:`_variateform_valuesupport_types` and associated
 `documentation <http://distributionsjl.readthedocs.io/en/latest/types.html>`_ in ``Distributions``) is used for
-parameterizing abstract states in ``Lora``.
+parameterizing abstract states in ``Klara``.
 
 .. code-block:: julia
   :name: _variateform_valuesupport_types
@@ -92,7 +92,7 @@ parameterizing abstract states in ``Lora``.
   type Discrete   <: ValueSupport end
   type Continuous <: ValueSupport end
 
-``VariableState`` is the root of ``Lora``’s variable state type hierarchy. It is defined as
+``VariableState`` is the root of ``Klara``’s variable state type hierarchy. It is defined as
 
 .. code-block:: julia
 
@@ -101,7 +101,7 @@ parameterizing abstract states in ``Lora``.
 Being parameterized by ``VariateForm``, the abstract type ``VariableState`` enables distinguishing between univariate,
 multivariate and matrix-variate variable states.
 
-``ParameterState`` is the root of ``Lora``’s parameter state types and an abstract sub-type of ``VariableState``. It is
+``ParameterState`` is the root of ``Klara``’s parameter state types and an abstract sub-type of ``VariableState``. It is
 defined as
 
 .. code-block:: julia
@@ -116,7 +116,7 @@ state space and the variate form.
 Basic variable states
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-``Lora`` ships with three so-called basic variable state types, namely ``BasicUnvVariableState``, ``BasicMuvVariableState``
+``Klara`` ships with three so-called basic variable state types, namely ``BasicUnvVariableState``, ``BasicMuvVariableState``
 and ``BasicMavVariableState``. These three types are used for encapsulating minimal information, that is the ``value`` of a
 variable state and possibly the associated ``size`` of ``value``.
 
@@ -124,7 +124,7 @@ Each of these three basic state types corresponds to a specific variate form, wh
 support of state space. Instead, each of them is parameterized by the type of ``Number`` of their ``value`` field, see
 :numref:`_variable_states`.
 
-.. table:: Basic variable states in ``Lora``.
+.. table:: Basic variable states in ``Klara``.
    :name: _variable_states
    
    +----------------------------------+----------------+-----------------+
@@ -151,7 +151,7 @@ BasicUnvVariableState
   .. code-block:: julia
    
     state = BasicUnvVariableState(1.)
-    # Lora.BasicUnvVariableState{Float64}(1.0)
+    # Klara.BasicUnvVariableState{Float64}(1.0)
      
     state.value
     # 1.0
@@ -168,7 +168,7 @@ BasicMuvVariableState
   .. code-block:: julia
    
     state = BasicMuvVariableState([1, 2])
-    # Lora.BasicMuvVariableState{Int64}([1, 2], 2)
+    # Klara.BasicMuvVariableState{Int64}([1, 2], 2)
      
     state.value
     #  2-element Array{Int64, 1}:
@@ -187,7 +187,7 @@ BasicMuvVariableState
   .. code-block:: julia
    
     BasicMuvVariableState(3, Float32)
-    # Lora.BasicMuvVariableState{Float32}(3-element Array{Float32, 1}, 2)
+    # Klara.BasicMuvVariableState{Float32}(3-element Array{Float32, 1}, 2)
     
 BasicMavVariableState
 ------------------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ BasicMavVariableState
   .. code-block:: julia
    
     state = BasicMavVariableState(eye(2))
-    # Lora.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
+    # Klara.BasicMavVariableState{Float64}(2x2 Array{Float64, 2}, (2, 2))
      
     state.value
     #  2x2 Array{Float64, 2}:
@@ -220,18 +220,18 @@ BasicMavVariableState
   .. code-block:: julia
    
     BasicMavVariableState((3, 2), Float32)
-    # Lora.BasicMavVariableState{Int16}(3x2 Array{Float32, 2}, (3, 2))
+    # Klara.BasicMavVariableState{Int16}(3x2 Array{Float32, 2}, (3, 2))
 
 .. _basic_parameter_states:
 
 Basic parameter states
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Four basic parameter state types are made available by ``Lora``, namely the discrete univariate
+Four basic parameter state types are made available by ``Klara``, namely the discrete univariate
 ``BasicDiscUnvParameterState``, discrete multivariate ``BasicDiscMuvParameterState``, continuous univariate
 ``BasicContUnvParameterState`` and continuous multivariate ``BasicContMuvParameterState``, see :numref:`_parameter_states`.
 
-.. table:: Basic parameter states in ``Lora``.
+.. table:: Basic parameter states in ``Klara``.
    :name: _parameter_states
    
    +---------------------------------------------------+--------------+--------------+
@@ -265,7 +265,7 @@ of the likelihood function and prior PDF evaluated at ``state.value``. Apparentl
 ``state.loglikelihood`` and ``state.logprior``.
 
 .. tabularcolumns:: |p{3cm}|p{2.4cm}|p{2.4cm}|p{2.4cm}|p{2.4cm}|
-.. table:: Fields of basic parameter state types in ``Lora``. All four types are parameterized by ``NI<:Integer`` or
+.. table:: Fields of basic parameter state types in ``Klara``. All four types are parameterized by ``NI<:Integer`` or
    ``NR<:Real``.
    :name: _parameter_state_fields
    
@@ -342,7 +342,7 @@ diagnostics but are maintained in two separate vectors to improve MCMC performan
 
   Return the dictionary of ``state`` diagnostics arising from ``state.diagnostickeys`` and ``state.diagnosticvalues``.
 
-The constructors of ``Lora``’s basic parameter state types are elucidated in the remaining of this section.
+The constructors of ``Klara``’s basic parameter state types are elucidated in the remaining of this section.
 
 BasicDiscUnvParameterState
 ------------------------------------------------------------------------------------------
@@ -364,7 +364,7 @@ BasicDiscUnvParameterState
   .. code-block:: julia
    
     state = BasicDiscUnvParameterState(2, [:accept], Float64, [true])
-    # Lora.BasicDiscUnvParameterState{Int64, Float64}(
+    # Klara.BasicDiscUnvParameterState{Int64, Float64}(
     #   2, NaN, NaN, NaN, Bool[true], [:accept]
     # )
      
@@ -395,7 +395,7 @@ BasicDiscMuvParameterState
   .. code-block:: julia
    
     state = BasicDiscMuvParameterState(Int64[0, 1], [:accept], Float64, [false])
-    # Lora.BasicDiscMuvParameterState{Int64, Float64}(
+    # Klara.BasicDiscMuvParameterState{Int64, Float64}(
     #   [0, 1], NaN, NaN, NaN, Bool[false], 2, [:accept]
     # )
      
@@ -426,7 +426,7 @@ BasicDiscMuvParameterState
   .. code-block:: julia
   
     BasicDiscMuvParameterState(3, [:accept], Int32, Float32, [true])
-    # Lora.BasicDiscMuvParameterState{Int32, Float32}(
+    # Klara.BasicDiscMuvParameterState{Int32, Float32}(
     #   3-element Array{Int32, 1}, NaN32, NaN32, NaN32, Bool[true], 3, [:accept]
     # )
 
@@ -447,7 +447,7 @@ BasicContUnvParameterState
   .. code-block:: julia
    
     state = BasicContUnvParameterState(-1.25, [:accept], [false])
-    # Lora.BasicContUnvParameterState{Float64}(
+    # Klara.BasicContUnvParameterState{Float64}(
     #   -1.25,
     #   NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,
     #   Bool[false], [:accept]
@@ -475,7 +475,7 @@ BasicContUnvParameterState
   .. code-block:: julia
    
     BasicContUnvParameterState()
-    # Lora.BasicContUnvParameterState{Float64}(
+    # Klara.BasicContUnvParameterState{Float64}(
     #   NaN,
     #   NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN,
     #   Any[], Symbol[]
@@ -500,7 +500,7 @@ BasicContMuvParameterState
   .. code-block:: julia
    
     state = BasicContMuvParameterState(ones(Float32, 2))
-    # Lora.BasicContMuvParameterState{Float32}(
+    # Klara.BasicContMuvParameterState{Float32}(
     #   Float32[1.0f0, 1.0f0],
     #   NaN32, NaN32, NaN32,
     #   Float32[], Float32[], Float32[],
@@ -540,7 +540,7 @@ BasicContMuvParameterState
     state = BasicContMuvParameterState(
       zeros(Float64, 2), [:logtarget, :gradlogtarget]
     )
-    # Lora.BasicContMuvParameterState{Float64}(
+    # Klara.BasicContMuvParameterState{Float64}(
     #   [0.0, 0.0],
     #   NaN, NaN, NaN,
     #   Float64[], Float64[], 2-element Array{Float64, 1},
@@ -572,7 +572,7 @@ BasicContMuvParameterState
   .. code-block:: julia
 
     state = BasicContMuvParameterState(3)
-    # Lora.BasicContMuvParameterState{Float64}(
+    # Klara.BasicContMuvParameterState{Float64}(
     #   3-element Array{Float64, 1},
     #   NaN, NaN, NaN,
     #   Float64[], Float64[], Float64[],
@@ -605,7 +605,7 @@ BasicContMuvParameterState
     BasicContMuvParameterState(
       3, [:loglikelihood, :logtarget], [:accept], Float16, [true]
     )
-    # Lora.BasicContMuvParameterState{Float16}(
+    # Klara.BasicContMuvParameterState{Float16}(
     #   3-element Array{Float16, 1}
     #   NaN16, NaN16, NaN16,
     #   Float16[], Float16[], Float16[],

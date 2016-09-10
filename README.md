@@ -1,17 +1,17 @@
-Lora.jl
+Klara.jl
 ==============================
 
-[![Build Status](https://travis-ci.org/JuliaStats/Lora.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Lora.jl)
-[![Lora](http://pkg.julialang.org/badges/Lora_0.4.svg)](http://pkg.julialang.org/?pkg=Lora&ver=0.4)
-[![Lora](http://pkg.julialang.org/badges/Lora_0.5.svg)](http://pkg.julialang.org/?pkg=Lora&ver=0.5)
+[![Build Status](https://travis-ci.org/JuliaStats/Klara.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Klara.jl)
+[![Klara](http://pkg.julialang.org/badges/Klara_0.4.svg)](http://pkg.julialang.org/?pkg=Klara&ver=0.4)
+[![Klara](http://pkg.julialang.org/badges/Klara_0.5.svg)](http://pkg.julialang.org/?pkg=Klara&ver=0.5)
 [![Docs](https://readthedocs.org/projects/lorajl/badge/?version=latest)](http://lorajl.readthedocs.org/en/latest/)
-[![Stories in In Progress](https://badge.waffle.io/JuliaStats/Lora.jl.svg?label=In%20Progress&title=In%20Progress)](http://waffle.io/JuliaStats/Lora.jl)
+[![Stories in In Progress](https://badge.waffle.io/JuliaStats/Klara.jl.svg?label=In%20Progress&title=In%20Progress)](http://waffle.io/JuliaStats/Klara.jl)
 
-[![Throughput Graph](https://graphs.waffle.io/JuliaStats/Lora.jl/throughput.svg)](https://waffle.io/JuliaStats/Lora.jl/metrics)
+[![Throughput Graph](https://graphs.waffle.io/JuliaStats/Klara.jl/throughput.svg)](https://waffle.io/JuliaStats/Klara.jl/metrics)
 
-The Julia *Lora* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
+The Julia *Klara* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
 
-*Lora* has undergone a major upgrade. Some of its recent changes include:
+*Klara* has undergone a major upgrade. Some of its recent changes include:
 
 * Models are represented internally by graphs.
 * Memory allocation and garbage collection have been reduced by using mutating functions associated with targets.
@@ -23,14 +23,14 @@ Some of the old one has not been fully ported. The full porting of old functiona
 be completed shortly. Progress is being tracked systematically via issues and milestones.
 
 The documentation is out of date, but will be brought up-to-date fairly soon. In the meantime, this README file provides a
-few examples of the new interface, explaining how to get up to speed with the new face of Lora. More examples can be found
+few examples of the new interface, explaining how to get up to speed with the new face of Klara. More examples can be found
 in doc/examples.
 
 Example: sampling from an unnormalized normal target
 ------------------------------
 
 ```julia
-using Lora
+using Klara
 
 ### Define the log-target as a function (generic or anonymous):
 
@@ -184,7 +184,7 @@ chain = output(job)
 To run a sampler which requires the gradient of the log-target, such as MALA, try
 
 ```julia
-using Lora
+using Klara
 
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
@@ -239,7 +239,7 @@ The examples below demonstrates how to run MCMC using automatic differentiation 
 To use forward mode AD, try the following:
 
 ```julia
-using Lora
+using Klara
 
 plogtarget(z::Vector) = -dot(z, z)
 
@@ -269,7 +269,7 @@ explicitly; instead, the optional argument `autodiff=:forward` enables computing
 To employ reverse mode AD, try
 
 ```julia
-using Lora
+using Klara
 
 plogtarget(z::Vector) = -dot(z, z)
 
@@ -301,7 +301,7 @@ Finally, it is possible to run reverse mode AD by passing an expression for the 
 log-prior) instead of a function. An example follows where the log-target is specified via an expression:
 
 ```julia
-using Lora
+using Klara
 
 p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, ones(2))])
 

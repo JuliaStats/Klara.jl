@@ -1,5 +1,5 @@
 using Distributions
-using Lora
+using Klara
 
 ρ = Hyperparameter(:ρ, 1)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Lora.jl documentation build configuration file, created by
+# Klara.jl documentation build configuration file, created by
 # sphinx-quickstart on Wed Oct 29 10:51:54 2014.
 #
 # This file is execfile()d with the current directory set to its
@@ -50,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Lora'
+project = u'Klara'
 copyright = u'2016, JuliaStats Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -189,7 +189,7 @@ html_static_path = ['.static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Lorajldoc'
+htmlhelp_basename = 'Klarajldoc'
 
 # If true, figures, tables and code-blocks are automatically numbered if they have a caption
 numfig = True
@@ -226,8 +226,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('texindex',
-    'LoraUserGuide.tex',
-    u'Lora User Guide',
+    'KlaraUserGuide.tex',
+    u'Klara User Guide',
     u'JuliaStats Team',
     'manual'
   ),
@@ -261,7 +261,7 @@ latex_logo = 'figures/logo.png'
 man_pages = [
     ('index',
       'lorajl',
-      u'Lora.jl Documentation',
+      u'Klara.jl Documentation',
       [u'JuliaStats Team'],
       1
     )
@@ -278,10 +278,10 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index',
-    'Lorajl',
-    u'Lora.jl Documentation',
+    'Klarajl',
+    u'Klara.jl Documentation',
     u'JuliaStats Team',
-    'Lorajl',
+    'Klarajl',
     'One line description of project.',
     'Miscellaneous'
   ),

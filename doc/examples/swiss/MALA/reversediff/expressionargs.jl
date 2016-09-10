@@ -1,4 +1,4 @@
-using Lora
+using Klara
 
 covariates, = dataset("swiss", "measurements")
 ndata, npars = size(covariates)

@@ -1,4 +1,4 @@
-using Lora
+using Klara
 
 println("    Testing likelihood_model generator...")
 

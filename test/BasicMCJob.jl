@@ -1,5 +1,5 @@
 using Base.Test
-using Lora
+using Klara
 
 # println("    Testing BasicMCJob constructors...")
 
@@ -45,7 +45,7 @@ acceptance(chain)
 
 # Example 2: univariate parameter
 
-# using Lora
+# using Klara
 
 p = BasicContUnvParameter(:p, 1, signature=:low, logtarget=(state, states) -> state.logtarget = -abs2(state.value))
 model = likelihood_model([p])

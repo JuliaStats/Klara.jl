@@ -1,4 +1,4 @@
-using Lora
+using Klara
 
 println("    Testing GenericModel constructors...")
 

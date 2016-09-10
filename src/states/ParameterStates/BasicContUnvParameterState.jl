@@ -26,7 +26,7 @@ Construct a basic continuous univariate parameter state with an uninitialized ``
 
 ```julia
 julia> state = BasicContUnvParameterState(-1.25, [:accept], [false])
-Lora.BasicContUnvParameterState{Float64}(-1.25,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,Bool[false],[:accept])
+Klara.BasicContUnvParameterState{Float64}(-1.25,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,Bool[false],[:accept])
 
 julia> state.value
 -1.25

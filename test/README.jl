@@ -1,4 +1,4 @@
-using Lora
+using Klara
 
 ### Define the log-target as a function (generic or anonymous):
 

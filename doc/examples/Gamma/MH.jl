@@ -1,7 +1,7 @@
 ### https://darrenjw.wordpress.com/2012/06/04/metropolis-hastings-mcmc-when-the-proposal-and-target-have-differing-support/
 
 using Distributions
-using Lora
+using Klara
 
 plogtarget(p::Float64, v::Vector) = (v[1]-1)*log(p)-p/v[2]
 

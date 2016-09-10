@@ -1,6 +1,6 @@
 .. _user_guide_index_html:
     
-Lora User Guide
+Klara User Guide
 ==========================================================================================
 
 .. toctree::

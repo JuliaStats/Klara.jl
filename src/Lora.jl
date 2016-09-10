@@ -1,4 +1,4 @@
-module Lora
+module Klara
 
 using Distributions
 using Formatting

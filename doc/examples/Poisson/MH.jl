@@ -1,4 +1,4 @@
-using Lora
+using Klara
 
 plogtarget(p::Int, v::Vector) = p*log(v[1])-log(factorial(p))
 

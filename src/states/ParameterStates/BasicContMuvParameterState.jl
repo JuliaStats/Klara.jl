@@ -51,7 +51,7 @@ fields specified by ``monitor``.
 
 ```julia
 julia> state = BasicContMuvParameterState(zeros(Float64, 2), [:logtarget])
-Lora.BasicContMuvParameterState{Float64}([0.0,0.0],NaN,NaN,NaN,Float64[],Float64[],Float64[],0x0 Array{Float64,2},0x0 Array{Float64,2},0x0 Array{Float64,2},0x0x0 Array{Float64,3},0x0x0 Array{Float64,3},0x0x0 Array{Float64,3},Any[],2,Symbol[])
+Klara.BasicContMuvParameterState{Float64}([0.0,0.0],NaN,NaN,NaN,Float64[],Float64[],Float64[],0x0 Array{Float64,2},0x0 Array{Float64,2},0x0 Array{Float64,2},0x0x0 Array{Float64,3},0x0x0 Array{Float64,3},0x0x0 Array{Float64,3},Any[],2,Symbol[])
 
 julia> state.value
 2-element Array{Float64,1}:

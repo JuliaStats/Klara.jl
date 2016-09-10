@@ -1,5 +1,5 @@
 using Base.Test
-using Lora
+using Klara
 
 fnames = (
   :value,

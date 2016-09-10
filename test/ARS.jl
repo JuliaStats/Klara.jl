@@ -1,7 +1,7 @@
 using Base.Test
 using Distributions
 # using Gadfly
-using Lora
+using Klara
 
 # Target distribution shape, unscaled
 g(x) = exp(-dot(x, x)/2)

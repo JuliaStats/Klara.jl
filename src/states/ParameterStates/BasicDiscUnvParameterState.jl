@@ -17,7 +17,7 @@ Construct a basic discrete univariate parameter state with some ``value``.
 
 ```julia
 julia> state = BasicDiscUnvParameterState(2, [:accept], Float64, [true])
-Lora.BasicDiscUnvParameterState{Int64,Float64}(2,NaN,NaN,NaN,Bool[true],[:accept])
+Klara.BasicDiscUnvParameterState{Int64,Float64}(2,NaN,NaN,NaN,Bool[true],[:accept])
 
 julia> state.value
 2

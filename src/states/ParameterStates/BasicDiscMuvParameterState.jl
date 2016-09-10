@@ -28,7 +28,7 @@ Construct a basic discrete multivariate parameter state with with a ``value`` of
 
 ```julia
 julia> state = BasicDiscMuvParameterState(Int64[0, 1], [:accept], Float64, [false])
-Lora.BasicDiscMuvParameterState{Int64,Float64}([0,1],NaN,NaN,NaN,Bool[false],2,[:accept])
+Klara.BasicDiscMuvParameterState{Int64,Float64}([0,1],NaN,NaN,NaN,Bool[false],2,[:accept])
 
 julia> state.value
 2-element Array{Int64,1}:

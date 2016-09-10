@@ -1,5 +1,5 @@
 using Base.Test
-using Lora
+using Klara
 
 println("    Testing VanillaMCTuner constructors...")
 

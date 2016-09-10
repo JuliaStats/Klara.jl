@@ -22,7 +22,7 @@ Construct a basic univariate variable state with some ``value``.
 
 ```julia
 julia> state = BasicUnvVariableState(1.)
-Lora.BasicUnvVariableState{Float64}(1.0)
+Klara.BasicUnvVariableState{Float64}(1.0)
 
 julia> state.value
 1.0
@@ -56,7 +56,7 @@ Construct a basic multivariate variable state with a ``value`` of specified ``si
 
 ```julia
 julia> state = BasicMuvVariableState([1, 2])
-Lora.BasicMuvVariableState{Int64}([1,2],2)
+Klara.BasicMuvVariableState{Int64}([1,2],2)
 
 julia> state.value
 2-element Array{Int64,1}:
@@ -101,7 +101,7 @@ Construct a basic matrix-variate variable state with a ``value`` of specified ``
 
 ```julia
 julia> state = BasicMavVariableState(eye(2))
-Lora.BasicMavVariableState{Float64}(2x2 Array{Float64,2}:
+Klara.BasicMavVariableState{Float64}(2x2 Array{Float64,2}:
  1.0  0.0
  0.0  1.0,(2,2))
 
