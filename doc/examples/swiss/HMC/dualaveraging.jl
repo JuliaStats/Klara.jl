@@ -33,7 +33,7 @@ mcrange = BasicMCRange(nsteps=10000, burnin=5000)
 
 v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
-tuner = DualAveragingMCTuner(0.47, 1000, verbose=true)
+tuner = DualAveragingMCTuner(0.651, 10000, verbose=true)
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
