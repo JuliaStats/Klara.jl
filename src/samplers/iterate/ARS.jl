@@ -16,7 +16,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{ARS}, job::BasicMCJob)
   if vform == Univariate
     push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sampler.jumpscale*randn()))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sampler.jumpscale*randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.pstate.value[:] = _job.pstate.value+_job.sampler.jumpscale*randn(_job.pstate.size)))
   end
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))

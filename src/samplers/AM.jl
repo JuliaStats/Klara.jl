@@ -34,6 +34,7 @@ type MuvAMState <: AMState{Multivariate}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
     new(pstate, tune, ratio, lastmean, secondlastmean, C, cholC, count)
   end
 end
@@ -123,7 +124,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.lastmean = copy(pstate.value)
   sstate.C = copy(sampler.C0)
-  sstate.cholC = chol(sstate.C, Val{:L})
+  sstate.cholC[:, :] = chol(sstate.C, Val{:L})
   sstate.count = 0
 end
 

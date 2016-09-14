@@ -26,17 +26,6 @@ abstract HMCSampler <: MCSampler
 
 abstract LMCSampler <: MCSampler
 
-### Code generation of sampler fields
-
-function codegen_setfield(sampler::MCSampler, field::Symbol, f::Function)
-  @gensym setfield
-  quote
-    function $setfield(_state, _states::VariableStateVector)
-      setfield!($sampler, $(QuoteNode(field)), $(f)(_state, _states))
-    end
-  end
-end
-
 function initialize_step!{F<:VariateForm}(
   sstate::HMCSamplerState{F},
   parameter::Parameter{Continuous, F},
@@ -45,7 +34,7 @@ function initialize_step!{F<:VariateForm}(
 )
   sstate.oldhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
 
-  leapfrog!(sstate, parameter)
+  leapfrog!(sstate, sstate.tune.step, parameter.gradlogtarget!)
   sstate.newhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
 
   sstate.ratio = sstate.newhamiltonian-sstate.oldhamiltonian
@@ -67,7 +56,7 @@ function initialize_step!(
   tuner::DualAveragingMCTuner,
   momentum::Real
 )
-  sstate.momentum = momentum # randn()
+  sstate.momentum = momentum
   initialize_step!(sstate, parameter, sampler, tuner)
 end
 
@@ -78,7 +67,7 @@ function initialize_step!(
   tuner::DualAveragingMCTuner,
   momentum::RealVector
 )
-  sstate.momentum = momentum
+  sstate.momentum[:] = momentum
   initialize_step!(sstate, parameter, sampler, tuner)
 end
 
@@ -121,3 +110,29 @@ reset!{S<:ValueSupport, F<:VariateForm}(
   tuner::MCTuner
 ) =
   reset!(sstate.tune, sampler, tuner)
+
+hamiltonian(logtarget::Real, momentum::Real) = logtarget-0.5*abs2(momentum)
+
+hamiltonian(logtarget::Real, momentum::RealVector) = logtarget-0.5*dot(momentum, momentum)
+
+function leapfrog!(
+  sstate::HMCSamplerState{Univariate},
+  step::Real,
+  gradlogtarget!::Function
+)
+  sstate.momentum += 0.5*step*sstate.pstate.gradlogtarget
+  sstate.pstate.value += step*sstate.momentum
+  gradlogtarget!(sstate.pstate)
+  sstate.momentum += 0.5*step*sstate.pstate.gradlogtarget
+end
+
+function leapfrog!(
+  sstate::HMCSamplerState{Multivariate},
+  step::Real,
+  gradlogtarget!::Function
+)
+  sstate.momentum[:] += 0.5*step*sstate.pstate.gradlogtarget
+  sstate.pstate.value[:] += step*sstate.momentum
+  gradlogtarget!(sstate.pstate)
+  sstate.momentum[:] += 0.5*step*sstate.pstate.gradlogtarget
+end

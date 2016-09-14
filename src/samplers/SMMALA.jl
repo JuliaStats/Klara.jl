@@ -129,7 +129,7 @@ function initialize!(
 )
   parameter.uptotensorlogtarget!(pstate)
   if sampler.transform != nothing
-    pstate.tensorlogtarget = sampler.transform(pstate.tensorlogtarget)
+    pstate.tensorlogtarget[:, :] = sampler.transform(pstate.tensorlogtarget)
   end
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
@@ -162,9 +162,9 @@ function sampler_state(
 )
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
-  sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor = chol(sstate.oldinvtensor, Val{:L})
-  sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
+  sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
+  sstate.cholinvtensor[:, :] = chol(sstate.oldinvtensor, Val{:L})
+  sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
 
@@ -217,9 +217,9 @@ function reset!(
 )
   reset!(sstate.tune, sampler, tuner)
   sstate.sqrttunestep = sqrt(sstate.tune.step)
-  sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor = chol(sstate.oldinvtensor, Val{:L})
-  sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
+  sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
+  sstate.cholinvtensor[:, :] = chol(sstate.oldinvtensor, Val{:L})
+  sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
 end
 
 Base.show(io::IO, sampler::SMMALA) = print(io, "SMMALA sampler: drift step = $(sampler.driftstep)")

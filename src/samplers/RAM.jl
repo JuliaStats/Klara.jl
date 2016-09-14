@@ -34,6 +34,7 @@ type UnvRAMState <: RAMState{Univariate}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
     new(pstate, tune, ratio, S, SST, randnsample, η, count)
   end
 end
@@ -52,7 +53,7 @@ type MuvRAMState <: RAMState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by RAM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
-  S::RealMatrix
+  S::RealLowerTriangular
   SST::RealMatrix
   randnsample::RealVector
   η::Real
@@ -62,7 +63,7 @@ type MuvRAMState <: RAMState{Multivariate}
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
-    S::RealMatrix,
+    S::RealLowerTriangular,
     SST::RealMatrix,
     randnsample::RealVector,
     η::Real,
@@ -71,6 +72,7 @@ type MuvRAMState <: RAMState{Multivariate}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
     new(pstate, tune, ratio, S, SST, randnsample, η, count)
   end
 end
@@ -78,7 +80,7 @@ end
 MuvRAMState(
   pstate::ParameterState{Continuous, Multivariate},
   tune::MCTunerState=BasicMCTune(),
-  S::RealMatrix=Array(eltype(pstate), pstate.size, pstate.size),
+  S::RealLowerTriangular=RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
   SST::RealMatrix=S*S'
 ) =
   MuvRAMState(pstate, tune, NaN, S, SST, Array(eltype(pstate), pstate.size), NaN, 0)
@@ -86,11 +88,11 @@ MuvRAMState(
 ### Robust adaptive Metropolis (RAM) sampler
 
 immutable RAM <: MHSampler
-  S0::RealMatrix # Initial adaptation matrix
+  S0::RealLowerTriangular # Initial adaptation matrix
   targetrate::Real # Target acceptance rate
   γ::Real # Exponent for scaling stepsize η
 
-  function RAM(S0::RealMatrix, targetrate::Real, γ::Real)
+  function RAM(S0::RealLowerTriangular, targetrate::Real, γ::Real)
     @assert all(i -> i > 0, diag(S0)) "All diagonal elements of initial adaptation matrix must be positive"
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1"
     @assert 0.5 < γ <= 1 "Exponent of stepsize must be greater than 0.5 and less or equal to 1"
@@ -98,9 +100,9 @@ immutable RAM <: MHSampler
   end
 end
 
-RAM(S0::RealMatrix; targetrate::Real=0.234, γ::Real=0.7) = RAM(S0, targetrate, γ)
+RAM(S0::RealMatrix; targetrate::Real=0.234, γ::Real=0.7) = RAM(RealLowerTriangular(S0), targetrate, γ)
 
-RAM(S0::RealVector; targetrate::Real=0.234, γ::Real=0.7) = RAM(diagm(S0), targetrate, γ)
+RAM(S0::RealVector; targetrate::Real=0.234, γ::Real=0.7) = RAM(RealLowerTriangular(diagm(S0)), targetrate, γ)
 
 RAM(S0::Real=1., n::Integer=1; targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(S0, n), targetrate=targetrate, γ=γ)
 
@@ -171,14 +173,27 @@ end
 
 ## Reset sampler state
 
-function reset!{F<:VariateForm}(
-  sstate::RAMState{F},
-  pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
+function reset!(
+  sstate::RAMState{Univariate},
+  pstate::ParameterState{Continuous, Univariate},
+  parameter::Parameter{Continuous, Univariate},
   sampler::RAM,
   tuner::MCTuner
 )
   reset!(sstate.tune, sampler, tuner)
+  sstate.S = sampler.S0[1, 1]
+  sstate.count = 0
+end
+
+function reset!(
+  sstate::RAMState{Multivariate},
+  pstate::ParameterState{Continuous, Multivariate},
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::RAM,
+  tuner::MCTuner
+)
+  reset!(sstate.tune, sampler, tuner)
+  sstate.S = copy(sampler.S0)
   sstate.count = 0
 end
 

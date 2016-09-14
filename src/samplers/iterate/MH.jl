@@ -15,7 +15,11 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.proposal = _job.sampler.setproposal(_job.pstate)))
 
-  push!(body, :(_job.sstate.pstate.value =  rand(_job.sstate.proposal)))
+  if vform == Univariate
+    push!(body, :(_job.sstate.pstate.value =  rand(_job.sstate.proposal)))
+  elseif vform == Multivariate
+    push!(body, :(_job.sstate.pstate.value[:] =  rand(_job.sstate.proposal)))
+  end
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 

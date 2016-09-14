@@ -14,12 +14,12 @@ function codegen(::Type{Val{:iterate}}, ::Type{MALA}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
-
   if vform == Univariate
+    push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
     push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn()))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.μ[:] = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
+    push!(body, :(_job.sstate.pstate.value[:] = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn(_job.pstate.size)))
   end
 
   push!(body, :(_job.parameter.uptogradlogtarget!(_job.sstate.pstate)))
@@ -28,15 +28,11 @@ function codegen(::Type{Val{:iterate}}, ::Type{MALA}, job::BasicMCJob)
 
   if vform == Univariate
     push!(body, :(_job.sstate.ratio += 0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step)))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
-  end
-
-  push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
-
-  if vform == Univariate
+    push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
     push!(body, :(_job.sstate.ratio -= 0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step)))
   elseif vform == Multivariate
+    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
+    push!(body, :(_job.sstate.μ[:] = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
     push!(body, :(_job.sstate.ratio -= sum(0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step))))
   end
 

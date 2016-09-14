@@ -34,6 +34,7 @@ type UnvHMCState <: HMCState{Univariate}
     if !isnan(a)
       @assert 0 <= a <= 1 "Acceptance probability should be in [0, 1]"
     end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
     new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count)
   end
 end
@@ -71,6 +72,7 @@ type MuvHMCState <: HMCState{Multivariate}
     if !isnan(a)
       @assert 0 <= a <= 1 "Acceptance probability should be in [0, 1]"
     end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
     new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count)
   end
 end
@@ -218,21 +220,6 @@ function reset!(
   initialize_step!(sstate, parameter, sampler, tuner, randn(sstate.pstate.size))
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate.count = 0
-end
-
-### Compute Hamiltonian
-
-hamiltonian(logtarget::Real, momentum::Real) = logtarget-0.5*abs2(momentum)
-
-hamiltonian(logtarget::Real, momentum::RealVector) = logtarget-0.5*dot(momentum, momentum)
-
-### Perform leapfrog iteration
-
-function leapfrog!{F<:VariateForm}(sstate::HMCState, parameter::Parameter{Continuous, F})
-  sstate.momentum += 0.5*sstate.tune.step*sstate.pstate.gradlogtarget
-  sstate.pstate.value += sstate.tune.step*sstate.momentum
-  parameter.gradlogtarget!(sstate.pstate)
-  sstate.momentum += 0.5*sstate.tune.step*sstate.pstate.gradlogtarget
 end
 
 Base.show(io::IO, sampler::HMC) =

@@ -17,11 +17,12 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
 
   if vform == Univariate
     push!(body, :(_job.sstate.randnsample = randn()))
+    push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sstate.S*_job.sstate.randnsample))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.randnsample = randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.randnsample[:] = randn(_job.pstate.size)))
+    push!(body, :(_job.sstate.pstate.value[:] = _job.pstate.value+_job.sstate.S*_job.sstate.randnsample))
   end
 
-  push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sstate.S*_job.sstate.randnsample))
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
@@ -83,16 +84,16 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
     push!(
       body,
       :(
-        _job.sstate.SST = (
+        _job.sstate.SST[:, :] = (
           _job.sstate.randnsample*_job.sstate.randnsample'/dot(_job.sstate.randnsample, _job.sstate.randnsample)*
           _job.sstate.η*(min(1, exp(_job.sstate.ratio))-_job.sampler.targetrate)
         )
       )
     )
 
-    push!(body, :(_job.sstate.SST = _job.sstate.S*(eye(_job.pstate.size)+_job.sstate.SST)*_job.sstate.S'))
+    push!(body, :(_job.sstate.SST[:, :] = _job.sstate.S*(eye(_job.pstate.size)+_job.sstate.SST)*_job.sstate.S'))
 
-    push!(body, :(_job.sstate.S = chol(_job.sstate.SST)'))
+    push!(body, :(_job.sstate.S[:, :] = chol(_job.sstate.SST, Val{:L})))
   end
 
   if !job.plain

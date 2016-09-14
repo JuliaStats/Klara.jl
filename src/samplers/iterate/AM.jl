@@ -35,9 +35,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   )
 
   # Once fully migrated to Julia 0.5 or higher, use LinAlg.lowrankupdate instead of chol in order to reduce complexity
-  push!(body, :(_job.sstate.cholC = chol(_job.sstate.C, Val{:L})))
+  push!(body, :(_job.sstate.cholC[:, :] = chol(_job.sstate.C, Val{:L})))
 
-  push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sstate.cholC*randn(_job.pstate.size)))
+  push!(body, :(_job.sstate.pstate.value[:] = _job.pstate.value+_job.sstate.cholC*randn(_job.pstate.size)))
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
