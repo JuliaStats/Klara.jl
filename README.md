@@ -19,7 +19,7 @@ The Julia *Klara* package provides a generic engine for Markov Chain Monte Carlo
 * Automatic differentiation is available allowing to choose between forward mode and reverse mode (the latter relying
 on source transformation).
 
-Some of the old one has not been fully ported. The full porting of old functionality, as well as further developments, will
+Some of the old code has not been fully ported. The full porting of old functionality, as well as further developments, will
 be completed shortly. Progress is being tracked systematically via issues and milestones.
 
 The documentation is out of date, but will be brought up-to-date fairly soon. In the meantime, this README file provides a
