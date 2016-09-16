@@ -77,7 +77,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
 
     push!(body, :(_job.sstate.SST = abs2(_job.sstate.S)*(1+_job.sstate.SST)))
 
-    push!(body, :(_job.sstate.S = chol(_job.sstate.SST)))
+    push!(body, :(_job.sstate.S = chol(Hermitian(_job.sstate.SST))))
   elseif vform == Multivariate
     push!(body, :(_job.sstate.η = min(1, _job.pstate.size*_job.sstate.count^(-_job.sampler.γ))))
 
@@ -93,7 +93,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
 
     push!(body, :(_job.sstate.SST[:, :] = _job.sstate.S*(eye(_job.pstate.size)+_job.sstate.SST)*_job.sstate.S'))
 
-    push!(body, :(_job.sstate.S[:, :] = chol(_job.sstate.SST, Val{:L})))
+    push!(body, :(_job.sstate.S[:, :] = ctranspose(chol(Hermitian(_job.sstate.SST)))))
   end
 
   if !job.plain
