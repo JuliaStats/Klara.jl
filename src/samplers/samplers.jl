@@ -34,7 +34,7 @@ function initialize_step!{F<:VariateForm}(
 )
   sstate.oldhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
 
-  leapfrog!(sstate, sstate.tune.step, parameter.gradlogtarget!)
+  leapfrog!(sstate, parameter.gradlogtarget!)
   sstate.newhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
 
   sstate.ratio = sstate.newhamiltonian-sstate.oldhamiltonian
@@ -42,7 +42,7 @@ function initialize_step!{F<:VariateForm}(
 
   while exp(sstate.ratio)^sstate.a > 2^(-sstate.a)
     sstate.tune.step = (2^sstate.a)*sstate.tune.step
-    leapfrog!(sstate, parameter)
+    leapfrog!(sstate, parameter.gradlogtarget!)
     sstate.newhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
 
     sstate.ratio = sstate.newhamiltonian-sstate.oldhamiltonian
@@ -116,23 +116,30 @@ hamiltonian(logtarget::Real, momentum::Real) = logtarget-0.5*abs2(momentum)
 hamiltonian(logtarget::Real, momentum::RealVector) = logtarget-0.5*dot(momentum, momentum)
 
 function leapfrog!(
-  sstate::HMCSamplerState{Univariate},
+  pstate::ParameterState{Continuous, Univariate},
+  pstate0::ParameterState{Continuous, Univariate},
+  momentum0::Real,
   step::Real,
   gradlogtarget!::Function
 )
-  sstate.momentum += 0.5*step*sstate.pstate.gradlogtarget
-  sstate.pstate.value += step*sstate.momentum
-  gradlogtarget!(sstate.pstate)
-  sstate.momentum += 0.5*step*sstate.pstate.gradlogtarget
+  local momentum::Real
+
+  momentum = momentum0+0.5*step*pstate0.gradlogtarget
+  pstate.value = pstate0.value+step*momentum
+  gradlogtarget!(pstate)
+  momentum = momentum+0.5*step*pstate.gradlogtarget
+
+  return momentum
 end
 
 function leapfrog!(
-  sstate::HMCSamplerState{Multivariate},
+  pstate::ParameterState{Continuous, Multivariate},
+  momentum::RealVector,
   step::Real,
   gradlogtarget!::Function
 )
-  sstate.momentum[:] += 0.5*step*sstate.pstate.gradlogtarget
-  sstate.pstate.value[:] += step*sstate.momentum
-  gradlogtarget!(sstate.pstate)
-  sstate.momentum[:] += 0.5*step*sstate.pstate.gradlogtarget
+  momentum[:] += 0.5*step*pstate.gradlogtarget
+  pstate.value[:] += step*momentum
+  gradlogtarget!(pstate)
+  momentum[:] += 0.5*step*pstate.gradlogtarget
 end

@@ -147,7 +147,7 @@ function sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
-  sstate = MuvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), 0)
+  sstate = UnvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), 0)
   initialize_step!(sstate, parameter, sampler, tuner, randn())
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate
@@ -221,6 +221,12 @@ function reset!(
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate.count = 0
 end
+
+leapfrog!(sstate::HMCState{Univariate}, gradlogtarget!::Function) =
+  sstate.momentum = leapfrog!(sstate.pstate, sstate.pstate, sstate.momentum, sstate.tune.step, gradlogtarget!)
+
+leapfrog!(sstate::HMCState{Multivariate}, gradlogtarget!::Function) =
+  leapfrog!(sstate.pstate, sstate.momentum, sstate.tune.step, gradlogtarget!)
 
 Base.show(io::IO, sampler::HMC) =
   print(io, "HMC sampler: number of leaps = $(sampler.nleaps), leap step = $(sampler.leapstep)")

@@ -32,32 +32,35 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
   if vform == Univariate
     push!(body, :(_job.sstate.pstate.value = _job.pstate.value))
     push!(body, :(_job.sstate.pstate.gradlogtarget = _job.pstate.gradlogtarget))
-    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(body, :(_job.sstate.pstate.gradloglikelihood = _job.pstate.gradloglikelihood))
-    end
-    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(body, :(_job.sstate.pstate.gradlogprior = _job.pstate.gradlogprior))
-    end
   elseif vform == Multivariate
     push!(body, :(_job.sstate.pstate.value = copy(_job.pstate.value)))
     push!(body, :(_job.sstate.pstate.gradlogtarget = copy(_job.pstate.gradlogtarget)))
-    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(body, :(_job.sstate.pstate.gradloglikelihood = copy(_job.pstate.gradloglikelihood)))
-    end
-    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(body, :(_job.sstate.pstate.gradlogprior = copy(_job.pstate.gradlogprior)))
-    end
   end
 
   if isa(job.tuner, DualAveragingMCTuner)
     push!(body, :(_job.sstate.nleaps = max(1, Int(round(_job.sstate.tune.λ/_job.sstate.tune.step)))))
   end
 
-  push!(body, :(
-    for i in 1:_job.sstate.nleaps
-      leapfrog!(_job.sstate, _job.sstate.tune.step, _job.parameter.gradlogtarget!)
-    end
-  ))
+  if vform == Univariate
+    push!(body, :(
+      for i in 1:_job.sstate.nleaps
+        _job.sstate.momentum =
+          leapfrog!(
+            _job.sstate.pstate,
+            _job.sstate.pstate,
+            _job.sstate.momentum,
+            _job.sstate.tune.step,
+            _job.parameter.gradlogtarget!
+          )
+      end
+    ))
+  elseif vform == Multivariate
+    push!(body, :(
+      for i in 1:_job.sstate.nleaps
+        leapfrog!(_job.sstate.pstate, _job.sstate.momentum, _job.sstate.tune.step, _job.parameter.gradlogtarget!)
+      end
+    ))
+  end
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
