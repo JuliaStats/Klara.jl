@@ -93,7 +93,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
 
     push!(body, :(_job.sstate.SST[:, :] = _job.sstate.S*(eye(_job.pstate.size)+_job.sstate.SST)*_job.sstate.S'))
 
-    push!(body, :(_job.sstate.S[:, :] = chol(_job.sstate.SST, Val{:L})))
+    push!(body, :(_job.sstate.S[:, :] = ctranspose(chol(_job.sstate.SST))))
   end
 
   if !job.plain
