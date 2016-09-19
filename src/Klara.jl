@@ -123,7 +123,10 @@ export
   MuvAMWGState,
   MuvHMCState,
   MuvMALAState,
+  MuvNUTSState,
   MuvSMMALAState,
+  NUTS,
+  NUTSState,
   Parameter,
   ParameterIOStream,
   ParameterNState,
@@ -284,7 +287,7 @@ include("samplers/MH.jl")
 include("samplers/AM.jl")
 include("samplers/RAM.jl")
 include("samplers/HMC.jl")
-# include("samplers/NUTS.jl")
+include("samplers/NUTS.jl")
 include("samplers/MALA.jl")
 include("samplers/SMMALA.jl")
 
@@ -297,7 +300,7 @@ include("samplers/iterate/MH.jl")
 include("samplers/iterate/AM.jl")
 include("samplers/iterate/RAM.jl")
 include("samplers/iterate/HMC.jl")
-# include("samplers/iterate/NUTS.jl")
+include("samplers/iterate/NUTS.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/SMMALA.jl")
 include("samplers/iterate/iterate.jl")
