@@ -57,7 +57,14 @@ function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
   elseif vform == Multivariate
     push!(body, :(
       for i in 1:_job.sstate.nleaps
-        leapfrog!(_job.sstate.pstate, _job.sstate.momentum, _job.sstate.tune.step, _job.parameter.gradlogtarget!)
+        leapfrog!(
+          _job.sstate.pstate,
+          _job.sstate.momentum,
+          _job.sstate.pstate,
+          _job.sstate.momentum,
+          _job.sstate.tune.step,
+          _job.parameter.gradlogtarget!
+        )
       end
     ))
   end

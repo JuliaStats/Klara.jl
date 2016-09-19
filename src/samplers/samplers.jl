@@ -135,11 +135,13 @@ end
 function leapfrog!(
   pstate::ParameterState{Continuous, Multivariate},
   momentum::RealVector,
+  pstate0::ParameterState{Continuous, Multivariate},
+  momentum0::RealVector,
   step::Real,
   gradlogtarget!::Function
 )
-  momentum[:] += 0.5*step*pstate.gradlogtarget
-  pstate.value[:] += step*momentum
+  momentum[:] = momentum0+0.5*step*pstate0.gradlogtarget
+  pstate.value[:] = pstate0.value+step*momentum
   gradlogtarget!(pstate)
-  momentum[:] += 0.5*step*pstate.gradlogtarget
+  momentum[:] = momentum+0.5*step*pstate.gradlogtarget
 end
