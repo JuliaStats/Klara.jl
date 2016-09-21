@@ -23,6 +23,7 @@ type MuvNUTSState <: NUTSState{Multivariate}
   s::Bool
   sprime::Bool
   sdprime::Bool
+  update::Bool
   count::Integer
 
   function MuvNUTSState(
@@ -48,6 +49,7 @@ type MuvNUTSState <: NUTSState{Multivariate}
     s::Bool,
     sprime::Bool,
     sdprime::Bool,
+    update::Bool,
     count::Integer
   )
     if !isnan(ratio)
@@ -80,6 +82,7 @@ type MuvNUTSState <: NUTSState{Multivariate}
       s,
       sprime,
       sdprime,
+      update,
       count
     )
   end
@@ -106,6 +109,7 @@ MuvNUTSState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
     0,
     0,
     0,
+    true,
     true,
     true,
     true,

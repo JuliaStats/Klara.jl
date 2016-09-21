@@ -1,8 +1,7 @@
 function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   result::Expr
   whilebody = []
-  update = []
-  noupdate = []
+  ifwhilebody = []
   burninbody = []
   ifburninbody = []
   body = []
@@ -45,6 +44,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   push!(body, :(_job.sstate.j = 0))
   push!(body, :(_job.sstate.n = 1))
   push!(body, :(_job.sstate.s = true))
+  if in(:accept, job.outopts[:diagnostics])
+    push!(body, :(_job.sstate.update = false))
+  end
 
   push!(body, :(_job.sstate.u = log(rand())+_job.sstate.oldhamiltonian))
 
@@ -95,36 +97,38 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   ))
 
   if vform == Univariate
-    push!(update, :(_job.pstate.value = _job.sstate.pstateprime.value))
-    push!(update, :(_job.pstate.gradlogtarget = _job.sstate.pstateprime.gradlogtarget))
+    push!(ifwhilebody, :(_job.pstate.value = _job.sstate.pstateprime.value))
+    push!(ifwhilebody, :(_job.pstate.gradlogtarget = _job.sstate.pstateprime.gradlogtarget))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = _job.sstate.pstateprime.gradloglikelihood))
+      push!(ifwhilebody, :(_job.pstate.gradloglikelihood = _job.sstate.pstateprime.gradloglikelihood))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = _job.sstate.pstateprime.gradlogprior))
+      push!(ifwhilebody, :(_job.pstate.gradlogprior = _job.sstate.pstateprime.gradlogprior))
     end
   elseif vform == Multivariate
-    push!(update, :(_job.pstate.value = copy(_job.sstate.pstateprime.value)))
-    push!(update, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstateprime.gradlogtarget)))
+    push!(ifwhilebody, :(_job.pstate.value = copy(_job.sstate.pstateprime.value)))
+    push!(ifwhilebody, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstateprime.gradlogtarget)))
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstateprime.gradloglikelihood)))
+      push!(ifwhilebody, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstateprime.gradloglikelihood)))
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = copy(_job.sstate.pstateprime.gradlogprior)))
+      push!(ifwhilebody, :(_job.pstate.gradlogprior = copy(_job.sstate.pstateprime.gradlogprior)))
     end
   end
-  push!(update, :(_job.pstate.logtarget = _job.sstate.pstateprime.logtarget))
+  push!(ifwhilebody, :(_job.pstate.logtarget = _job.sstate.pstateprime.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstateprime.loglikelihood))
+    push!(ifwhilebody, :(_job.pstate.loglikelihood = _job.sstate.pstateprime.loglikelihood))
   end
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_job.pstate.logprior = _job.sstate.pstateprime.logprior))
+    push!(ifwhilebody, :(_job.pstate.logprior = _job.sstate.pstateprime.logprior))
   end
-  push!(update, :(_job.sstate.count += 1))
+  if in(:accept, job.outopts[:diagnostics])
+    push!(ifwhilebody, :(_job.sstate.update = true))
+  end
 
   push!(
     whilebody,
-    Expr(:if, :(_job.sstate.sprime && (rand() < _job.sstate.nprime/_job.sstate.n)), Expr(:block, update...))
+    Expr(:if, :(_job.sstate.sprime && (rand() < _job.sstate.nprime/_job.sstate.n)), Expr(:block, ifwhilebody...))
   )
 
   push!(whilebody, :(_job.sstate.j += 1))
@@ -144,6 +148,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   )
 
   push!(body, Expr(:while, :(_job.sstate.s && (_job.sstate.j < _job.sampler.maxndoublings)), Expr(:block, whilebody...)))
+
+  if in(:accept, job.outopts[:diagnostics])
+    push!(body, :( _job.pstate.diagnosticvalues[1] = _job.sstate.update))
+  end
 
   if !job.plain
     push!(body, :(produce()))

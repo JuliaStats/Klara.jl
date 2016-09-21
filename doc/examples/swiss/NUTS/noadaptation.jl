@@ -27,16 +27,20 @@ p = BasicContMuvParameter(
 
 model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
-sampler = NUTS(0.5)
+sampler = NUTS(0.4)
 
 mcrange = BasicMCRange(nsteps=5000, burnin=1000)
 
 v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
-job = BasicMCJob(model, sampler, mcrange, v0)
+outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
 
 run(job)
 
 chain = output(job)
 
 mean(chain)
+
+acceptance(chain)
