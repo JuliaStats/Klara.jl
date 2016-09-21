@@ -1,7 +1,3 @@
-# TODO:
-# 1. scaling factor for variance of normal proposal
-# 2. max number of doublings
-
 function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   result::Expr
   whilebody = []
@@ -73,7 +69,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
           _job.sstate.tune.step,
           _job.parameter.logtarget!,
           _job.parameter.gradlogtarget!,
-          _job.sampler.deltamax
+          _job.sampler
         )
     else
       _,
@@ -93,7 +89,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
           _job.sstate.tune.step,
           _job.parameter.logtarget!,
           _job.parameter.gradlogtarget!,
-          _job.sampler.deltamax
+          _job.sampler
         )
     end
   ))
@@ -147,7 +143,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
     )
   )
 
-  push!(body, Expr(:while, :(_job.sstate.s), Expr(:block, whilebody...)))
+  push!(body, Expr(:while, :(_job.sstate.s && (_job.sstate.j < _job.sampler.maxndoublings)), Expr(:block, whilebody...)))
 
   if !job.plain
     push!(body, :(produce()))

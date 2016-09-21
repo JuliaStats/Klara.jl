@@ -114,16 +114,18 @@ MuvNUTSState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
 
 immutable NUTS <: HMCSampler
   leapstep::Real
-  deltamax::Integer
+  maxδ::Integer
+  maxndoublings::Integer
 
-  function NUTS(leapstep::Real, deltamax::Integer)
+  function NUTS(leapstep::Real, maxδ::Integer, maxndoublings::Integer)
     @assert leapstep > 0 "Leapfrog step is not positive"
-    @assert deltamax > 0 "deltamax is not positive"
-    new(leapstep, deltamax)
+    @assert maxδ > 0 "maxδ is not positive"
+    @assert maxndoublings > 0 "Maximum number of doublings is not positive"
+    new(leapstep, maxδ, maxndoublings)
   end
 end
 
-NUTS(leapstep::Real=0.1) = NUTS(leapstep, 1000)
+NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(leapstep, maxδ, maxndoublings)
 
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
@@ -157,7 +159,7 @@ function build_tree!(
   step::Real,
   logtarget!::Function,
   gradlogtarget!::Function,
-  deltamax::Real
+  sampler::NUTS
 )
   if j == 0 # Base case: take one leapfrog step in the direction v
     local hamiltonianprime::Real
@@ -167,7 +169,7 @@ function build_tree!(
     hamiltonianprime = hamiltonian(sstate.pstateprime.logtarget, sstate.momentumprime)
 
     sstate.nprime = Int(u <= hamiltonianprime)
-    sstate.sprime = u < deltamax+hamiltonianprime
+    sstate.sprime = u < sampler.maxδ+hamiltonianprime
 
     return sstate.pstateprime,
       sstate.momentumprime,
@@ -184,7 +186,7 @@ function build_tree!(
     sstate.pstateprime,
     sstate.nprime,
     sstate.sprime =
-      build_tree!(sstate, pstate, momentum, u, v, j-1, step, logtarget!, gradlogtarget!, deltamax)
+      build_tree!(sstate, pstate, momentum, u, v, j-1, step, logtarget!, gradlogtarget!, sampler)
 
     if sstate.sprime
       if v == -1
@@ -199,7 +201,7 @@ function build_tree!(
             step,
             logtarget!,
             gradlogtarget!,
-            deltamax
+            sampler
           )
       else
         _, _, sstate.pstateplus, sstate.momentumplus, sstate.pstatedprime, sstate.ndprime, sstate.sdprime =
@@ -213,7 +215,7 @@ function build_tree!(
             step,
             logtarget!,
             gradlogtarget!,
-            deltamax
+            sampler
           )
       end
 
