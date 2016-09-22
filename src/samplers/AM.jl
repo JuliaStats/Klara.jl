@@ -77,10 +77,16 @@ AM(C0::Real=1., d::Integer=1; t0::Real=3, ε::Real=0.05) = AM(fill(C0, d), d, t0
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   parameter::Parameter{Continuous, F},
-  sampler::AM
+  sampler::AM,
+  outopts::Dict
 )
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize AM state

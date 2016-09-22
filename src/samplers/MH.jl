@@ -67,9 +67,19 @@ MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> Normal(x, 1.0), signature=:high)
 
 ## Initialize parameter state
 
-function initialize!{S<:ValueSupport, F<:VariateForm}(pstate::ParameterState{S, F}, parameter::Parameter{S, F}, sampler::MH)
+function initialize!{S<:ValueSupport, F<:VariateForm}(
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MH,
+  outopts::Dict
+)
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize MHState

@@ -59,6 +59,9 @@ type BasicMCJob <: MCJob
     instance.parameter = instance.model.vertices[instance.pindex]
     instance.parameter.states = instance.vstate
 
+    instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
+    augment_parameter_outopts!(instance.outopts)
+
     instance.pstate = instance.vstate[instance.pindex]
     if any(isnan, instance.pstate.value)
       if instance.parameter.pdf != nothing
@@ -69,12 +72,9 @@ type BasicMCJob <: MCJob
         error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
       end
     end
-    initialize!(instance.pstate, instance.parameter, sampler)
+    initialize!(instance.pstate, instance.parameter, sampler, instance.outopts)
 
     instance.sstate = sampler_state(instance.parameter, sampler, tuner, instance.pstate, instance.vstate)
-
-    instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
-    augment_parameter_outopts!(instance.outopts)
 
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 

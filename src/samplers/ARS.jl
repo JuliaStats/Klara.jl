@@ -45,10 +45,16 @@ ARS(logproposal::Function; proposalscale::Real=1., jumpscale::Real=1.) = ARS(log
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   parameter::Parameter{Continuous, F},
-  sampler::ARS
+  sampler::ARS,
+  outopts::Dict
 )
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize ARSState

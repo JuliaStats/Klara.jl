@@ -102,11 +102,17 @@ HMC(leapstep::Real=0.1) = HMC(leapstep, 10)
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   parameter::Parameter{Continuous, F},
-  sampler::HMC
+  sampler::HMC,
+  outopts::Dict
 )
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize HMC state

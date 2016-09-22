@@ -134,11 +134,17 @@ NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(l
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   parameter::Parameter{Continuous, F},
-  sampler::NUTS
+  sampler::NUTS,
+  outopts::Dict
 )
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 sampler_state(

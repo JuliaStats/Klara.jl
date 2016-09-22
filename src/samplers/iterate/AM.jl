@@ -3,6 +3,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   update = []
   noupdate = []
   body = []
+  dindex::Integer
 
   vform = variate_form(job.pstate)
   if vform != Multivariate
@@ -51,9 +52,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
     push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
   end
-  if in(:accept, job.outopts[:diagnostics])
-    push!(update, :(_job.pstate.diagnosticvalues[1] = true))
-    push!(noupdate, :(_job.pstate.diagnosticvalues[1] = false))
+  dindex = findfirst(job.outopts[:diagnostics], :accept)
+  if dindex != 0
+    push!(update, :(_job.pstate.diagnosticvalues[$dindex] = true))
+    push!(noupdate, :(_job.pstate.diagnosticvalues[$dindex] = false))
   end
   if job.tuner.verbose
     push!(update, :(_job.sstate.tune.accepted += 1))

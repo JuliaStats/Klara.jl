@@ -113,10 +113,16 @@ RAM(S0::Real=1., n::Integer=1; targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   parameter::Parameter{Continuous, F},
-  sampler::RAM
+  sampler::RAM,
+  outopts::Dict
 )
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize MuvRAMState

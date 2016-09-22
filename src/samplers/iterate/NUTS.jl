@@ -5,6 +5,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
   burninbody = []
   ifburninbody = []
   body = []
+  dindex::Integer
 
   vform = variate_form(job.pstate)
   if vform != Univariate && vform != Multivariate
@@ -149,8 +150,14 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
 
   push!(body, Expr(:while, :(_job.sstate.s && (_job.sstate.j < _job.sampler.maxndoublings)), Expr(:block, whilebody...)))
 
-  if in(:accept, job.outopts[:diagnostics])
-    push!(body, :( _job.pstate.diagnosticvalues[1] = _job.sstate.update))
+  dindex = findfirst(job.outopts[:diagnostics], :accept)
+  if dindex != 0
+    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = _job.sstate.update))
+  end
+
+  dindex = findfirst(job.outopts[:diagnostics], :ndoublings)
+  if dindex != 0
+    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = _job.sstate.j))
   end
 
   if !job.plain

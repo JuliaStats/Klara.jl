@@ -114,18 +114,25 @@ SMMALA(driftstep::Real=1.) = SMMALA(driftstep, nothing)
 function initialize!(
   pstate::ParameterState{Continuous, Univariate},
   parameter::Parameter{Continuous, Univariate},
-  sampler::SMMALA
+  sampler::SMMALA,
+  outopts::Dict
 )
   parameter.uptotensorlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
   @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 function initialize!(
   pstate::ParameterState{Continuous, Multivariate},
   parameter::Parameter{Continuous, Multivariate},
-  sampler::SMMALA
+  sampler::SMMALA,
+  outopts::Dict
 )
   parameter.uptotensorlogtarget!(pstate)
   if sampler.transform != nothing
@@ -134,6 +141,11 @@ function initialize!(
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
   @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
+
+  if !isempty(outopts[:diagnostics])
+    pstate.diagnostickeys = copy(outopts[:diagnostics])
+    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+  end
 end
 
 ## Initialize SMMALA state
