@@ -12,7 +12,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
     error("Only univariate or multivariate parameter states allowed in NUTS code generation")
   end
 
-  # push!(body, :(_job.sstate.count += 1))
+  if isa(job.tuner, DualAveragingMCTuner)
+    push!(body, :(_job.sstate.count += 1))
+  end
 
   if job.tuner.verbose
     push!(body, :(_job.sstate.tune.proposed += 1))
@@ -62,7 +64,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
       _job.sstate.pstateprime,
       _job.sstate.nprime,
       _job.sstate.sprime =
-        build_tree!(
+        _job.sampler.buildtree!(
           _job.sstate,
           _job.sstate.pstateminus,
           _job.sstate.momentumminus,
@@ -82,7 +84,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
       _job.sstate.pstateprime,
       _job.sstate.nprime,
       _job.sstate.sprime =
-        build_tree!(
+        _job.sampler.buildtree!(
           _job.sstate,
           _job.sstate.pstateplus,
           _job.sstate.momentumplus,

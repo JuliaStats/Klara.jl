@@ -50,17 +50,22 @@ type BasicMCJob <: MCJob
       checkin(instance)
     end
 
-    instance.sampler = sampler
-    instance.tuner = tuner
-    instance.range = range
-    instance.plain = plain
-    instance.verbose = verbose
+    instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
+    augment_parameter_outopts!(instance.outopts)
 
     instance.parameter = instance.model.vertices[instance.pindex]
     instance.parameter.states = instance.vstate
 
-    instance.outopts = isa(outopts, Dict{Symbol, Any}) ? outopts : convert(Dict{Symbol, Any}, outopts)
-    augment_parameter_outopts!(instance.outopts)
+    instance.sampler = sampler
+    if isa(sampler, NUTS)
+      instance.sampler.buildtree! =
+        eval(codegen_tree_builder(variate_form(instance.parameter), typeof(sampler), typeof(tuner), instance.outopts))
+    end
+
+    instance.tuner = tuner
+    instance.range = range
+    instance.plain = plain
+    instance.verbose = verbose
 
     instance.pstate = instance.vstate[instance.pindex]
     if any(isnan, instance.pstate.value)
@@ -72,9 +77,9 @@ type BasicMCJob <: MCJob
         error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
       end
     end
-    initialize!(instance.pstate, instance.parameter, sampler, instance.outopts)
+    initialize!(instance.pstate, instance.parameter, instance.sampler, instance.outopts)
 
-    instance.sstate = sampler_state(instance.parameter, sampler, tuner, instance.pstate, instance.vstate)
+    instance.sstate = sampler_state(instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate)
 
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 

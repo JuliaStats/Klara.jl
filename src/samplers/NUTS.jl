@@ -116,20 +116,21 @@ MuvNUTSState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
     0
   )
 
-immutable NUTS <: HMCSampler
+type NUTS <: HMCSampler
   leapstep::Real
   maxδ::Integer
   maxndoublings::Integer
+  buildtree!::Function
 
-  function NUTS(leapstep::Real, maxδ::Integer, maxndoublings::Integer)
+  function NUTS(leapstep::Real, maxδ::Integer, maxndoublings::Integer, buildtree!::Function)
     @assert leapstep > 0 "Leapfrog step is not positive"
     @assert maxδ > 0 "maxδ is not positive"
     @assert maxndoublings > 0 "Maximum number of doublings is not positive"
-    new(leapstep, maxδ, maxndoublings)
+    new(leapstep, maxδ, maxndoublings, buildtree!)
   end
 end
 
-NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(leapstep, maxδ, maxndoublings)
+NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(leapstep, maxδ, maxndoublings, ()->())
 
 function initialize!{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
@@ -156,97 +157,186 @@ sampler_state(
 ) =
   MuvNUTSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
+function sampler_state(
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::NUTS,
+  tuner::DualAveragingMCTuner,
+  pstate::ParameterState{Continuous, Multivariate},
+  vstate::VariableStateVector
+)
+  sstate = MuvNUTSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  initialize_step!(sstate, parameter, sampler, tuner, randn(sstate.pstate.size))
+  sstate.tune.μ = log(10*sstate.tune.step)
+  sstate
+end
+
 uturn(positionplus::RealVector, positionminus::RealVector, momentumplus::RealVector, momentumminus::RealVector) =
   dot(positionplus-positionminus, momentumplus) < 0. || dot(positionplus-positionminus, momentumminus) < 0.
 
-function build_tree!(
-  sstate::NUTSState{Multivariate},
-  pstate::ParameterState{Continuous, Multivariate},
-  momentum::RealVector,
-  u::Real,
-  v::Real,
-  j::Integer,
-  step::Real,
-  logtarget!::Function,
-  gradlogtarget!::Function,
-  sampler::NUTS
+function codegen_tree_builder{F<:VariateForm, T<:MCTuner}(
+  variateform::Type{F},
+  ::Type{NUTS},
+  tunertype::Type{T},
+  outopts::Dict
 )
-  if j == 0 # Base case: take one leapfrog step in the direction v
-    local hamiltonianprime::Real
+  ifjzero = []
+  ifjnotzero = []
+  ifsprime = []
+  ifvminusone = []
+  ifvnotminusone = []
+  update = []
+  body = []
 
-    leapfrog!(sstate.pstateprime, sstate.momentumprime, pstate, momentum, v*sstate.tune.step, gradlogtarget!)
-    logtarget!(sstate.pstateprime)
-    hamiltonianprime = hamiltonian(sstate.pstateprime.logtarget, sstate.momentumprime)
+  @gensym tree_builder
 
-    sstate.nprime = Int(u <= hamiltonianprime)
-    sstate.sprime = u < sampler.maxδ+hamiltonianprime
+  push!(ifjzero, :(local hamiltonianprime::Real))
 
-    return sstate.pstateprime,
-      sstate.momentumprime,
-      sstate.pstateprime,
-      sstate.momentumprime,
-      sstate.pstateprime,
-      sstate.nprime,
-      sstate.sprime
-  else # Recursion: implicitly build the left and right subtrees
-    sstate.pstateminus,
-    sstate.momentumminus,
-    sstate.pstateplus,
-    sstate.momentumplus,
-    sstate.pstateprime,
-    sstate.nprime,
-    sstate.sprime =
-      build_tree!(sstate, pstate, momentum, u, v, j-1, step, logtarget!, gradlogtarget!, sampler)
+  push!(
+    ifjzero,
+    :(
+      leapfrog!(_sstate.pstateprime, _sstate.momentumprime, _pstate, _momentum, _v*_sstate.tune.step, _gradlogtarget!)
+    )
+  )
+  push!(ifjzero, :(_logtarget!(_sstate.pstateprime)))
+  push!(ifjzero, :(hamiltonianprime = hamiltonian(_sstate.pstateprime.logtarget, _sstate.momentumprime)))
 
-    if sstate.sprime
-      if v == -1
-        sstate.pstateminus, sstate.momentumminus, _, _, sstate.pstatedprime, sstate.ndprime, sstate.sdprime =
-          build_tree!(
-            sstate,
-            sstate.pstateminus,
-            sstate.momentumminus,
-            u,
-            v,
-            j-1,
-            step,
-            logtarget!,
-            gradlogtarget!,
-            sampler
-          )
-      else
-        _, _, sstate.pstateplus, sstate.momentumplus, sstate.pstatedprime, sstate.ndprime, sstate.sdprime =
-          build_tree!(
-            sstate,
-            sstate.pstateplus,
-            sstate.momentumplus,
-            u,
-            v,
-            j-1,
-            step,
-            logtarget!,
-            gradlogtarget!,
-            sampler
-          )
-      end
+  push!(ifjzero, :(_sstate.nprime = Int(_u <= hamiltonianprime)))
+  push!(ifjzero, :(_sstate.sprime = _u < _sampler.maxδ+hamiltonianprime))
 
-      if rand() <= sstate.ndprime/(sstate.ndprime+sstate.nprime)
-        sstate.pstateprime.value = copy(sstate.pstatedprime.value)
-        sstate.pstateprime.gradlogtarget = copy(sstate.pstatedprime.gradlogtarget)
-      end
+  push!(
+    ifjzero,
+    :(
+      return _sstate.pstateprime,
+        _sstate.momentumprime,
+        _sstate.pstateprime,
+        _sstate.momentumprime,
+        _sstate.pstateprime,
+        _sstate.nprime,
+        _sstate.sprime
+    )
+  )
 
-      sstate.nprime += sstate.ndprime
+  push!(
+    ifjnotzero,
+    :(
+      (
+        _sstate.pstateminus,
+        _sstate.momentumminus,
+        _sstate.pstateplus,
+        _sstate.momentumplus,
+        _sstate.pstateprime,
+        _sstate.nprime,
+        _sstate.sprime
+      ) =
+        $tree_builder(_sstate, _pstate, _momentum, _u, _v, _j-1, _step, _logtarget!, _gradlogtarget!, _sampler)
+    )
+  )
 
-      sstate.sprime =
-        sstate.sdprime &&
-        !uturn(sstate.pstateplus.value, sstate.pstateminus.value, sstate.momentumplus, sstate.momentumminus)
+  push!(
+    ifvminusone,
+    :(
+      (
+        _sstate.pstateminus,
+        _sstate.momentumminus,
+        _,
+        _,
+        _sstate.pstatedprime,
+        _sstate.ndprime,
+        _sstate.sdprime
+      ) =
+        $tree_builder(
+          _sstate,
+          _sstate.pstateminus,
+          _sstate.momentumminus,
+          _u,
+          _v,
+          _j-1,
+          _step,
+          _logtarget!,
+          _gradlogtarget!,
+          _sampler
+        )
+    )
+  )
+
+  push!(
+    ifvnotminusone,
+    :(
+      (
+        _,
+        _,
+        _sstate.pstateplus,
+        _sstate.momentumplus,
+        _sstate.pstatedprime,
+        _sstate.ndprime,
+        _sstate.sdprime
+      ) =
+        $tree_builder(
+          _sstate,
+          _sstate.pstateplus,
+          _sstate.momentumplus,
+          _u,
+          _v,
+          _j-1,
+          _step,
+          _logtarget!,
+          _gradlogtarget!,
+          _sampler
+        )
+      )
+    )
+
+  push!(ifsprime, Expr(:if, :(_v == -1), Expr(:block, ifvminusone...), ifvnotminusone...))
+
+  push!(update, :(_sstate.pstateprime.value = copy(_sstate.pstatedprime.value)))
+  push!(update, :(_sstate.pstateprime.gradlogtarget = copy(_sstate.pstatedprime.gradlogtarget)))
+
+  push!(ifsprime, Expr(:if, :(rand() <= _sstate.ndprime/(_sstate.ndprime+_sstate.nprime)), Expr(:block, update...)))
+
+  push!(ifsprime, :(_sstate.nprime += _sstate.ndprime))
+
+  push!(
+    ifsprime,
+    :(
+      _sstate.sprime =
+        _sstate.sdprime &&
+        !uturn(_sstate.pstateplus.value, _sstate.pstateminus.value, _sstate.momentumplus, _sstate.momentumminus)
+    )
+  )
+
+  push!(ifjnotzero, Expr(:if, :(_sstate.sprime), Expr(:block, ifsprime...)))
+
+  push!(
+    ifjnotzero,
+    :(
+      return _sstate.pstateminus,
+        _sstate.momentumminus,
+        _sstate.pstateplus,
+        _sstate.momentumplus,
+        _sstate.pstateprime,
+        _sstate.nprime,
+        _sstate.sprime
+    )
+  )
+
+  push!(body, Expr(:if, :(_j == 0), Expr(:block, ifjzero...), Expr(:block, ifjnotzero...)))
+
+  args = [
+    :(_sstate::NUTSState{$variateform}),
+    :(_pstate::ParameterState{Continuous, $variateform}),
+    :(_momentum::RealVector),
+    :(_u::Real),
+    :(_v::Real),
+    :(_j::Integer),
+    :(_step::Real),
+    :(_logtarget!::Function),
+    :(_gradlogtarget!::Function),
+    :(_sampler::NUTS)
+  ]
+
+  quote
+    function $tree_builder($(args...))
+      $(body...)
     end
-
-    return sstate.pstateminus,
-      sstate.momentumminus,
-      sstate.pstateplus,
-      sstate.momentumplus,
-      sstate.pstateprime,
-      sstate.nprime,
-      sstate.sprime
   end
 end
