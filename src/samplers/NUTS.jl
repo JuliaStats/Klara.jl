@@ -1,5 +1,121 @@
 abstract NUTSState{F<:VariateForm} <: HMCSamplerState{F}
 
+type UnvNUTSState <: NUTSState{Univariate}
+  pstateplus::ParameterState{Continuous, Univariate}
+  pstateminus::ParameterState{Continuous, Univariate}
+  pstateprime::ParameterState{Continuous, Univariate}
+  pstatedprime::ParameterState{Continuous, Univariate}
+  tune::MCTunerState
+  ratio::Real
+  a::Real
+  momentum::Real
+  momentumplus::Real
+  momentumminus::Real
+  momentumprime::Real
+  oldhamiltonian::Real
+  newhamiltonian::Real
+  u::Real
+  v::Integer
+  j::Integer
+  n::Integer
+  nprime::Integer
+  ndprime::Integer
+  s::Bool
+  sprime::Bool
+  sdprime::Bool
+  update::Bool
+  count::Integer
+
+  function UnvNUTSState(
+    pstateplus::ParameterState{Continuous, Univariate},
+    pstateminus::ParameterState{Continuous, Univariate},
+    pstateprime::ParameterState{Continuous, Univariate},
+    pstatedprime::ParameterState{Continuous, Univariate},
+    tune::MCTunerState,
+    ratio::Real,
+    a::Real,
+    momentum::Real,
+    momentumplus::Real,
+    momentumminus::Real,
+    momentumprime::Real,
+    oldhamiltonian::Real,
+    newhamiltonian::Real,
+    u::Real,
+    v::Integer,
+    j::Integer,
+    n::Integer,
+    nprime::Integer,
+    ndprime::Integer,
+    s::Bool,
+    sprime::Bool,
+    sdprime::Bool,
+    update::Bool,
+    count::Integer
+  )
+    if !isnan(ratio)
+      @assert ratio > 0 "Acceptance ratio should be positive"
+    end
+    if !isnan(a)
+      @assert 0 <= a <= 1 "Acceptance probability should be in [0, 1]"
+    end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
+    new(
+      pstateplus,
+      pstateminus,
+      pstateprime,
+      pstatedprime,
+      tune,
+      ratio,
+      a,
+      momentum,
+      momentumplus,
+      momentumminus,
+      momentumprime,
+      oldhamiltonian,
+      newhamiltonian,
+      u,
+      v,
+      j,
+      n,
+      nprime,
+      ndprime,
+      s,
+      sprime,
+      sdprime,
+      update,
+      count
+    )
+  end
+end
+
+UnvNUTSState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
+  UnvNUTSState(
+    pstate,
+    pstate,
+    pstate,
+    pstate,
+    tune,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    0,
+    0,
+    0,
+    0,
+    0,
+    true,
+    true,
+    true,
+    true,
+    0
+  )
+
 type MuvNUTSState <: NUTSState{Multivariate}
   pstateplus::ParameterState{Continuous, Multivariate}
   pstateminus::ParameterState{Continuous, Multivariate}
@@ -149,6 +265,15 @@ function initialize!{F<:VariateForm}(
 end
 
 sampler_state(
+  parameter::Parameter{Continuous, Univariate},
+  sampler::NUTS,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::VariableStateVector
+) =
+  UnvNUTSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+
+sampler_state(
   parameter::Parameter{Continuous, Multivariate},
   sampler::NUTS,
   tuner::MCTuner,
@@ -170,6 +295,9 @@ function sampler_state(
   sstate
 end
 
+uturn(positionplus::Real, positionminus::Real, momentumplus::Real, momentumminus::Real) =
+  (positionplus-positionminus)*momentumplus < 0. || (positionplus-positionminus)*momentumminus < 0.
+
 uturn(positionplus::RealVector, positionminus::RealVector, momentumplus::RealVector, momentumminus::RealVector) =
   dot(positionplus-positionminus, momentumplus) < 0. || dot(positionplus-positionminus, momentumminus) < 0.
 
@@ -187,16 +315,29 @@ function codegen_tree_builder{F<:VariateForm, T<:MCTuner}(
   update = []
   body = []
 
+  if variateform != Univariate && variateform != Multivariate
+    error("Only univariate or multivariate parameter states allowed in code generation of NUTS tree building")
+  end
+
   @gensym tree_builder
 
   push!(ifjzero, :(local hamiltonianprime::Real))
 
-  push!(
-    ifjzero,
-    :(
-      leapfrog!(_sstate.pstateprime, _sstate.momentumprime, _pstate, _momentum, _v*_sstate.tune.step, _gradlogtarget!)
+  if variateform == Univariate
+    push!(
+      ifjzero,
+      :(
+        _sstate.momentumprime = leapfrog!(_sstate.pstateprime, _pstate, _momentum, _v*_sstate.tune.step, _gradlogtarget!)
+      )
     )
-  )
+  elseif variateform == Multivariate
+    push!(
+      ifjzero,
+      :(
+        leapfrog!(_sstate.pstateprime, _sstate.momentumprime, _pstate, _momentum, _v*_sstate.tune.step, _gradlogtarget!)
+      )
+    )
+  end
   push!(ifjzero, :(_logtarget!(_sstate.pstateprime)))
   push!(ifjzero, :(hamiltonianprime = hamiltonian(_sstate.pstateprime.logtarget, _sstate.momentumprime)))
 
@@ -288,8 +429,29 @@ function codegen_tree_builder{F<:VariateForm, T<:MCTuner}(
 
   push!(ifsprime, Expr(:if, :(_v == -1), Expr(:block, ifvminusone...), ifvnotminusone...))
 
-  push!(update, :(_sstate.pstateprime.value = copy(_sstate.pstatedprime.value)))
-  push!(update, :(_sstate.pstateprime.gradlogtarget = copy(_sstate.pstatedprime.gradlogtarget)))
+  if variateform == Univariate
+    push!(update, :(_sstate.pstateprime.value = _sstate.pstatedprime.value))
+    push!(update, :(_sstate.pstateprime.gradlogtarget = _sstate.pstatedprime.gradlogtarget))
+    if in(:gradloglikelihood, outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+      push!(update, :(_sstate.pstateprime.gradloglikelihood = _sstate.pstatedprime.gradloglikelihood))
+    end
+    if in(:gradlogprior, outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+      push!(update, :(_sstate.pstateprime.gradlogprior = _sstate.pstatedprime.gradlogprior))
+    end
+  else
+    push!(update, :(_sstate.pstateprime.value = copy(_sstate.pstatedprime.value)))
+    push!(update, :(_sstate.pstateprime.gradlogtarget = copy(_sstate.pstatedprime.gradlogtarget)))
+    if in(:gradloglikelihood, outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+      push!(update, :(_sstate.pstateprime.gradloglikelihood = copy(_sstate.pstatedprime.gradloglikelihood)))
+    end
+    if in(:gradlogprior, outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+      push!(update, :(_sstate.pstateprime.gradlogprior = copy(_sstate.pstatedprime.gradlogprior)))
+    end
+  end
+  push!(update, :(_sstate.pstateprime.logtarget = _sstate.pstatedprime.logtarget))
+  if in(:loglikelihood, outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+    push!(update, :(_sstate.pstateprime.loglikelihood = _sstate.pstatedprime.loglikelihood))
+  end
 
   push!(ifsprime, Expr(:if, :(rand() <= _sstate.ndprime/(_sstate.ndprime+_sstate.nprime)), Expr(:block, update...)))
 
@@ -324,7 +486,7 @@ function codegen_tree_builder{F<:VariateForm, T<:MCTuner}(
   args = [
     :(_sstate::NUTSState{$variateform}),
     :(_pstate::ParameterState{Continuous, $variateform}),
-    :(_momentum::RealVector),
+    :(_momentum::$(variateform == Univariate ? Real : RealVector)),
     :(_u::Real),
     :(_v::Real),
     :(_j::Integer),
@@ -340,3 +502,16 @@ function codegen_tree_builder{F<:VariateForm, T<:MCTuner}(
     end
   end
 end
+
+Base.show(io::IO, sampler::NUTS) =
+  print(
+    io,
+    "NUTS sampler: leap step = ",
+    sampler.leapstep,
+    ", doubling threshold = ",
+    sampler.maxδ,
+    ", maximum number of doublings = ",
+    sampler.maxndoublings
+  )
+
+Base.writemime(io::IO, ::MIME"text/plain", sampler::NUTS) = show(io, sampler)

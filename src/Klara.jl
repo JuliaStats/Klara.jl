@@ -150,6 +150,7 @@ export
   UnvAMWGState,
   UnvHMCState,
   UnvMALAState,
+  UnvNUTSState,
   UnvSMMALAState,
   VanillaMCTuner,
   Variable,
