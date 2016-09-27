@@ -26,51 +26,6 @@ abstract HMCSampler <: MCSampler
 
 abstract LMCSampler <: MCSampler
 
-function initialize_step!{F<:VariateForm}(
-  sstate::HMCSamplerState{F},
-  parameter::Parameter{Continuous, F},
-  sampler::HMCSampler,
-  tuner::DualAveragingMCTuner
-)
-  sstate.oldhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
-
-  leapfrog!(sstate, parameter.gradlogtarget!)
-  sstate.newhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
-
-  sstate.ratio = sstate.newhamiltonian-sstate.oldhamiltonian
-  sstate.a = 2*(exp(sstate.ratio) > 0.5)-1
-
-  while exp(sstate.ratio)^sstate.a > 2^(-sstate.a)
-    sstate.tune.step = (2^sstate.a)*sstate.tune.step
-    leapfrog!(sstate, parameter.gradlogtarget!)
-    sstate.newhamiltonian = hamiltonian(sstate.pstate.logtarget, sstate.momentum)
-
-    sstate.ratio = sstate.newhamiltonian-sstate.oldhamiltonian
-  end
-end
-
-function initialize_step!(
-  sstate::HMCSamplerState{Univariate},
-  parameter::Parameter{Continuous, Univariate},
-  sampler::HMCSampler,
-  tuner::DualAveragingMCTuner,
-  momentum::Real
-)
-  sstate.momentum = momentum
-  initialize_step!(sstate, parameter, sampler, tuner)
-end
-
-function initialize_step!(
-  sstate::HMCSamplerState{Multivariate},
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::HMCSampler,
-  tuner::DualAveragingMCTuner,
-  momentum::RealVector
-)
-  sstate.momentum[:] = momentum
-  initialize_step!(sstate, parameter, sampler, tuner)
-end
-
 tuner_state(parameter::Parameter, sampler::MCSampler, tuner::VanillaMCTuner) = BasicMCTune(NaN, 0, 0, tuner.period)
 
 tuner_state(parameter::Parameter, sampler::MHSampler, tuner::VanillaMCTuner) = BasicMCTune(1., 0, 0, tuner.period)
@@ -88,6 +43,26 @@ tuner_state(parameter::Parameter, sampler::HMCSampler, tuner::AcceptanceRateMCTu
 
 tuner_state(parameter::Parameter, sampler::LMCSampler, tuner::AcceptanceRateMCTuner) =
   BasicMCTune(sampler.driftstep, 0, 0, tuner.period)
+
+function reset!(
+  pstate::ParameterState{Continuous, Univariate},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::HMCSampler
+)
+  pstate.value = x
+  parameter.uptogradlogtarget!(pstate)
+end
+
+function reset!(
+  pstate::ParameterState{Continuous, Multivariate},
+  x::RealVector,
+  parameter::Parameter{Continuous, Multivariate},
+  sampler::HMCSampler
+)
+  pstate.value = copy(x)
+  parameter.uptogradlogtarget!(pstate)
+end
 
 reset!(tune::BasicMCTune, sampler::MCSampler, tuner::VanillaMCTuner) =
   ((tune.accepted, tune.proposed, tune.totproposed, tune.rate) = (0, 0, tuner.period, NaN))
@@ -144,4 +119,72 @@ function leapfrog!(
   pstate.value[:] = pstate0.value+step*momentum
   gradlogtarget!(pstate)
   momentum[:] = momentum+0.5*step*pstate.gradlogtarget
+end
+
+function initialize_step!(
+  pstate::ParameterState{Continuous, Univariate},
+  pstate0::ParameterState{Continuous, Univariate},
+  momentum0::Real,
+  step0::Real,
+  gradlogtarget!::Function,
+  ::Type{DualAveragingMCTuner}
+)
+  local momentum::Real
+  local oldhamiltonian::Real
+  local newhamiltonian::Real
+  local ratio::Real
+  local a::Real
+  local step::Real = step0
+
+  oldhamiltonian = hamiltonian(pstate0.logtarget, momentum0)
+
+  momentum = leapfrog!(pstate, pstate0, momentum0, step, gradlogtarget!)
+  newhamiltonian = hamiltonian(pstate.logtarget, momentum)
+
+  ratio = newhamiltonian-oldhamiltonian
+  a = 2*(exp(ratio) > 0.5)-1
+
+  while exp(ratio)^a > 2^(-a)
+    step = (2^a)*step
+    momentum = leapfrog!(pstate, pstate, momentum, step, gradlogtarget!)
+    newhamiltonian = hamiltonian(pstate.logtarget, momentum)
+
+    ratio = newhamiltonian-oldhamiltonian
+  end
+
+  return step
+end
+
+function initialize_step!(
+  pstate::ParameterState{Continuous, Multivariate},
+  momentum::RealVector,
+  pstate0::ParameterState{Continuous, Multivariate},
+  momentum0::RealVector,
+  step0::Real,
+  gradlogtarget!::Function,
+  ::Type{DualAveragingMCTuner}
+)
+  local oldhamiltonian::Real
+  local newhamiltonian::Real
+  local ratio::Real
+  local a::Real
+  local step::Real = step0
+
+  oldhamiltonian = hamiltonian(pstate0.logtarget, momentum0)
+
+  leapfrog!(pstate, momentum, pstate0, momentum0, step, gradlogtarget!)
+  newhamiltonian = hamiltonian(pstate.logtarget, momentum)
+
+  ratio = newhamiltonian-oldhamiltonian
+  a = 2*(exp(ratio) > 0.5)-1
+
+  while exp(ratio)^a > 2^(-a)
+    step = (2^a)*step
+    leapfrog!(pstate, momentum, pstate, moment, step, gradlogtarget!)
+    newhamiltonian = hamiltonian(pstate.logtarget, momentum)
+
+    ratio = newhamiltonian-oldhamiltonian
+  end
+
+  return step
 end

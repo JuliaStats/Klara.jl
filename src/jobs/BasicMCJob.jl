@@ -59,7 +59,7 @@ type BasicMCJob <: MCJob
     instance.sampler = sampler
     if isa(sampler, NUTS)
       instance.sampler.buildtree! =
-        eval(codegen_tree_builder(variate_form(instance.parameter), typeof(sampler), typeof(tuner), instance.outopts))
+        eval(codegen_tree_builder(instance.parameter, typeof(sampler), typeof(tuner), instance.outopts))
     end
 
     instance.tuner = tuner

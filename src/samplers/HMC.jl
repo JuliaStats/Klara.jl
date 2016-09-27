@@ -154,7 +154,9 @@ function sampler_state(
   vstate::VariableStateVector
 )
   sstate = UnvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), 0)
-  initialize_step!(sstate, parameter, sampler, tuner, randn())
+  sstate.tune.step = initialize_step!(
+    sstate.pstate, pstate, randn(), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
+  )
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate
 end
@@ -167,32 +169,14 @@ function sampler_state(
   vstate::VariableStateVector
 )
   sstate = MuvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), 0)
-  initialize_step!(sstate, parameter, sampler, tuner, randn(sstate.pstate.size))
+  sstate.tune.step = initialize_step!(
+    sstate.pstate, sstate.momentum, pstate, randn(pstate.size), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
+  )
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate
 end
 
 ## Reset parameter state
-
-function reset!(
-  pstate::ParameterState{Continuous, Univariate},
-  x::Real,
-  parameter::Parameter{Continuous, Univariate},
-  sampler::HMC
-)
-  pstate.value = x
-  parameter.uptogradlogtarget!(pstate)
-end
-
-function reset!(
-  pstate::ParameterState{Continuous, Multivariate},
-  x::RealVector,
-  parameter::Parameter{Continuous, Multivariate},
-  sampler::HMC
-)
-  pstate.value = copy(x)
-  parameter.uptogradlogtarget!(pstate)
-end
 
 function reset!(tune::DualAveragingMCTune, sampler::HMC, tuner::DualAveragingMCTuner)
   tune.step = 1
@@ -210,7 +194,9 @@ function reset!(
   tuner::DualAveragingMCTuner
 )
   reset!(sstate.tune, sampler, tuner)
-  initialize_step!(sstate, parameter, sampler, tuner, randn())
+  sstate.tune.step = initialize_step!(
+    sstate.pstate, pstate, randn(), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
+  )
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate.count = 0
 end
@@ -223,7 +209,9 @@ function reset!(
   tuner::DualAveragingMCTuner
 )
   reset!(sstate.tune, sampler, tuner)
-  initialize_step!(sstate, parameter, sampler, tuner, randn(sstate.pstate.size))
+  sstate.tune.step = initialize_step!(
+    sstate.pstate, sstate.momentum, pstate, randn(pstate.size), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
+  )
   sstate.tune.μ = log(10*sstate.tune.step)
   sstate.count = 0
 end
