@@ -160,7 +160,7 @@ function sampler_state(
   sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor = chol(sstate.oldinvtensor, :L)
+  sstate.cholinvtensor = chol(sstate.oldinvtensor)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -175,7 +175,7 @@ function sampler_state(
   sstate = MuvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor[:, :] = chol(sstate.oldinvtensor, Val{:L})
+  sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(sstate.oldinvtensor)))
   sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
   sstate
 end
@@ -216,7 +216,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor = chol(sstate.oldinvtensor, :L)
+  sstate.cholinvtensor = chol(sstate.oldinvtensor)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
 end
 
@@ -230,7 +230,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
-  sstate.cholinvtensor[:, :] = chol(sstate.oldinvtensor, Val{:L})
+  sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(sstate.oldinvtensor)))
   sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
 end
 

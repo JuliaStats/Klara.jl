@@ -81,7 +81,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       push!(update, :(_job.pstate.tensorlogprior = _job.sstate.pstate.tensorlogprior))
     end
     push!(update, :(_job.sstate.oldinvtensor = _job.sstate.newinvtensor))
-    push!(update, :(_job.sstate.cholinvtensor = chol(_job.sstate.newinvtensor, :L)))
+    push!(update, :(_job.sstate.cholinvtensor = chol(_job.sstate.newinvtensor)))
     push!(update, :(_job.sstate.oldfirstterm = _job.sstate.newfirstterm))
   elseif vform == Multivariate
     push!(
@@ -136,7 +136,7 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
       push!(update, :(_job.pstate.tensorlogprior = copy(_job.sstate.pstate.tensorlogprior)))
     end
     push!(update, :(_job.sstate.oldinvtensor = copy(_job.sstate.newinvtensor)))
-    push!(update, :(_job.sstate.cholinvtensor[:, :] = chol(_job.sstate.newinvtensor, Val{:L})))
+    push!(update, :(_job.sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(_job.sstate.newinvtensor)))))
     push!(update, :(_job.sstate.oldfirstterm = copy(_job.sstate.newfirstterm)))
   end
 

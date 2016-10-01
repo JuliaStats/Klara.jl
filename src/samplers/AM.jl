@@ -44,7 +44,7 @@ MuvAMState(
   tune::MCTunerState=BasicMCTune(),
   lastmean::RealVector=Array(eltype(pstate), pstate.size),
   C::RealMatrix=Array(eltype(pstate), pstate.size, pstate.size),
-  cholC::RealLowerTriangular=chol(C, Val{:L})
+  cholC::RealLowerTriangular=ctranspose(chol(Hermitian(C)))
 ) =
   MuvAMState(pstate, tune, NaN, lastmean, Array(eltype(pstate), pstate.size), C, cholC, 0)
 
@@ -130,7 +130,7 @@ function reset!(
   reset!(sstate.tune, sampler, tuner)
   sstate.lastmean = copy(pstate.value)
   sstate.C = copy(sampler.C0)
-  sstate.cholC[:, :] = chol(sstate.C, Val{:L})
+  sstate.cholC[:, :] = ctranspose(chol(Hermitian(sstate.C)))
   sstate.count = 0
 end
 
