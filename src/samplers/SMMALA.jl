@@ -234,6 +234,4 @@ function reset!(
   sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
 end
 
-Base.show(io::IO, sampler::SMMALA) = print(io, "SMMALA sampler: drift step = $(sampler.driftstep)")
-
-Base.writemime(io::IO, ::MIME"text/plain", sampler::SMMALA) = show(io, sampler)
+@compat show(io::IO, sampler::SMMALA) = print(io, "SMMALA sampler: drift step = $(sampler.driftstep)")

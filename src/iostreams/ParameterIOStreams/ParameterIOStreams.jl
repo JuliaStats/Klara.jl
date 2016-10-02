@@ -17,5 +17,3 @@ Base.flush(iostream::ParameterIOStream) = iostream.flush(iostream)
 
 Base.write{S<:ValueSupport, F<:VariateForm}(iostream::ParameterIOStream{S}, state::ParameterState{S, F}) =
   iostream.write(iostream, state)
-
-Base.writemime(io::IO, ::MIME"text/plain", iostream::ParameterIOStream) = show(io, iostream)

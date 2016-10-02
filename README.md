@@ -11,7 +11,7 @@ Klara.jl
 
 The Julia *Klara* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
 
-*Klara* has undergone a major upgrade. Some of its recent changes include:
+*Klara*, previously called *Lora*, has undergone a major upgrade. Some of its recent changes include:
 
 * Models are represented internally by graphs.
 * Memory allocation and garbage collection have been reduced by using mutating functions associated with targets.

@@ -398,7 +398,7 @@ output(job::BasicGibbsJob) = job.output
 
 Dict(job::BasicGibbsJob, field::Symbol=:output) = Dict(zip(dpkeys(job), getfield(job, field)))
 
-function Base.show(io::IO, job::BasicGibbsJob)
+@compat function show(io::IO, job::BasicGibbsJob)
   ndptransforms = num_dptransforms(job)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
@@ -421,8 +421,6 @@ function Base.show(io::IO, job::BasicGibbsJob)
   show(io, job.range)
   println(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
 end
-
-Base.writemime(io::IO, ::MIME"text/plain", job::BasicGibbsJob) = show(io, job)
 
 function job2dot(stream::IOStream, job::BasicGibbsJob)
   graphkeyword, edgesign = is_directed(job.model) ? ("digraph", "->") : ("graph", "--")

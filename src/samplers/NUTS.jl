@@ -685,7 +685,7 @@ function codegen_tree_builder{T<:MCTuner}(
   end
 end
 
-Base.show(io::IO, sampler::NUTS) =
+@compat show(io::IO, sampler::NUTS) =
   print(
     io,
     "NUTS sampler: leap step = ",
@@ -695,5 +695,3 @@ Base.show(io::IO, sampler::NUTS) =
     ", maximum number of doublings = ",
     sampler.maxndoublings
   )
-
-Base.writemime(io::IO, ::MIME"text/plain", sampler::NUTS) = show(io, sampler)

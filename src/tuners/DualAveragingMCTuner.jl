@@ -100,7 +100,7 @@ function tune!(tune::DualAveragingMCTune, tuner::DualAveragingMCTuner, count::In
   tune.εbar = exp((1-tune.εweight)*log(tune.εbar)+tune.εweight*log(tune.step))
 end
 
-Base.show(io::IO, tuner::DualAveragingMCTuner) =
+@compat show(io::IO, tuner::DualAveragingMCTuner) =
   print(
     io,
     string(
@@ -124,5 +124,3 @@ Base.show(io::IO, tuner::DualAveragingMCTuner) =
       tuner.verbose
     )
   )
-
-Base.writemime(io::IO, ::MIME"text/plain", tuner::DualAveragingMCTuner) = show(io, tuner)

@@ -5,8 +5,6 @@ abstract VariableNState{F<:VariateForm}
 add_dimension(n::Number) = eltype(n)[n]
 add_dimension(a::Array, sa::Tuple=size(a)) = reshape(a, sa..., 1)
 
-Base.writemime(io::IO, ::MIME"text/plain", nstate::VariableNState) = show(io, nstate)
-
 ### Basic variable NState subtypes
 
 ## BasicUnvVariableNState
@@ -25,7 +23,7 @@ Base.eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Integer) = (nstate.value[i] = state.value)
 
-function Base.show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
+@compat function show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
   indentation = "  "
 
   println(io, "BasicUnvVariableNState:")
@@ -33,8 +31,6 @@ function Base.show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
   println(io, indentation*"eltype: $(eltype(nstate))")
   print(io, indentation*"number of states = $(nstate.n)")
 end
-
-Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicUnvVariableNState{N}) = show(io, nstate)
 
 ## BasicMuvVariableNState
 
@@ -55,7 +51,7 @@ Base.eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
 Base.copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Integer) =
   (nstate.value[1+(i-1)*state.size:i*state.size] = state.value)
 
-function Base.show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
+@compat function show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
   indentation = "  "
 
   println(io, "BasicMuvVariableNState:")
@@ -64,8 +60,6 @@ function Base.show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
   println(io, indentation*"state size = $(nstate.size)")
   print(io, indentation*"number of states = $(nstate.n)")
 end
-
-Base.writemime{N<:Number}(io::IO, ::MIME"text/plain", nstate::BasicMuvVariableNState{N}) = show(io, nstate)
 
 ## BasicMavVariableNState
 
@@ -87,7 +81,7 @@ Base.eltype{N<:Number}(::BasicMavVariableNState{N}) = N
 Base.copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Integer, statelen::Integer=prod(state.size)) =
   (nstate.value[1+(i-1)*statelen:i*statelen] = state.value)
 
-function Base.show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
+@compat function show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
   indentation = "  "
 
   println(io, "BasicMavVariableNState:")

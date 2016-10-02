@@ -170,5 +170,4 @@ default_state{N<:Integer}(variable::BasicDiscUnvParameter, value::N, outopts::Di
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-Base.show(io::IO, ::Type{BasicDiscUnvParameter}) = print(io, "BasicDiscUnvParameter")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{BasicDiscUnvParameter}) = show(io, t)
+@compat show(io::IO, ::Type{BasicDiscUnvParameter}) = print(io, "BasicDiscUnvParameter")

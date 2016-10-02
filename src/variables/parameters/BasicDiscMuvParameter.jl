@@ -172,5 +172,4 @@ default_state{N<:Integer}(variable::BasicDiscMuvParameter, value::Vector{N}, out
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-Base.show(io::IO, ::Type{BasicDiscMuvParameter}) = print(io, "BasicDiscMuvParameter")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{BasicDiscMuvParameter}) = show(io, t)
+@compat show(io::IO, ::Type{BasicDiscMuvParameter}) = print(io, "BasicDiscMuvParameter")

@@ -352,7 +352,7 @@ end
 
 output(job::BasicMCJob) = job.output
 
-function Base.show(io::IO, job::BasicMCJob)
+@compat function show(io::IO, job::BasicMCJob)
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
 
   indentation = "  "
@@ -370,5 +370,3 @@ function Base.show(io::IO, job::BasicMCJob)
   show(io, job.range)
   print(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
 end
-
-Base.writemime(io::IO, ::MIME"text/plain", job::BasicMCJob) = show(io, job)

@@ -99,7 +99,5 @@ reset!{S<:ValueSupport, F<:VariateForm}(
 ) =
   reset!(sstate.tune, sampler, tuner)
 
-Base.show(io::IO, sampler::ARS) =
+@compat show(io::IO, sampler::ARS) =
   print(io, "ARS sampler: proposal scale = $(sampler.proposalscale), jump scale = $(sampler.jumpscale)")
-
-Base.writemime(io::IO, ::MIME"text/plain", sampler::ARS) = show(io, sampler)

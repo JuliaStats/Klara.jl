@@ -6,9 +6,9 @@ function codegen_lowlevel_variable_method(
   nkeys::Integer=0,
   vfarg::Bool=false
 )
-  body::Expr
-  fargs::Vector
-  rvalues::Expr
+  local body::Expr
+  local fargs::Vector
+  local rvalues::Expr
 
   if nkeys == 0
     fargs = [:(_state.value)]

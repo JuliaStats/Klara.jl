@@ -45,7 +45,5 @@ AcceptanceRateMCTuner(
 
 tune!(tune::BasicMCTune, tuner::AcceptanceRateMCTuner) = (tune.step *= tuner.score(tune.rate-tuner.targetrate))
 
-Base.show(io::IO, tuner::AcceptanceRateMCTuner) =
+@compat show(io::IO, tuner::AcceptanceRateMCTuner) =
   print(io, "AcceptanceRateMCTuner: target rate = $(tuner.targetrate), period = $(tuner.period), verbose = $(tuner.verbose)")
-
-Base.writemime(io::IO, ::MIME"text/plain", tuner::AcceptanceRateMCTuner) = show(io, tuner)

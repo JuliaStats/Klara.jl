@@ -316,7 +316,7 @@ function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::
   nstate
 end
 
-function Base.show(io::IO, iostream::BasicDiscParamIOStream)
+@compat function show(io::IO, iostream::BasicDiscParamIOStream)
   fnames = fieldnames(BasicDiscParamIOStream)
   fbool = map(n -> getfield(iostream, n) != nothing, fnames[1:4])
   indentation = "  "

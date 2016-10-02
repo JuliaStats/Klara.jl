@@ -152,6 +152,4 @@ function covariance!(
   C[:, :] = ((k-1)*lastC+sd*(C+ε*eye(d)))/k
 end
 
-Base.show(io::IO, sampler::AM) = print(io, "AM sampler: t0 = $(sampler.t0), sd = $(sampler.sd), ε = $(sampler.ε)")
-
-Base.writemime(io::IO, ::MIME"text/plain", sampler::AM) = show(io, sampler)
+@compat show(io::IO, sampler::AM) = print(io, "AM sampler: t0 = $(sampler.t0), sd = $(sampler.sd), ε = $(sampler.ε)")

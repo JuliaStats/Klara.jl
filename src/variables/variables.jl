@@ -54,8 +54,7 @@ function default_state(v::VariableVector, v0::Vector, outopts::Vector, dpindex::
   default_state(v, v0, opts)
 end
 
-Base.show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
-Base.writemime(io::IO, ::MIME"text/plain", v::Variable) = show(io, v)
+@compat show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
 
 ### Deterministic Variable subtypes
 
@@ -72,8 +71,7 @@ default_state{N<:Number}(variable::Constant, value::N) = BasicUnvVariableState(v
 default_state{N<:Number}(variable::Constant, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Constant, value::Matrix{N}) = BasicMavVariableState(value)
 
-Base.show(io::IO, ::Type{Constant}) = print(io, "Constant")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{Constant}) = show(io, t)
+@compat show(io::IO, ::Type{Constant}) = print(io, "Constant")
 
 dotshape(variable::Constant) = "trapezium"
 
@@ -97,8 +95,7 @@ default_state{N<:Number}(variable::Data, value::N) = BasicUnvVariableState(value
 default_state{N<:Number}(variable::Data, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableState(value)
 
-Base.show(io::IO, ::Type{Data}) = print(io, "Data")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{Data}) = show(io, t)
+@compat show(io::IO, ::Type{Data}) = print(io, "Data")
 
 dotshape(variable::Data) = "box"
 
@@ -121,7 +118,6 @@ default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableS
 default_state{N<:Number}(variable::Transformation, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Transformation, value::Matrix{N}) = BasicMavVariableState(value)
 
-Base.show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{Transformation}) = show(io, t)
+@compat show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
 
 dotshape(variable::Transformation) = "polygon"

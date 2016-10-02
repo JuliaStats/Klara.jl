@@ -203,6 +203,4 @@ function reset!(
   sstate.count = 0
 end
 
-Base.show(io::IO, sampler::RAM) = print(io, "RAM sampler: target rate = $(sampler.targetrate), γ = $(sampler.γ)")
-
-Base.writemime(io::IO, ::MIME"text/plain", sampler::RAM) = show(io, sampler)
+@compat show(io::IO, sampler::RAM) = print(io, "RAM sampler: target rate = $(sampler.targetrate), γ = $(sampler.γ)")

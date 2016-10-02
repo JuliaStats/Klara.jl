@@ -649,5 +649,4 @@ default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopt
     (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-Base.show(io::IO, ::Type{BasicContMuvParameter}) = print(io, "BasicContMuvParameter")
-Base.writemime(io::IO, ::MIME"text/plain", t::Type{BasicContMuvParameter}) = show(io, t)
+@compat show(io::IO, ::Type{BasicContMuvParameter}) = print(io, "BasicContMuvParameter")

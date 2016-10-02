@@ -19,6 +19,6 @@ variate_form{S<:ValueSupport, F<:VariateForm}(::Type{ParameterState{S, F}}) = F
 
 diagnostics(state::ParameterState) = Dict(zip(state.diagnostickeys, state.diagnosticvalues))
 
-Base.(:(==)){S<:ParameterState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)])
+=={S<:ParameterState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)])
 
 Base.isequal{S<:ParameterState}(z::S, w::S) = reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)])

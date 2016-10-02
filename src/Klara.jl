@@ -1,8 +1,11 @@
 module Klara
 
+using Compat
 using Distributions
 using Formatting
 using StatsBase
+
+@compat import Base.show
 
 import Base:
   ==,
@@ -24,9 +27,7 @@ import Base:
   read,
   reset,
   run,
-  show,
-  write,
-  writemime
+  write
 
 import Distributions:
   @check_args,
@@ -161,6 +162,7 @@ export
   VariableVector,
 
   ### Functions
+  ==,
   acceptance,
   add_dimension,
   add_edge!,
@@ -217,6 +219,7 @@ export
   save,
   setpdf!,
   setprior!,
+  show,
   softabs,
   sort_by_index,
   source,

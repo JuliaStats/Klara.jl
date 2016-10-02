@@ -151,13 +151,12 @@ end
 Base.eltype{N<:Real}(::Type{BasicContMuvParameterNState{N}}) = N
 Base.eltype{N<:Real}(::BasicContMuvParameterNState{N}) = N
 
-Base.(:(==)){S<:BasicContMuvParameterNState}(z::S, w::S) =
-  reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:17]])
+=={S<:BasicContMuvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:17]])
 
 Base.isequal{S<:BasicContMuvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:17]])
 
-function Base.show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
+@compat function show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
   fnames = fieldnames(BasicContMuvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
   indentation = "  "
