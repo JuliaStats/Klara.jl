@@ -286,7 +286,7 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
 end
 
 function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR})
-  nstate::DiscreteParameterNState
+  local nstate::DiscreteParameterNState
   fnames = fieldnames(BasicDiscParamIOStream)
   l = length(iostream.size)
 

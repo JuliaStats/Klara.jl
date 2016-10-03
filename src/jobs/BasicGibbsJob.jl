@@ -284,7 +284,7 @@ function codegen(::Type{Val{:iterate}}, job::BasicGibbsJob)
 end
 
 function codegen(::Type{Val{:run}}, job::BasicGibbsJob)
-  result::Expr
+  local result::Expr
   ifforbody = []
   forbody = []
   body = []

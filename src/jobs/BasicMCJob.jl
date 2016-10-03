@@ -195,7 +195,7 @@ end
 codegen(f::Symbol, job::BasicMCJob) = codegen(Val{f}, job)
 
 function codegen(::Type{Val{:resetplain}}, job::BasicMCJob)
-  fsignature::Vector{Union{Symbol, Expr}}
+  local fsignature::Vector{Union{Symbol, Expr}}
   body = []
 
   if job.resetpstate
@@ -230,8 +230,8 @@ function codegen(::Type{Val{:resetplain}}, job::BasicMCJob)
 end
 
 function codegen(::Type{Val{:resettask}}, job::BasicMCJob)
-  fsignature::Vector{Union{Symbol, Expr}}
-  fbody::Expr
+  local fsignature::Vector{Union{Symbol, Expr}}
+  local fbody::Expr
 
   @gensym _resettask
 
@@ -277,7 +277,7 @@ function codegen(::Type{Val{:save}}, job::BasicMCJob)
 end
 
 function codegen(::Type{Val{:run}}, job::BasicMCJob)
-  result::Expr
+  local result::Expr
   ifforbody = []
   forbody = []
   body = []

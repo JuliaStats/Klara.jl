@@ -90,7 +90,7 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monito
   body = []
   fnames = fieldnames(BasicContMuvParameterNState)
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
-  statelen::Integer
+  local statelen::Integer
 
   for j in 2:4
     if monitor[j]

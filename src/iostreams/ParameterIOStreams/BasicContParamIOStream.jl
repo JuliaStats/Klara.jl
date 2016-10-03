@@ -334,7 +334,7 @@ function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicCont
 end
 
 function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
-  nstate::ContinuousParameterNState
+  local nstate::ContinuousParameterNState
   fnames = fieldnames(BasicContParamIOStream)
   l = length(iostream.size)
 

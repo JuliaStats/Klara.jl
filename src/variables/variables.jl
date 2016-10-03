@@ -24,7 +24,7 @@ indices(variables::VariableVector) = Integer[v.index for v in variables]
 sort_by_index(vs::VariableVector) = vs[[v.index for v in vs]]
 
 function default_state(v::Variable, v0, outopts::Dict=Dict())
-  vstate::VariableState
+  local vstate::VariableState
 
   if isa(v0, VariableState)
     vstate = v0

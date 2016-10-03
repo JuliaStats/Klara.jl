@@ -48,7 +48,7 @@ augment_parameter_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_para
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
 
 function initialize_output(state::BasicUnvVariableState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicUnvVariableNState(n, eltype(state))
@@ -70,7 +70,7 @@ function initialize_output(state::BasicUnvVariableState, n::Integer, outopts::Di
 end
 
 function initialize_output(state::BasicMuvVariableState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicMuvVariableNState(state.size, n, eltype(state))
@@ -92,7 +92,7 @@ function initialize_output(state::BasicMuvVariableState, n::Integer, outopts::Di
 end
 
 function initialize_output(state::BasicMavVariableState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicMavVariableNState(state.size, n, eltype(state))
@@ -114,7 +114,7 @@ function initialize_output(state::BasicMavVariableState, n::Integer, outopts::Di
 end
 
 function initialize_output(state::BasicDiscUnvParameterState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicDiscUnvParameterNState(n, outopts[:monitor], outopts[:diagnostics], eltype(state)...)
@@ -138,7 +138,7 @@ function initialize_output(state::BasicDiscUnvParameterState, n::Integer, outopt
 end
 
 function initialize_output(state::BasicDiscMuvParameterState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicDiscMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state)...)
@@ -163,7 +163,7 @@ function initialize_output(state::BasicDiscMuvParameterState, n::Integer, outopt
 end
 
 function initialize_output(state::BasicContUnvParameterState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicContUnvParameterNState(n, outopts[:monitor], outopts[:diagnostics], eltype(state))
@@ -187,7 +187,7 @@ function initialize_output(state::BasicContUnvParameterState, n::Integer, outopt
 end
 
 function initialize_output(state::BasicContMuvParameterState, n::Integer, outopts::Dict)
-  output::Union{VariableNState, VariableIOStream, Void}
+  local output::Union{VariableNState, VariableIOStream, Void}
 
   if outopts[:destination] == :nstate
     output = BasicContMuvParameterNState(state.size, n, outopts[:monitor], outopts[:diagnostics], eltype(state))

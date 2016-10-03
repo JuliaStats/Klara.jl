@@ -1,11 +1,11 @@
 function codegen(::Type{Val{:iterate}}, ::Type{HMC}, job::BasicMCJob)
-  result::Expr
+  local result::Expr
   update = []
   noupdate = []
   burninbody = []
   ifburninbody = []
   body = []
-  dindex::Integer
+  local dindex::Integer
 
   vform = variate_form(job.pstate)
   if vform != Univariate && vform != Multivariate

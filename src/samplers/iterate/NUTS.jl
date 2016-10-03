@@ -1,11 +1,11 @@
 function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
-  result::Expr
+  local result::Expr
   whilebody = []
   ifwhilebody = []
   burninbody = []
   ifburninbody = []
   body = []
-  dindex::Integer
+  local dindex::Integer
 
   if isa(job.tuner, DualAveragingMCTuner)
     push!(body, :(local a::Real))

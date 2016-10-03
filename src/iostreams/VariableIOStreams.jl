@@ -53,7 +53,7 @@ function Base.read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMav
 end
 
 function Base.read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
-  nstate::VariableNState
+  local nstate::VariableNState
   l = length(iostream.size)
 
   if l == 0
