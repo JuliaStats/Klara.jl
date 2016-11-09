@@ -113,7 +113,7 @@ function codegen(::Type{Val{:open}}, iostream::BasicDiscParamIOStream, fnames::V
   push!(body,:(_iostream.names = _names))
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(setfield!(_iostream, $(QuoteNode(f)), open(_names[$i], _mode))))
     end
@@ -133,7 +133,7 @@ function codegen(::Type{Val{:close}}, iostream::BasicDiscParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
     end
@@ -153,7 +153,7 @@ function codegen(::Type{Val{:mark}}, iostream::BasicDiscParamIOStream, fnames::V
   local f::Symbol
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(mark(getfield(_iostream, $(QuoteNode(f))))))
     end
@@ -173,7 +173,7 @@ function codegen(::Type{Val{:reset}}, iostream::BasicDiscParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(reset(getfield($(iostream), $(QuoteNode(f))))))
     end
@@ -193,7 +193,7 @@ function codegen(::Type{Val{:flush}}, iostream::BasicDiscParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(flush(getfield($(iostream), $(QuoteNode(f))))))
     end
@@ -213,7 +213,7 @@ function codegen(::Type{Val{:write}}, iostream::BasicDiscParamIOStream, fnames::
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
   for i in 1:5
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(
         body,
@@ -234,8 +234,8 @@ end
 function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState)
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:4
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i]))
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -246,13 +246,13 @@ end
 function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState)
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 2:4
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i]))
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
     end
   end
   for i in (1, 5)
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i])', ',')
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i])', ',')
     end
   end
 end
@@ -261,8 +261,8 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
   t = [NI, fill(NR, 3)]
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:4
-    if iostream.(fnames[i]) != nothing
-      setfield!(nstate, fnames[i], vec(readdlm(iostream.(fnames[i]), ',', t[i])))
+    if getfield(iostream, fnames[i]) != nothing
+      setfield!(nstate, fnames[i], vec(readdlm(getfield(iostream, fnames[i]), ',', t[i])))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -276,8 +276,8 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
     setfield!(nstate, fnames[1], readdlm(iostream.(fnames[1]), ',', NI)')
   end
   for i in 2:4
-    if iostream.(fnames[i]) != nothing
-      setfield!(nstate, fnames[i], vec(readdlm(iostream.(fnames[i]), ',', NR)))
+    if getfield(iostream, fnames[i]) != nothing
+      setfield!(nstate, fnames[i], vec(readdlm(getfield(iostream, fnames[i]), ',', NR)))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -293,7 +293,7 @@ function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::
   if l == 0
     nstate = BasicDiscUnvParameterNState(
       iostream.n,
-      [iostream.(fnames[i]) != nothing ? true : false for i in 1:13],
+      [getfield(iostream, fnames[i]) != nothing ? true : false for i in 1:13],
       iostream.diagnostickeys,
       TI,
       TR
@@ -302,7 +302,7 @@ function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::
     nstate = BasicDiscMuvParameterNState(
       iostream.size[1],
       iostream.n,
-      [iostream.(fnames[i]) != nothing ? true : false for i in 1:13],
+      [getfield(iostream, fnames[i]) != nothing ? true : false for i in 1:13],
       iostream.diagnostickeys,
       TI,
       TR

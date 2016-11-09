@@ -122,7 +122,7 @@ function codegen(::Type{Val{:open}}, iostream::BasicContParamIOStream, fnames::V
   push!(body,:(_iostream.names = _names))
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(setfield!(_iostream, $(QuoteNode(f)), open(_names[$i], _mode))))
     end
@@ -142,7 +142,7 @@ function codegen(::Type{Val{:close}}, iostream::BasicContParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
     end
@@ -162,7 +162,7 @@ function codegen(::Type{Val{:mark}}, iostream::BasicContParamIOStream, fnames::V
   local f::Symbol
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(mark(getfield(_iostream, $(QuoteNode(f))))))
     end
@@ -182,7 +182,7 @@ function codegen(::Type{Val{:reset}}, iostream::BasicContParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(reset(getfield($(iostream), $(QuoteNode(f))))))
     end
@@ -202,7 +202,7 @@ function codegen(::Type{Val{:flush}}, iostream::BasicContParamIOStream, fnames::
   local f::Symbol
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(body, :(flush(getfield($(iostream), $(QuoteNode(f))))))
     end
@@ -222,7 +222,7 @@ function codegen(::Type{Val{:write}}, iostream::BasicContParamIOStream, fnames::
   local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
   for i in 1:14
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       f = fnames[i]
       push!(
         body,
@@ -243,8 +243,8 @@ end
 function Base.write(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState)
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i]))
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -255,17 +255,17 @@ end
 function Base.write(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState)
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i]))
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
     end
   end
   for i in (1, 5, 6, 7, 14)
-    if iostream.(fnames[i]) != nothing
-      writedlm(iostream.(fnames[i]), nstate.(fnames[i])', ',')
+    if getfield(iostream, fnames[i]) != nothing
+      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i])', ',')
     end
   end
   for i in 8:10
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       statelen = abs2(iostream.size)
       for j in 1:nstate.n
         write(iostream.stream, join(nstate.value[1+(j-1)*statelen:j*statelen], ','), "\n")
@@ -273,7 +273,7 @@ function Base.write(iostream::BasicContParamIOStream, nstate::BasicContMuvParame
     end
   end
   for i in 11:13
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       statelen = iostream.size^3
       for j in 1:nstate.n
         write(iostream.stream, join(nstate.value[1+(j-1)*statelen:j*statelen], ','), "\n")
@@ -285,8 +285,8 @@ end
 function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState{N})
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
-    if iostream.(fnames[i]) != nothing
-      setfield!(nstate, fnames[i], vec(readdlm(iostream.(fnames[i]), ',', N)))
+    if getfield(iostream, fnames[i]) != nothing
+      setfield!(nstate, fnames[i], vec(readdlm(getfield(iostream, fnames[i]), ',', N)))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -297,17 +297,17 @@ end
 function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState{N})
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
-    if iostream.(fnames[i]) != nothing
-      setfield!(nstate, fnames[i], vec(readdlm(iostream.(fnames[i]), ',', N)))
+    if getfield(iostream, fnames[i]) != nothing
+      setfield!(nstate, fnames[i], vec(readdlm(getfield(iostream, fnames[i]), ',', N)))
     end
   end
   for i in (1, 5, 6, 7)
-    if iostream.(fnames[i]) != nothing
-      setfield!(nstate, fnames[i], readdlm(iostream.(fnames[i]), ',', N)')
+    if getfield(iostream, fnames[i]) != nothing
+      setfield!(nstate, fnames[i], readdlm(getfield(iostream, fnames[i]), ',', N)')
     end
   end
   for i in 8:10
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       statelen = abs2(iostream.size)
       line = 1
       while !eof(iostream.stream)
@@ -318,7 +318,7 @@ function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicCont
     end
   end
   for i in 11:13
-    if iostream.(fnames[i]) != nothing
+    if getfield(iostream, fnames[i]) != nothing
       statelen = iostream.size^3
       line = 1
       while !eof(iostream.stream)
@@ -341,7 +341,7 @@ function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
   if l == 0
     nstate = BasicContUnvParameterNState(
       iostream.n,
-      [iostream.(fnames[i]) != nothing ? true : false for i in 1:13],
+      [getfield(iostream, fnames[i]) != nothing ? true : false for i in 1:13],
       iostream.diagnostickeys,
       T
     )
@@ -349,7 +349,7 @@ function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
     nstate = BasicContMuvParameterNState(
       iostream.size[1],
       iostream.n,
-      [iostream.(fnames[i]) != nothing ? true : false for i in 1:13],
+      [getfield(iostream, fnames[i]) != nothing ? true : false for i in 1:13],
       iostream.diagnostickeys,
       T
     )
