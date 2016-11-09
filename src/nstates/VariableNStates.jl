@@ -23,7 +23,7 @@ Base.eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
 
 Base.copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Integer) = (nstate.value[i] = state.value)
 
-@compat function show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
+function show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
   indentation = "  "
 
   println(io, "BasicUnvVariableNState:")
@@ -51,7 +51,7 @@ Base.eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
 Base.copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Integer) =
   (nstate.value[1+(i-1)*state.size:i*state.size] = state.value)
 
-@compat function show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
+function show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
   indentation = "  "
 
   println(io, "BasicMuvVariableNState:")
@@ -81,7 +81,7 @@ Base.eltype{N<:Number}(::BasicMavVariableNState{N}) = N
 Base.copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Integer, statelen::Integer=prod(state.size)) =
   (nstate.value[1+(i-1)*statelen:i*statelen] = state.value)
 
-@compat function show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
+function show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})
   indentation = "  "
 
   println(io, "BasicMavVariableNState:")

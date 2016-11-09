@@ -11,14 +11,6 @@ end
 
 ARSState{S<:ValueSupport, F<:VariateForm}(
   pstate::ParameterState{S, F},
-  tune::MCTunerState,
-  logproposal::Real,
-  weight::Real
-) =
-  ARSState{S, F}(pstate, tune, logproposal, weight)
-
-ARSState{S<:ValueSupport, F<:VariateForm}(
-  pstate::ParameterState{S, F},
   tune::MCTunerState=BasicMCTune()
 ) =
   ARSState(pstate, tune, NaN, NaN)
@@ -99,5 +91,5 @@ reset!{S<:ValueSupport, F<:VariateForm}(
 ) =
   reset!(sstate.tune, sampler, tuner)
 
-@compat show(io::IO, sampler::ARS) =
+show(io::IO, sampler::ARS) =
   print(io, "ARS sampler: proposal scale = $(sampler.proposalscale), jump scale = $(sampler.jumpscale)")

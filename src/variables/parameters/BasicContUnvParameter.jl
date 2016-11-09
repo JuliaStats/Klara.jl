@@ -635,4 +635,4 @@ default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict)
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )
 
-@compat show(io::IO, ::Type{BasicContUnvParameter}) = print(io, "BasicContUnvParameter")
+show(io::IO, ::Type{BasicContUnvParameter}) = print(io, "BasicContUnvParameter")

@@ -104,7 +104,7 @@ Base.eltype{N<:Real}(::BasicContUnvParameterNState{N}) = N
 Base.isequal{S<:BasicContUnvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:16]])
 
-@compat function show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
+function show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
   fnames = fieldnames(BasicContUnvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
   indentation = "  "

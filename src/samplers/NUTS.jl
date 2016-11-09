@@ -685,7 +685,7 @@ function codegen_tree_builder{T<:MCTuner}(
   end
 end
 
-@compat show(io::IO, sampler::NUTS) =
+show(io::IO, sampler::NUTS) =
   print(
     io,
     "NUTS sampler: leap step = ",

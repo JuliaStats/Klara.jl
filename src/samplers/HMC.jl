@@ -222,5 +222,5 @@ leapfrog!(sstate::HMCState{Univariate}, gradlogtarget!::Function) =
 leapfrog!(sstate::HMCState{Multivariate}, gradlogtarget!::Function) =
   leapfrog!(sstate.pstate, sstate.momentum, sstate.pstate, sstate.momentum, sstate.tune.step, gradlogtarget!)
 
-@compat show(io::IO, sampler::HMC) =
+show(io::IO, sampler::HMC) =
   print(io, "HMC sampler: number of leaps = $(sampler.nleaps), leap step = $(sampler.leapstep)")

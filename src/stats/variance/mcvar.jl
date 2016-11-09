@@ -30,7 +30,7 @@ mcse_iid(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size) = eltype(s
 ## Batch Means and Spectral Variance Estimators in Markov chain Monte Carlo
 ## Annals of Statistics, 2010, 38 (2), pp 1034-1070
 
-function mcvar_bm{T}(v::AbstractArray{T}; batchlen::Integer=100)
+function mcvar_bm{T}(v::AbstractArray{T}, batchlen::Integer=100)
   nbatches = div(length(v), batchlen)
   @assert nbatches > 1 "Choose batch size such that the number of batches is greather than one"
   nbsamples = nbatches*batchlen
@@ -38,27 +38,27 @@ function mcvar_bm{T}(v::AbstractArray{T}; batchlen::Integer=100)
   return batchlen*var(batchmeans)/nbsamples
 end
 
-mcvar_bm(v::AbstractArray, region; batchlen::Integer=100) = mapslices(x -> mcvar_bm(x, batchlen=batchlen), v, region)
+mcvar_bm(v::AbstractArray, region, batchlen::Integer=100) = mapslices(x -> mcvar_bm(x, batchlen), v, region)
 
-mcvar_bm(s::VariableNState{Univariate}; batchlen::Integer=100) = mcvar_bm(s.value, batchlen=batchlen)
+mcvar_bm(s::VariableNState{Univariate}, batchlen::Integer=100) = mcvar_bm(s.value, batchlen)
 
-mcvar_bm(s::VariableNState{Multivariate}, i::Integer; batchlen::Integer=100) = mcvar_bm(s.value[i, :], batchlen=batchlen)
+mcvar_bm(s::VariableNState{Multivariate}, i::Integer, batchlen::Integer=100) = mcvar_bm(s.value[i, :], batchlen)
 
-mcvar_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; batchlen::Integer=100) =
-  eltype(s)[mcvar_bm(s, i, batchlen=batchlen) for i in r]
+mcvar_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, batchlen::Integer=100) =
+  eltype(s)[mcvar_bm(s, i, batchlen) for i in r]
 
 ## Monte Carlo standard error using batch means
 
-mcse_bm(v::AbstractArray; batchlen::Integer=100) = sqrt(mcvar_bm(v, batchlen=batchlen))
+mcse_bm(v::AbstractArray, batchlen::Integer=100) = sqrt(mcvar_bm(v, batchlen))
 
-mcse_bm(v::AbstractArray, region; batchlen::Integer=100) = mapslices(x -> mcse_bm(x, batchlen=batchlen), v, region)
+mcse_bm(v::AbstractArray, region, batchlen::Integer=100) = mapslices(x -> mcse_bm(x, batchlen), v, region)
 
-mcse_bm(s::VariableNState{Univariate}; batchlen::Integer=100) = mcse_bm(s.value, batchlen=batchlen)
+mcse_bm(s::VariableNState{Univariate}, batchlen::Integer=100) = mcse_bm(s.value, batchlen)
 
-mcse_bm(s::VariableNState{Multivariate}, i::Integer; batchlen::Integer=100) = mcse_bm(s.value[i, :], batchlen=batchlen)
+mcse_bm(s::VariableNState{Multivariate}, i::Integer, batchlen::Integer=100) = mcse_bm(s.value[i, :], batchlen)
 
-mcse_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; batchlen::Integer=100) =
-  eltype(s)[mcse_bm(s, i, batchlen=batchlen) for i in r]
+mcse_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, batchlen::Integer=100) =
+  eltype(s)[mcse_bm(s, i, batchlen) for i in r]
 
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo variance
 ## Reference:
@@ -66,7 +66,7 @@ mcse_bm(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; batchlen::I
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
-function mcvar_imse{T}(v::AbstractVector{T}; maxlag::Integer=length(v)-1)
+function mcvar_imse{T}(v::AbstractVector{T}, maxlag::Integer=length(v)-1)
   k = convert(Integer, floor((maxlag-1)/2))
   m = k+1
 
@@ -98,33 +98,33 @@ function mcvar_imse{T}(v::AbstractVector{T}; maxlag::Integer=length(v)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(v)
 end
 
-mcvar_imse(v::AbstractArray; maxlag::Integer=length(v)-1) = mcvar_imse(vec(v), maxlag=maxlag)
+mcvar_imse(v::AbstractArray, maxlag::Integer=length(v)-1) = mcvar_imse(vec(v), maxlag)
 
-mcvar_imse(v::AbstractArray, region; maxlag::Integer=length(v)-1) = mapslices(x -> mcvar_imse(x, maxlag=maxlag), v, region)
+mcvar_imse(v::AbstractArray, region) = mapslices(x -> mcvar_imse(x, length(x)-1), v, region)
 
-mcvar_imse(v::AbstractArray, region) = mapslices(x -> mcvar_imse(x, maxlag=length(x)-1), v, region)
+mcvar_imse(v::AbstractArray, region, maxlag::Integer) = mapslices(x -> mcvar_imse(x, maxlag), v, region)
 
-mcvar_imse(s::VariableNState{Univariate}; maxlag::Integer=s.n-1) = mcvar_imse(s.value, maxlag=maxlag)
+mcvar_imse(s::VariableNState{Univariate}, maxlag::Integer=s.n-1) = mcvar_imse(s.value, maxlag)
 
-mcvar_imse(s::VariableNState{Multivariate}, i::Integer; maxlag::Integer=s.n-1) = mcvar_imse(s.value[i, :], maxlag=maxlag)
+mcvar_imse(s::VariableNState{Multivariate}, i::Integer, maxlag::Integer=s.n-1) = mcvar_imse(s.value[i, :], maxlag)
 
-mcvar_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Integer=s.n-1) =
-  eltype(s)[mcvar_imse(s, i, maxlag=maxlag) for i in r]
+mcvar_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, maxlag::Integer=s.n-1) =
+  eltype(s)[mcvar_imse(s, i, maxlag) for i in r]
 
 ## Initial monotone sequence estimator (IMSE) of Monte Carlo standard error
 
-mcse_imse(v::AbstractArray; maxlag::Integer=length(v)-1) = sqrt(mcvar_imse(v, maxlag=maxlag))
+mcse_imse(v::AbstractArray, maxlag::Integer=length(v)-1) = sqrt(mcvar_imse(v, maxlag))
 
-mcse_imse(v::AbstractArray, region; maxlag::Integer=length(v)-1) = mapslices(x -> mcse_imse(x, maxlag=maxlag), v, region)
+mcse_imse(v::AbstractArray, region) = mapslices(x -> mcse_imse(x, length(x)-1), v, region)
 
-mcse_imse(v::AbstractArray, region) = mapslices(x -> mcse_imse(x, maxlag=length(x)-1), v, region)
+mcse_imse(v::AbstractArray, region, maxlag::Integer) = mapslices(x -> mcse_imse(x, maxlag), v, region)
 
-mcse_imse(s::VariableNState{Univariate}; maxlag::Integer=s.n-1) = mcse_imse(s.value, maxlag=maxlag)
+mcse_imse(s::VariableNState{Univariate}, maxlag::Integer=s.n-1) = mcse_imse(s.value, maxlag)
 
-mcse_imse(s::VariableNState{Multivariate}, i::Integer; maxlag::Integer=s.n-1) = mcse_imse(s.value[i, :], maxlag=maxlag)
+mcse_imse(s::VariableNState{Multivariate}, i::Integer, maxlag::Integer=s.n-1) = mcse_imse(s.value[i, :], maxlag)
 
-mcse_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Integer=s.n-1) =
-  eltype(s)[mcse_imse(s, i, maxlag=maxlag) for i in r]
+mcse_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, maxlag::Integer=s.n-1) =
+  eltype(s)[mcse_imse(s, i, maxlag) for i in r]
 
 ## Initial positive sequence estimator (IPSE) of Monte Carlo variance
 ## Reference:
@@ -132,7 +132,7 @@ mcse_imse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::I
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
-function mcvar_ipse{T}(v::AbstractVector{T}; maxlag::Integer=length(v)-1)
+function mcvar_ipse{T}(v::AbstractVector{T}, maxlag::Integer=length(v)-1)
   k = convert(Integer, floor((maxlag-1)/2))
 
   # Preallocate memory
@@ -155,33 +155,33 @@ function mcvar_ipse{T}(v::AbstractVector{T}; maxlag::Integer=length(v)-1)
   return (-acv[1]+2*sum(g[1:m]))/length(v)
 end
 
-mcvar_ipse(v::AbstractArray; maxlag::Integer=length(v)-1) = mcvar_ipse(vec(v), maxlag=maxlag)
+mcvar_ipse(v::AbstractArray, maxlag::Integer=length(v)-1) = mcvar_ipse(vec(v), maxlag)
 
-mcvar_ipse(v::AbstractArray, region; maxlag::Integer=length(v)-1) = mapslices(x -> mcvar_ipse(x, maxlag=maxlag), v, region)
+mcvar_ipse(v::AbstractArray, region) = mapslices(x -> mcvar_ipse(x, length(x)-1), v, region)
 
-mcvar_ipse(v::AbstractArray, region) = mapslices(x -> mcvar_ipse(x, maxlag=length(x)-1), v, region)
+mcvar_ipse(v::AbstractArray, region, maxlag::Integer) = mapslices(x -> mcvar_ipse(x, maxlag), v, region)
 
-mcvar_ipse(s::VariableNState{Univariate}; maxlag::Integer=s.n-1) = mcvar_ipse(s.value, maxlag=maxlag)
+mcvar_ipse(s::VariableNState{Univariate}, maxlag::Integer=s.n-1) = mcvar_ipse(s.value, maxlag)
 
-mcvar_ipse(s::VariableNState{Multivariate}, i::Integer; maxlag::Integer=s.n-1) = mcvar_ipse(s.value[i, :], maxlag=maxlag)
+mcvar_ipse(s::VariableNState{Multivariate}, i::Integer, maxlag::Integer=s.n-1) = mcvar_ipse(s.value[i, :], maxlag)
 
-mcvar_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Integer=s.n-1) =
-  eltype(s)[mcvar_ipse(s, i, maxlag=maxlag) for i in r]
+mcvar_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, maxlag::Integer=s.n-1) =
+  eltype(s)[mcvar_ipse(s, i, maxlag) for i in r]
 
 ## Initial positive sequence estimator (IPSE) of Monte Carlo standard error
 
-mcse_ipse(v::AbstractArray; maxlag::Integer=length(v)-1) = sqrt(mcvar_ipse(v, maxlag=maxlag))
+mcse_ipse(v::AbstractArray, maxlag::Integer=length(v)-1) = sqrt(mcvar_ipse(v, maxlag))
 
-mcse_ipse(v::AbstractArray, region; maxlag::Integer=length(v)-1) = mapslices(x -> mcse_ipse(x, maxlag=maxlag), v, region)
+mcse_ipse(v::AbstractArray, region) = mapslices(x -> mcse_ipse(x, length(x)-1), v, region)
 
-mcse_ipse(v::AbstractArray, region) = mapslices(x -> mcse_ipse(x, maxlag=length(x)-1), v, region)
+mcse_ipse(v::AbstractArray, region, maxlag::Integer) = mapslices(x -> mcse_ipse(x, maxlag), v, region)
 
-mcse_ipse(s::VariableNState{Univariate}; maxlag::Integer=s.n-1) = mcse_ipse(s.value, maxlag=maxlag)
+mcse_ipse(s::VariableNState{Univariate}, maxlag::Integer=s.n-1) = mcse_ipse(s.value, maxlag)
 
-mcse_ipse(s::VariableNState{Multivariate}, i::Integer; maxlag::Integer=s.n-1) = mcse_ipse(s.value[i, :], maxlag=maxlag)
+mcse_ipse(s::VariableNState{Multivariate}, i::Integer, maxlag::Integer=s.n-1) = mcse_ipse(s.value[i, :], maxlag)
 
-mcse_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; maxlag::Integer=s.n-1) =
-  eltype(s)[mcse_ipse(s, i, maxlag=maxlag) for i in r]
+mcse_ipse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size, maxlag::Integer=s.n-1) =
+  eltype(s)[mcse_ipse(s, i, maxlag) for i in r]
 
 ## Wrapper function for estimating Monte Carlo variance using various approaches
 
@@ -189,26 +189,22 @@ mcvar_types = (:iid, :bm, :imse, :ipse)
 mcvar_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcvar_iid, mcvar_bm, mcvar_imse, mcvar_ipse)))
 mcse_functions = Dict{Symbol, Function}(zip(mcvar_types, (mcse_iid, mcse_bm, mcse_imse, mcse_ipse)))
 
-mcvar(v::AbstractArray; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v; args...)
+mcvar(v::AbstractArray, vtype::Symbol, args...) = mcvar_functions[vtype](v, args...)
 
-mcvar(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](v, region; args...)
+mcvar(s::VariableNState{Univariate}, vtype::Symbol, args...) = mcvar_functions[vtype](s, args...)
 
-mcvar(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](s; args...)
+mcvar(s::VariableNState{Multivariate}, vtype::Symbol, i::Integer, args...) = mcvar_functions[vtype](s, i, args...)
 
-mcvar(s::VariableNState{Multivariate}, i::Integer; vtype::Symbol=:imse, args...) = mcvar_functions[vtype](s, i; args...)
-
-mcvar(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; vtype::Symbol=:imse, args...) =
-  mcvar_functions[vtype](s, r; args...)
+mcvar(s::VariableNState{Multivariate}, vtype::Symbol, r::AbstractVector=1:s.size, args...) =
+  mcvar_functions[vtype](s, r, args...)
 
 ## Wrapper function for estimating Monte Carlo standard error using various approaches
 
-mcse(v::AbstractArray; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v; args...)
+mcse(v::AbstractArray, vtype::Symbol, args...) = mcse_functions[vtype](v, args...)
 
-mcse(v::AbstractArray, region; vtype::Symbol=:imse, args...) = mcse_functions[vtype](v, region; args...)
+mcse(s::VariableNState{Univariate}, vtype::Symbol, args...) = mcse_functions[vtype](s, args...)
 
-mcse(s::VariableNState{Univariate}; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s; args...)
+mcse(s::VariableNState{Multivariate}, vtype::Symbol, i::Integer, args...) = mcse_functions[vtype](s, i, args...)
 
-mcse(s::VariableNState{Multivariate}, i::Integer; vtype::Symbol=:imse, args...) = mcse_functions[vtype](s, i; args...)
-
-mcse(s::VariableNState{Multivariate}, r::AbstractVector=1:s.size; vtype::Symbol=:imse, args...) =
-  mcse_functions[vtype](s, r; args...)
+mcse(s::VariableNState{Multivariate}, vtype::Symbol, r::AbstractVector=1:s.size, args...) =
+  mcse_functions[vtype](s, r, args...)

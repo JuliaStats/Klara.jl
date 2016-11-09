@@ -352,7 +352,7 @@ end
 
 output(job::BasicMCJob) = job.output
 
-@compat function show(io::IO, job::BasicMCJob)
+function show(io::IO, job::BasicMCJob)
   isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
 
   indentation = "  "

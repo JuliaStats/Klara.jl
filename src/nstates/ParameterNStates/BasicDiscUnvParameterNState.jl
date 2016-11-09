@@ -102,7 +102,7 @@ Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterNState{NI, NR}) = (NI,
 Base.isequal{S<:BasicDiscUnvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:7]])
 
-@compat function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscUnvParameterNState{NI, NR})
+function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscUnvParameterNState{NI, NR})
   fnames = fieldnames(BasicDiscUnvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:4])
   indentation = "  "

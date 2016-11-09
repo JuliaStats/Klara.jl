@@ -110,7 +110,7 @@ Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterNState{NI, NR}) = (NI,
 Base.isequal{S<:BasicDiscMuvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:8]])
 
-@compat function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscMuvParameterNState{NI, NR})
+function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscMuvParameterNState{NI, NR})
   fnames = fieldnames(BasicDiscMuvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:4])
   indentation = "  "

@@ -32,5 +32,5 @@ BasicMCRange{T<:Integer}(postrange::UnitRange{T}) = BasicMCRange{T}(first(postra
 
 BasicMCRange{T<:Integer}(; burnin::T=0, thinning::T=1, nsteps::T=100) = BasicMCRange{T}((burnin+1):thinning:nsteps)
 
-@compat show(io::IO, r::BasicMCRange) =
+show(io::IO, r::BasicMCRange) =
   print(io, "BasicMCRange: number of steps = $(r.nsteps), burnin = $(r.burnin), thinning = $(r.thinning)")

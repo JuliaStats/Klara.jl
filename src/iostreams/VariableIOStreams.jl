@@ -71,5 +71,5 @@ function Base.read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
   nstate
 end
 
-@compat show(io::IO, iostream::BasicVariableIOStream) =
+show(io::IO, iostream::BasicVariableIOStream) =
   print(io, "BasicVariableIOStream: state size = $(iostream.size), number of states = $(iostream.n)")

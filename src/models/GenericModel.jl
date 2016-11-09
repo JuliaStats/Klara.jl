@@ -156,7 +156,7 @@ function GenericModel(vs::Dict{Symbol, DataType}, ds::Dict{Symbol, Symbol}, isdi
   return m
 end
 
-@compat function show(io::IO, model::GenericModel)
+function show(io::IO, model::GenericModel)
   isdirected = is_directed(model) ? "directed": "undirected"
   print(io, "GenericModel: $(num_vertices(model)) variables, $(num_edges(model)) dependencies ($isdirected graph)")
 end

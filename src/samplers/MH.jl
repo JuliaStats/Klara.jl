@@ -114,7 +114,7 @@ reset!{S<:ValueSupport, F<:VariateForm}(
 ) =
   reset!(sstate.tune, sampler, tuner)
 
-@compat function show(io::IO, sampler::MH)
+function show(io::IO, sampler::MH)
   issymmetric = sampler.symmetric ? "symmetric" : "non-symmmetric"
   isnormalised = sampler.normalised ? "normalised" : "non-normalised"
   print(io, "MH sampler: $issymmetric $isnormalised proposal")

@@ -117,4 +117,4 @@ function reset!(
   parameter.uptogradlogtarget!(pstate)
 end
 
-@compat show(io::IO, sampler::MALA) = print(io, "MALA sampler: drift step = $(sampler.driftstep)")
+show(io::IO, sampler::MALA) = print(io, "MALA sampler: drift step = $(sampler.driftstep)")

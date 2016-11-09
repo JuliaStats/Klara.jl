@@ -1,11 +1,8 @@
 module Klara
 
-using Compat
 using Distributions
 using Formatting
 using StatsBase
-
-@compat import Base.show
 
 import Base:
   ==,
@@ -27,6 +24,7 @@ import Base:
   read,
   reset,
   run,
+  show,
   write
 
 import Distributions:

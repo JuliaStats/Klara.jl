@@ -362,7 +362,7 @@ function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
   nstate
 end
 
-@compat function show(io::IO, iostream::BasicContParamIOStream)
+function show(io::IO, iostream::BasicContParamIOStream)
   fnames = fieldnames(BasicContParamIOStream)
   fbool = map(n -> getfield(iostream, n) != nothing, fnames[1:13])
   indentation = "  "

@@ -398,7 +398,7 @@ output(job::BasicGibbsJob) = job.output
 
 Dict(job::BasicGibbsJob, field::Symbol=:output) = Dict(zip(dpkeys(job), getfield(job, field)))
 
-@compat function show(io::IO, job::BasicGibbsJob)
+function show(io::IO, job::BasicGibbsJob)
   ndptransforms = num_dptransforms(job)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc

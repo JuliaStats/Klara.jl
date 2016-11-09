@@ -54,7 +54,7 @@ function default_state(v::VariableVector, v0::Vector, outopts::Vector, dpindex::
   default_state(v, v0, opts)
 end
 
-@compat show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
+show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof(v)))")
 
 ### Deterministic Variable subtypes
 
@@ -71,7 +71,7 @@ default_state{N<:Number}(variable::Constant, value::N) = BasicUnvVariableState(v
 default_state{N<:Number}(variable::Constant, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Constant, value::Matrix{N}) = BasicMavVariableState(value)
 
-@compat show(io::IO, ::Type{Constant}) = print(io, "Constant")
+show(io::IO, ::Type{Constant}) = print(io, "Constant")
 
 dotshape(variable::Constant) = "trapezium"
 
@@ -95,7 +95,7 @@ default_state{N<:Number}(variable::Data, value::N) = BasicUnvVariableState(value
 default_state{N<:Number}(variable::Data, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableState(value)
 
-@compat show(io::IO, ::Type{Data}) = print(io, "Data")
+show(io::IO, ::Type{Data}) = print(io, "Data")
 
 dotshape(variable::Data) = "box"
 
@@ -118,6 +118,6 @@ default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableS
 default_state{N<:Number}(variable::Transformation, value::Vector{N}) = BasicMuvVariableState(value)
 default_state{N<:Number}(variable::Transformation, value::Matrix{N}) = BasicMavVariableState(value)
 
-@compat show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
+show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
 
 dotshape(variable::Transformation) = "polygon"

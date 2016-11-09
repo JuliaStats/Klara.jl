@@ -100,7 +100,7 @@ function tune!(tune::DualAveragingMCTune, tuner::DualAveragingMCTuner, count::In
   tune.εbar = exp((1-tune.εweight)*log(tune.εbar)+tune.εweight*log(tune.step))
 end
 
-@compat show(io::IO, tuner::DualAveragingMCTuner) =
+show(io::IO, tuner::DualAveragingMCTuner) =
   print(
     io,
     string(

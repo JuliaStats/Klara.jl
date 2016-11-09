@@ -15,5 +15,5 @@ end
 
 VanillaMCTuner(; period::Integer=100, verbose::Bool=false) = VanillaMCTuner(period, verbose)
 
-@compat show(io::IO, tuner::VanillaMCTuner) =
+show(io::IO, tuner::VanillaMCTuner) =
   print(io, "VanillaMCTuner: period = $(tuner.period), verbose = $(tuner.verbose)")
