@@ -13,6 +13,7 @@ import Base:
   eltype,
   flush,
   getindex,
+  indices,
   isequal,
   keys,
   mark,
