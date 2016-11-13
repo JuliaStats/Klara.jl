@@ -16,7 +16,7 @@ s = BasicDiscMuvParameterState(v)
 @test eltype(s) == (Int64, Float64)
 @test s.value == v
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == []
 @test s.size == length(v)
@@ -31,7 +31,7 @@ s = BasicDiscMuvParameterState(v, [:accept], Float16, dv)
 @test eltype(s) == (Int16, Float16)
 @test s.value == v
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == dv
 @test s.size == length(v)
@@ -46,7 +46,7 @@ s = BasicDiscMuvParameterState(ssize)
 @test isa(s.value, Vector{Int64})
 @test length(s.value) == ssize
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == []
 @test s.size == ssize
@@ -62,7 +62,7 @@ s = BasicDiscMuvParameterState(ssize, [:accept], Int32, Float32, dv)
 @test isa(s.value, Vector{Int32})
 @test length(s.value) == ssize
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == dv
 @test s.size == ssize

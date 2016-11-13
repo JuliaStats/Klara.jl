@@ -25,7 +25,7 @@ s = BasicContUnvParameterState(v)
 @test eltype(s) == Float64
 @test s.value == v
 for i in 2:13
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == []
 @test s.diagnostickeys == Symbol[]
@@ -39,7 +39,7 @@ s = BasicContUnvParameterState(v, [:accept], dv)
 @test eltype(s) == Float64
 @test s.value == v
 for i in 2:13
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == dv
 @test s.diagnostickeys == [:accept]
@@ -50,7 +50,7 @@ s = BasicContUnvParameterState()
 
 @test isa(s.value, Float64)
 for i in 1:13
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == []
 @test s.diagnostickeys == Symbol[]
@@ -62,7 +62,7 @@ s = BasicContUnvParameterState([:accept], Float16, dv)
 
 @test isa(s.value, Float16)
 for i in 1:13
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == dv
 @test s.diagnostickeys == [:accept]

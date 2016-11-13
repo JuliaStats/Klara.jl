@@ -272,8 +272,8 @@ end
 
 function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState{NI, NR})
   fnames = fieldnames(BasicDiscParamIOStream)
-  if iostream.(fnames[1]) != nothing
-    setfield!(nstate, fnames[1], readdlm(iostream.(fnames[1]), ',', NI)')
+  if getfield(iostream, fnames[1]) != nothing
+    setfield!(nstate, fnames[1], readdlm(getfield(iostream, fnames[1]), ',', NI)')
   end
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing

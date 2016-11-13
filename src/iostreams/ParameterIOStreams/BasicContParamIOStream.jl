@@ -244,7 +244,7 @@ function write(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNS
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
     if getfield(iostream, fnames[i]) != nothing
-      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
+      writedlm(getfield(iostream, fnames[i]), getfield(nstate, fnames[i]))
     end
   end
   if iostream.diagnosticvalues != nothing
@@ -256,12 +256,12 @@ function write(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNS
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing
-      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i]))
+      writedlm(getfield(iostream, fnames[i]), getfield(nstate, fnames[i]))
     end
   end
   for i in (1, 5, 6, 7, 14)
     if getfield(iostream, fnames[i]) != nothing
-      writedlm(getfield(iostream, fnames[i]), nstate.(fnames[i])', ',')
+      writedlm(getfield(iostream, fnames[i]), getfield(nstate, fnames[i])', ',')
     end
   end
   for i in 8:10

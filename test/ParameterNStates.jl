@@ -25,7 +25,7 @@ nstate = ContUnvMarkovChain(nstaten)
 @test eltype(nstate) == Float64
 @test length(nstate.value) == nstaten
 for i in 2:13
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 @test size(nstate.diagnosticvalues) == (0, 0)
 @test nstate.n == nstaten
@@ -38,7 +38,7 @@ nstate = ContUnvMarkovChain(nstaten, [true; fill(false, 5); true; fill(false, 6)
 @test length(nstate.value) == nstaten
 @test length(nstate.gradlogtarget) == nstaten
 for i in [2:6; 8:13]
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 @test size(nstate.diagnosticvalues) == (1, nstaten)
 @test nstate.n == nstaten
@@ -62,7 +62,7 @@ nstate = ContUnvMarkovChain(nstaten, [:value, :logtarget], [:accept])
 @test length(nstate.value) == nstaten
 @test length(nstate.logtarget) == nstaten
 for i in [2:3; 5:13]
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 @test size(nstate.diagnosticvalues) == (1, nstaten)
 @test nstate.n == nstaten
@@ -94,16 +94,16 @@ nstate = ContMuvMarkovChain(nstatesize, nstaten)
 @test eltype(nstate) == Float64
 @test size(nstate.value) == (nstatesize, nstaten)
 for i in (2, 3, 4)
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 for i in 5:7
-  @test size(nstate.(fnames[i])) == (0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0)
 end
 for i in 8:10
-  @test size(nstate.(fnames[i])) == (0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0)
 end
 for i in 11:13
-  @test size(nstate.(fnames[i])) == (0, 0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0, 0)
 end
 @test size(nstate.diagnosticvalues) == (0, 0)
 @test nstate.size == nstatesize
@@ -118,16 +118,16 @@ nstate = ContMuvMarkovChain(nstatesize, nstaten, [true; fill(false, 3); true; fi
 @test size(nstate.value) == (nstatesize, nstaten)
 @test size(nstate.gradloglikelihood) == (nstatesize, nstaten)
 for i in (2, 3, 4)
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 for i in (6, 7)
-  @test size(nstate.(fnames[i])) == (0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0)
 end
 for i in 8:10
-  @test size(nstate.(fnames[i])) == (0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0)
 end
 for i in 11:13
-  @test size(nstate.(fnames[i])) == (0, 0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0, 0)
 end
 @test size(nstate.diagnosticvalues) == (1, nstaten)
 @test nstate.size == nstatesize
@@ -154,16 +154,16 @@ nstate = ContMuvMarkovChain(nstatesize, nstaten, [:value, :logtarget, :gradlogta
 @test length(nstate.logtarget) == nstaten
 @test size(nstate.gradlogtarget) == (nstatesize, nstaten)
 for i in (2, 3)
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 for i in (5, 6)
-  @test size(nstate.(fnames[i])) == (0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0)
 end
 for i in 8:10
-  @test size(nstate.(fnames[i])) == (0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0)
 end
 for i in 11:13
-  @test size(nstate.(fnames[i])) == (0, 0, 0, 0)
+  @test size(getfield(nstate, fnames[i])) == (0, 0, 0, 0)
 end
 @test size(nstate.diagnosticvalues) == (1, nstaten)
 @test nstate.size == nstatesize

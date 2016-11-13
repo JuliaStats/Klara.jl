@@ -16,7 +16,7 @@ s = BasicDiscUnvParameterState(v)
 @test eltype(s) == (Int64, Float64)
 @test s.value == v
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == []
 @test s.diagnostickeys == Symbol[]
@@ -30,7 +30,7 @@ s = BasicDiscUnvParameterState(v, [:accept], Float32, dv)
 @test eltype(s) == (Int32, Float32)
 @test s.value == v
 for i in 2:4
-  @test isnan(s.(fnames[i]))
+  @test isnan(getfield(s, fnames[i]))
 end
 @test s.diagnosticvalues == dv
 @test s.diagnostickeys == [:accept]

@@ -19,7 +19,7 @@ vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
 keys(variables::VariableVector) = Symbol[v.key for v in variables]
-indices(variables::VariableVector) = Integer[v.index for v in variables]
+indexes(variables::VariableVector) = Integer[v.index for v in variables]
 
 sort_by_index(vs::VariableVector) = vs[[v.index for v in vs]]
 

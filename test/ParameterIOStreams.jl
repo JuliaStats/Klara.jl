@@ -32,7 +32,7 @@ iostream = BasicContParamIOStream(iostreamsize, iostreamn, filepath=filepath)
 
 @test isa(iostream.value, IOStream)
 for i in 2:14
-  @test iostream.(fnames[i]) == nothing
+  @test getfield(iostream, fnames[i]) == nothing
 end
 @test iostream.size == iostreamsize
 @test iostream.n == iostreamn
@@ -52,10 +52,10 @@ iostream = BasicContParamIOStream(
 )
 
 for i in (1, 7, 14)
-  @test isa(iostream.(fnames[i]), IOStream)
+  @test isa(getfield(iostream, fnames[i]), IOStream)
 end
 for i in [2:6; 8:13]
-  @test iostream.(fnames[i]) == nothing
+  @test getfield(iostream, fnames[i]) == nothing
 end
 @test iostream.size == iostreamsize
 @test iostream.n == iostreamn
@@ -69,10 +69,10 @@ iostreamn = 7
 iostream = BasicContParamIOStream(iostreamsize, iostreamn, [:value, :logtarget], filepath=filepath, diagnostickeys=[:accept])
 
 for i in (1, 4, 14)
-  @test isa(iostream.(fnames[i]), IOStream)
+  @test isa(getfield(iostream, fnames[i]), IOStream)
 end
 for i in [2:3; 5:13]
-  @test iostream.(fnames[i]) == nothing
+  @test getfield(iostream, fnames[i]) == nothing
 end
 @test iostream.size == iostreamsize
 @test iostream.n == iostreamn
@@ -102,7 +102,7 @@ nstate = read(iostream, Float64)
 @test isa(nstate, ContUnvMarkovChain{Float64})
 @test nstate.value == nstatev
 for i in 2:13
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 @test length(nstate.diagnostickeys) == 0
 @test size(nstate.diagnosticvalues) == (0, 0)
@@ -132,7 +132,7 @@ nstateout = read(iostream, Float32)
 @test isa(nstateout, ContUnvMarkovChain{Float32})
 @test nstateout.value == nstatein.value
 for i in 2:13
-  @test length(nstateout.(fnames[i])) == 0
+  @test length(getfield(nstateout, fnames[i])) == 0
 end
 @test length(nstateout.diagnostickeys) == 1
 @test nstateout.diagnosticvalues == nstatein.diagnosticvalues
@@ -169,7 +169,7 @@ nstate = read(iostream, Float64)
 @test nstate.value == nstatev
 @test nstate.gradloglikelihood == nstategll
 for i in [2:4; 6:13]
-  @test length(nstate.(fnames[i])) == 0
+  @test length(getfield(nstate, fnames[i])) == 0
 end
 @test length(nstate.diagnostickeys) == 1
 @test nstate.diagnosticvalues == nstated
@@ -210,7 +210,7 @@ nstateout = read(iostream, Float32)
 @test nstateout.loglikelihood == nstatein.loglikelihood
 @test nstateout.logtarget == nstatein.logtarget
 for i in [3; 5:13]
-  @test length(nstateout.(fnames[i])) == 0
+  @test length(getfield(nstateout, fnames[i])) == 0
 end
 @test length(nstateout.diagnostickeys) == 1
 @test nstateout.diagnosticvalues == nstatein.diagnosticvalues
