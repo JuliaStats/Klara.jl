@@ -18,10 +18,10 @@ BasicUnvVariableNState{N<:Number}(value::Vector{N}) = BasicUnvVariableNState{N}(
 
 BasicUnvVariableNState{N<:Number}(n::Integer, ::Type{N}=Float64) = BasicUnvVariableNState{N}(Array(N, n), n)
 
-Base.eltype{N<:Number}(::Type{BasicUnvVariableNState{N}}) = N
-Base.eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
+eltype{N<:Number}(::Type{BasicUnvVariableNState{N}}) = N
+eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
 
-Base.copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Integer) = (nstate.value[i] = state.value)
+copy!(nstate::BasicUnvVariableNState, state::BasicUnvVariableState, i::Integer) = (nstate.value[i] = state.value)
 
 function show{N<:Number}(io::IO, nstate::BasicUnvVariableNState{N})
   indentation = "  "
@@ -45,10 +45,10 @@ BasicMuvVariableNState{N<:Number}(value::Matrix{N}) = BasicMuvVariableNState{N}(
 BasicMuvVariableNState{N<:Number}(size::Integer, n::Integer, ::Type{N}=Float64) =
   BasicMuvVariableNState{N}(Array(N, size, n), size, n)
 
-Base.eltype{N<:Number}(::Type{BasicMuvVariableNState{N}}) = N
-Base.eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
+eltype{N<:Number}(::Type{BasicMuvVariableNState{N}}) = N
+eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
 
-Base.copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Integer) =
+copy!(nstate::BasicMuvVariableNState, state::BasicMuvVariableState, i::Integer) =
   (nstate.value[1+(i-1)*state.size:i*state.size] = state.value)
 
 function show{N<:Number}(io::IO, nstate::BasicMuvVariableNState{N})
@@ -75,10 +75,10 @@ BasicMavVariableNState{N<:Number}(value::Array{N, 3}) =
 BasicMavVariableNState{N<:Number}(size::Tuple, n::Integer, ::Type{N}=Float64) =
   BasicMavVariableNState{N}(Array(N, size..., n), size, n)
 
-Base.eltype{N<:Number}(::Type{BasicMavVariableNState{N}}) = N
-Base.eltype{N<:Number}(::BasicMavVariableNState{N}) = N
+eltype{N<:Number}(::Type{BasicMavVariableNState{N}}) = N
+eltype{N<:Number}(::BasicMavVariableNState{N}) = N
 
-Base.copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Integer, statelen::Integer=prod(state.size)) =
+copy!(nstate::BasicMavVariableNState, state::BasicMavVariableState, i::Integer, statelen::Integer=prod(state.size)) =
   (nstate.value[1+(i-1)*statelen:i*statelen] = state.value)
 
 function show{N<:Number}(io::IO, nstate::BasicMavVariableNState{N})

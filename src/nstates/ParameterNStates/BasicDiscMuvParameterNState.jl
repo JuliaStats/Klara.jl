@@ -102,12 +102,12 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscMuvParameterNState, monito
   end
 end
 
-Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterNState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterNState{NI, NR}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterNState{NI, NR}}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterNState{NI, NR}) = (NI, NR)
 
 =={S<:BasicDiscMuvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:8]])
 
-Base.isequal{S<:BasicDiscMuvParameterNState}(z::S, w::S) =
+isequal{S<:BasicDiscMuvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:8]])
 
 function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscMuvParameterNState{NI, NR})

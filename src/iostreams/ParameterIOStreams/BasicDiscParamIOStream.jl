@@ -231,7 +231,7 @@ function codegen(::Type{Val{:write}}, iostream::BasicDiscParamIOStream, fnames::
   end
 end
 
-function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState)
+function write(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState)
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:4
     if getfield(iostream, fnames[i]) != nothing
@@ -243,7 +243,7 @@ function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParame
   end
 end
 
-function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState)
+function write(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState)
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing
@@ -257,7 +257,7 @@ function Base.write(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParame
   end
 end
 
-function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState{NI, NR})
+function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState{NI, NR})
   t = [NI, fill(NR, 3)]
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:4
@@ -270,7 +270,7 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
   end
 end
 
-function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState{NI, NR})
+function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState{NI, NR})
   fnames = fieldnames(BasicDiscParamIOStream)
   if iostream.(fnames[1]) != nothing
     setfield!(nstate, fnames[1], readdlm(iostream.(fnames[1]), ',', NI)')
@@ -285,7 +285,7 @@ function Base.read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nst
   end
 end
 
-function Base.read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR})
+function read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR})
   local nstate::DiscreteParameterNState
   fnames = fieldnames(BasicDiscParamIOStream)
   l = length(iostream.size)

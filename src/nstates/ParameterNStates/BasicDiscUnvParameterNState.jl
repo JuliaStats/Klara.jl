@@ -94,12 +94,12 @@ function codegen(::Type{Val{:copy}}, nstate::BasicDiscUnvParameterNState, monito
   end
 end
 
-Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterNState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterNState{NI, NR}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterNState{NI, NR}}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterNState{NI, NR}) = (NI, NR)
 
 =={S<:BasicDiscUnvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:7]])
 
-Base.isequal{S<:BasicDiscUnvParameterNState}(z::S, w::S) =
+isequal{S<:BasicDiscUnvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:7]])
 
 function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscUnvParameterNState{NI, NR})

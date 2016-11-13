@@ -82,8 +82,8 @@ value_support(::BasicDiscMuvParameterState) = Discrete
 variate_form{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = Univariate
 variate_form(::BasicDiscMuvParameterState) = Univariate
 
-Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterState{NI, NR}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterState{NI, NR}) = (NI, NR)
 
 generate_empty(state::BasicDiscMuvParameterState) =
   BasicDiscMuvParameterState(state.size, state.diagnostickeys, eltype(state)...)

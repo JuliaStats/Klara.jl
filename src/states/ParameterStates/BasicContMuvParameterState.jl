@@ -163,8 +163,8 @@ value_support(::BasicContMuvParameterState) = Continuous
 variate_form{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Multivariate
 variate_form(::BasicContMuvParameterState) = Multivariate
 
-Base.eltype{N<:Real}(::Type{BasicContMuvParameterState{N}}) = N
-Base.eltype{N<:Real}(::BasicContMuvParameterState{N}) = N
+eltype{N<:Real}(::Type{BasicContMuvParameterState{N}}) = N
+eltype{N<:Real}(::BasicContMuvParameterState{N}) = N
 
 generate_empty(
   state::BasicContMuvParameterState,

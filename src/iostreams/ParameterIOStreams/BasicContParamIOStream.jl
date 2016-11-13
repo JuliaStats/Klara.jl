@@ -240,7 +240,7 @@ function codegen(::Type{Val{:write}}, iostream::BasicContParamIOStream, fnames::
   end
 end
 
-function Base.write(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState)
+function write(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState)
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
     if getfield(iostream, fnames[i]) != nothing
@@ -252,7 +252,7 @@ function Base.write(iostream::BasicContParamIOStream, nstate::BasicContUnvParame
   end
 end
 
-function Base.write(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState)
+function write(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState)
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing
@@ -282,7 +282,7 @@ function Base.write(iostream::BasicContParamIOStream, nstate::BasicContMuvParame
   end
 end
 
-function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState{N})
+function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState{N})
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
     if getfield(iostream, fnames[i]) != nothing
@@ -294,7 +294,7 @@ function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicCont
   end
 end
 
-function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState{N})
+function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState{N})
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing
@@ -333,7 +333,7 @@ function Base.read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicCont
   end
 end
 
-function Base.read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
+function read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
   local nstate::ContinuousParameterNState
   fnames = fieldnames(BasicContParamIOStream)
   l = length(iostream.size)

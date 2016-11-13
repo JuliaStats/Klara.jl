@@ -272,7 +272,7 @@ using Klara
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, ones(2))])
+p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, Vector{Float64})])
 
 model = likelihood_model(p, false)
 
@@ -302,7 +302,7 @@ log-prior) instead of a function. An example follows where the log-target is spe
 ```julia
 using Klara
 
-p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, ones(2))])
+p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, Vector{Float64})])
 
 model = likelihood_model(p, false)
 

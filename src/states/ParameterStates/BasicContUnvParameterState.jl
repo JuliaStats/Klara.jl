@@ -8,7 +8,7 @@ Basic continuous univariate parameter state type
 Construct a basic continuous univariate parameter state with some ``value``.
 
 ### Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
 
@@ -17,7 +17,7 @@ Construct a basic continuous univariate parameter state with some ``value``.
 Construct a basic continuous univariate parameter state with an uninitialized ``value`` (``NaN``).
 
 ### Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{N}=Float64``: the element type of the state value.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
@@ -91,7 +91,7 @@ value_support(::BasicContUnvParameterState) = Continuous
 variate_form{N<:Real}(::Type{BasicContUnvParameterState{N}}) = Univariate
 variate_form(::BasicContUnvParameterState) = Univariate
 
-Base.eltype{N<:Real}(::Type{BasicContUnvParameterState{N}}) = N
-Base.eltype{N<:Real}(::BasicContUnvParameterState{N}) = N
+eltype{N<:Real}(::Type{BasicContUnvParameterState{N}}) = N
+eltype{N<:Real}(::BasicContUnvParameterState{N}) = N
 
 generate_empty(state::BasicContUnvParameterState) = BasicContUnvParameterState(state.diagnostickeys, eltype(state))

@@ -96,12 +96,12 @@ function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monito
   end
 end
 
-Base.eltype{N<:Real}(::Type{BasicContUnvParameterNState{N}}) = N
-Base.eltype{N<:Real}(::BasicContUnvParameterNState{N}) = N
+eltype{N<:Real}(::Type{BasicContUnvParameterNState{N}}) = N
+eltype{N<:Real}(::BasicContUnvParameterNState{N}) = N
 
 =={S<:BasicContUnvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:16]])
 
-Base.isequal{S<:BasicContUnvParameterNState}(z::S, w::S) =
+isequal{S<:BasicContUnvParameterNState}(z::S, w::S) =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:16]])
 
 function show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})

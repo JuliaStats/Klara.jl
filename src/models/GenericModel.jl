@@ -7,7 +7,7 @@ type GenericModel
   ofkey::Dict{Symbol, Integer}         # Dictionary storing index of vertex (variable) of corresponding key
 end
 
-Base.getindex(m::GenericModel, k::Symbol) = m.vertices[m.ofkey[k]]
+getindex(m::GenericModel, k::Symbol) = m.vertices[m.ofkey[k]]
 
 is_directed(m::GenericModel) = m.is_directed
 
@@ -24,7 +24,7 @@ edge_index(d::Dependence, m::GenericModel) = edge_index(d)
 source(d::Dependence, m::GenericModel) = d.source
 target(d::Dependence, m::GenericModel) = d.target
 
-Base.keys(m::GenericModel) = keys(m.vertices)
+keys(m::GenericModel) = keys(m.vertices)
 indices(m::GenericModel) = indices(m.vertices)
 
 out_edges(v::Variable, m::GenericModel) = m.finclist[vertex_index(v, m)]

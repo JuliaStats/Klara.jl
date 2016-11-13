@@ -22,28 +22,28 @@ BasicVariableIOStream(
 ) =
   BasicVariableIOStream(size, n, joinpath(filepath, "value."*filesuffix), mode)
 
-Base.close(iostream::BasicVariableIOStream) = close(iostream.stream)
+close(iostream::BasicVariableIOStream) = close(iostream.stream)
 
-Base.write(iostream::BasicVariableIOStream, state::VariableState) = write(iostream.stream, join(state.value, ','), "\n")
+write(iostream::BasicVariableIOStream, state::VariableState) = write(iostream.stream, join(state.value, ','), "\n")
 
-Base.write(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState) = writedlm(iostream.stream, nstate.value)
+write(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState) = writedlm(iostream.stream, nstate.value)
 
-Base.write(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState) = writedlm(iostream.stream, nstate.value', ',')
+write(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState) = writedlm(iostream.stream, nstate.value', ',')
 
-function Base.write(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState)
+function write(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState)
   statelen = prod(nstate.size)
   for i in 1:nstate.n
     write(iostream.stream, join(nstate.value[1+(i-1)*statelen:i*statelen], ','), "\n")
   end
 end
 
-Base.read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState{N}) =
+read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState{N}) =
   nstate.value = vec(readdlm(iostream.stream, ',', N))
 
-Base.read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState{N}) =
+read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState{N}) =
   nstate.value = readdlm(iostream.stream, ',', N)'
 
-function Base.read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState{N})
+function read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState{N})
   statelen = prod(iostream.size)
   line = 1
   while !eof(iostream.stream)
@@ -52,7 +52,7 @@ function Base.read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMav
   end
 end
 
-function Base.read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
+function read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
   local nstate::VariableNState
   l = length(iostream.size)
 

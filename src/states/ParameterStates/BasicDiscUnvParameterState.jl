@@ -8,7 +8,7 @@ Basic discrete univariate parameter state type
 Construct a basic discrete univariate parameter state with some ``value``.
 
 ### Optional arguments:
-  
+
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{NR}=Float64``: the element type of target-related fields.
 * ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
@@ -58,8 +58,8 @@ value_support(::BasicDiscUnvParameterState) = Discrete
 variate_form{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = Univariate
 variate_form(::BasicDiscUnvParameterState) = Univariate
 
-Base.eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = (NI, NR)
-Base.eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterState{NI, NR}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterState{NI, NR}}) = (NI, NR)
+eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterState{NI, NR}) = (NI, NR)
 
 generate_empty(state::BasicDiscUnvParameterState) =
   BasicDiscUnvParameterState(state.value, state.diagnostickeys, eltype(state)[2])

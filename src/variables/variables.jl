@@ -12,13 +12,13 @@ abstract Variable{S<:Sampleability}
 
 typealias VariableVector{V<:Variable} Vector{V}
 
-Base.eltype{S<:Sampleability}(::Type{Variable{S}}) = S
+eltype{S<:Sampleability}(::Type{Variable{S}}) = S
 
 vertex_key(v::Variable) = v.key
 vertex_index(v::Variable) = v.index
 is_indexed(v::Variable) = v.index > 0 ? true : false
 
-Base.keys(variables::VariableVector) = Symbol[v.key for v in variables]
+keys(variables::VariableVector) = Symbol[v.key for v in variables]
 indices(variables::VariableVector) = Integer[v.index for v in variables]
 
 sort_by_index(vs::VariableVector) = vs[[v.index for v in vs]]
