@@ -35,7 +35,7 @@ type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
     # Check that all generic functions have correct signature
     for i in 1:5
       if isa(args[i], Function) &&
-        isgeneric(args[i]) &&
+        isa(args[i], Function) &&
         !method_exists(args[i], (BasicDiscUnvParameterState, VariableStateVector))
         error("$(fnames[i]) has wrong signature")
       end

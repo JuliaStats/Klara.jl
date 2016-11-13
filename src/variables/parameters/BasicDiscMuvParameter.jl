@@ -37,7 +37,7 @@ type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
     # Check that all generic functions have correct signature
     for i in 1:5
       if isa(args[i], Function) &&
-        isgeneric(args[i]) &&
+        isa(args[i], Function) &&
         !method_exists(args[i], (BasicDiscMuvParameterState, VariableStateVector))
         error("$(fnames[i]) has wrong signature")
       end

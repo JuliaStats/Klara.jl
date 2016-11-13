@@ -54,7 +54,7 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
     # Check that all generic functions have correct signature
     for i in 1:17
       if isa(args[i], Function) &&
-        isgeneric(args[i]) &&
+        isa(args[i], Function) &&
         !method_exists(args[i], (BasicContMuvParameterState, VariableStateVector))
         error("$(fnames[i]) has wrong signature")
       end
