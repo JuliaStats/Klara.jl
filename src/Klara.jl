@@ -124,6 +124,7 @@ export
   MuvMALAState,
   MuvNUTSState,
   MuvSMMALAState,
+  MuvSliceSamplerState,
   NUTS,
   NUTSState,
   Parameter,
@@ -142,6 +143,8 @@ export
   SMMALA,
   SMMALAState,
   Sampleability,
+  SliceSampler,
+  SliceSamplerState,
   Transformation,
   UnivariateParameter,
   UnivariateParameterNState,
@@ -300,6 +303,7 @@ include("tuners/DualAveragingMCTuner.jl")
 
 include("samplers/samplers.jl")
 include("samplers/ARS.jl")
+include("samplers/SliceSampler.jl")
 include("samplers/MH.jl")
 include("samplers/AM.jl")
 include("samplers/RAM.jl")
@@ -313,6 +317,7 @@ include("jobs/BasicMCJob.jl")
 include("jobs/BasicGibbsJob.jl")
 
 include("samplers/iterate/ARS.jl")
+include("samplers/iterate/SliceSampler.jl")
 include("samplers/iterate/MH.jl")
 include("samplers/iterate/AM.jl")
 include("samplers/iterate/RAM.jl")

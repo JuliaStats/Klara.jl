@@ -125,7 +125,7 @@ function initialize!{F<:VariateForm}(
   end
 end
 
-## Initialize MuvRAMState
+## Initialize RAM state
 
 sampler_state(
   parameter::Parameter{Continuous, Univariate},
