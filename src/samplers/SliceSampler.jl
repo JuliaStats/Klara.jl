@@ -1,16 +1,19 @@
 ## MuvSliceSamplerState holds the internal state ("local variables") of the slice sampler for multivariate parameters
 
-abstract SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
-
-type MuvSliceSamplerState <: SliceSamplerState{Multivariate}
-  xl::RealVector
-  xr::RealVector
-  xprime::RealVector
+type SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
+  lstate::ParameterState{Continuous, F}
+  rstate::ParameterState{Continuous, F}
+  primestate::ParameterState{Continuous, F}
   loguprime::Real
   runiform::Real
 end
 
-MuvSliceSamplerState(s::Integer, t::Type=Float64) = MuvSliceSamplerState(Array(t, n), Array(t, n), Array(t, n), NaN, NaN)
+SliceSamplerState{F<:VariateForm}(
+  lstate::ParameterState{Continuous, F},
+  rstate::ParameterState{Continuous, F},
+  primestate::ParameterState{Continuous, F}
+) =
+  SliceSamplerState(lstate, rstate, primestate, NaN, NaN)
 
 ### Slice sampler
 
@@ -44,11 +47,13 @@ end
 
 ## Initialize SliceSampler state
 
-sampler_state(
-  parameter::Parameter{Continuous, Multivariate},
+sampler_state{F<:VariateForm}(
+  parameter::Parameter{Continuous, F},
   sampler::SliceSampler,
   tuner::MCTuner,
-  pstate::ParameterState{Continuous, Multivariate},
+  pstate::ParameterState{Continuous, F},
   vstate::VariableStateVector
 ) =
-  MuvSliceSamplerState(pstate.size, eltype(pstate))
+  SliceSamplerState(generate_empty(pstate), generate_empty(pstate), generate_empty(pstate))
+
+show(io::IO, sampler::SliceSampler) = print(io, "Slice sampler")

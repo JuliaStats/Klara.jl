@@ -124,7 +124,6 @@ export
   MuvMALAState,
   MuvNUTSState,
   MuvSMMALAState,
-  MuvSliceSamplerState,
   NUTS,
   NUTSState,
   Parameter,
