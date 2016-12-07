@@ -4,6 +4,7 @@ type SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
   lstate::ParameterState{Continuous, F}
   rstate::ParameterState{Continuous, F}
   primestate::ParameterState{Continuous, F}
+  tune::MCTunerState
   loguprime::Real
   runiform::Real
 end
@@ -11,9 +12,10 @@ end
 SliceSamplerState{F<:VariateForm}(
   lstate::ParameterState{Continuous, F},
   rstate::ParameterState{Continuous, F},
-  primestate::ParameterState{Continuous, F}
+  primestate::ParameterState{Continuous, F},
+  tune::MCTunerState=BasicMCTune()
 ) =
-  SliceSamplerState(lstate, rstate, primestate, NaN, NaN)
+  SliceSamplerState(lstate, rstate, primestate, tune, NaN, NaN)
 
 ### Slice sampler
 
@@ -54,6 +56,28 @@ sampler_state{F<:VariateForm}(
   pstate::ParameterState{Continuous, F},
   vstate::VariableStateVector
 ) =
-  SliceSamplerState(generate_empty(pstate), generate_empty(pstate), generate_empty(pstate))
+  SliceSamplerState(
+    generate_empty(pstate),
+    generate_empty(pstate),
+    generate_empty(pstate),
+    tuner_state(parameter, sampler, tuner)
+  )
+
+## Reset parameter state
+
+function reset!(pstate::MultivariateParameterState, x::RealVector, parameter::MultivariateParameter, sampler::SliceSampler)
+  pstate.value = copy(x)
+  parameter.logtarget!(pstate)
+end
+
+function reset!{F<:VariateForm}(
+  sstate::SliceSamplerState{F},
+  pstate::ParameterState{Continuous, F},
+  parameter::Parameter{Continuous, F},
+  sampler::MCSampler,
+  tuner::MCTuner
+)
+  tune.proposed, tune.totproposed = (0, tuner.period)
+end
 
 show(io::IO, sampler::SliceSampler) = print(io, "Slice sampler")

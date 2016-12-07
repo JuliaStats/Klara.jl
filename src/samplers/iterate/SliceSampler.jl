@@ -1,9 +1,17 @@
 function codegen(::Type{Val{:iterate}}, ::Type{SliceSampler}, job::BasicMCJob)
   local result::Expr
   innerbody = []
+  burninbody = []
   body = []
 
   vform = variate_form(job.pstate)
+  if vform != Univariate && vform != Multivariate
+    error("Only univariate or multivariate parameter states allowed in SliceSampler code generation")
+  end
+
+  if job.tuner.verbose
+    push!(body, :(_job.sstate.tune.proposed += 1))
+  end
 
   if vform == Multivariate
     push!(innerbody, :(_job.sstate.loguprime = log(rand())+_job.pstate.logtarget))
@@ -56,6 +64,24 @@ function codegen(::Type{Val{:iterate}}, ::Type{SliceSampler}, job::BasicMCJob)
 
     push!(body, Expr(:for, :(i = 1:_job.pstate.size), Expr(:block, innerbody...)))
   end
+
+  if job.tuner.verbose
+    fmt_iter = format_iteration(ndigits(job.range.burnin))
+
+    push!(burninbody, :(println("Burnin iteration ", $(fmt_iter)(_job.sstate.tune.totproposed), " of ", _job.range.burnin)))
+  end
+
+  push!(burninbody, :(_job.sstate.tune.totproposed += _job.sstate.tune.proposed))
+  push!(burninbody, :(_job.sstate.tune.proposed = 0))
+
+  push!(
+    body,
+    Expr(
+      :if,
+      :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
+      Expr(:block, burninbody...)
+    )
+  )
 
   if !job.plain
     push!(body, :(produce()))
