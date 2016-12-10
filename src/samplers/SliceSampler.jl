@@ -1,4 +1,4 @@
-## MuvSliceSamplerState holds the internal state ("local variables") of the slice sampler for multivariate parameters
+## SliceSamplerState holds the internal state ("local variables") of the slice sampler for multivariate parameters
 
 type SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
   lstate::ParameterState{Continuous, F}

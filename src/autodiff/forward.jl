@@ -46,9 +46,9 @@ function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Func
   @gensym forward_autodiff_uptofunction
   quote
     function $forward_autodiff_uptofunction(_x::Real)
-      result = ForwardDiff.DerivativeResult(_x)
-      getfield(ForwardDiff, :derivative)(result, $f, _x)
-      return ForwardDiff.value(result), ForwardDiff.derivative(result)
+      result = DiffBase.DiffResult(_x, _x)
+      getfield(ForwardDiff, :derivative!)(result, $f, _x)
+      return DiffBase.value(result), DiffBase.derivative(result)
     end
   end
 end
@@ -64,9 +64,9 @@ function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Functi
   @gensym forward_autodiff_uptofunction
   quote
     function $forward_autodiff_uptofunction(_x::Vector)
-      result = ForwardDiff.GradientResult(_x)
+      result = DiffBase.GradientResult(_x)
       $adfcall
-      return ForwardDiff.value(result), ForwardDiff.gradient(result)
+      return DiffBase.value(result), DiffBase.gradient(result)
     end
   end
 end
@@ -85,9 +85,9 @@ function codegen_forward_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function,
   @gensym forward_autodiff_uptotarget
   quote
     function $forward_autodiff_uptotarget(_x::Vector)
-      result = ForwardDiff.HessianResult(_x)
+      result = DiffBase.HessianResult(_x)
       $adfcall
-      return ForwardDiff.value(result), ForwardDiff.gradient(result), -ForwardDiff.hessian(result)
+      return DiffBase.value(result), DiffBase.gradient(result), -DiffBase.hessian(result)
     end
   end
 end

@@ -1,5 +1,6 @@
 module Klara
 
+using DiffBase
 using Distributions
 using Formatting
 using StatsBase
