@@ -13,7 +13,55 @@ function codegen(::Type{Val{:iterate}}, ::Type{SliceSampler}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  if vform == Multivariate
+  if vform == Univariate
+    push!(body, :(_job.sstate.loguprime = log(rand())+_job.pstate.logtarget))
+    push!(body, :(_job.sstate.lstate.value = _job.pstate.value))
+    push!(body, :(_job.sstate.rstate.value = _job.pstate.value))
+    push!(body, :(_job.sstate.primestate.value = _job.pstate.value))
+
+    push!(body, :(_job.sstate.runiform = rand()))
+    push!(body, :(_job.sstate.lstate.value = _job.pstate.value-_job.sstate.runiform*_job.sampler.widths[1]))
+    push!(body, :(_job.sstate.rstate.value = _job.pstate.value+(1-_job.sstate.runiform)*_job.sampler.widths[1]))
+
+    if job.sampler.stepout
+      push!(body, :(_job.parameter.logtarget!(_job.sstate.lstate)))
+      push!(body, :(
+        while _job.sstate.lstate.logtarget > _job.sstate.loguprime
+          _job.sstate.lstate.value -= _job.sampler.widths[1]
+          _job.parameter.logtarget!(_job.sstate.lstate)
+        end
+      ))
+
+      push!(body, :(_job.parameter.logtarget!(_job.sstate.rstate)))
+      push!(body, :(
+        while _job.sstate.rstate.logtarget > _job.sstate.loguprime
+          _job.sstate.rstate.value += _job.sampler.widths[1]
+          _job.parameter.logtarget!(_job.sstate.rstate)
+        end
+      ))
+    end
+
+    push!(body, :(
+      while true
+        _job.sstate.primestate.value =
+          rand()*(_job.sstate.rstate.value-_job.sstate.lstate.value)+_job.sstate.lstate.value
+        _job.pstate.logtarget = _job.parameter.logtarget!(_job.sstate.primestate)
+        if _job.pstate.logtarget > _job.sstate.loguprime
+          break
+        else
+          if _job.sstate.primestate.value > _job.pstate.value
+            _job.sstate.rstate.value = _job.sstate.primestate.value
+          elseif _job.sstate.primestate.value < _job.pstate.value
+            _job.sstate.lstate.value = _job.sstate.primestate.value
+          else
+            @assert false "Shrunk to current position and still not acceptable"
+          end
+        end
+      end
+    ))
+
+    push!(body, :(_job.pstate.value = _job.sstate.primestate.value))
+  elseif vform == Multivariate
     push!(innerbody, :(_job.sstate.loguprime = log(rand())+_job.pstate.logtarget))
     push!(innerbody, :(_job.sstate.lstate.value = copy(_job.pstate.value)))
     push!(innerbody, :(_job.sstate.rstate.value = copy(_job.pstate.value)))
