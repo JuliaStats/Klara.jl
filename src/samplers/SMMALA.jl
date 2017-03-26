@@ -172,7 +172,9 @@ function sampler_state(
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
 )
-  sstate = MuvSMMALAState(generate_empty(pstate, parameter.diffopts), tuner_state(parameter, sampler, tuner))
+  sstate = MuvSMMALAState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
+  )
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
   sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(sstate.oldinvtensor)))

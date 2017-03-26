@@ -92,6 +92,7 @@ type BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivari
   size::Integer
   "Diagnostic keys associated with the sampling of the state"
   diagnostickeys::Vector{Symbol}
+  diffmethods::Union{DiffMethods, Void}
   diffstate::Union{DiffState, Void}
 end
 
@@ -99,6 +100,7 @@ function BasicContMuvParameterState{N<:Real}(
   value::Vector{N},
   monitor::Vector{Bool}=fill(false, 9),
   diagnostickeys::Vector{Symbol}=Symbol[],
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys)),
 )
@@ -112,66 +114,62 @@ function BasicContMuvParameterState{N<:Real}(
   end
 
   diffstate = DiffState()
-  # diffresult = Union{DiffBase.DiffResult, Void}[nothing for i in 1:3]
+
   if diffopts != nothing
     if diffopts.order == 1
-      for i in 1:3
+      for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          diffresult[i] = DiffBase.GradientResult(value)
+          setfield!(diffstate, field, DiffBase.GradientResult(value))
         end
       end
     else
-      for i in 1:3
+      for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          diffresult[i] = DiffBase.HessianResult(value)
+          setfield!(diffstate, field, DiffBase.HessianResult(value))
         end
       end
     end
-  end
 
-  diffconfig = Union{ReverseDiff.AbstractConfig, ForwardDiff.AbstractConfig, Void}[nothing for i in 1:6]
-
-  if diffopts != nothing
     if diffopts.mode == :reverse
-      for i in 1:3
-        if diffopts.targets[i]
-          diffconfig[i] = ReverseDiff.GradientConfig(value)
+      for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
+        if diffopts.targets[i-3]
+          setfield!(diffstate, field, ReverseDiff.GradientConfig(value))
         end
       end
 
       if diffopts.order == 2
-        for i in 4:6
-          if diffopts.targets[i-3]
-            diffconfig[i] = ReverseDiff.HessianConfig(value)
+        for (i, field) in ((7, :cfgtll), (8, :cfgtlp), (9, :cfgtlt))
+          if diffopts.targets[i-6]
+            setfield!(diffstate, field, ReverseDiff.HessianConfig(value))
           end
         end
       end
     else
       if diffopts.chunksize == 0
-        for i in 1:3
-          if diffopts.targets[i]
-            diffconfig[i] = ForwardDiff.GradientConfig(value)
+        for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
+          if diffopts.targets[i-3]
+            setfield!(diffstate, field, ForwardDiff.GradientConfig(value))
           end
         end
 
         if diffopts.order == 2
-          for i in 4:6
-            if diffopts.targets[i-3]
-              diffconfig[i] = ForwardDiff.HessianConfig(value)
+          for (i, field) in ((7, :cfgtll), (8, :cfgtlp), (9, :cfgtlt))
+            if diffopts.targets[i-6]
+              setfield!(diffstate, field, ForwardDiff.HessianConfig(value))
             end
           end
         end
       else
-        for i in 1:3
-          if diffopts.targets[i]
-            diffconfig[i] = ForwardDiff.GradientConfig{diffopts.chunksize}(value)
+        for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
+          if diffopts.targets[i-3]
+            setfield!(diffstate, field, ForwardDiff.GradientConfig{diffopts.chunksize}(value))
           end
         end
 
         if diffopts.order == 2
-          for i in 4:6
-            if diffopts.targets[i-3]
-              diffconfig[i] = ForwardDiff.HessianConfig{diffopts.chunksize}(value)
+          for (i, field) in ((7, :cfgtll), (8, :cfgtlp), (9, :cfgtlt))
+            if diffopts.targets[i-6]
+              setfield!(diffstate, field, ForwardDiff.HessianConfig{diffopts.chunksize}(value))
             end
           end
         end
@@ -196,8 +194,8 @@ function BasicContMuvParameterState{N<:Real}(
     diagnosticvalues,
     s,
     diagnostickeys,
-    diffresult...,
-    diffconfig...
+    diffmethods,
+    diffstate
   )
 end
 
@@ -205,12 +203,13 @@ function BasicContMuvParameterState{N<:Real}(
   value::Vector{N},
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 )
   fnames = fieldnames(BasicContMuvParameterState)
   BasicContMuvParameterState(
-    value, [fnames[i] in monitor ? true : false for i in 5:13], diagnostickeys, diffopts, diagnosticvalues
+    value, [fnames[i] in monitor ? true : false for i in 5:13], diagnostickeys, diffmethods, diffopts, diagnosticvalues
   )
 end
 
@@ -219,20 +218,22 @@ BasicContMuvParameterState{N<:Real}(
   monitor::Vector{Bool}=fill(false, 9),
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffopts, diagnosticvalues)
+  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 BasicContMuvParameterState{N<:Real}(
   size::Integer,
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffopts, diagnosticvalues)
+  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 value_support{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Continuous
 value_support(::BasicContMuvParameterState) = Continuous
@@ -245,7 +246,8 @@ eltype{N<:Real}(::BasicContMuvParameterState{N}) = N
 
 generate_empty(
   state::BasicContMuvParameterState,
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   monitor::Vector{Bool}=[isempty(getfield(state, fieldnames(BasicContMuvParameterState)[i])) ? false : true for i in 5:13]
 ) =
-  BasicContMuvParameterState(state.size, monitor, state.diagnostickeys, eltype(state), diffopts)
+  BasicContMuvParameterState(state.size, monitor, state.diagnostickeys, eltype(state), diffmethods, diffopts)

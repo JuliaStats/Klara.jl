@@ -6,6 +6,7 @@ function codegen_lowlevel_variable_method(
   vfarg::Bool=false,
   nkeys::Integer=0,
   diffresult::Union{Symbol, Void}=nothing,
+  diffmethod::Union{Symbol, Void}=nothing,
   diffconfig::Union{Symbol, Void}=nothing
 )
   local body::Expr
@@ -23,13 +24,17 @@ function codegen_lowlevel_variable_method(
     fargs = [Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
   else
     if diffresult != nothing
-      fargs = [Expr(:., :_state, QuoteNode(diffresult))]
+      fargs = [Expr(:., :(_state.diffstate), QuoteNode(diffresult))]
+    end
+
+    if diffmethod != nothing
+      push!(fargs, Expr(:., :(_state.diffmethods), QuoteNode(diffmethod)))
     end
 
     push!(fargs, :(_state.value))
 
     if diffconfig != nothing
-      push!(fargs, Expr(:., :_state, QuoteNode(diffconfig)))
+      push!(fargs, Expr(:., :(_state.diffstate), QuoteNode(diffconfig)))
     end
 
     if nkeys > 0

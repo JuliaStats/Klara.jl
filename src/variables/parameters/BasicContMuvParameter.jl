@@ -22,6 +22,7 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
   uptogradlogtarget!::Union{Function, Void}
   uptotensorlogtarget!::Union{Function, Void}
   uptodtensorlogtarget!::Union{Function, Void}
+  diffmethods::Union{DiffMethods, Void}
   diffopts::Union{DiffOptions, Void}
   states::VariableStateVector
   state::ParameterState{Continuous, Multivariate}
@@ -48,6 +49,7 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
     uptoglt::Union{Function, Void},
     uptotlt::Union{Function, Void},
     uptodtlt::Union{Function, Void},
+    diffmethods::Union{DiffMethods, Void},
     diffopts::Union{DiffOptions, Void},
     states::VariableStateVector,
     state::ParameterState{Continuous, Multivariate}
@@ -86,6 +88,7 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
       uptoglt,
       uptotlt,
       uptodtlt,
+      diffmethods,
       diffopts,
       states,
       state
@@ -325,11 +328,12 @@ function BasicContMuvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
+  diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   states::VariableStateVector=VariableState[],
   state::ParameterState{Continuous, Multivariate}=BasicContMuvParameterState(0)
 )
-  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffopts, states, state)
+  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffmethods, diffopts, states, state)
 
   BasicContMuvParameter!(
     parameter,
@@ -431,13 +435,15 @@ function BasicContMuvParameter(
     @assert diffopts.chunksize >= 0 "chunksize must be non-negative, got $chunksize"
   end
 
-  for i in 3:5
-    if isa(inargs[i], Function) && (!isa(inargs[i+3], Function) || (diffopts.oder == 2 && !isa(inargs[i+6], Function)))
-      diffopts.targets[i-2] = true
+  if diffopts != nothing
+    for i in 3:5
+      if isa(inargs[i], Function) && (!isa(inargs[i+3], Function) || (diffopts.order == 2 && !isa(inargs[i+6], Function)))
+        diffopts.targets[i-2] = true
+      end
     end
   end
 
-  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffopts, states, state)
+  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., DiffMethods(), diffopts, states, state)
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 
@@ -452,59 +458,75 @@ function BasicContMuvParameter(
   end
 
   if diffopts != nothing
-    diffclosure = Union{Function, Void}[nothing for i in 1:3]
-    for i in 3:5
+    for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
       if isa(inargs[i], Function)
-        diffclosure[i-2] = nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
+        setfield!(
+          parameter.diffmethods,
+          field,
+          nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
+        )
       end
     end
 
-    for (i, diffresult, diffconfig) in (
-      (6, :diffresultll, :diffconfiggll), (7, :diffresultlp, :diffconfigglp), (8, :diffresultlt, :diffconfigglt)
+    diffmethods = diffopts.mode == :reverse ? (:tapell, :tapelp, :tapelt) : (:closurell, :closurelp, :closurelt)
+    for (i, diffresult, diffmethod, diffconfig) in (
+      (6, :resultll, diffmethods[1], :cfggll),
+      (7, :resultlp, diffmethods[2], :cfgglp),
+      (8, :resultlt, diffmethods[3], :cfgglt)
     )
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_autodiff_function(diffopts.mode, :gradient, diffclosure[i-5])),
+          eval(codegen_autodiff_function(diffopts.mode, :gradient)),
           statetype=:BasicContMuvParameterState,
           returns=fnames[i],
           diffresult=diffresult,
-          diffconfig=diffconfig
+          diffmethod=diffmethod,
+          diffconfig=(diffopts.mode == :reverse ? nothing : diffconfig)
+          # diffconfig=diffconfig
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_autodiff_uptofunction(diffopts.mode, :gradient, diffclosure[3])),
+        eval(codegen_autodiff_uptofunction(diffopts.mode, :gradient)),
         statetype=:BasicContMuvParameterState,
         returns=fnames[15],
-        diffresult=:diffresultlt,
-        diffconfig=:diffconfigglt
+        diffresult=:resultlt,
+        diffmethod=diffmethods[3],
+        diffconfig=(diffopts.mode == :reverse ? nothing : :cfgglt)
+        # diffconfig=:cfgglt
       ))
     end
 
     if diffopts.order == 2
-      for (i, diffresult, diffconfig) in (
-        (9, :diffresultll, :diffconfigtll), (10, :diffresultlp, :diffconfigtlp), (11, :diffresultlt, :diffconfigtlt)
+      for (i, diffresult, diffmethod, diffconfig) in (
+        (9, :resultll, diffmethods[1], :cfgtll),
+        (10, :resultlp, diffmethods[2], :cfgtlp),
+        (11, :resultlt, diffmethods[3], :cfgtlt)
       )
         if !isa(inargs[i], Function) && isa(inargs[i-6], Function)
           outargs[i] = eval(codegen_lowlevel_variable_method(
-            eval(codegen_autodiff_target(diffopts.mode, :hessian, diffclosure[i-8])),
+            eval(codegen_autodiff_target(diffopts.mode, :hessian)),
             statetype=:BasicContMuvParameterState,
             returns=fnames[i],
             diffresult=diffresult,
-            diffconfig=diffconfig
+            diffmethod=diffmethod,
+            diffconfig=nothing
+            # diffconfig=diffconfig
           ))
         end
       end
 
       if !isa(inargs[16], Function) && isa(inargs[5], Function)
         outargs[16] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_autodiff_uptotarget(diffopts.mode, :hessian, diffclosure[3])),
+          eval(codegen_autodiff_uptotarget(diffopts.mode, :hessian)),
           statetype=:BasicContMuvParameterState,
           returns=fnames[16],
-          diffresult=:diffresultlt,
-          diffconfig=:diffconfigtlt
+          diffresult=:resultlt,
+          diffmethod=diffmethods[3],
+          diffconfig=nothing
+          # diffconfig=:cfgtlt
         ))
       end
     end
@@ -542,6 +564,7 @@ default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopt
     value,
     [getfield(variable, fieldnames(BasicContMuvParameter)[i]) == nothing ? false : true for i in 10:18],
     (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[],
+    variable.diffmethods,
     variable.diffopts
   )
 
