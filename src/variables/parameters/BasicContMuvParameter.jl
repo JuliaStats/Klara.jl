@@ -468,7 +468,8 @@ function BasicContMuvParameter(
       end
     end
 
-    diffmethods = diffopts.mode == :reverse ? (:tapell, :tapelp, :tapelt) : (:closurell, :closurelp, :closurelt)
+    diffmethods = diffopts.mode == :reverse ? (:tapegll, :tapeglp, :tapeglt) : (:closurell, :closurelp, :closurelt)
+
     for (i, diffresult, diffmethod, diffconfig) in (
       (6, :resultll, diffmethods[1], :cfggll),
       (7, :resultlp, diffmethods[2], :cfgglp),
@@ -500,6 +501,8 @@ function BasicContMuvParameter(
     end
 
     if diffopts.order == 2
+      diffmethods = diffopts.mode == :reverse ? (:tapetll, :tapetlp, :tapetlt) : (:closurell, :closurelp, :closurelt)
+
       for (i, diffresult, diffmethod, diffconfig) in (
         (9, :resultll, diffmethods[1], :cfgtll),
         (10, :resultlp, diffmethods[2], :cfgtlp),
@@ -553,28 +556,41 @@ end
 
 function initialize!(parameter::BasicContMuvParameter, pstate::ParameterState{Continuous, Multivariate})
   if parameter.diffopts != nothing && parameter.diffopts.mode == :reverse
-    for (i, diffclosure, difftape) in ((1, :closurell, :tapell), (2, :closurelp, :tapelp), (3, :closurelt, :tapelt))
+    diffgtapes = (:tapegll, :tapeglp, :tapeglt)
+    diffttapes = (:tapetll, :tapetlp, :tapetlt)
+
+    for (i, diffclosure) in ((1, :closurell), (2, :closurelp), (3, :closurelt))
       if parameter.diffopts.targets[i]
-        if parameter.diffopts.order == 1
-          setfield!(
-            parameter.diffmethods,
-            difftape,
-            ReverseDiff.GradientTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
-          )
-        else
-          setfield!(
-            parameter.diffmethods,
-            difftape,
-            ReverseDiff.HessianTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
-          )
-        end
+        setfield!(
+          parameter.diffmethods,
+          diffgtapes[i],
+          ReverseDiff.GradientTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+        )
 
         if parameter.diffopts.compiled
           setfield!(
             parameter.diffmethods,
-            difftape,
-            ReverseDiff.compile(getfield(parameter.diffmethods, difftape))
+            diffgtapes[i],
+            ReverseDiff.compile(getfield(parameter.diffmethods, diffgtapes[i]))
           )
+        end
+
+        if parameter.diffopts.order == 2
+          difftapes = (:tapegll, :tapeglp, :tapeglt)
+
+          setfield!(
+            parameter.diffmethods,
+            diffttapes[i],
+            ReverseDiff.HessianTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+          )
+
+          if parameter.diffopts.compiled
+            setfield!(
+              parameter.diffmethods,
+              diffttapes[i],
+              ReverseDiff.compile(getfield(parameter.diffmethods, diffttapes[i]))
+            )
+          end
         end
       end
     end

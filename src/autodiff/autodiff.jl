@@ -2,20 +2,26 @@ type DiffMethods
   closurell::Union{Function, Void}
   closurelp::Union{Function, Void}
   closurelt::Union{Function, Void}
-  tapell::Union{ReverseDiff.AbstractTape, Void}
-  tapelp::Union{ReverseDiff.AbstractTape, Void}
-  tapelt::Union{ReverseDiff.AbstractTape, Void}
+  tapegll::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}
+  tapeglp::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}
+  tapeglt::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}
+  tapetll::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}
+  tapetlp::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}
+  tapetlt::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}
 end
 
 DiffMethods(;
   closurell::Union{Function, Void}=nothing,
   closurelp::Union{Function, Void}=nothing,
   closurelt::Union{Function, Void}=nothing,
-  tapell::Union{ReverseDiff.AbstractTape, Void}=nothing,
-  tapelp::Union{ReverseDiff.AbstractTape, Void}=nothing,
-  tapelt::Union{ReverseDiff.AbstractTape, Void}=nothing
+  tapegll::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}=nothing,
+  tapeglp::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}=nothing,
+  tapeglt::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape, Void}=nothing,
+  tapetll::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}=nothing,
+  tapetlp::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}=nothing,
+  tapetlt::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape, Void}=nothing
 ) =
- DiffMethods(closurell, closurelp, closurelt, tapell, tapelp, tapelt)
+ DiffMethods(closurell, closurelp, closurelt, tapegll, tapeglp, tapeglt, tapetll, tapetlp, tapetlt)
 
 type DiffState
   resultll::Union{DiffBase.DiffResult, Void}

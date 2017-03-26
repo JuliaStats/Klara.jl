@@ -8,8 +8,16 @@ function codegen_autodiff_function(::Type{Val{:reverse}}, ::Type{Val{:gradient}}
 
   @gensym autodiff_function
   quote
-    function $autodiff_function(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector)
-    # function $autodiff_function(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector, _cfg::ReverseDiff.GradientConfig)
+    function $autodiff_function(
+      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, _x::Vector
+    )
+    # function $autodiff_function(
+    #   _result::DiffBase.DiffResult,
+    #   _f:Union{ReverseDiff.GradientTape,
+    #   ReverseDiff.CompiledTape},
+    #   _x::Vector,
+    #   _cfg::ReverseDiff.GradientConfig
+    # )
       $(body...)
     end
   end
@@ -25,8 +33,15 @@ function codegen_autodiff_target(::Type{Val{:reverse}}, ::Type{Val{:hessian}})
 
   @gensym autodiff_target
   quote
-    function $autodiff_target(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector)
-    # function $autodiff_target(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector, _cfg::ReverseDiff.HessianConfig)
+    function $autodiff_target(
+      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape}, _x::Vector
+    )
+    # function $autodiff_target(
+    #   _result::DiffBase.DiffResult,
+    #   _f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape},
+    #   _x::Vector,
+    #   _cfg::ReverseDiff.HessianConfig
+    # )
       $(body...)
     end
   end
@@ -42,8 +57,16 @@ function codegen_autodiff_uptofunction(::Type{Val{:reverse}}, ::Type{Val{:gradie
 
   @gensym autodiff_uptofunction
   quote
-    function $autodiff_uptofunction(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector)
-    # function $autodiff_uptofunction(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector, _cfg::ReverseDiff.GradientConfig)
+    function $autodiff_uptofunction(
+      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, _x::Vector
+    )
+    # function $autodiff_uptofunction(
+    #   _result::DiffBase.DiffResult,
+    #   _f:Union{ReverseDiff.GradientTape,
+    #   ReverseDiff.CompiledTape},
+    #   _x::Vector,
+    #   _cfg::ReverseDiff.GradientConfig
+    # )
       $(body...)
     end
   end
@@ -59,8 +82,15 @@ function codegen_autodiff_uptotarget(::Type{Val{:reverse}}, ::Type{Val{:hessian}
 
   @gensym autodiff_uptotarget
   quote
-    function $autodiff_uptotarget(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector)
-    # function $autodiff_uptotarget(_result::DiffBase.DiffResult, _f::ReverseDiff.AbstractTape, _x::Vector, _cfg::ReverseDiff.HessianConfig)
+    function $autodiff_uptotarget(
+      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape}, _x::Vector
+    )
+    # function $autodiff_uptotarget(
+    #   _result::DiffBase.DiffResult,
+    #   _f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape},
+    #   _x::Vector,
+    #   _cfg::ReverseDiff.HessianConfig
+    # )
       $(body...)
     end
   end
