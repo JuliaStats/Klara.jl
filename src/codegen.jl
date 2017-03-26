@@ -1,35 +1,50 @@
 function codegen_lowlevel_variable_method(
-  f::Function,
+  f::Function;
   statetype::Union{Symbol, Void}=nothing,
   states::Bool=true,
-  returnfields::Vector{Symbol}=Symbol[],
+  returns::Vector{Symbol}=Symbol[],
+  vfarg::Bool=false,
   nkeys::Integer=0,
-  vfarg::Bool=false
+  diffresult::Union{Symbol, Void}=nothing,
+  diffconfig::Union{Symbol, Void}=nothing
 )
   local body::Expr
-  local fargs::Vector
+  local fargs::Vector = []
   local rvalues::Expr
 
-  if nkeys == 0
-    fargs = [:(_state.value)]
-  elseif nkeys > 0
-    if vfarg
-      fargs = [Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
-    else
-      fargs = [:(_state.value), Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
-    end
+  if vfarg
+    @assert nkeys > 0 "If vfarg=$vfarg, nkeys must be positive, got $nkeys"
+    @assert diffresult == nothing "If vfarg=$vfarg, diffresult must be nothing, got $diffresult"
   else
-    error("nkeys must be non-negative, got $nkeys")
+    @assert nkeys >= 0 "If vfarg=$vfarg, nkeys must be non-negative, got $nkeys"
   end
 
-  nr = length(returnfields)
+  if vfarg
+    fargs = [Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...)]
+  else
+    if diffresult != nothing
+      fargs = [Expr(:., :_state, QuoteNode(diffresult))]
+    end
+
+    push!(fargs, :(_state.value))
+
+    if diffconfig != nothing
+      push!(fargs, Expr(:., :_state, QuoteNode(diffconfig)))
+    end
+
+    if nkeys > 0
+      push!(fargs, Expr(:ref, :Any, [:(_states[$i].value) for i in 1:nkeys]...))
+    end
+  end
+
+  nr = length(returns)
   if nr == 0
     body = :($(f)($(fargs...)))
   elseif nr == 1
-    rvalues = Expr(:., :_state, QuoteNode(returnfields[1]))
+    rvalues = Expr(:., :_state, QuoteNode(returns[1]))
     body = :($rvalues = $(f)($(fargs...)))
   elseif nr > 1
-    rvalues = Expr(:tuple, [Expr(:., :_state, QuoteNode(returnfields[i])) for i in 1:nr]...)
+    rvalues = Expr(:tuple, [Expr(:., :_state, QuoteNode(returns[i])) for i in 1:nr]...)
     body = :($rvalues = $(f)($(fargs...)))
   else
     error("Vector of return symbols must have one or more elements")

@@ -22,7 +22,9 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
   uptogradlogtarget!::Union{Function, Void}
   uptotensorlogtarget!::Union{Function, Void}
   uptodtensorlogtarget!::Union{Function, Void}
+  diffopts::Union{DiffOptions, Void}
   states::VariableStateVector
+  state::ParameterState{Continuous, Multivariate}
 
   function BasicContMuvParameter(
     key::Symbol,
@@ -46,7 +48,9 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
     uptoglt::Union{Function, Void},
     uptotlt::Union{Function, Void},
     uptodtlt::Union{Function, Void},
-    states::VariableStateVector
+    diffopts::Union{DiffOptions, Void},
+    states::VariableStateVector,
+    state::ParameterState{Continuous, Multivariate}
   )
     args = (setpdf, setprior, ll, lp, lt, gll, glp, glt, tll, tlp, tlt, dtll, dtlp, dtlt, uptoglt, uptotlt, uptodtlt)
     fnames = fieldnames(BasicContMuvParameter)[5:21]
@@ -82,7 +86,9 @@ type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
       uptoglt,
       uptotlt,
       uptodtlt,
-      states
+      diffopts,
+      states,
+      state
     )
   end
 end
@@ -140,7 +146,7 @@ function BasicContMuvParameter!(
   # ppfield and spfield stand for parameter prior-related field and state prior-related field repsectively
   for (i , ppfield, spfield, f) in ((4, :logprior!, :logprior, logpdf), (7, :gradlogprior!, :gradlogprior, gradlogpdf))
     setfield!(
-    parameter,
+      parameter,
       ppfield,
       if isa(args[i], Function)
         eval(codegen_closure(parameter, args[i]))
@@ -319,9 +325,11 @@ function BasicContMuvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::VariableStateVector=VariableState[]
+  diffopts::Union{DiffOptions, Void}=nothing,
+  states::VariableStateVector=VariableState[],
+  state::ParameterState{Continuous, Multivariate}=BasicContMuvParameterState(0)
 )
-  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
+  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffopts, states, state)
 
   BasicContMuvParameter!(
     parameter,
@@ -355,9 +363,9 @@ function BasicContMuvParameter(
   prior::Union{ContinuousMultivariateDistribution, Void}=nothing,
   setpdf::Union{Function, Void}=nothing,
   setprior::Union{Function, Void}=nothing,
-  loglikelihood::Union{Function, Expr, Void}=nothing,
-  logprior::Union{Function, Expr, Void}=nothing,
-  logtarget::Union{Function, Expr, Void}=nothing,
+  loglikelihood::Union{Function, Void}=nothing,
+  logprior::Union{Function, Void}=nothing,
+  logtarget::Union{Function, Void}=nothing,
   gradloglikelihood::Union{Function, Void}=nothing,
   gradlogprior::Union{Function, Void}=nothing,
   gradlogtarget::Union{Function, Void}=nothing,
@@ -370,13 +378,11 @@ function BasicContMuvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::VariableStateVector=VariableState[],
   nkeys::Integer=0,
   vfarg::Bool=false,
-  autodiff::Symbol=:none,
-  order::Integer=1,
-  chunksize::Integer=0,
-  init::Vector=fill(Any[], 3)
+  diffopts::Union{DiffOptions, Void}=nothing,
+  states::VariableStateVector=VariableState[],
+  state::ParameterState{Continuous, Multivariate}=BasicContMuvParameterState(0),
 )
   inargs = (
     setpdf,
@@ -405,214 +411,101 @@ function BasicContMuvParameter(
     fnames[14+i] = Symbol[fnames[j][1] for j in 5:3:(5+i*3)]
   end
 
-  for i in 3:5
-    if isa(inargs[i], Expr) && autodiff != :reverse
-      error("The only case $(fnames[i][1]) can be an expression is when used in conjunction with reverse mode autodiff")
-    end
-  end
-
   if nkeys > 0
-    if (autodiff == :forward || autodiff == :reverse) && vfarg
+    if diffopts != nothing && vfarg
       error("In the case of autodiff, if nkeys is not 0, then vfarg must be false")
     end
   elseif nkeys < 0
     "nkeys must be non-negative, got $nkeys"
   end
 
-  if !in(autodiff, (:none, :forward, :reverse))
-    error("autodiff must be :nore or :forward or :reverse, got $autodiff")
-  end
-
-  if order < 0 || order > 2
-    error("Derivative order must be 0, 1 or 2, got $order")
-  elseif autodiff != :reverse && order == 0
-    error("Zero order can be used only with reverse mode autodiff")
-  end
-
-  @assert chunksize >= 0 "chunksize must be non-negative, got $chunksize"
-
-  initarg = Array(Any, 3)
-  initlen = length(init)
-
-  if initlen == 1 || initlen == 2
-    if autodiff != :reverse
-      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
+  if diffopts != nothing
+    if diffopts.mode != :reverse && diffopts.mode != :forward
+      error("autodiff must be :forward or :reverse, got $autodiff")
     end
 
-    for i in 1:3
-      initarg[i] = (inargs[i+2] != nothing) ? init : Any[]
-    end
-  elseif initlen == 3
-    if autodiff != :reverse
-      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
+    if diffopts.order < 0 || diffopts.order > 2
+      error("Derivative order must be 0, 1 or 2, got $order")
     end
 
-    initarg = init
-  else
-    error("init must be a vector of length 1, 2 or 3, got vector of length $initlen")
+    @assert diffopts.chunksize >= 0 "chunksize must be non-negative, got $chunksize"
   end
 
-  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
+  for i in 3:5
+    if isa(inargs[i], Function) && (!isa(inargs[i+3], Function) || (diffopts.oder == 2 && !isa(inargs[i+6], Function)))
+      diffopts.targets[i-2] = true
+    end
+  end
+
+  parameter = BasicContMuvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffopts, states, state)
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 
   for i in 1:17
     if isa(inargs[i], Function)
       outargs[i] = eval(
-        codegen_lowlevel_variable_method(inargs[i], :BasicContMuvParameterState, true, fnames[i], nkeys, vfarg)
+        codegen_lowlevel_variable_method(
+          inargs[i], statetype=:BasicContMuvParameterState, returns=fnames[i], vfarg=vfarg, nkeys=nkeys
+        )
       )
     end
   end
 
-  if autodiff == :forward
-    fadclosure = Array(Union{Function, Void}, 3)
+  if diffopts != nothing
+    diffclosure = Union{Function, Void}[nothing for i in 1:3]
     for i in 3:5
-      fadclosure[i-2] =
-        if isa(inargs[i], Function)
-          nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
-        else
-          nothing
-        end
+      if isa(inargs[i], Function)
+        diffclosure[i-2] = nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
+      end
     end
 
-    for i in 6:8
+    for (i, diffresult, diffconfig) in (
+      (6, :diffresultll, :diffconfiggll), (7, :diffresultlp, :diffconfigglp), (8, :diffresultlt, :diffconfigglt)
+    )
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_forward_autodiff_function(Val{:gradient}, fadclosure[i-5], chunksize)),
-          :BasicContMuvParameterState,
-          true,
-          fnames[i],
-          0
+          eval(codegen_autodiff_function(diffopts.mode, :gradient, diffclosure[i-5])),
+          statetype=:BasicContMuvParameterState,
+          returns=fnames[i],
+          diffresult=diffresult,
+          diffconfig=diffconfig
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_forward_autodiff_uptofunction(Val{:gradient}, fadclosure[3], chunksize)),
-        :BasicContMuvParameterState,
-        true,
-        fnames[15],
-        0
+        eval(codegen_autodiff_uptofunction(diffopts.mode, :gradient, diffclosure[3])),
+        statetype=:BasicContMuvParameterState,
+        returns=fnames[15],
+        diffresult=:diffresultlt,
+        diffconfig=:diffconfigglt
       ))
     end
 
-    if order >= 2
-      for i in 9:11
+    if diffopts.order == 2
+      for (i, diffresult, diffconfig) in (
+        (9, :diffresultll, :diffconfigtll), (10, :diffresultlp, :diffconfigtlp), (11, :diffresultlt, :diffconfigtlt)
+      )
         if !isa(inargs[i], Function) && isa(inargs[i-6], Function)
           outargs[i] = eval(codegen_lowlevel_variable_method(
-            eval(codegen_forward_autodiff_target(:hessian, fadclosure[i-8], chunksize)),
-            :BasicContMuvParameterState,
-            true,
-            fnames[i],
-            0
+            eval(codegen_autodiff_target(diffopts.mode, :hessian, diffclosure[i-8])),
+            statetype=:BasicContMuvParameterState,
+            returns=fnames[i],
+            diffresult=diffresult,
+            diffconfig=diffconfig
           ))
         end
       end
 
       if !isa(inargs[16], Function) && isa(inargs[5], Function)
         outargs[16] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_forward_autodiff_uptotarget(:hessian, fadclosure[3], chunksize)),
-          :BasicContMuvParameterState,
-          true,
-          fnames[16],
-          0
+          eval(codegen_autodiff_uptotarget(diffopts.mode, :hessian, diffclosure[3])),
+          statetype=:BasicContMuvParameterState,
+          returns=fnames[16],
+          diffresult=:diffresultlt,
+          diffconfig=:diffconfigtlt
         ))
-      end
-    end
-  elseif autodiff == :reverse
-    local f::Function
-
-    for i in 3:5
-      if isa(inargs[i], Expr)
-        if nkeys == 0
-          f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2][1], 0, false))
-        else
-          f = eval(codegen_reverse_autodiff_function(inargs[i], :Vector, initarg[i-2], 0, false))
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[i], 0))
-      end
-    end
-
-    for i in 6:8
-      if !isa(inargs[i], Function)
-        if isa(inargs[i-3], Function)
-          if nkeys == 0
-            f = ReverseDiffSource.rdiff(inargs[i-3], (initarg[i-5][1][2],), order=1, allorders=false)
-          else
-            f = ReverseDiffSource.rdiff(
-              inargs[i-3], (initarg[i-5][1][2], initarg[i-5][2][2]), ignore=[initarg[i-5][2][1]], order=1, allorders=false
-            )
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[i], 0))
-        elseif isa(inargs[i-3], Expr)
-          if nkeys == 0
-            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5][1], 1, false))
-          else
-            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Vector, initarg[i-5], 1, false))
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[i], 0))
-        end
-      end
-    end
-
-    if !isa(inargs[15], Function)
-      if isa(inargs[5], Function)
-        if nkeys == 0
-          f = ReverseDiffSource.rdiff(inargs[5], (initarg[3][1][2],), order=1, allorders=true)
-        else
-          f = ReverseDiffSource.rdiff(
-            inargs[5], (initarg[3][1][2], initarg[3][2][2]), ignore=[initarg[3][2][1]], order=1, allorders=true
-          )
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[15], 0))
-      elseif isa(inargs[5], Expr)
-        if nkeys == 0
-          f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3][1], 1, true))
-        else
-          f = eval(codegen_reverse_autodiff_function(inargs[5], :Vector, initarg[3], 1, true))
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[15], 0))
-      end
-    end
-
-    if order >= 2
-      for i in 9:11
-        if !isa(inargs[i], Function)
-          if isa(inargs[i-6], Function) || isa(inargs[i-6], Expr)
-            if nkeys == 0
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Vector, initarg[i-8][1]))
-            else
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Vector, initarg[i-8]))
-              f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-            end
-
-            outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[i], 0))
-          end
-        end
-      end
-
-      if !isa(inargs[16], Function)
-        if isa(inargs[5], Function) || isa(inargs[5], Expr)
-          if nkeys == 0
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Vector, initarg[3][1]))
-          else
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Vector, initarg[3]))
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[16] = eval(codegen_lowlevel_variable_method(f, :BasicContMuvParameterState, true, fnames[16], 0))
-        end
       end
     end
   end
@@ -625,10 +518,12 @@ end
 function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Integer)
   fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
 
-  @gensym internal_forward_autodiff_closure
+  arg = parameter.diffopts.mode == :reverse ? :_x : :(_x::Vector)
+
+  @gensym internal_autodiff_closure
 
   quote
-    function $internal_forward_autodiff_closure(_x::Vector)
+    function $internal_autodiff_closure($arg)
       $(f)(_x, $(fstatesarg...))
     end
   end
@@ -646,7 +541,8 @@ default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopt
   BasicContMuvParameterState(
     value,
     [getfield(variable, fieldnames(BasicContMuvParameter)[i]) == nothing ? false : true for i in 10:18],
-    (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
+    (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[],
+    variable.diffopts
   )
 
 show(io::IO, ::Type{BasicContMuvParameter}) = print(io, "BasicContMuvParameter")

@@ -1,51 +1,47 @@
-function codegen_forward_autodiff_function(::Type{Val{:derivative}}, f::Function)
-  @gensym forward_autodiff_function
+function codegen_autodiff_function(::Type{Val{:forward}}, ::Type{Val{:derivative}}, f::Function)
+  @gensym autodiff_function
   quote
-    function $forward_autodiff_function(_x::Real)
+    function $autodiff_function(_x::Real)
       getfield(ForwardDiff, :derivative)($f, _x)
     end
   end
 end
 
-function codegen_forward_autodiff_function(::Type{Val{:gradient}}, f::Function, chunksize::Integer=0)
-  body =
-    if chunksize == 0
-      :(getfield(ForwardDiff, :gradient)($f, _x))
-    else
-      :(getfield(ForwardDiff, :gradient)($f, _x, Chunk{$chunksize}()))
-    end
+function codegen_autodiff_function(::Type{Val{:forward}}, ::Type{Val{:gradient}}, f::Function)
+  body = []
 
-  @gensym forward_autodiff_function
+  push!(body, :(getfield(ForwardDiff, :gradient!)(_result, $f, _x, _cfg)))
+
+  push!(body, :(return DiffBase.gradient(_result)))
+
+  @gensym autodiff_function
   quote
-    function $forward_autodiff_function(_x::Vector)
-      $body
+    function $autodiff_function(_result::DiffBase.DiffResult, _x::Vector, _cfg::ForwardDiff.GradientConfig)
+      $(body...)
     end
   end
 end
 
-codegen_forward_autodiff_target(method::Symbol, f::Function, chunksize::Integer=0) =
-  codegen_forward_autodiff_target(Val{method}, f, chunksize)
+function codegen_autodiff_target(::Type{Val{:forward}}, ::Type{Val{:hessian}}, f::Function)
+  body = []
 
-function codegen_forward_autodiff_target(::Type{Val{:hessian}}, f::Function, chunksize::Integer=0)
-  body =
-    if chunksize == 0
-      :(-getfield(ForwardDiff, :hessian)($f, _x))
-    else
-      :(-getfield(ForwardDiff, :hessian)($f, _x, Chunk{$chunksize}()))
-    end
+  push!(body, :(getfield(ForwardDiff, :hessian!)(_result, $f, _x)))
+  # push!(body, :(getfield(ForwardDiff, :hessian!)(_result, $f, _x, _cfg)))
 
-  @gensym forward_autodiff_target
+  push!(body, :(return -DiffBase.hessian(_result)))
+
+  @gensym autodiff_target
   quote
-    function $forward_autodiff_target(_x::Vector)
-      $body
+    function $autodiff_target(_result::DiffBase.DiffResult, _x::Vector, _cfg::ForwardDiff.HessianConfig)
+      $(body...)
     end
   end
 end
 
-function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Function)
-  @gensym forward_autodiff_uptofunction
+function codegen_autodiff_uptofunction(::Type{Val{:forward}}, ::Type{Val{:derivative}}, f::Function)
+  @gensym autodiff_uptofunction
   quote
-    function $forward_autodiff_uptofunction(_x::Real)
+    function $autodiff_uptofunction(_x::Real)
       result = DiffBase.DiffResult(_x, _x)
       getfield(ForwardDiff, :derivative!)(result, $f, _x)
       return DiffBase.value(result), DiffBase.derivative(result)
@@ -53,41 +49,33 @@ function codegen_forward_autodiff_uptofunction(::Type{Val{:derivative}}, f::Func
   end
 end
 
-function codegen_forward_autodiff_uptofunction(::Type{Val{:gradient}}, f::Function, chunksize::Integer=0)
-  adfcall =
-    if chunksize == 0
-      :(getfield(ForwardDiff, :gradient!)(result, $f, _x))
-    else
-      :(getfield(ForwardDiff, :gradient!)(result, $f, _x, Chunk{$chunksize}()))
-    end
+function codegen_autodiff_uptofunction(::Type{Val{:forward}}, ::Type{Val{:gradient}}, f::Function)
+  body = []
 
-  @gensym forward_autodiff_uptofunction
+  push!(body, :(getfield(ForwardDiff, :gradient!)(_result, $f, _x, _cfg)))
+
+  push!(body, :(return DiffBase.value(_result), DiffBase.gradient(_result)))
+
+  @gensym autodiff_uptofunction
   quote
-    function $forward_autodiff_uptofunction(_x::Vector)
-      result = DiffBase.GradientResult(_x)
-      $adfcall
-      return DiffBase.value(result), DiffBase.gradient(result)
+    function $autodiff_uptofunction(_result::DiffBase.DiffResult, _x::Vector, _cfg::ForwardDiff.GradientConfig)
+      $(body...)
     end
   end
 end
 
-codegen_forward_autodiff_uptotarget(method::Symbol, f::Function, chunksize::Integer=0) =
-  codegen_forward_autodiff_uptotarget(Val{method}, f, chunksize)
+function codegen_autodiff_uptotarget(::Type{Val{:forward}}, ::Type{Val{:hessian}}, f::Function)
+  body = []
 
-function codegen_forward_autodiff_uptotarget(::Type{Val{:hessian}}, f::Function, chunksize::Integer=0)
-  adfcall =
-    if chunksize == 0
-      :(getfield(ForwardDiff, :hessian!)(result, $f, _x))
-    else
-      :(getfield(ForwardDiff, :hessian!)(result, $f, _x, Chunk{$chunksize}()))
-    end
+  push!(body, :(getfield(ForwardDiff, :hessian!)(_result, $f, _x)))
+  # push!(body, :(getfield(ForwardDiff, :hessian!)(_result, $f, _x, _cfg)))
 
-  @gensym forward_autodiff_uptotarget
+  push!(body, :(return DiffBase.value(_result), DiffBase.gradient(_result), -DiffBase.hessian(_result)))
+
+  @gensym autodiff_uptotarget
   quote
-    function $forward_autodiff_uptotarget(_x::Vector)
-      result = DiffBase.HessianResult(_x)
-      $adfcall
-      return DiffBase.value(result), DiffBase.gradient(result), -DiffBase.hessian(result)
+    function $autodiff_uptotarget(_result::DiffBase.DiffResult, _x::Vector, _cfg::ForwardDiff.HessianConfig)
+      $(body...)
     end
   end
 end

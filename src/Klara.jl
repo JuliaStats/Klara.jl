@@ -39,7 +39,7 @@ import Distributions:
 
 import ForwardDiff
 
-import ReverseDiffSource
+import ReverseDiff
 
 export
   ### Types
@@ -84,6 +84,9 @@ export
   Dependence,
   DependenceVector,
   Deterministic,
+  DiffMethods,
+  DiffOptions,
+  DiffState,
   DiscMuvMarkovChain,
   DiscUnvMarkovChain,
   DiscreteParameter,
@@ -260,6 +263,7 @@ include("stats/logistic.jl")
 include("distributions/Binary.jl")
 include("distributions/TruncatedNormal.jl")
 
+include("autodiff/autodiff.jl")
 include("autodiff/reverse.jl")
 include("autodiff/forward.jl")
 

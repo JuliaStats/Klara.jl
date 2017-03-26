@@ -93,7 +93,7 @@ sampler_state(
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
 ) =
-  MuvMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  MuvMALAState(generate_empty(pstate, parameter.diffopts), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
 

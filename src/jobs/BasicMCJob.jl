@@ -78,6 +78,7 @@ type BasicMCJob <: MCJob
       end
     end
     initialize!(instance.pstate, instance.parameter, instance.sampler, instance.outopts)
+    instance.parameter.state = instance.pstate
 
     instance.sstate = sampler_state(instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate)
 

@@ -8,19 +8,21 @@ covariates = (covariates.-mean(covariates, 1))./repmat(std(covariates, 1), ndata
 outcome, = dataset("swiss", "status")
 outcome = vec(outcome)
 
-function ploglikelihood(p::Vector, v::Vector)
+function ploglikelihood(p, v)
   Xp = v[2]*p
   dot(Xp, v[3])-sum(log(1+exp(Xp)))
 end
 
-plogprior(p::Vector, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))
+function plogprior(p, v)
+  -0.5*(dot(p, p)/v[1]+length(p)*log(6.283185307179586*v[1]))
+end
 
 p = BasicContMuvParameter(
   :p,
   loglikelihood=ploglikelihood,
   logprior=plogprior,
   nkeys=4,
-  diffopts=DiffOptions(mode=:forward, order=2)
+  diffopts=DiffOptions(mode=:reverse, order=2)
 )
 
 model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
