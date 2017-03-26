@@ -77,6 +77,7 @@ type BasicMCJob <: MCJob
         error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
       end
     end
+    initialize!(instance.parameter, instance.pstate)
     initialize!(instance.pstate, instance.parameter, instance.sampler, instance.outopts)
     instance.parameter.state = instance.pstate
 

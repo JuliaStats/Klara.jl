@@ -47,12 +47,15 @@ type DiffOptions
   order::Integer
   targets::Vector{Bool}
   chunksize::Integer
+  compiled::Bool
 end
 
-DiffOptions(mode::Symbol, order::Integer) = DiffOptions(mode, order, fill(false, 3), 0)
+DiffOptions(mode::Symbol, order::Integer) = DiffOptions(mode, order, fill(false, 3), 0, true)
 
-DiffOptions(; mode::Symbol=:reverse, order::Integer=1, targets::Vector{Bool}=fill(false, 3), chunksize::Integer=0) =
-  DiffOptions(mode, order, targets, chunksize)
+DiffOptions(;
+  mode::Symbol=:reverse, order::Integer=1, targets::Vector{Bool}=fill(false, 3), chunksize::Integer=0, compiled::Bool=true
+) =
+  DiffOptions(mode, order, targets, chunksize, compiled)
 
 codegen_autodiff_function(mode::Symbol, method::Symbol) = codegen_autodiff_function(Val{mode}, Val{method})
 

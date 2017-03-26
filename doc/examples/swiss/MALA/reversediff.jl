@@ -19,7 +19,7 @@ end
 
 v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
-init = Any[(:p, v0[:p]), (:v, Any[v0[:λ], v0[:X], v0[:y], v0[:p]])]
+# init = Any[(:p, v0[:p]), (:v, Any[v0[:λ], v0[:X], v0[:y], v0[:p]])]
 
 p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, nkeys=4, diffopts=DiffOptions(mode=:reverse))
 

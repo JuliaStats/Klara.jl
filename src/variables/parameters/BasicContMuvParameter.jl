@@ -551,6 +551,36 @@ function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::
   end
 end
 
+function initialize!(parameter::BasicContMuvParameter, pstate::ParameterState{Continuous, Multivariate})
+  if parameter.diffopts != nothing && parameter.diffopts.mode == :reverse
+    for (i, diffclosure, difftape) in ((1, :closurell, :tapell), (2, :closurelp, :tapelp), (3, :closurelt, :tapelt))
+      if parameter.diffopts.targets[i]
+        if parameter.diffopts.order == 1
+          setfield!(
+            parameter.diffmethods,
+            difftape,
+            ReverseDiff.GradientTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+          )
+        else
+          setfield!(
+            parameter.diffmethods,
+            difftape,
+            ReverseDiff.HessianTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+          )
+        end
+
+        if parameter.diffopts.compiled
+          setfield!(
+            parameter.diffmethods,
+            difftape,
+            ReverseDiff.compile(getfield(parameter.diffmethods, difftape))
+          )
+        end
+      end
+    end
+  end
+end
+
 value_support(::Type{BasicContMuvParameter}) = Continuous
 value_support(::BasicContMuvParameter) = Continuous
 
