@@ -1,8 +1,14 @@
-function codegen_autodiff_function(::Type{Val{:forward}}, ::Type{Val{:derivative}}, f::Function)
+function codegen_autodiff_function(::Type{Val{:forward}}, ::Type{Val{:derivative}})
+  body = []
+
+  push!(body, :(getfield(ForwardDiff, :derivative!)(_result, _f, _x)))
+
+  push!(body, :(return DiffBase.derivative(_result)))
+
   @gensym autodiff_function
   quote
-    function $autodiff_function(_x::Real)
-      getfield(ForwardDiff, :derivative)($f, _x)
+    function $autodiff_function(_result::DiffBase.DiffResult, _f::Function, _x::Real)
+      $(body...)
     end
   end
 end
@@ -39,13 +45,17 @@ function codegen_autodiff_target(::Type{Val{:forward}}, ::Type{Val{:hessian}})
   end
 end
 
-function codegen_autodiff_uptofunction(::Type{Val{:forward}}, ::Type{Val{:derivative}}, f::Function)
+function codegen_autodiff_uptofunction(::Type{Val{:forward}}, ::Type{Val{:derivative}})
+  body = []
+
+  push!(body, :(getfield(ForwardDiff, :derivative!)(_result, _f, _x)))
+
+  push!(body, :(return DiffBase.value(_result), DiffBase.derivative(_result)))
+
   @gensym autodiff_uptofunction
   quote
-    function $autodiff_uptofunction(_x::Real)
-      result = DiffBase.DiffResult(_x, _x)
-      getfield(ForwardDiff, :derivative!)(result, $f, _x)
-      return DiffBase.value(result), DiffBase.derivative(result)
+    function $autodiff_uptofunction(_result::DiffBase.DiffResult, _f::Function, _x::Real)
+      $(body...)
     end
   end
 end

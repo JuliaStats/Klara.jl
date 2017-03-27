@@ -67,15 +67,36 @@ type BasicContUnvParameterState{N<:Real} <: ParameterState{Continuous, Univariat
   diagnosticvalues::Vector
   "Diagnostic keys associated with the sampling of the state"
   diagnostickeys::Vector{Symbol}
+  diffmethods::Union{DiffMethods, Void}
+  diffstate::Union{DiffState, Void}
 end
 
 function BasicContUnvParameterState{N<:Real}(
   value::N,
   diagnostickeys::Vector{Symbol}=Symbol[],
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 )
   v = convert(N, NaN)
-  BasicContUnvParameterState{N}(value, v, v, v, v, v, v, v, v, v, v, v, v, diagnosticvalues, diagnostickeys)
+
+  diffstate = DiffState()
+
+  if diffopts != nothing
+    if diffopts.order == 1
+      for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
+        if diffopts.targets[i]
+          setfield!(diffstate, field, DiffBase.DiffResult(zero(value), zero(value)))
+        end
+      end
+    else
+      error("Derivative order must be 1, got order=$order")
+    end
+  end
+
+  BasicContUnvParameterState{N}(
+    value, v, v, v, v, v, v, v, v, v, v, v, v, diagnosticvalues, diagnostickeys, diffmethods, diffstate
+  )
 end
 
 BasicContUnvParameterState{N<:Real}(

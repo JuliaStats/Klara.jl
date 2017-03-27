@@ -77,10 +77,16 @@ type BasicMCJob <: MCJob
         error("Not possible to initialize pstate with missing pstate.value and without parameter.pdf or parameter.prior")
       end
     end
-    initialize!(instance.parameter, instance.pstate)
+    if value_support(instance.parameter) == Continuous &&
+      instance.parameter.diffopts != nothing &&
+      instance.parameter.diffopts.mode == :reverse
+      set_tapes!(instance.parameter, instance.pstate)
+    end
     initialize!(instance.pstate, instance.parameter, instance.sampler, instance.outopts)
-    instance.parameter.state = instance.pstate
-
+    if value_support(instance.parameter) == Continuous
+      instance.parameter.state = instance.pstate
+    end
+    
     instance.sstate = sampler_state(instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate)
 
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)

@@ -29,7 +29,10 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
   uptogradlogtarget!::Union{Function, Void}
   uptotensorlogtarget!::Union{Function, Void}
   uptodtensorlogtarget!::Union{Function, Void}
+  diffmethods::Union{DiffMethods, Void}
+  diffopts::Union{DiffOptions, Void}
   states::VariableStateVector
+  state::ParameterState{Continuous, Univariate}
 
   function BasicContUnvParameter(
     key::Symbol,
@@ -53,7 +56,10 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
     uptoglt::Union{Function, Void},
     uptotlt::Union{Function, Void},
     uptodtlt::Union{Function, Void},
-    states::VariableStateVector
+    diffmethods::Union{DiffMethods, Void},
+    diffopts::Union{DiffOptions, Void},
+    states::VariableStateVector,
+    state::ParameterState{Continuous, Univariate}
   )
     args = (setpdf, setprior, ll, lp, lt, gll, glp, glt, tll, tlp, tlt, dtll, dtlp, dtlt, uptoglt, uptotlt, uptodtlt)
     fnames = fieldnames(BasicContUnvParameter)[5:21]
@@ -89,7 +95,10 @@ type BasicContUnvParameter <: Parameter{Continuous, Univariate}
       uptoglt,
       uptotlt,
       uptodtlt,
-      states
+      diffmethods,
+      diffopts,
+      states,
+      state
     )
   end
 end
@@ -326,9 +335,12 @@ function BasicContUnvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::VariableStateVector=VariableState[]
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
+  states::VariableStateVector=VariableState[],
+  state::ParameterState{Continuous, Multivariate}=BasicContUnvParameterState()
 )
-  parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
+  parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffmethods, diffopts, states, state)
 
   BasicContUnvParameter!(
     parameter,
@@ -354,9 +366,6 @@ function BasicContUnvParameter(
   parameter
 end
 
-# The constructor below has not be split in autodiff-specific constructors on purpose
-# The rationale is that it allows to provide some order derivatives in closed form while compute others via AD
-
 function BasicContUnvParameter(
   key::Symbol,
   ::Type{Val{:high}},
@@ -380,13 +389,11 @@ function BasicContUnvParameter(
   uptogradlogtarget::Union{Function, Void}=nothing,
   uptotensorlogtarget::Union{Function, Void}=nothing,
   uptodtensorlogtarget::Union{Function, Void}=nothing,
-  states::VariableStateVector=VariableState[],
   nkeys::Integer=0,
   vfarg::Bool=false,
-  autodiff::Symbol=:none,
-  order::Integer=1,
-  chunksize::Integer=0,
-  init::Vector=fill(Any[], 3)
+  diffopts::Union{DiffOptions, Void}=nothing,
+  states::VariableStateVector=VariableState[],
+  state::ParameterState{Continuous, Multivariate}=BasicContUnvParameterState()
 )
   inargs = (
     setpdf,
@@ -415,193 +422,79 @@ function BasicContUnvParameter(
     fnames[14+i] = Symbol[fnames[j][1] for j in 5:3:(5+i*3)]
   end
 
-  for i in 3:5
-    if isa(inargs[i], Expr) && autodiff != :reverse
-      error("The only case $(fnames[i][1]) can be an expression is when used in conjunction with reverse mode autodiff")
-    end
-  end
-
   if nkeys > 0
-    if (autodiff == :forward || autodiff == :reverse) && vfarg
+    if diffopts != nothing && vfarg
       error("In the case of autodiff, if nkeys is not 0, then vfarg must be false")
     end
   elseif nkeys < 0
     "nkeys must be non-negative, got $nkeys"
   end
 
-  if !in(autodiff, (:none, :forward, :reverse))
-    error("autodiff must be :nore or :forward or :reverse, got $autodiff")
-  end
-
-  if order < 0 || order > 2
-    error("Derivative order must be 0, 1 or 2, got $order")
-  elseif autodiff != :reverse && order == 0
-    error("Zero order can be used only with reverse mode autodiff")
-  elseif autodiff != :reverse && order == 2
-    error("Second order can be used only with reverse mode autodiff")
-  end
-
-  @assert chunksize >= 0 "chunksize must be non-negative, got $chunksize"
-
-  initarg = Array(Any, 3)
-  initlen = length(init)
-
-  if initlen == 1 || initlen == 2
-    if autodiff != :reverse
-      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
+  if diffopts != nothing
+    if diffopts.mode != :forward
+      error("Only :forward mode autodiff is available for univariate parameters, got $autodiff mode")
     end
 
-    for i in 1:3
-      initarg[i] = (inargs[i+2] != nothing) ? init : Any[]
+    if diffopts.order != 1
+      error("Derivative order must be 1, got order=$order")
     end
-  elseif initlen == 3
-    if autodiff != :reverse
-      @assert all(isempty, init) "init option is used only for reverse mode autodiff"
-    end
-
-    initarg = init
-  else
-    error("init must be a vector of length 1, 2 or 3, got vector of length $initlen")
   end
 
-  parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., states)
+  if diffopts != nothing
+    for i in 3:5
+      if isa(inargs[i], Function) && !isa(inargs[i+3], Function)
+        diffopts.targets[i-2] = true
+      end
+    end
+  end
+
+  parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., DiffMethods(), diffopts, states, state)
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 
   for i in 1:17
     if isa(inargs[i], Function)
       outargs[i] = eval(
-        codegen_lowlevel_variable_method(inargs[i], :BasicContUnvParameterState, true, fnames[i], nkeys, vfarg)
+        codegen_lowlevel_variable_method(
+          inargs[i], statetype=:BasicContUnvParameterState, returns=fnames[i], vfarg=vfarg, nkeys=nkeys
+        )
       )
     end
   end
 
-  if autodiff == :forward
-    fadclosure = Array(Union{Function, Void}, 3)
-    for i in 3:5
-      fadclosure[i-2] =
-        if isa(inargs[i], Function)
+  if diffopts != nothing
+    for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
+      if isa(inargs[i], Function)
+        setfield!(
+          parameter.diffmethods,
+          field,
           nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
-        else
-          nothing
-        end
+        )
+      end
     end
 
-    for i in 6:8
+    for (i, diffresult, diffmethod) in ((6, :resultll, :closurell), (7, :resultlp, :closurelp), (8, :resultlt, :closurelt))
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_forward_autodiff_function(Val{:derivative}, fadclosure[i-5])),
-          :BasicContUnvParameterState,
-          true,
-          fnames[i],
-          0
+          eval(codegen_autodiff_function(diffopts.mode, :derivative)),
+          statetype=:BasicContUnvParameterState,
+          returns=fnames[i],
+          diffresult=diffresult,
+          diffmethod=diffmethod,
+          diffconfig=nothing
         ))
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_forward_autodiff_uptofunction(Val{:derivative}, fadclosure[3])),
-        :BasicContUnvParameterState,
-        true,
-        fnames[15],
-        0
+        eval(codegen_autodiff_uptofunction(diffopts.mode, :derivative)),
+        statetype=:BasicContUnvParameterState,
+        returns=fnames[15],
+        diffresult=:resultlt,
+        diffmethod=:closurelt,
+        diffconfig=nothing
       ))
-    end
-  elseif autodiff == :reverse
-    local f::Function
-
-    for i in 3:5
-      if isa(inargs[i], Expr)
-        if nkeys == 0
-          f = eval(codegen_reverse_autodiff_function(inargs[i], :Real, initarg[i-2][1], 0, false))
-        else
-          f = eval(codegen_reverse_autodiff_function(inargs[i], :Real, initarg[i-2], 0, false))
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[i], 0))
-      end
-    end
-
-    for i in 6:8
-      if !isa(inargs[i], Function)
-        if isa(inargs[i-3], Function)
-          if nkeys == 0
-            f = ReverseDiffSource.rdiff(inargs[i-3], (initarg[i-5][1][2],), order=1, allorders=false)
-          else
-            f = ReverseDiffSource.rdiff(
-              inargs[i-3], (initarg[i-5][1][2], initarg[i-5][2][2]), ignore=[initarg[i-5][2][1]], order=1, allorders=false
-            )
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[i], 0))
-        elseif isa(inargs[i-3], Expr)
-          if nkeys == 0
-            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Real, initarg[i-5][1], 1, false))
-          else
-            f = eval(codegen_reverse_autodiff_function(inargs[i-3], :Real, initarg[i-5], 1, false))
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[i], 0))
-        end
-      end
-    end
-
-    if !isa(inargs[15], Function)
-      if isa(inargs[5], Function)
-        if nkeys == 0
-          f = ReverseDiffSource.rdiff(inargs[5], (initarg[3][1][2],), order=1, allorders=true)
-        else
-          f = ReverseDiffSource.rdiff(
-            inargs[5], (initarg[3][1][2], initarg[3][2][2]), ignore=[initarg[3][2][1]], order=1, allorders=true
-          )
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[15], 0))
-      elseif isa(inargs[5], Expr)
-        if nkeys == 0
-          f = eval(codegen_reverse_autodiff_function(inargs[5], :Real, initarg[3][1], 1, true))
-        else
-          f = eval(codegen_reverse_autodiff_function(inargs[5], :Real, initarg[3], 1, true))
-          f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-        end
-
-        outargs[15] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[15], 0))
-      end
-    end
-
-    if order >= 2
-      for i in 9:11
-        if !isa(inargs[i], Function)
-          if isa(inargs[i-6], Function) || isa(inargs[i-6], Expr)
-            if nkeys == 0
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Real, initarg[i-8][1]))
-            else
-              f = eval(codegen_reverse_autodiff_target(:hessian, inargs[i-6], :Real, initarg[i-8]))
-              f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-            end
-
-            outargs[i] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[i], 0))
-          end
-        end
-      end
-
-      if !isa(inargs[16], Function)
-        if isa(inargs[5], Function) || isa(inargs[5], Expr)
-          if nkeys == 0
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Real, initarg[3][1]))
-          else
-            f = eval(codegen_reverse_autodiff_uptotarget(:hessian, inargs[5], :Real, initarg[3]))
-            f = eval(codegen_internal_autodiff_closure(parameter, f, nkeys))
-          end
-
-          outargs[16] = eval(codegen_lowlevel_variable_method(f, :BasicContUnvParameterState, true, fnames[16], 0))
-        end
-      end
     end
   end
 
@@ -613,10 +506,10 @@ end
 function codegen_internal_autodiff_closure(parameter::BasicContUnvParameter, f::Function, nkeys::Integer)
   fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
 
-  @gensym internal_forward_autodiff_closure
+  @gensym internal_autodiff_closure
 
   quote
-    function $internal_forward_autodiff_closure(_x::Real)
+    function $internal_autodiff_closure(_x::Real)
       $(f)(_x, $(fstatesarg...))
     end
   end
@@ -632,7 +525,10 @@ default_state_type(::BasicContUnvParameter) = BasicContUnvParameterState
 
 default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict) =
   BasicContUnvParameterState(
-    value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
+    value,
+    (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[],
+    variable.diffmethods,
+    variable.diffopts
   )
 
 show(io::IO, ::Type{BasicContUnvParameter}) = print(io, "BasicContUnvParameter")

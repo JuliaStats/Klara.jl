@@ -54,9 +54,17 @@ type DiffOptions
   targets::Vector{Bool}
   chunksize::Integer
   compiled::Bool
+
+  function DiffOptions(mode::Symbol, order::Integer, targets::Vector{Bool}, chunksize::Integer, compiled::Bool)
+    @assert (mode == :reverse || mode == :forward) "Mode of automatic differentation must be :reverse or :forward, got $mode"
+    @assert (order == 1 || order == 2) "Order of differentiation must be 1 or 2, got order=$order"
+    @assert (length(targets) == 3) "Length of targets must be 3, got $length(targets)-length vector"
+    @assert chunksize >= 0 "chunksize can not be negative, got chunksize=$chunksize"
+    new(mode, order, targets, chunksize, compiled)
+  end
 end
 
-DiffOptions(mode::Symbol, order::Integer) = DiffOptions(mode, order, fill(false, 3), 0, true)
+DiffOptions(mode::Symbol, order::Integer) = DiffOptions(mode, order, fill(false, 3), 0, mode == :reverse ? true : false)
 
 DiffOptions(;
   mode::Symbol=:reverse, order::Integer=1, targets::Vector{Bool}=fill(false, 3), chunksize::Integer=0, compiled::Bool=true

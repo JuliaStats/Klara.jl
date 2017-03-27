@@ -54,7 +54,7 @@ MH(
   symmetric::Bool=true,
   normalised::Bool=true
 ) =
-  MH(symmetric, normalised, eval(codegen_lowlevel_variable_method(setproposal, nothing, false, Symbol[], 0)))
+  MH(symmetric, normalised, eval(codegen_lowlevel_variable_method(setproposal, states=false)))
 
 # Random-walk Metropolis, i.e. Metropolis with a normal proposal distribution
 

@@ -151,7 +151,9 @@ function BasicDiscMuvParameter(
   for i in 1:5
     if isa(inargs[i], Function)
       outargs[i] = eval(
-        codegen_lowlevel_variable_method(inargs[i], :BasicDiscMuvParameterState, true, fnames[i], nkeys, vfarg)
+        codegen_lowlevel_variable_method(
+          inargs[i], statetype=:BasicDiscMuvParameterState, returns=fnames[i], vfarg=vfarg, nkeys=nkeys
+        )
       )
     end
   end

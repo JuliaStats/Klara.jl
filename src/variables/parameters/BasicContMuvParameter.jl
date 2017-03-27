@@ -386,7 +386,7 @@ function BasicContMuvParameter(
   vfarg::Bool=false,
   diffopts::Union{DiffOptions, Void}=nothing,
   states::VariableStateVector=VariableState[],
-  state::ParameterState{Continuous, Multivariate}=BasicContMuvParameterState(0),
+  state::ParameterState{Continuous, Multivariate}=BasicContMuvParameterState(0)
 )
   inargs = (
     setpdf,
@@ -421,18 +421,6 @@ function BasicContMuvParameter(
     end
   elseif nkeys < 0
     "nkeys must be non-negative, got $nkeys"
-  end
-
-  if diffopts != nothing
-    if diffopts.mode != :reverse && diffopts.mode != :forward
-      error("autodiff must be :forward or :reverse, got $autodiff")
-    end
-
-    if diffopts.order < 0 || diffopts.order > 2
-      error("Derivative order must be 0, 1 or 2, got $order")
-    end
-
-    @assert diffopts.chunksize >= 0 "chunksize must be non-negative, got $chunksize"
   end
 
   if diffopts != nothing
@@ -554,43 +542,41 @@ function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::
   end
 end
 
-function initialize!(parameter::BasicContMuvParameter, pstate::ParameterState{Continuous, Multivariate})
-  if parameter.diffopts != nothing && parameter.diffopts.mode == :reverse
-    diffgtapes = (:tapegll, :tapeglp, :tapeglt)
-    diffttapes = (:tapetll, :tapetlp, :tapetlt)
+function set_tapes!(parameter::BasicContMuvParameter, pstate::ParameterState{Continuous, Multivariate})
+  diffgtapes = (:tapegll, :tapeglp, :tapeglt)
+  diffttapes = (:tapetll, :tapetlp, :tapetlt)
 
-    for (i, diffclosure) in ((1, :closurell), (2, :closurelp), (3, :closurelt))
-      if parameter.diffopts.targets[i]
+  for (i, diffclosure) in ((1, :closurell), (2, :closurelp), (3, :closurelt))
+    if parameter.diffopts.targets[i]
+      setfield!(
+        parameter.diffmethods,
+        diffgtapes[i],
+        ReverseDiff.GradientTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+      )
+
+      if parameter.diffopts.compiled
         setfield!(
           parameter.diffmethods,
           diffgtapes[i],
-          ReverseDiff.GradientTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+          ReverseDiff.compile(getfield(parameter.diffmethods, diffgtapes[i]))
+        )
+      end
+
+      if parameter.diffopts.order == 2
+        difftapes = (:tapegll, :tapeglp, :tapeglt)
+
+        setfield!(
+          parameter.diffmethods,
+          diffttapes[i],
+          ReverseDiff.HessianTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
         )
 
         if parameter.diffopts.compiled
           setfield!(
             parameter.diffmethods,
-            diffgtapes[i],
-            ReverseDiff.compile(getfield(parameter.diffmethods, diffgtapes[i]))
-          )
-        end
-
-        if parameter.diffopts.order == 2
-          difftapes = (:tapegll, :tapeglp, :tapeglt)
-
-          setfield!(
-            parameter.diffmethods,
             diffttapes[i],
-            ReverseDiff.HessianTape(getfield(parameter.diffmethods, diffclosure), pstate.value)
+            ReverseDiff.compile(getfield(parameter.diffmethods, diffttapes[i]))
           )
-
-          if parameter.diffopts.compiled
-            setfield!(
-              parameter.diffmethods,
-              diffttapes[i],
-              ReverseDiff.compile(getfield(parameter.diffmethods, diffttapes[i]))
-            )
-          end
         end
       end
     end
