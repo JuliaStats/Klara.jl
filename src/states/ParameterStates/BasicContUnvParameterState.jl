@@ -102,9 +102,11 @@ end
 BasicContUnvParameterState{N<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
   diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
 ) =
-  BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diagnosticvalues)
+  BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 value_support{N<:Real}(::Type{BasicContUnvParameterState{N}}) = Continuous
 value_support(::BasicContUnvParameterState) = Continuous
@@ -115,4 +117,8 @@ variate_form(::BasicContUnvParameterState) = Univariate
 eltype{N<:Real}(::Type{BasicContUnvParameterState{N}}) = N
 eltype{N<:Real}(::BasicContUnvParameterState{N}) = N
 
-generate_empty(state::BasicContUnvParameterState) = BasicContUnvParameterState(state.diagnostickeys, eltype(state))
+generate_empty(
+  state::BasicContUnvParameterState,
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing
+) = BasicContUnvParameterState(state.diagnostickeys, eltype(state), diffmethods, diffopts)

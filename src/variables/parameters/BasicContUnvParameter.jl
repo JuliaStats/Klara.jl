@@ -338,7 +338,7 @@ function BasicContUnvParameter(
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
   states::VariableStateVector=VariableState[],
-  state::ParameterState{Continuous, Multivariate}=BasicContUnvParameterState()
+  state::ParameterState{Continuous, Univariate}=BasicContUnvParameterState()
 )
   parameter = BasicContUnvParameter(key, index, pdf, prior, fill(nothing, 17)..., diffmethods, diffopts, states, state)
 
@@ -393,7 +393,7 @@ function BasicContUnvParameter(
   vfarg::Bool=false,
   diffopts::Union{DiffOptions, Void}=nothing,
   states::VariableStateVector=VariableState[],
-  state::ParameterState{Continuous, Multivariate}=BasicContUnvParameterState()
+  state::ParameterState{Continuous, Univariate}=BasicContUnvParameterState()
 )
   inargs = (
     setpdf,
