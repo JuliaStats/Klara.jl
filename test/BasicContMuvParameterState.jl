@@ -45,7 +45,7 @@ end
 v = Float16[0.24, 5.5, -6.3]
 dv = [false]
 ssize = length(v)
-s = BasicContMuvParameterState(v, [:gradlogtarget], [:accept], dv)
+s = BasicContMuvParameterState(v, [:gradlogtarget], [:accept], nothing, nothing, dv)
 
 @test eltype(s) == Float16
 @test s.value == v
@@ -94,7 +94,7 @@ end
 
 dv = [true]
 ssize = 5
-s = BasicContMuvParameterState(ssize, [:tensorlogtarget], [:accept], BigFloat, dv)
+s = BasicContMuvParameterState(ssize, [:tensorlogtarget], [:accept], BigFloat, nothing, nothing, dv)
 
 @test eltype(s) == BigFloat
 @test isa(s.value, Vector{BigFloat})
@@ -118,6 +118,6 @@ end
 
 @test diagnostics(s) == Dict(:accept => dv[1])
 
-z = BasicContMuvParameterState(Float64[-0.12, 12.15], [:gradloglikelihood], [:accept], [false])
+z = BasicContMuvParameterState(Float64[-0.12, 12.15], [:gradloglikelihood], [:accept], nothing, nothing, [false])
 w = deepcopy(z)
 @test isequal(z, w)

@@ -153,7 +153,7 @@ iostream = BasicContParamIOStream(
   iostreamsize, iostreamn, [:value, :gradloglikelihood], filepath=filepath, diagnostickeys=[:accept]
 )
 for i in 1:iostreamn
-  state = BasicContMuvParameterState(nstatev[:, i], Symbol[], [:accept], [nstated[i]])
+  state = BasicContMuvParameterState(nstatev[:, i], Symbol[], [:accept], nothing, nothing, [nstated[i]])
   state.gradloglikelihood = nstategll[:, i]
   write(iostream, state)
 end

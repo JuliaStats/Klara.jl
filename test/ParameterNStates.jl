@@ -46,7 +46,7 @@ end
 
 statev = Float32(3.)
 stateglt = Float32(4.21)
-state = BasicContUnvParameterState(statev, [:accept], [true])
+state = BasicContUnvParameterState(statev, [:accept], nothing, nothing, [true])
 state.gradlogtarget = stateglt
 savei = 2
 
@@ -70,7 +70,7 @@ end
 
 statev = Float64(1.25)
 statelt = Float64(-1.12)
-state = BasicContUnvParameterState(statev, [:accept], [false])
+state = BasicContUnvParameterState(statev, [:accept], nothing, nothing, [false])
 state.logtarget = statelt
 savei = 7
 
@@ -136,7 +136,7 @@ end
 
 statev = Float32[0.17, 9.44]
 stategll = Float32[-0.01, 4.7]
-state = BasicContMuvParameterState(statev, [:gradloglikelihood], [:accept], [false])
+state = BasicContMuvParameterState(statev, [:gradloglikelihood], [:accept], nothing, nothing, [false])
 state.gradloglikelihood = stategll
 savei = 3
 
@@ -173,7 +173,7 @@ end
 statev = Float16[6.91, 0.42]
 statelt = Float16(4.67)
 stateglt = Float16[-0.01, 3.2]
-state = BasicContMuvParameterState(statev, [:gradlogtarget], [:accept], [true])
+state = BasicContMuvParameterState(statev, [:gradlogtarget], [:accept], nothing, nothing, [true])
 state.logtarget = statelt
 state.gradlogtarget = stateglt
 savei = 7

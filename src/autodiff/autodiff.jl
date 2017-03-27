@@ -48,6 +48,10 @@ DiffState(;
 ) =
   DiffState(resultll, resultlp, resultlt, cfggll, cfgglp, cfgglt, cfgtll, cfgtlp, cfgtlt)
 
+==(z::DiffState, w::DiffState) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(DiffState)])
+
+isequal(z::DiffState, w::DiffState) = reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(DiffState)])
+
 type DiffOptions
   mode::Symbol
   order::Integer

@@ -15,8 +15,7 @@ The Julia *Klara* package provides a generic engine for Markov Chain Monte Carlo
 * Models are represented internally by graphs.
 * Memory allocation and garbage collection have been reduced by using mutating functions associated with targets.
 * It is possible to select storing output in memory or in file at runtime.
-* Automatic differentiation is available allowing to choose between forward mode and reverse mode (the latter relying
-on source transformation).
+* Automatic differentiation is available allowing to choose between forward mode and reverse mode.
 
 Some of the old code has not been fully ported. The full porting of old functionality, as well as further developments, will
 be completed shortly. Progress is being tracked systematically via issues and milestones.
@@ -242,7 +241,7 @@ using Klara
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:forward)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, diffopts=DiffOptions(mode=:forward))
 
 model = likelihood_model(p, false)
 
@@ -263,46 +262,17 @@ chain = output(job)
 
 Note that `plogtarget` takes an argument of type `Vector` instead of `Vector{Float64}`, as required by the ForwardDiff
 package. Furthermore, notice that in the definition of parameter `p`, the gradient of its log-target is not provided
-explicitly; instead, the optional argument `autodiff=:forward` enables computing the gradient via forward mode AD.
+explicitly; instead, the optional argument `diffopts=DiffOptions(mode=:forward)` enables computing the gradient via forward
+mode AD.
 
 To employ reverse mode AD, try
 
 ```julia
 using Klara
 
-plogtarget(z::Vector) = -dot(z, z)
+plogtarget(z) = -dot(z, z)
 
-p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, Vector{Float64})])
-
-model = likelihood_model(p, false)
-
-sampler = MALA(0.9)
-
-mcrange = BasicMCRange(nsteps=10000, burnin=1000)
-
-v0 = Dict(:p=>[5.1, -0.9])
-
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
-
-job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
-
-run(job)
-
-chain = output(job)
-```
-
-In this case the optional argument `autodiff=:reverse` enables computing the gradient via reverse mode AD using source
-transformation. Notice also the `init=[(:z, ones(2))]` optional argument, which allows passing the required input to the
-`init` optional argument of `rdiff()` of the ReverseDiffSource package. The `:z` symbol in the `init` argument refers to the
-symbol used as the input argument of `plogtarget`.
-
-Finally, it is possible to run reverse mode AD by passing an expression for the log-target (or log-likelihood or
-log-prior) instead of a function. An example follows where the log-target is specified via an expression:
-
-```julia
-using Klara
-
-p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, Vector{Float64})])
+p = BasicContMuvParameter(:p, logtarget=plogtarget, diffopts=DiffOptions(mode=:reverse))
 
 model = likelihood_model(p, false)
 
@@ -320,6 +290,10 @@ run(job)
 
 chain = output(job)
 ```
+
+`plogtarget` takes an argument without specifying its type, as required by the ReverseDiff package. In the definition of
+parameter `p`, the gradient of its log-target is not provided explicitly; the optional argument
+`diffopts=DiffOptions(mode=:reverse)` enables computing the gradient via reverse mode AD.
 
 Documentation
 ------------------------------

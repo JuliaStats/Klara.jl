@@ -34,7 +34,7 @@ end
 
 v = Float64(1.5)
 dv = [true]
-s = BasicContUnvParameterState(v, [:accept], dv)
+s = BasicContUnvParameterState(v, [:accept], nothing, nothing, dv)
 
 @test eltype(s) == Float64
 @test s.value == v
@@ -58,7 +58,7 @@ end
 @test diagnostics(s) == Dict{Symbol, Any}()
 
 dv = [false]
-s = BasicContUnvParameterState([:accept], Float16, dv)
+s = BasicContUnvParameterState([:accept], Float16, nothing, nothing, dv)
 
 @test isa(s.value, Float16)
 for i in 1:13
@@ -69,6 +69,6 @@ end
 
 @test diagnostics(s) == Dict(:accept => dv[1])
 
-z = BasicContUnvParameterState(Float64(-3.1), [:accept], [false])
+z = BasicContUnvParameterState(Float64(-3.1), [:accept], nothing, nothing, [false])
 w = deepcopy(z)
 @test isequal(z, w)

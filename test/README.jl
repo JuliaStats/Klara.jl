@@ -149,7 +149,7 @@ chain = output(job)
 
 plogtarget(z::Vector) = -dot(z, z)
 
-p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:forward)
+p = BasicContMuvParameter(:p, logtarget=plogtarget, diffopts=DiffOptions(mode=:forward))
 
 model = likelihood_model(p, false)
 
@@ -167,27 +167,9 @@ run(job)
 
 chain = output(job)
 
-plogtarget(z::Vector) = -dot(z, z)
+plogtarget(z) = -dot(z, z)
 
-p = BasicContMuvParameter(:p, logtarget=plogtarget, autodiff=:reverse, init=[(:z, Vector{Float64})])
-
-model = likelihood_model(p, false)
-
-sampler = MALA(0.9)
-
-mcrange = BasicMCRange(nsteps=10000, burnin=1000)
-
-v0 = Dict(:p=>[5.1, -0.9])
-
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
-
-job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts)
-
-run(job)
-
-chain = output(job)
-
-p = BasicContMuvParameter(:p, logtarget=:(-dot(z, z)), autodiff=:reverse, init=[(:z, Vector{Float64})])
+p = BasicContMuvParameter(:p, logtarget=plogtarget, diffopts=DiffOptions(mode=:reverse))
 
 model = likelihood_model(p, false)
 
