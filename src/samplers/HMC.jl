@@ -135,7 +135,11 @@ sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 ) =
-  UnvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), sampler.nleaps)
+  UnvHMCState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
+    tuner_state(parameter, sampler, tuner),
+    sampler.nleaps
+  )
 
 sampler_state(
   parameter::Parameter{Continuous, Multivariate},
@@ -146,7 +150,8 @@ sampler_state(
 ) =
   MuvHMCState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
-    tuner_state(parameter, sampler, tuner), sampler.nleaps
+    tuner_state(parameter, sampler, tuner),
+    sampler.nleaps
   )
 
 function sampler_state(
@@ -156,7 +161,11 @@ function sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
-  sstate = UnvHMCState(generate_empty(pstate), tuner_state(parameter, sampler, tuner), 0)
+  sstate = UnvHMCState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
+    tuner_state(parameter, sampler, tuner),
+    0
+  )
   sstate.tune.step = initialize_step!(
     sstate.pstate, pstate, randn(), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
   )
@@ -171,7 +180,11 @@ function sampler_state(
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
 )
-  sstate = MuvHMCState(generate_empty(pstate, parameter.diffopts), tuner_state(parameter, sampler, tuner), 0)
+  sstate = MuvHMCState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
+    tuner_state(parameter, sampler, tuner),
+    0
+  )
   sstate.tune.step = initialize_step!(
     sstate.pstate, sstate.momentum, pstate, randn(pstate.size), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
   )

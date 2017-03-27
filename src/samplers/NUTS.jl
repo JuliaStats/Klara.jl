@@ -268,7 +268,7 @@ sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 ) =
-  UnvNUTSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  UnvNUTSState(generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner))
 
 sampler_state(
   parameter::Parameter{Continuous, Multivariate},
@@ -286,7 +286,9 @@ function sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
-  sstate = UnvNUTSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  sstate = UnvNUTSState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
+  )
   sstate.tune.step = initialize_step!(
     sstate.pstateplus, pstate, randn(), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
   )
@@ -302,8 +304,7 @@ function sampler_state(
   vstate::VariableStateVector
 )
   sstate = MuvNUTSState(
-    generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
-    tuner_state(parameter, sampler, tuner)
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
   )
   sstate.tune.step = initialize_step!(
     sstate.pstateplus,

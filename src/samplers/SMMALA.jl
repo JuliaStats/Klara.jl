@@ -157,7 +157,9 @@ function sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
-  sstate = UnvSMMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  sstate = UnvSMMALAState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
+  )
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
   sstate.cholinvtensor = chol(sstate.oldinvtensor)

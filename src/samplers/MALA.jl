@@ -84,7 +84,7 @@ sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 ) =
-  UnvMALAState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  UnvMALAState(generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner))
 
 sampler_state(
   parameter::Parameter{Continuous, Multivariate},
