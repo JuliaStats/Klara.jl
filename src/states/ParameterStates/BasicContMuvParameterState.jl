@@ -153,9 +153,9 @@ function BasicContMuvParameterState{N<:Real}(
         end
 
         if diffopts.order == 2
-          for (i, field) in ((7, :cfgtll), (8, :cfgtlp), (9, :cfgtlt))
+          for (i, diffresult, diffconfig) in ((7, :resultll, :cfgtll), (8, :resultlp, :cfgtlp), (9, :resultlt, :cfgtlt))
             if diffopts.targets[i-6]
-              setfield!(diffstate, field, ForwardDiff.HessianConfig(value))
+              setfield!(diffstate, diffconfig, ForwardDiff.HessianConfig(getfield(diffstate, diffresult), value))
             end
           end
         end
@@ -167,9 +167,11 @@ function BasicContMuvParameterState{N<:Real}(
         end
 
         if diffopts.order == 2
-          for (i, field) in ((7, :cfgtll), (8, :cfgtlp), (9, :cfgtlt))
+          for (i, diffresult, diffconfig) in ((7, :resultll, :cfgtll), (8, :resultlp, :cfgtlp), (9, :resultlt, :cfgtlt))
             if diffopts.targets[i-6]
-              setfield!(diffstate, field, ForwardDiff.HessianConfig{diffopts.chunksize}(value))
+              setfield!(
+                diffstate, diffconfig, ForwardDiff.HessianConfig{diffopts.chunksize}(getfield(diffstate, diffresult), value)
+              )
             end
           end
         end

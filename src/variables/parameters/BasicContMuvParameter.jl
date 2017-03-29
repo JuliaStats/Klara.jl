@@ -471,7 +471,6 @@ function BasicContMuvParameter(
           diffresult=diffresult,
           diffmethod=diffmethod,
           diffconfig=(diffopts.mode == :reverse ? nothing : diffconfig)
-          # diffconfig=diffconfig
         ))
       end
     end
@@ -484,7 +483,6 @@ function BasicContMuvParameter(
         diffresult=:resultlt,
         diffmethod=diffmethods[3],
         diffconfig=(diffopts.mode == :reverse ? nothing : :cfgglt)
-        # diffconfig=:cfgglt
       ))
     end
 
@@ -503,8 +501,7 @@ function BasicContMuvParameter(
             returns=fnames[i],
             diffresult=diffresult,
             diffmethod=diffmethod,
-            diffconfig=nothing
-            # diffconfig=diffconfig
+            diffconfig=(diffopts.mode == :reverse ? nothing : diffconfig)
           ))
         end
       end
@@ -516,8 +513,7 @@ function BasicContMuvParameter(
           returns=fnames[16],
           diffresult=:resultlt,
           diffmethod=diffmethods[3],
-          diffconfig=nothing
-          # diffconfig=:cfgtlt
+          diffconfig=(diffopts.mode == :reverse ? nothing : :cfgtlt)
         ))
       end
     end
