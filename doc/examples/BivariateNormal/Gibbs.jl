@@ -1,7 +1,9 @@
+# https://theclevermachine.wordpress.com/2012/11/05/mcmc-the-gibbs-sampler/
+
 using Distributions
 using Klara
 
-ρ = Hyperparameter(:ρ, 1)
+ρ = Hyperparameter(:ρ)
 
 p1 = BasicContUnvParameter(
   :p1,

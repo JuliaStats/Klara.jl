@@ -1,0 +1,34 @@
+using Klara
+
+# Precision matrix
+C = Hyperparameter(:C)
+
+p = BasicContMuvParameter(
+  :p,
+  logtarget=(p::Vector{Float64}, v::Vector) -> -dot(p, v[1]*p),
+  gradlogtarget=(p::Vector{Float64}, v::Vector) -> -2*v[1]*p,
+  tensorlogtarget=(p::Vector{Float64}, v::Vector) -> -2*v[1],
+  nkeys=2
+)
+
+model = GenericModel([C, p], isindexed=false)
+
+sampler = SMMALA(1.25, H -> softabs(H, 1000.))
+
+tuner = VanillaMCTuner()
+
+mcrange = BasicMCRange(nsteps=10000, burnin=1000)
+
+v0 = Dict(:C=>inv([0.8 0; 0 0.8]), :p=>Float64[1.25, 3.11])
+
+outopts = Dict(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
+
+job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+
+@time run(job)
+
+chain = output(job)
+
+mean(chain)
+
+acceptance(chain)
