@@ -10,19 +10,7 @@ Klara.jl
 
 The Julia *Klara* package provides a generic engine for Markov Chain Monte Carlo (MCMC) inference.
 
-*Klara*, previously called *Lora*, has undergone a major upgrade. Some of its recent changes include:
-
-* Models are represented internally by graphs.
-* Memory allocation and garbage collection have been reduced by using mutating functions associated with targets.
-* It is possible to select storing output in memory or in file at runtime.
-* Automatic differentiation is available allowing to choose between forward mode and reverse mode.
-
-Some of the old code has not been fully ported. The full porting of old functionality, as well as further developments, will
-be completed shortly. Progress is being tracked systematically via issues and milestones.
-
-The documentation is out of date, but will be brought up-to-date fairly soon. In the meantime, this README file provides a
-few examples of the new interface, explaining how to get up to speed with the new face of Klara. More examples can be found
-in doc/examples.
+The documentation is out of date, but will be brought up-to-date upon completing milestone 0.12.0. In the meantime, this README file provides some elementary examples of the current interface. More examples can be found in doc/examples.
 
 Example: sampling from an unnormalized normal target
 ------------------------------
