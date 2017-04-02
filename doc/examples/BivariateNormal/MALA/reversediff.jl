@@ -7,13 +7,13 @@ p = BasicContMuvParameter(:p, logtarget=(p, v) -> -dot(p, v[1]*p), nkeys=2, diff
 
 model = GenericModel([C, p], isindexed=false)
 
-sampler = MALA(0.75)
+sampler = MALA(0.3)
 
 tuner = VanillaMCTuner()
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
-v0 = Dict(:C=>inv([0.8 0; 0 0.8]), :p=>[1.25, 3.11])
+v0 = Dict(:C=>inv([1. 0.8; 0.8 1.]), :p=>[1.25, 3.11])
 
 outopts = Dict(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
