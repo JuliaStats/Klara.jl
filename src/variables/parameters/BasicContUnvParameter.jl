@@ -462,6 +462,19 @@ function BasicContUnvParameter(
     end
   end
 
+  for (i, j, field, distribution, f) in ((4, 2, :logprior, :prior, logpdf), (5, 1, :logtarget, :pdf, logpdf))
+    if !isa(inargs[i], Function) &&
+      (
+        (
+          isa(getfield(parameter, distribution), ContinuousUnivariateDistribution) &&
+          method_exists(f, (typeof(getfield(parameter, distribution)), eltype(getfield(parameter, distribution))))
+        ) ||
+        isa(inargs[j], Function)
+      )
+      outargs[i] = eval(codegen_setfield(parameter, field, distribution, f))
+    end
+  end
+
   if diffopts != nothing
     for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
       if isa(inargs[i], Function)

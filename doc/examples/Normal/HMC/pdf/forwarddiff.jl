@@ -1,10 +1,10 @@
-using Klara
+using Distributions, Klara
 
-p = BasicContUnvParameter(:p, logtarget=(p::Float64) -> -abs2(p), gradlogtarget=(p::Float64) -> -2*p)
+p = BasicContUnvParameter(:p, pdf=Normal(), diffopts=DiffOptions(mode=:forward))
 
 model = likelihood_model([p], isindexed=false)
 
-sampler = HMC(0.95)
+sampler = HMC(1.25)
 
 tuner = VanillaMCTuner()
 

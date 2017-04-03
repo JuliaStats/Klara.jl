@@ -24,6 +24,15 @@ function codegen_setfield(parameter::Parameter, field::Symbol, f::Function)
   end
 end
 
+function codegen_setfield(parameter::Parameter, field::Symbol, distribution::Symbol, f::Function)
+  @gensym setfield
+  quote
+    function $setfield(_state::$(default_state_type(parameter)), _states::VariableStateVector)
+      setfield!(_state, $(QuoteNode(field)), $(f)(getfield($parameter, $(QuoteNode(distribution))), _state.value))
+    end
+  end
+end
+
 function codegen_closure(parameter::Parameter, f::Function)
   @gensym closure
   quote

@@ -1,15 +1,10 @@
 using Klara
 
-p = BasicContUnvParameter(
-  :p,
-  logtarget=(p::Real, v::Vector) -> -abs2(p),
-  nkeys=1,
-  diffopts=DiffOptions(mode=:forward)
-)
+p = BasicContUnvParameter(:p, logtarget=p::Real -> -abs2(p), diffopts=DiffOptions(mode=:forward))
 
 model = likelihood_model([p], isindexed=false)
 
-sampler = MALA(0.75)
+sampler = MALA(0.95)
 
 tuner = VanillaMCTuner()
 

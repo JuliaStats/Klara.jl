@@ -1,16 +1,16 @@
-using Klara
+using Distributions, Klara
 
-p = BasicContUnvParameter(:p, logtarget=(p::Float64) -> -abs2(p), gradlogtarget=(p::Float64) -> -2*p)
+p = BasicContMuvParameter(:p, pdf=MvNormal([0., 0.], [1. 0.8; 0.8 1.]), diffopts=DiffOptions(mode=:reverse))
 
 model = likelihood_model([p], isindexed=false)
 
-sampler = MALA(0.75)
+sampler = MALA(0.3)
 
 tuner = VanillaMCTuner()
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
-v0 = Dict(:p=>3.11)
+v0 = Dict(:p=>Float64[1.25, 3.11])
 
 outopts = Dict(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
