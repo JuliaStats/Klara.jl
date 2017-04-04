@@ -15,7 +15,7 @@ sampler = MH(psetproposal, symmetric=false)
 
 mcrange = BasicMCRange(nsteps=100000, burnin=10000)
 
-v0 = Dict(:k=>2., :θ=>1., :p=>2.)
+v0 = Dict(:k=>2., :θ=>1., :p=>10.)
 
 job = BasicMCJob(model, sampler, mcrange, v0)
 
