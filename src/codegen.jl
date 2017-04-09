@@ -55,7 +55,7 @@ function codegen_lowlevel_variable_method(
     error("Vector of return symbols must have one or more elements")
   end
 
-  args = [statetype == nothing ? :_state : :(_state::$statetype)]
+  args = Union{Symbol, Expr}[statetype == nothing ? :_state : :(_state::$statetype)]
   if states
     push!(args, :(_states::VariableStateVector))
   end
