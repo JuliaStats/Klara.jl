@@ -239,6 +239,8 @@ export
   save,
   setpdf!,
   setprior!,
+  setproposal,
+  setproposal!,
   show,
   softabs,
   sort_by_index,

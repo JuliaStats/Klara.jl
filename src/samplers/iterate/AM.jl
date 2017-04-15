@@ -19,30 +19,30 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   push!(
     body,
     :(
-      if _job.sstate.count > _job.sampler.t0
-        covariance!(
-          _job.sstate.C,
-          _job.sstate.C,
-          _job.sstate.count-2,
-          _job.pstate.value,
-          _job.sstate.lastmean,
-          _job.sstate.secondlastmean,
-          _job.pstate.size,
-          _job.sampler.sd,
-          _job.sampler.ε
+      covariance!(
+        _job.sstate.C,
+        _job.sstate.C,
+        _job.sstate.count-2,
+        _job.pstate.value,
+        _job.sstate.lastmean,
+        _job.sstate.secondlastmean
         )
-      end
     )
   )
 
-  # Once fully migrated to Julia 0.5 or higher, use LinAlg.lowrankupdate instead of chol in order to reduce complexity
-  push!(body, :(_job.sstate.cholC[:, :] = ctranspose(chol(Hermitian(_job.sstate.C)))))
+  push!(body, :(setproposal!(_job.sstate, _job.sampler, _job.pstate)))
 
-  push!(body, :(_job.sstate.pstate.value[:] = _job.pstate.value+_job.sstate.cholC*randn(_job.pstate.size)))
+  push!(body, :(_job.sstate.pstate.value[:] =  rand(_job.sstate.proposal)))
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
+
+  push!(body, :(_job.sstate.ratio -= logpdf(_job.sstate.proposal, _job.sstate.pstate.value)))
+
+  push!(body, :(setproposal!(_job.sstate, _job.sampler, _job.sstate.pstate)))
+
+  push!(body, :(_job.sstate.ratio += logpdf(_job.sstate.proposal, _job.pstate.value)))
 
   push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
   push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))

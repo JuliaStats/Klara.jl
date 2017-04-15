@@ -1,4 +1,9 @@
-### Reference:
+### The implementation of AM in Klara uses the mixture proposal of the following article:
+### Gareth O. Roberts and Jeffrey S. Rosenthal
+### Examples of Adaptive MCMC
+### Journal of Computational and Graphical Statistics, 2012, 18 (2), pp 349-367
+
+### The original adaptive Metropolis algorithm was introduced by the following article:
 ### Heikki Haario, Eero Saksman and Johanna Tamminen
 ### An Adaptive Metropolis Algorithm
 ### Bernoulli, 2001, 7 (2), pp 223-242
@@ -12,63 +17,74 @@ abstract AMState{F<:VariateForm} <: MHSamplerState{F}
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
 type MuvAMState <: AMState{Multivariate}
+  proposal::Union{MixtureModel, Void}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by AM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
   lastmean::RealVector
   secondlastmean::RealVector
   C::RealMatrix
-  cholC::RealLowerTriangular
+  w::RealVector
   count::Integer
 
   function MuvAMState(
+    proposal::Union{MixtureModel, Void},
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
     lastmean::RealVector,
     secondlastmean::RealVector,
     C::RealMatrix,
-    cholC::RealLowerTriangular,
+    w::RealVector,
     count::Integer
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
+    if !isnan(w[1])
+      @assert w[1] > 0 "Weight of core mixture component must be positive"
+    end
+    if !isnan(w[2])
+      @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
+    end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(pstate, tune, ratio, lastmean, secondlastmean, C, cholC, count)
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, w, count)
   end
 end
 
 MuvAMState(
+  proposal::MixtureModel,
   pstate::ParameterState{Continuous, Multivariate},
+  C::RealMatrix,
+  w::RealVector,
   tune::MCTunerState=BasicMCTune(),
-  lastmean::RealVector=Array(eltype(pstate), pstate.size),
-  C::RealMatrix=Array(eltype(pstate), pstate.size, pstate.size),
-  cholC::RealLowerTriangular=ctranspose(chol(Hermitian(C)))
+  lastmean::RealVector=Array(eltype(pstate), pstate.size)
 ) =
-  MuvAMState(pstate, tune, NaN, lastmean, Array(eltype(pstate), pstate.size), C, cholC, 0)
+  MuvAMState(proposal, pstate, tune, NaN, lastmean, Array(eltype(pstate), pstate.size), C, w, 0)
 
 ### Adaptive Metropolis (AM) sampler
 
 immutable AM <: MHSampler
   C0::RealMatrix # Initial covariance of proposal according to best prior knowledge
-  t0::Integer # Number of initial Monte Carlo steps for which C0 will be used
-  sd::Real # Constant that depends only on the dimension of the parameter space
-  ε::Real # Non-negative constant with relatively small value
+  corescale::Real # Scaling factor of covariance matrix of the core mixture component
+  minorscale::Real # Scaling factor of covariance matrix of the stabilizing mixture component
+  c::Real # Non-negative constant with relative small value that determines the mixture weight of the stabilizing component
 
-  function AM(C0::RealMatrix, t0::Integer, sd::Real, ε::Real)
-    @assert 0 < t0 "Number of initial Monte Carlo steps for which C0 will be used must be positive"
-    @assert 0 < sd "Constant sd must be positive"
-    @assert 0 <= ε "Constant ε must be non-negative"
-    new(C0, t0, sd, ε)
+  function AM(C0::RealMatrix, corescale::Real, minorscale::Real, c::Real)
+    @assert 0 < corescale "Constant corescale must be positive, got $corescale"
+    @assert 0 < minorscale "Constant minorscale must be positive, got $minorscale"
+    @assert 0 <= c "Constant c must be non-negative"
+    new(C0, corescale, minorscale, c)
   end
 end
 
-AM(C0::RealMatrix, d::Integer; t0::Real=3, ε::Real=0.05) = AM(C0, t0, abs2(2.4)/d, ε)
+AM(C0::RealMatrix; corescale::Real=1., minorscale::Real=1., c::Real=0.05) = AM(C0, corescale, minorscale, c)
 
-AM(C0::RealVector, d::Integer; t0::Real=3, ε::Real=0.05) = AM(diagm(C0), d, t0=t0, ε=ε)
+AM(C0::RealVector; corescale::Real=1., minorscale::Real=1., c::Real=0.05) =
+  AM(diagm(C0), corescale=corescale, minorscale=minorscale, c=c)
 
-AM(C0::Real=1., d::Integer=1; t0::Real=3, ε::Real=0.05) = AM(fill(C0, d), d, t0=t0, ε=ε)
+AM(C0::Real, d::Integer=1; corescale::Real=1., minorscale::Real=1., c::Real=0.05) =
+  AM(fill(C0, d), corescale=corescale, minorscale=minorscale, c=c)
 
 ### Initialize AM sampler
 
@@ -91,20 +107,34 @@ end
 
 ## Initialize AM state
 
-sampler_state(
+setproposal(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, w::RealVector) =
+  MixtureModel(
+    [MvNormal(pstate.value, sampler.corescale*sampler.C0), MvNormal(pstate.value, sampler.minorscale*eye(pstate.size))], w
+  )
+
+setproposal!(sstate::MuvAMState, sampler::AM, pstate::ParameterState{Continuous, Multivariate}) =
+  sstate.proposal = MixtureModel(
+    [MvNormal(pstate.value, sampler.corescale*sampler.C0), MvNormal(pstate.value, sampler.minorscale*eye(pstate.size))],
+    sstate.w
+  )
+
+function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
   sampler::AM,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
-) =
+)
+  w = [1-sampler.c, sampler.c]
+
   MuvAMState(
+    setproposal(sampler, pstate, w),
     generate_empty(pstate),
-    tuner_state(parameter, sampler, tuner),
-    copy(pstate.value),
     copy(sampler.C0),
-    RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size))
+    w,
+    tuner_state(parameter, sampler, tuner)
   )
+end
 
 ## Reset parameter state
 
@@ -127,29 +157,19 @@ function reset!(
   sampler::AM,
   tuner::MCTuner
 )
+  setproposal!(sstate, sampler, pstate)
   reset!(sstate.tune, sampler, tuner)
   sstate.lastmean = copy(pstate.value)
   sstate.C = copy(sampler.C0)
-  sstate.cholC[:, :] = ctranspose(chol(Hermitian(sstate.C)))
   sstate.count = 0
 end
 
-function covariance!(
-  C::RealMatrix,
-  lastC::RealMatrix,
-  k::Integer,
-  x::RealVector,
-  lastmean::RealVector,
-  secondlastmean::RealVector,
-  d::Integer,
-  sd::Real,
-  ε::Real
+show(io::IO, sampler::AM) = print(
+  io,
+  "AM sampler: scaling of core covariance = ",
+  sampler.corescale,
+  ", scaling of stabilizing covariance = ",
+  sampler.minorscale,
+  ", weight of stabilizing mixture component = ",
+  sampler.c
 )
-  C[:, :] = zeros(d, d)
-  BLAS.ger!(1.0, x, x, C)
-  BLAS.ger!(1.0, -(k+1)*lastmean, lastmean, C)
-  BLAS.ger!(1.0, k*secondlastmean, secondlastmean, C)
-  C[:, :] = ((k-1)*lastC+sd*(C+ε*eye(d)))/k
-end
-
-show(io::IO, sampler::AM) = print(io, "AM sampler: t0 = $(sampler.t0), sd = $(sampler.sd), ε = $(sampler.ε)")
