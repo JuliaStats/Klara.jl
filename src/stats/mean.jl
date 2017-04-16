@@ -1,8 +1,8 @@
 ### Compute mean recursively given previous mean and new sample
 
-mean(lastmean::Real, k::Integer, x::Real) = ((k-1)*lastmean+x)/k
+recursive_mean(lastmean::Real, k::Integer, x::Real) = ((k-1)*lastmean+x)/k
 
-mean!(m::RealVector, lastmean::RealVector, k::Integer, x::RealVector) = (m[:] = ((k-1)*lastmean+x)/k)
+recursive_mean!(m::RealVector, lastmean::RealVector, k::Integer, x::RealVector) = (m[:] = ((k-1)*lastmean+x)/k)
 
 mean(s::VariableNState{Univariate}) = mean(s.value)
 

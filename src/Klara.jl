@@ -9,9 +9,7 @@ using StatsBase
 
 import Base:
   ==,
-  Dict,
   close,
-  convert,
   copy!,
   eltype,
   flush,
@@ -231,6 +229,8 @@ export
   rate!,
   read,
   read!,
+  recursive_mean,
+  recursive_mean!,
   reset,
   reset!,
   reset_burnin!,

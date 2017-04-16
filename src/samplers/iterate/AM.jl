@@ -89,10 +89,10 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
 
   if vform == Univariate
     push!(body, :(_job.sstate.secondlastmean = _job.sstate.lastmean))
-    push!(body, :(_job.sstate.lastmean = mean(_job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
+    push!(body, :(_job.sstate.lastmean = recursive_mean(_job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
   elseif vform == Multivariate
     push!(body, :(_job.sstate.secondlastmean = copy(_job.sstate.lastmean)))
-    push!(body, :(mean!(_job.sstate.lastmean, _job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
+    push!(body, :(recursive_mean!(_job.sstate.lastmean, _job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
   end
 
   if job.tuner.verbose
