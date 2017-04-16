@@ -6,8 +6,8 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
   local dindex::Integer
 
   vform = variate_form(job.pstate)
-  if vform != Multivariate
-    error("Only multivariate parameter states allowed in MH code generation")
+  if vform != Univariate && vform != Multivariate
+    error("Only univariate or multivariate parameter states allowed in AM code generation")
   end
 
   push!(body, :(_job.sstate.count += 1))
@@ -16,23 +16,43 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
     push!(body, :(_job.sstate.tune.proposed += 1))
   end
 
-  push!(
-    body,
-    :(
-      covariance!(
-        _job.sstate.C,
-        _job.sstate.C,
-        _job.sstate.count-2,
-        _job.pstate.value,
-        _job.sstate.lastmean,
-        _job.sstate.secondlastmean
-        )
+  if vform == Univariate
+    push!(
+      body,
+      :(
+        _job.sstate.C =
+          covariance(
+            _job.sstate.C,
+            _job.sstate.count-2,
+            _job.pstate.value,
+            _job.sstate.lastmean,
+            _job.sstate.secondlastmean
+          )
+      )
     )
-  )
+  elseif vform == Multivariate
+    push!(
+      body,
+      :(
+        covariance!(
+          _job.sstate.C,
+          _job.sstate.C,
+          _job.sstate.count-2,
+          _job.pstate.value,
+          _job.sstate.lastmean,
+          _job.sstate.secondlastmean
+        )
+      )
+    )
+  end
 
   push!(body, :(setproposal!(_job.sstate, _job.sampler, _job.pstate)))
 
-  push!(body, :(_job.sstate.pstate.value[:] =  rand(_job.sstate.proposal)))
+  if vform == Univariate
+    push!(body, :(_job.sstate.pstate.value =  rand(_job.sstate.proposal)))
+  elseif vform == Multivariate
+    push!(body, :(_job.sstate.pstate.value[:] =  rand(_job.sstate.proposal)))
+  end
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
@@ -44,7 +64,11 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
 
   push!(body, :(_job.sstate.ratio += logpdf(_job.sstate.proposal, _job.pstate.value)))
 
-  push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
+  if vform == Univariate
+    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
+  elseif vform == Multivariate
+    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
+  end
   push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
   if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
     push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
@@ -63,9 +87,13 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
 
   push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
 
-  push!(body, :(_job.sstate.secondlastmean = copy(_job.sstate.lastmean)))
-
-  push!(body, :(mean!(_job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
+  if vform == Univariate
+    push!(body, :(_job.sstate.secondlastmean = _job.sstate.lastmean))
+    push!(body, :(_job.sstate.lastmean = mean(_job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
+  elseif vform == Multivariate
+    push!(body, :(_job.sstate.secondlastmean = copy(_job.sstate.lastmean)))
+    push!(body, :(mean!(_job.sstate.lastmean, _job.sstate.lastmean, _job.sstate.count, _job.pstate.value)))
+  end
 
   if job.tuner.verbose
     fmt_iter = format_iteration(ndigits(job.range.burnin))

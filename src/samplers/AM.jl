@@ -14,10 +14,60 @@ abstract AMState{F<:VariateForm} <: MHSamplerState{F}
 
 ### AM state subtypes
 
+## UnvAMState holds the internal state ("local variables") of the AM sampler for univariate parameters
+
+type UnvAMState <: AMState{Univariate}
+  proposal::UnivariateGMM
+  pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by AM
+  tune::MCTunerState
+  ratio::Real # Acceptance ratio
+  lastmean::Real
+  secondlastmean::Real
+  C0::Real
+  C::Real
+  w::RealVector
+  count::Integer
+
+  function UnvAMState(
+    proposal::UnivariateGMM,
+    pstate::ParameterState{Continuous, Univariate},
+    tune::MCTunerState,
+    ratio::Real,
+    lastmean::Real,
+    secondlastmean::Real,
+    C0::Real,
+    C::Real,
+    w::RealVector,
+    count::Integer
+  )
+    if !isnan(ratio)
+      @assert ratio > 0 "Acceptance ratio should be positive"
+    end
+    if !isnan(w[1])
+      @assert w[1] > 0 "Weight of core mixture component must be positive"
+    end
+    if !isnan(w[2])
+      @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
+    end
+    @assert count >= 0 "Number of iterations (count) should be non-negative"
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C0, C, w, count)
+  end
+end
+
+UnvAMState(
+  proposal::UnivariateGMM,
+  pstate::ParameterState{Continuous, Univariate},
+  C::Real,
+  w::RealVector,
+  tune::MCTunerState=BasicMCTune(),
+  lastmean::Real=NaN
+) =
+  UnvAMState(proposal, pstate, tune, NaN, lastmean, NaN, C, C, w, 0)
+
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
 type MuvAMState <: AMState{Multivariate}
-  proposal::Union{MixtureModel, Void}
+  proposal::MultivariateGMM
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by AM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
@@ -28,7 +78,7 @@ type MuvAMState <: AMState{Multivariate}
   count::Integer
 
   function MuvAMState(
-    proposal::Union{MixtureModel, Void},
+    proposal::MultivariateGMM,
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
@@ -53,7 +103,7 @@ type MuvAMState <: AMState{Multivariate}
 end
 
 MuvAMState(
-  proposal::MixtureModel,
+  proposal::MultivariateGMM,
   pstate::ParameterState{Continuous, Multivariate},
   C::RealMatrix,
   w::RealVector,
@@ -107,16 +157,45 @@ end
 
 ## Initialize AM state
 
+setproposal(sampler::AM, pstate::ParameterState{Continuous, Univariate}, w::RealVector) =
+  UnivariateGMM(
+    [pstate.value, pstate.value],
+    Float64[sqrt(sampler.corescale*sampler.C0[1, 1]), sqrt(sampler.minorscale)],
+    Categorical(w)
+  )
+
+setproposal!(sstate::UnvAMState, sampler::AM, pstate::ParameterState{Continuous, Univariate}) =
+  sstate.proposal = UnivariateGMM(
+    [pstate.value, pstate.value],
+    Float64[sqrt(sampler.corescale*sstate.C0), sqrt(sampler.minorscale)],
+    Categorical(sstate.w)
+  )
+
+function sampler_state(
+  parameter::Parameter{Continuous, Univariate},
+  sampler::AM,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, Univariate},
+  vstate::VariableStateVector
+)
+  w = [1-sampler.c, sampler.c]
+
+  UnvAMState(
+    setproposal(sampler, pstate, w),
+    generate_empty(pstate),
+    sampler.C0[1, 1],
+    w,
+    tuner_state(parameter, sampler, tuner)
+  )
+end
+
 setproposal(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, w::RealVector) =
   MixtureModel(
     [MvNormal(pstate.value, sampler.corescale*sampler.C0), MvNormal(pstate.value, sampler.minorscale*eye(pstate.size))], w
   )
 
 setproposal!(sstate::MuvAMState, sampler::AM, pstate::ParameterState{Continuous, Multivariate}) =
-  sstate.proposal = MixtureModel(
-    [MvNormal(pstate.value, sampler.corescale*sampler.C0), MvNormal(pstate.value, sampler.minorscale*eye(pstate.size))],
-    sstate.w
-  )
+  sstate.proposal = setproposal(sampler, pstate, sstate.w)
 
 function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
@@ -139,6 +218,16 @@ end
 ## Reset parameter state
 
 function reset!(
+  pstate::ParameterState{Continuous, Univariate},
+  x::Real,
+  parameter::Parameter{Continuous, Univariate},
+  sampler::AM
+)
+  pstate.value = x
+  parameter.logtarget!(pstate)
+end
+
+function reset!(
   pstate::ParameterState{Continuous, Multivariate},
   x::RealVector,
   parameter::Parameter{Continuous, Multivariate},
@@ -149,6 +238,21 @@ function reset!(
 end
 
 ## Reset sampler state
+
+function reset!(
+  sstate::UnvAMState,
+  pstate::ParameterState{Continuous, Univariate},
+  parameter::Parameter{Continuous, Univariate},
+  sampler::AM,
+  tuner::MCTuner
+)
+  setproposal!(sstate, sampler, pstate)
+  reset!(sstate.tune, sampler, tuner)
+  sstate.lastmean = pstate.value
+  sstate.C0 = sampler.C0[1, 1]
+  sstate.C = sstate.C0
+  sstate.count = 0
+end
 
 function reset!(
   sstate::MuvAMState,

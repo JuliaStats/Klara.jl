@@ -1,5 +1,8 @@
 ### Compute empirical covariance matrix recursively
 
+covariance(lastC::Real, k::Integer, x::Real, lastmean::Real, secondlastmean::Real) =
+  ((k-1)*lastC+abs2(x)-(k+1)*abs2(lastmean)+k*abs2(secondlastmean))/k
+
 function covariance!(
   C::RealMatrix,
   lastC::RealMatrix,
