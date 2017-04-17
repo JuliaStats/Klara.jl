@@ -21,12 +21,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
       body,
       :(
         if _job.sstate.count <= _job.sampler.t0
-          if _job.sstate.count > 2
-            _job.sstate.C = covariance(
-              _job.sstate.C, _job.sstate.count-2, _job.pstate.value, _job.sstate.lastmean, _job.sstate.secondlastmean
-            )
-          end
-
           set_normal!(_job.sstate, _job.sampler, _job.pstate)
         else
           _job.sstate.C = covariance(
@@ -42,19 +36,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
       body,
       :(
         if _job.sstate.count <= _job.sampler.t0
-          if _job.sstate.count > 2
-            covariance!(
-              _job.sstate.C,
-              _job.sstate.C,
-              _job.sstate.count-2,
-              _job.pstate.value,
-              _job.sstate.lastmean,
-              _job.sstate.secondlastmean
-            )
-          end
-
-          _job.sstate.C[:, :] = Hermitian(_job.sstate.C)
-
           set_normal!(_job.sstate, _job.sampler, _job.pstate)
         else
           covariance!(
