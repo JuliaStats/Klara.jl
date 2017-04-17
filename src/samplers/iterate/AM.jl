@@ -20,49 +20,80 @@ function codegen(::Type{Val{:iterate}}, ::Type{AM}, job::BasicMCJob)
     push!(
       body,
       :(
-        _job.sstate.C =
-          covariance(
-            _job.sstate.C,
-            _job.sstate.count-2,
-            _job.pstate.value,
-            _job.sstate.lastmean,
-            _job.sstate.secondlastmean
+        if _job.sstate.count <= _job.sampler.t0
+          if _job.sstate.count > 2
+            _job.sstate.C = covariance(
+              _job.sstate.C, _job.sstate.count-2, _job.pstate.value, _job.sstate.lastmean, _job.sstate.secondlastmean
+            )
+          end
+
+          set_normal!(_job.sstate, _job.sampler, _job.pstate)
+        else
+          _job.sstate.C = covariance(
+            _job.sstate.C, _job.sstate.count-2, _job.pstate.value, _job.sstate.lastmean, _job.sstate.secondlastmean
           )
+
+          set_gmm!(_job.sstate, _job.sampler, _job.pstate)
+        end
       )
     )
   elseif vform == Multivariate
     push!(
       body,
       :(
-        covariance!(
-          _job.sstate.C,
-          _job.sstate.C,
-          _job.sstate.count-2,
-          _job.pstate.value,
-          _job.sstate.lastmean,
-          _job.sstate.secondlastmean
-        )
+        if _job.sstate.count <= _job.sampler.t0
+          if _job.sstate.count > 2
+            covariance!(
+              _job.sstate.C,
+              _job.sstate.C,
+              _job.sstate.count-2,
+              _job.pstate.value,
+              _job.sstate.lastmean,
+              _job.sstate.secondlastmean
+            )
+          end
+
+          _job.sstate.C[:, :] = Hermitian(_job.sstate.C)
+
+          set_normal!(_job.sstate, _job.sampler, _job.pstate)
+        else
+          covariance!(
+            _job.sstate.C,
+            _job.sstate.C,
+            _job.sstate.count-2,
+            _job.pstate.value,
+            _job.sstate.lastmean,
+            _job.sstate.secondlastmean
+          )
+
+          _job.sstate.C[:, :] = Hermitian(_job.sstate.C)
+
+          set_gmm!(_job.sstate, _job.sampler, _job.pstate)
+        end
       )
     )
   end
 
-  push!(body, :(setproposal!(_job.sstate, _job.sampler, _job.pstate)))
-
   if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value =  rand(_job.sstate.proposal)))
+    push!(body, :(_job.sstate.pstate.value = rand(_job.sstate.proposal)))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value[:] =  rand(_job.sstate.proposal)))
+    push!(body, :(_job.sstate.pstate.value[:] = rand(_job.sstate.proposal)))
   end
 
   push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
 
   push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
 
-  push!(body, :(_job.sstate.ratio -= logpdf(_job.sstate.proposal, _job.sstate.pstate.value)))
-
-  push!(body, :(setproposal!(_job.sstate, _job.sampler, _job.sstate.pstate)))
-
-  push!(body, :(_job.sstate.ratio += logpdf(_job.sstate.proposal, _job.pstate.value)))
+  push!(
+    body,
+    :(
+      if _job.sstate.count > _job.sampler.t0
+        _job.sstate.ratio -= logpdf(_job.sstate.proposal, _job.sstate.pstate.value)
+        set_gmm!(_job.sstate, _job.sampler, _job.sstate.pstate)
+        _job.sstate.ratio += logpdf(_job.sstate.proposal, _job.pstate.value)
+      end
+    )
+  )
 
   if vform == Univariate
     push!(update, :(_job.pstate.value = _job.sstate.pstate.value))

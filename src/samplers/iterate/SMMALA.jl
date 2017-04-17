@@ -22,7 +22,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
     push!(body, :(_job.sstate.μ[:] = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
     push!(
       body,
-      :(_job.sstate.pstate.value[:] = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn(_job.pstate.size))
+      :(_job.sstate.pstate.value[:] =
+        _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn(_job.pstate.size)
+      )
     )
   end
 

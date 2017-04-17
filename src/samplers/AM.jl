@@ -17,31 +17,34 @@ abstract AMState{F<:VariateForm} <: MHSamplerState{F}
 ## UnvAMState holds the internal state ("local variables") of the AM sampler for univariate parameters
 
 type UnvAMState <: AMState{Univariate}
-  proposal::UnivariateGMM
+  proposal::Union{UnivariateGMM, RealNormal}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by AM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
   lastmean::Real
   secondlastmean::Real
-  C0::Real
   C::Real
+  sqrtminorscale::Real
   w::RealVector
   count::Integer
 
   function UnvAMState(
-    proposal::UnivariateGMM,
+    proposal::Union{UnivariateGMM, RealNormal},
     pstate::ParameterState{Continuous, Univariate},
     tune::MCTunerState,
     ratio::Real,
     lastmean::Real,
     secondlastmean::Real,
-    C0::Real,
     C::Real,
+    sqrtminorscale::Real,
     w::RealVector,
     count::Integer
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
+    end
+    if !isnan(sqrtminorscale)
+      @assert sqrtminorscale >= 0 "Scaling of stabilizing covariance should be non-negative"
     end
     if !isnan(w[1])
       @assert w[1] > 0 "Weight of core mixture component must be positive"
@@ -50,46 +53,52 @@ type UnvAMState <: AMState{Univariate}
       @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C0, C, w, count)
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count)
   end
 end
 
 UnvAMState(
-  proposal::UnivariateGMM,
+  proposal::Union{UnivariateGMM, RealNormal},
   pstate::ParameterState{Continuous, Univariate},
   C::Real,
+  sqrtminorscale::Real,
   w::RealVector,
   tune::MCTunerState=BasicMCTune(),
   lastmean::Real=NaN
 ) =
-  UnvAMState(proposal, pstate, tune, NaN, lastmean, NaN, C, C, w, 0)
+  UnvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0)
 
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
 type MuvAMState <: AMState{Multivariate}
-  proposal::MultivariateGMM
+  proposal::Union{MultivariateGMM, AbstractMvNormal}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by AM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
   lastmean::RealVector
   secondlastmean::RealVector
   C::RealMatrix
+  sqrtminorscale::Real
   w::RealVector
   count::Integer
 
   function MuvAMState(
-    proposal::MultivariateGMM,
+    proposal::Union{MultivariateGMM, AbstractMvNormal},
     pstate::ParameterState{Continuous, Multivariate},
     tune::MCTunerState,
     ratio::Real,
     lastmean::RealVector,
     secondlastmean::RealVector,
     C::RealMatrix,
+    sqrtminorscale::Real,
     w::RealVector,
     count::Integer
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
+    end
+    if !isnan(sqrtminorscale)
+      @assert sqrtminorscale >= 0 "Scaling of stabilizing covariance should be non-negative"
     end
     if !isnan(w[1])
       @assert w[1] > 0 "Weight of core mixture component must be positive"
@@ -98,19 +107,20 @@ type MuvAMState <: AMState{Multivariate}
       @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, w, count)
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count)
   end
 end
 
 MuvAMState(
-  proposal::MultivariateGMM,
+  proposal::Union{MultivariateGMM, AbstractMvNormal},
   pstate::ParameterState{Continuous, Multivariate},
   C::RealMatrix,
+  sqrtminorscale::Real,
   w::RealVector,
   tune::MCTunerState=BasicMCTune(),
   lastmean::RealVector=Array(eltype(pstate), pstate.size)
 ) =
-  MuvAMState(proposal, pstate, tune, NaN, lastmean, Array(eltype(pstate), pstate.size), C, w, 0)
+  MuvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0)
 
 ### Adaptive Metropolis (AM) sampler
 
@@ -119,22 +129,25 @@ immutable AM <: MHSampler
   corescale::Real # Scaling factor of covariance matrix of the core mixture component
   minorscale::Real # Scaling factor of covariance matrix of the stabilizing mixture component
   c::Real # Non-negative constant with relative small value that determines the mixture weight of the stabilizing component
+  t0::Integer
 
-  function AM(C0::RealMatrix, corescale::Real, minorscale::Real, c::Real)
+  function AM(C0::RealMatrix, corescale::Real, minorscale::Real, c::Real, t0::Integer)
     @assert 0 < corescale "Constant corescale must be positive, got $corescale"
     @assert 0 < minorscale "Constant minorscale must be positive, got $minorscale"
     @assert 0 <= c "Constant c must be non-negative"
-    new(C0, corescale, minorscale, c)
+    @assert t0 > 0 "t0 is not positive"
+    new(C0, corescale, minorscale, c, t0)
   end
 end
 
-AM(C0::RealMatrix; corescale::Real=1., minorscale::Real=1., c::Real=0.05) = AM(C0, corescale, minorscale, c)
+AM(C0::RealMatrix; corescale::Real=1., minorscale::Real=1., c::Real=0.05, t0::Integer=10) =
+  AM(C0, corescale, minorscale, c, t0)
 
-AM(C0::RealVector; corescale::Real=1., minorscale::Real=1., c::Real=0.05) =
-  AM(diagm(C0), corescale=corescale, minorscale=minorscale, c=c)
+AM(C0::RealVector; corescale::Real=1., minorscale::Real=1., c::Real=0.05, t0::Integer=10) =
+  AM(diagm(C0), corescale=corescale, minorscale=minorscale, c=c, t0=t0)
 
-AM(C0::Real, d::Integer=1; corescale::Real=1., minorscale::Real=1., c::Real=0.05) =
-  AM(fill(C0, d), corescale=corescale, minorscale=minorscale, c=c)
+AM(C0::Real, d::Integer=1; corescale::Real=1., minorscale::Real=1., c::Real=0.05, t0::Integer=10) =
+  AM(fill(C0, d), corescale=corescale, minorscale=minorscale, c=c, t0=t0)
 
 ### Initialize AM sampler
 
@@ -157,19 +170,17 @@ end
 
 ## Initialize AM state
 
-setproposal(sampler::AM, pstate::ParameterState{Continuous, Univariate}, w::RealVector) =
-  UnivariateGMM(
-    [pstate.value, pstate.value],
-    Float64[sqrt(sampler.corescale*sampler.C0[1, 1]), sqrt(sampler.minorscale)],
-    Categorical(w)
-  )
+set_gmm(sampler::AM, pstate::ParameterState{Continuous, Univariate}, C::Real, sqrtminorscale::Real, w::RealVector) =
+  UnivariateGMM([pstate.value, pstate.value], Float64[sqrt(sampler.corescale*C), sqrtminorscale], Categorical(w))
 
-setproposal!(sstate::UnvAMState, sampler::AM, pstate::ParameterState{Continuous, Univariate}) =
-  sstate.proposal = UnivariateGMM(
-    [pstate.value, pstate.value],
-    Float64[sqrt(sampler.corescale*sstate.C0), sqrt(sampler.minorscale)],
-    Categorical(sstate.w)
-  )
+set_gmm!(sstate::UnvAMState, sampler::AM, pstate::ParameterState{Continuous, Univariate}) =
+  sstate.proposal = set_gmm(sampler, pstate, sstate.C, sstate.sqrtminorscale, sstate.w)
+
+set_normal(sampler::AM, pstate::ParameterState{Continuous, Univariate}, sqrtminorscale::Real) =
+  Normal(pstate.value, sqrtminorscale)
+
+set_normal!(sstate::UnvAMState, sampler::AM, pstate::ParameterState{Continuous, Univariate}) =
+  sstate.proposal = set_normal(sampler, pstate, sstate.sqrtminorscale)
 
 function sampler_state(
   parameter::Parameter{Continuous, Univariate},
@@ -178,24 +189,31 @@ function sampler_state(
   pstate::ParameterState{Continuous, Univariate},
   vstate::VariableStateVector
 )
+  sqrtminorscale = sqrt(sampler.minorscale)
   w = [1-sampler.c, sampler.c]
 
   UnvAMState(
-    setproposal(sampler, pstate, w),
+    set_normal(sampler, pstate, sqrtminorscale),
     generate_empty(pstate),
     sampler.C0[1, 1],
+    sqrtminorscale,
     w,
-    tuner_state(parameter, sampler, tuner)
+    tuner_state(parameter, sampler, tuner),
+    pstate.value
   )
 end
 
-setproposal(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, w::RealVector) =
-  MixtureModel(
-    [MvNormal(pstate.value, sampler.corescale*sampler.C0), MvNormal(pstate.value, sampler.minorscale*eye(pstate.size))], w
-  )
+set_gmm(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, C::RealMatrix, sqrtminorscale::Real, w::RealVector) =
+  MixtureModel([MvNormal(pstate.value, sampler.corescale*C), MvNormal(pstate.value, sqrtminorscale)], w)
 
-setproposal!(sstate::MuvAMState, sampler::AM, pstate::ParameterState{Continuous, Multivariate}) =
-  sstate.proposal = setproposal(sampler, pstate, sstate.w)
+set_gmm!(sstate::MuvAMState, sampler::AM, pstate::ParameterState{Continuous, Multivariate}) =
+  sstate.proposal = set_gmm(sampler, pstate, sstate.C, sstate.sqrtminorscale, sstate.w)
+
+set_normal(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, sqrtminorscale::Real) =
+  MvNormal(pstate.value, sqrtminorscale)
+
+set_normal!(sstate::MuvAMState, sampler::AM, pstate::ParameterState{Continuous, Multivariate}) =
+  sstate.proposal = set_normal(sampler, pstate, sstate.sqrtminorscale)
 
 function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
@@ -204,14 +222,17 @@ function sampler_state(
   pstate::ParameterState{Continuous, Multivariate},
   vstate::VariableStateVector
 )
+  sqrtminorscale = sqrt(sampler.minorscale)
   w = [1-sampler.c, sampler.c]
 
   MuvAMState(
-    setproposal(sampler, pstate, w),
+    set_normal(sampler, pstate, sqrtminorscale),
     generate_empty(pstate),
     copy(sampler.C0),
+    sqrtminorscale,
     w,
-    tuner_state(parameter, sampler, tuner)
+    tuner_state(parameter, sampler, tuner),
+    copy(pstate.value)
   )
 end
 
@@ -246,7 +267,7 @@ function reset!(
   sampler::AM,
   tuner::MCTuner
 )
-  setproposal!(sstate, sampler, pstate)
+  set_normal!(sstate, sampler, pstate)
   reset!(sstate.tune, sampler, tuner)
   sstate.lastmean = pstate.value
   sstate.C0 = sampler.C0[1, 1]
@@ -261,7 +282,7 @@ function reset!(
   sampler::AM,
   tuner::MCTuner
 )
-  setproposal!(sstate, sampler, pstate)
+  set_normal!(sstate, sampler, pstate)
   reset!(sstate.tune, sampler, tuner)
   sstate.lastmean = copy(pstate.value)
   sstate.C = copy(sampler.C0)
