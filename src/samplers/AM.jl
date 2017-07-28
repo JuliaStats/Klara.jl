@@ -10,7 +10,7 @@
 
 ### Abstract AM state
 
-abstract AMState{F<:VariateForm} <: MHSamplerState{F}
+abstract type AMState{F<:VariateForm} <: MHSamplerState{F} end
 
 ### AM state subtypes
 

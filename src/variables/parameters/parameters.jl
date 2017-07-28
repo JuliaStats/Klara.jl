@@ -2,16 +2,15 @@
 
 ## Abstract parameter
 
-abstract Parameter{S<:ValueSupport, F<:VariateForm} <: Variable{Random}
+abstract type Parameter{S<:ValueSupport, F<:VariateForm} <: Variable{Random} end
 
-typealias DiscreteParameter{F<:VariateForm} Parameter{Discrete, F}
-typealias ContinuousParameter{F<:VariateForm} Parameter{Continuous, F}
+DiscreteParameter{F<:VariateForm} = Parameter{Discrete, F}
+ContinuousParameter{F<:VariateForm} = Parameter{Continuous, F}
+UnivariateParameter{S<:ValueSupport} = Parameter{S, Univariate}
+MultivariateParameter{S<:ValueSupport} = Parameter{S, Multivariate}
+MatrixvariateParameter{S<:ValueSupport} = Parameter{S, Matrixvariate}
 
-typealias UnivariateParameter{S<:ValueSupport} Parameter{S, Univariate}
-typealias MultivariateParameter{S<:ValueSupport} Parameter{S, Multivariate}
-typealias MatrixvariateParameter{S<:ValueSupport} Parameter{S, Matrixvariate}
-
-typealias ParameterVector{P<:Parameter} Vector{P}
+ParameterVector{P<:Parameter} = Vector{P}
 
 ### Code generation of parameter fields
 

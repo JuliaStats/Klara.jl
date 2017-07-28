@@ -12,7 +12,7 @@ Construct a basic continuous multivariate parameter state with some ``value``.
 * ``monitor::Vector{Bool}=fill(false, 9)``: 9-element Boolean vector indicating which of the target-related fields are
 stored by the state.
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
-* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+* ``diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))``: the diagnostic values of the state.
 
 ## BasicContMuvParameterState{N<:Real}(value::Vector{N}, monitor::Vector{Symbol}, <optional arguments>)
 
@@ -22,7 +22,7 @@ Construct a basic continuous multivariate parameter state with some ``value`` an
 ###  Optional arguments:
 
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
-* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+* ``diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))``: the diagnostic values of the state.
 
 ## BasicContMuvParameterState{N<:Real}(size::Integer, <optional arguments>)
 
@@ -34,7 +34,7 @@ Construct a basic continuous multivariate parameter state with a ``value`` of sp
 stored by the state.
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{N}=Float64``: the element type of the state value.
-* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+* ``diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))``: the diagnostic values of the state.
 
 ## BasicContMuvParameterState{N<:Real}(size::Integer, monitor::Vector{Symbol}, <optional arguments>)
 
@@ -45,7 +45,7 @@ fields specified by ``monitor``.
 
 * ``diagnostickeys::Vector{Symbol}=Symbol[]``: the diagnostic keys of the state.
 * ``::Type{N}=Float64``: the element type of the state value.
-* ``diagnosticvalues::Vector=Array(Any, length(diagnostickeys))``: the diagnostic values of the state.
+* ``diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))``: the diagnostic values of the state.
 
 # Examples
 
@@ -102,13 +102,13 @@ function BasicContMuvParameterState{N<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys)),
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys)),
 )
   v = convert(N, NaN)
 
   s = length(value)
 
-  l = Array(Integer, 9)
+  l = Array{Integer}(9)
   for i in 1:9
     l[i] = (monitor[i] == false ? zero(Integer) : s)
   end
@@ -184,15 +184,15 @@ function BasicContMuvParameterState{N<:Real}(
     v,
     v,
     v,
-    Array(N, l[1]),
-    Array(N, l[2]),
-    Array(N, l[3]),
-    Array(N, l[4], l[4]),
-    Array(N, l[5], l[5]),
-    Array(N, l[6], l[6]),
-    Array(N, l[7], l[7], l[7]),
-    Array(N, l[8], l[8], l[8]),
-    Array(N, l[9], l[9], l[9]),
+    Array{N}(l[1]),
+    Array{N}(l[2]),
+    Array{N}(l[3]),
+    Array{N}(l[4], l[4]),
+    Array{N}(l[5], l[5]),
+    Array{N}(l[6], l[6]),
+    Array{N}(l[7], l[7], l[7]),
+    Array{N}(l[8], l[8], l[8]),
+    Array{N}(l[9], l[9], l[9]),
     diagnosticvalues,
     s,
     diagnostickeys,
@@ -207,7 +207,7 @@ function BasicContMuvParameterState{N<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 )
   fnames = fieldnames(BasicContMuvParameterState)
   BasicContMuvParameterState(
@@ -222,9 +222,9 @@ BasicContMuvParameterState{N<:Real}(
   ::Type{N}=Float64,
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
+  BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 BasicContMuvParameterState{N<:Real}(
   size::Integer,
@@ -233,9 +233,9 @@ BasicContMuvParameterState{N<:Real}(
   ::Type{N}=Float64,
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) =
-  BasicContMuvParameterState(Array(N, size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
+  BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 value_support{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Continuous
 value_support(::BasicContMuvParameterState) = Continuous

@@ -8,14 +8,14 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
   diagnostickeys::Vector{Symbol}
   copy::Function
 
-  function BasicDiscUnvParameterNState(
+  function BasicDiscUnvParameterNState{NI, NR}(
     n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 3)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{NI}=Int64,
     ::Type{NR}=Float64,
-    diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-  )
+    diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  ) where {NI<:Integer, NR<:Real}
     instance = new()
 
     t = [NI; fill(NR, 3)]
@@ -41,14 +41,14 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
   end
 end
 
-BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
+BasicDiscUnvParameterNState(
   n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 3)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{NI}=Int64,
   ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-) =
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where {NI<:Integer, NR<:Real} =
   BasicDiscUnvParameterNState{NI, NR}(n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
 function BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
@@ -57,7 +57,7 @@ function BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{NI}=Int64,
   ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
   fnames = fieldnames(BasicDiscUnvParameterNState)
   BasicDiscUnvParameterNState(
@@ -65,7 +65,7 @@ function BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
   )
 end
 
-typealias DiscUnvMarkovChain BasicDiscUnvParameterNState
+const DiscUnvMarkovChain = BasicDiscUnvParameterNState
 
 codegen(f::Symbol, nstate::BasicDiscUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 

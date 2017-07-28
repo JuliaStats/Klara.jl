@@ -1,6 +1,6 @@
 ### Sampleability
 
-abstract Sampleability
+abstract type Sampleability end
 
 type Deterministic <: Sampleability end
 
@@ -8,9 +8,9 @@ type Random <: Sampleability end
 
 ### Abstract variable
 
-abstract Variable{S<:Sampleability}
+abstract type Variable{S<:Sampleability} end
 
-typealias VariableVector{V<:Variable} Vector{V}
+VariableVector{V<:Variable} = Vector{V}
 
 eltype{S<:Sampleability}(::Type{Variable{S}}) = S
 
@@ -77,7 +77,7 @@ dotshape(variable::Constant) = "trapezium"
 
 ## Hyperparameter
 
-typealias Hyperparameter Constant
+const Hyperparameter = Constant
 
 ## Data
 

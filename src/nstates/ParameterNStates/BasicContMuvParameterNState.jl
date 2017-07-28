@@ -18,32 +18,32 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
   diagnostickeys::Vector{Symbol}
   copy::Function
 
-  function BasicContMuvParameterNState(
+  function BasicContMuvParameterNState{N}(
     size::Integer,
     n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 12)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{N}=Float64,
-    diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-  )
+    diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  ) where N<:Real
     instance = new()
 
     fnames = fieldnames(BasicContMuvParameterNState)
     for i in 2:4
       l = (monitor[i] == false ? zero(Integer) : n)
-      setfield!(instance, fnames[i], Array(N, l))
+      setfield!(instance, fnames[i], Array{N}(l))
     end
     for i in (1, 5, 6, 7)
       s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
-      setfield!(instance, fnames[i], Array(N, s, l))
+      setfield!(instance, fnames[i], Array{N}(s, l))
     end
     for i in 8:10
       s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
-      setfield!(instance, fnames[i], Array(N, s, s, l))
+      setfield!(instance, fnames[i], Array{N}(s, s, l))
     end
     for i in 11:13
       s, l = (monitor[i] == false ? (zero(Integer), zero(Integer)) : (size, n))
-      setfield!(instance, fnames[i], Array(N, s, s, s, l))
+      setfield!(instance, fnames[i], Array{N}(s, s, s, l))
     end
 
     instance.diagnosticvalues = diagnosticvalues
@@ -58,14 +58,14 @@ type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multiva
   end
 end
 
-BasicContMuvParameterNState{N<:Real}(
+BasicContMuvParameterNState(
   size::Integer,
   n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 12)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-) =
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where N<:Real =
   BasicContMuvParameterNState{N}(size, n, monitor, diagnostickeys, N, diagnosticvalues)
 
 function BasicContMuvParameterNState{N<:Real}(
@@ -74,7 +74,7 @@ function BasicContMuvParameterNState{N<:Real}(
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
   fnames = fieldnames(BasicContMuvParameterNState)
   BasicContMuvParameterNState(
@@ -82,7 +82,7 @@ function BasicContMuvParameterNState{N<:Real}(
   )
 end
 
-typealias ContMuvMarkovChain BasicContMuvParameterNState
+const ContMuvMarkovChain = BasicContMuvParameterNState
 
 codegen(f::Symbol, nstate::BasicContMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 

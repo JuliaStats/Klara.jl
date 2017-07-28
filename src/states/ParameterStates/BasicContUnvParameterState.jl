@@ -76,7 +76,7 @@ function BasicContUnvParameterState{N<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 )
   v = convert(N, NaN)
 
@@ -104,7 +104,7 @@ BasicContUnvParameterState{N<:Real}(
   ::Type{N}=Float64,
   diffmethods::Union{DiffMethods, Void}=nothing,
   diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array(Any, length(diagnostickeys))
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) =
   BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 

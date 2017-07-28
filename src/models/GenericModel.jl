@@ -123,7 +123,7 @@ function GenericModel(vs::VariableVector, ds::Vector{Dependence}, isdirected::Bo
 
   m = GenericModel(
     isdirected,
-    Array(typeof(vs), n),
+    Array{typeof(vs)}(n),
     Dependence[],
     multivecs(Dependence, n),
     multivecs(Dependence, n),

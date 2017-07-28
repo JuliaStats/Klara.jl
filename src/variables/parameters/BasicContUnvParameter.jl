@@ -415,7 +415,7 @@ function BasicContUnvParameter(
     uptodtensorlogtarget
   )
 
-  fnames = Array(Any, 17)
+  fnames = Array{Any}(17)
   fnames[1:2] = fill(Symbol[], 2)
   fnames[3:14] = [Symbol[f] for f in fieldnames(BasicContUnvParameterState)[2:13]]
   for i in 1:3

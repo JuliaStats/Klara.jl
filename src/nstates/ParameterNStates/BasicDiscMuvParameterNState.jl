@@ -1,4 +1,4 @@
-type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Continuous, Multivariate}
+type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Multivariate}
   value::Matrix{NI}
   loglikelihood::Vector{NR}
   logprior::Vector{NR}
@@ -9,22 +9,22 @@ type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Conti
   diagnostickeys::Vector{Symbol}
   copy::Function
 
-  function BasicDiscMuvParameterNState(
+  function BasicDiscMuvParameterNState{NI, NR}(
     size::Integer,
     n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 3)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{NI}=Int64,
     ::Type{NR}=Float64,
-    diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-  )
+    diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  ) where {NI<:Integer, NR<:Real}
     instance = new()
 
     fnames = fieldnames(BasicDiscMuvParameterNState)
-    setfield!(instance, fnames[1], Array(NI, (monitor[1] == false ? (zero(Integer), zero(Integer)) : (size, n))...))
+    setfield!(instance, fnames[1], Array{NI}((monitor[1] == false ? (zero(Integer), zero(Integer)) : (size, n))...))
     for i in 2:4
       l = (monitor[i] == false ? zero(Integer) : n)
-      setfield!(instance, fnames[i], Array(NR, l))
+      setfield!(instance, fnames[i], Array{NR}(l))
     end
 
     instance.diagnosticvalues = diagnosticvalues
@@ -39,15 +39,15 @@ type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Conti
   end
 end
 
-BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
+BasicDiscMuvParameterNState(
   size::Integer,
   n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 3)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{NI}=Int64,
   ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-) =
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where {NI<:Integer, NR<:Real} =
   BasicDiscMuvParameterNState{NI, NR}(size, n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
 function BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
@@ -57,7 +57,7 @@ function BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{NI}=Int64,
   ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
   fnames = fieldnames(BasicDiscMuvParameterNState)
   BasicDiscMuvParameterNState(
@@ -65,7 +65,7 @@ function BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
   )
 end
 
-typealias DiscMuvMarkovChain BasicDiscMuvParameterNState
+const DiscMuvMarkovChain = BasicDiscMuvParameterNState
 
 codegen(f::Symbol, nstate::BasicDiscMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 

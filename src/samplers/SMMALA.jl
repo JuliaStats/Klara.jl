@@ -1,6 +1,6 @@
 ### Abstract SMMALA state
 
-abstract SMMALAState{F<:VariateForm} <: LMCSamplerState{F}
+abstract type SMMALAState{F<:VariateForm} <: LMCSamplerState{F} end
 
 ### SMMALA state subtypes
 

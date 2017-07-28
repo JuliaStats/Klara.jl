@@ -11,7 +11,7 @@ immutable BasicMCRange{T<:Integer} <: MCRange{T}
   postrange::StepRange{T, T}
   npoststeps::T
 
-  function BasicMCRange(postrange::StepRange{T, T})
+  function BasicMCRange{T}(postrange::StepRange{T, T}) where T<:Integer
     burnin = first(postrange)-1
     thinning = postrange.step
     nsteps = last(postrange)
@@ -26,7 +26,7 @@ immutable BasicMCRange{T<:Integer} <: MCRange{T}
   end
 end
 
-BasicMCRange{T<:Integer}(postrange::StepRange{T, T}) = BasicMCRange{T}(postrange)
+BasicMCRange(postrange::StepRange{T, T}) where T<:Integer = BasicMCRange{T}(postrange)
 
 BasicMCRange{T<:Integer}(postrange::UnitRange{T}) = BasicMCRange{T}(first(postrange):1:last(postrange))
 

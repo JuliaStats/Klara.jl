@@ -1,6 +1,6 @@
 ### Abstract MALA state
 
-abstract MALAState{F<:VariateForm} <: LMCSamplerState{F}
+abstract type MALAState{F<:VariateForm} <: LMCSamplerState{F} end
 
 ### MALA state subtypes
 

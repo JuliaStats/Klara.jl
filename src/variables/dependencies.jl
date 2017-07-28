@@ -8,7 +8,7 @@ end
 
 Dependence{S<:Variable, T<:Variable}(source::S, target::T) = Dependence(0, source, target)
 
-typealias DependenceVector{D<:Dependence} Vector{D}
+DependenceVector{D<:Dependence} = Vector{D}
 
 edge_index(d::Dependence) = d.index
 source(d::Dependence) = e.source

@@ -106,7 +106,7 @@ rm(filename)
 
 println("      Interaction with BasicMavVariableState...")
 
-nstatev = Array(Float64, 3, 4, 2)
+nstatev = Array{Float64}(3, 4, 2)
 nstatev[:, :, 1] = [
   0.765895  0.965563  0.777571  0.508304;
   0.782592  0.366614  0.736418  0.863816;
@@ -140,7 +140,7 @@ rm(filename)
 
 println("      Interaction with BasicMavVariableNState...")
 
-nstatev = Array(Float32, 3, 4, 2)
+nstatev = Array{Float32}(3, 4, 2)
 nstatev[:, :, 1] = [
   0.411455  0.268814  0.793351  0.502612;
   0.302095  0.702721  0.412092  0.488215;

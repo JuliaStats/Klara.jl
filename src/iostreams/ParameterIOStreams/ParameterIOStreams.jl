@@ -1,6 +1,6 @@
 ### Abstract parameter IOStreams
 
-abstract ParameterIOStream{S<:ValueSupport} <: VariableIOStream
+abstract type ParameterIOStream{S<:ValueSupport} <: VariableIOStream end
 
 codegen(f::Symbol, iostream::ParameterIOStream, fnames::Vector{Symbol}) = codegen(Val{f}, iostream, fnames)
 

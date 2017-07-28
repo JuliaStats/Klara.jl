@@ -19,7 +19,7 @@ fnames = (
 )
 filepath = dirname(@__FILE__)
 filesuffix = "csv"
-filenames = Array(AbstractString, 14)
+filenames = Array{AbstractString}(14)
 for i in 1:14
   filenames[i] = joinpath(filepath, string(fnames[i])*"."*filesuffix)
 end

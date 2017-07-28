@@ -1,3 +1,3 @@
 ### MCRange
 
-abstract MCRange{T<:Integer} <: Range{T}
+abstract type MCRange{T<:Integer} <: Range{T} end

@@ -253,16 +253,16 @@ pd = Normal(μ0v, σ0v)
 ll, lp = logpdf(ld, xv), logpdf(pd, μv)
 lt = ll+lp
 μ.loglikelihood!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 μ.logprior!(states[1])
-@test_approx_eq states[1].logprior lp
+@test isapprox(states[1].logprior, lp)
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.logtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
-@test_approx_eq states[1].logprior lp
-@test_approx_eq states[1].logtarget lt
+@test isapprox(states[1].loglikelihood, ll)
+@test isapprox(states[1].logprior, lp)
+@test isapprox(states[1].logtarget, lt)
 
 for field in [
   :pdf, :prior,
@@ -291,7 +291,7 @@ p = BasicContUnvParameter(
 )
 
 p.logtarget!(states[1])
-@test_approx_eq 0.5*(states[1].logtarget-log(2*pi)) logpdf(Normal(μv), pv)
+@test isapprox(0.5*(states[1].logtarget-log(2*pi)), logpdf(Normal(μv), pv))
 
 for field in [
   :pdf, :prior,
@@ -343,34 +343,34 @@ lt = ll+lp
 gll, glp = -gradlogpdf(ld, xv), gradlogpdf(pd, μv)
 glt = gll+glp
 μ.loglikelihood!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 μ.logprior!(states[1])
 @test states[1].logprior == lp
 μ.gradloglikelihood!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].gradloglikelihood, gll)
 μ.gradlogprior!(states[1])
 @test states[1].gradlogprior == glp
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.logtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 @test states[1].logprior == lp
-@test_approx_eq states[1].logtarget lt
+@test isapprox(states[1].logtarget, lt)
 μ.gradlogtarget!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].gradloglikelihood, gll)
 @test states[1].gradlogprior == glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].gradlogtarget, glt)
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.uptogradlogtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 @test states[1].logprior == lp
-@test_approx_eq states[1].logtarget lt
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].logtarget, lt)
+@test isapprox(states[1].gradloglikelihood, gll)
 @test states[1].gradlogprior == glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].gradlogtarget, glt)
 
 for field in [:pdf, :spdf, :sprior, :tll, :tlp, :tlt, :dtll, :dtlp, :dtlt, :uptotlt, :uptodtlt]
   @test getfield(μ, fields[field]) == nothing
@@ -398,34 +398,34 @@ lt = ll+lp
 gll, glp = -gradlogpdf(ld, xv), gradlogpdf(pd, μv)
 glt = gll+glp
 μ.loglikelihood!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 μ.logprior!(states[1])
 @test states[1].logprior == lp
 μ.gradloglikelihood!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].gradloglikelihood, gll)
 μ.gradlogprior!(states[1])
 @test states[1].gradlogprior == glp
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.logtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 @test states[1].logprior == lp
-@test_approx_eq states[1].logtarget lt
+@test isapprox(states[1].logtarget, lt)
 μ.gradlogtarget!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].gradloglikelihood, gll)
 @test states[1].gradlogprior == glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].gradlogtarget, glt)
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.uptogradlogtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 @test states[1].logprior == lp
-@test_approx_eq states[1].logtarget lt
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].logtarget, lt)
+@test isapprox(states[1].gradloglikelihood, gll)
 @test states[1].gradlogprior == glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].gradlogtarget, glt)
 
 for field in [:pdf, :spdf, :sprior, :tll, :tlp, :tlt, :dtll, :dtlp, :dtlt, :uptotlt, :uptodtlt]
   @test getfield(μ, fields[field]) == nothing
@@ -468,34 +468,34 @@ lt = ll+lp
 gll, glp = -gradlogpdf(ld, xv), gradlogpdf(pd, μv)
 glt = gll+glp
 μ.loglikelihood!(states[1])
-@test_approx_eq states[1].loglikelihood ll
+@test isapprox(states[1].loglikelihood, ll)
 μ.logprior!(states[1])
-@test_approx_eq states[1].logprior lp
+@test isapprox(states[1].logprior, lp)
 μ.gradloglikelihood!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
+@test isapprox(states[1].gradloglikelihood, gll)
 μ.gradlogprior!(states[1])
-@test_approx_eq states[1].gradlogprior glp
+@test isapprox(states[1].gradlogprior, glp)
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.logtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
-@test_approx_eq states[1].logprior lp
-@test_approx_eq states[1].logtarget lt
+@test isapprox(states[1].loglikelihood, ll)
+@test isapprox(states[1].logprior, lp)
+@test isapprox(states[1].logtarget, lt)
 μ.gradlogtarget!(states[1])
-@test_approx_eq states[1].gradloglikelihood gll
-@test_approx_eq states[1].gradlogprior glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].gradloglikelihood, gll)
+@test isapprox(states[1].gradlogprior, glp)
+@test isapprox(states[1].gradlogtarget, glt)
 
 states[1] = BasicContUnvParameterState(μv)
 
 μ.uptogradlogtarget!(states[1])
-@test_approx_eq states[1].loglikelihood ll
-@test_approx_eq states[1].logprior lp
-@test_approx_eq states[1].logtarget lt
-@test_approx_eq states[1].gradloglikelihood gll
-@test_approx_eq states[1].gradlogprior glp
-@test_approx_eq states[1].gradlogtarget glt
+@test isapprox(states[1].loglikelihood, ll)
+@test isapprox(states[1].logprior, lp)
+@test isapprox(states[1].logtarget, lt)
+@test isapprox(states[1].gradloglikelihood, gll)
+@test isapprox(states[1].gradlogprior, glp)
+@test isapprox(states[1].gradlogtarget, glt)
 
 for field in [:pdf, :prior, :spdf, :sprior, :tll, :tlp, :tlt, :dtll, :dtlp, :dtlt, :uptotlt, :uptodtlt]
   @test getfield(μ, fields[field]) == nothing
@@ -520,15 +520,15 @@ p = BasicContUnvParameter(
 distribution = Normal(μv)
 lt, glt = logpdf(distribution, pv), gradlogpdf(distribution, pv)
 p.logtarget!(states[1])
-@test_approx_eq 0.5*(states[1].logtarget-log(2*pi)) lt
+@test isapprox(0.5*(states[1].logtarget-log(2*pi)), lt)
 p.gradlogtarget!(states[1])
-@test_approx_eq 0.5*states[1].gradlogtarget glt
+@test isapprox(0.5*states[1].gradlogtarget, glt)
 
 states[1] = BasicContUnvParameterState(pv)
 
 p.uptogradlogtarget!(states[1])
-@test_approx_eq 0.5*(states[1].logtarget-log(2*pi)) lt
-@test_approx_eq 0.5*states[1].gradlogtarget glt
+@test isapprox(0.5*(states[1].logtarget-log(2*pi)), lt)
+@test isapprox(0.5*states[1].gradlogtarget, glt)
 
 for field in [
   :pdf, :prior,

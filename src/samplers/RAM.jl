@@ -5,7 +5,7 @@
 
 ### Abstract RAM state
 
-abstract RAMState{F<:VariateForm} <: MHSamplerState{F}
+abstract type RAMState{F<:VariateForm} <: MHSamplerState{F} end
 
 ### RAM state subtypes
 

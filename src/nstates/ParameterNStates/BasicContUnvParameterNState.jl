@@ -17,23 +17,23 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
   diagnostickeys::Vector{Symbol}
   copy::Function
 
-  function BasicContUnvParameterNState(
+  function BasicContUnvParameterNState{N}(
     n::Integer,
     monitor::Vector{Bool}=[true; fill(false, 12)],
     diagnostickeys::Vector{Symbol}=Symbol[],
     ::Type{N}=Float64,
-    diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-  )
+    diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  ) where N<:Real
     instance = new()
 
-    l = Array(Integer, 13)
+    l = Array{Integer}(13)
     for i in 1:13
       l[i] = (monitor[i] == false ? zero(Integer) : n)
     end
 
     fnames = fieldnames(BasicContUnvParameterNState)
     for i in 1:13
-      setfield!(instance, fnames[i], Array(N, l[i]))
+      setfield!(instance, fnames[i], Array{N}(l[i]))
     end
 
     instance.diagnosticvalues = diagnosticvalues
@@ -47,13 +47,13 @@ type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univari
   end
 end
 
-BasicContUnvParameterNState{N<:Real}(
+BasicContUnvParameterNState(
   n::Integer,
   monitor::Vector{Bool}=[true; fill(false, 12)],
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-) =
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where N<:Real =
   BasicContUnvParameterNState{N}(n, monitor, diagnostickeys, N, diagnosticvalues)
 
 function BasicContUnvParameterNState{N<:Real}(
@@ -61,13 +61,13 @@ function BasicContUnvParameterNState{N<:Real}(
   monitor::Vector{Symbol},
   diagnostickeys::Vector{Symbol}=Symbol[],
   ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array(Any, length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 )
   fnames = fieldnames(BasicContUnvParameterNState)
   BasicContUnvParameterNState(n, [fnames[i] in monitor ? true : false for i in 1:13], diagnostickeys, N, diagnosticvalues)
 end
 
-typealias ContUnvMarkovChain BasicContUnvParameterNState
+const ContUnvMarkovChain = BasicContUnvParameterNState
 
 codegen(f::Symbol, nstate::BasicContUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 

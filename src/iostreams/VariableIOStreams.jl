@@ -1,6 +1,6 @@
 ### Abstract variable IOStreams
 
-abstract VariableIOStream
+abstract type VariableIOStream end
 
 ### BasicVariableIOStream
 

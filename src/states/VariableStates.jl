@@ -3,9 +3,9 @@ abstract VariableState{F<:VariateForm}
 
 Root of variable state type hierarchy
 """
-abstract VariableState{F<:VariateForm}
+abstract type VariableState{F<:VariateForm} end
 
-typealias VariableStateVector{S<:VariableState} Vector{S}
+VariableStateVector{S<:VariableState} = Vector{S}
 
 variate_form{F<:VariateForm}(::Type{VariableState{F}}) = F
 
@@ -76,7 +76,7 @@ end
 
 BasicMuvVariableState{N<:Number}(value::Vector{N}) = BasicMuvVariableState{N}(value, length(value))
 
-BasicMuvVariableState{N<:Number}(size::Integer, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array(N, size), size)
+BasicMuvVariableState{N<:Number}(size::Integer, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array{N}(size), size)
 
 variate_form{N<:Number}(::Type{BasicMuvVariableState{N}}) = Multivariate
 variate_form(::BasicMuvVariableState) = Multivariate
@@ -123,7 +123,7 @@ end
 
 BasicMavVariableState{N<:Number}(value::Matrix{N}) = BasicMavVariableState{N}(value, size(value))
 
-BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64) = BasicMavVariableState{N}(Array(N, size...), size)
+BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64) = BasicMavVariableState{N}(Array{N}(size...), size)
 
 variate_form{N<:Number}(::Type{BasicMavVariableState{N}}) = Matrixvariate
 variate_form(::BasicMavVariableState) = Matrixvariate

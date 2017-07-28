@@ -1,8 +1,8 @@
 ### MCJob
 
-abstract MCJob
+abstract type MCJob end
 
-abstract GibbsJob <: MCJob
+abstract type GibbsJob <: MCJob end
 
 # Set defaults for possibly unspecified output options
 

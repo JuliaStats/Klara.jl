@@ -140,7 +140,7 @@ function BasicDiscMuvParameter(
 )
   inargs = (setpdf, setprior, loglikelihood, logprior, logtarget)
 
-  fnames = Array(Any, 5)
+  fnames = Array{Any}(5)
   fnames[1:2] = fill(Symbol[], 2)
   fnames[3:5] = [Symbol[f] for f in fieldnames(BasicDiscMuvParameterState)[2:4]]
 

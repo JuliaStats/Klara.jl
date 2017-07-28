@@ -85,7 +85,7 @@ function BasicContParamIOStream(
 )
   fnames = fieldnames(BasicContParamIOStream)
 
-  filenames = Array(AbstractString, 14)
+  filenames = Array{AbstractString}(14)
   for i in 1:13
     filenames[i] = (monitor[i] == false ? "" : joinpath(filepath, string(fnames[i])*"."*filesuffix))
   end

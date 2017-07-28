@@ -82,7 +82,7 @@ println("    Testing BasicMavVariableNState constructors and methods...")
 
 nstatesize = (2, 4)
 nstaten = 5
-nstatev = Array(Float64, nstatesize..., nstaten)
+nstatev = Array{Float64}(nstatesize..., nstaten)
 nstatev[:, :, 1] = Float64[
    0.680789  -0.194683   1.86498    0.490497;
   -0.730417   0.305873  -0.0434663  0.879241
@@ -124,7 +124,7 @@ end
 
 nstatesize = (3, 4)
 nstaten = 2
-nstatev = Array(Float16, nstatesize..., nstaten)
+nstatev = Array{Float16}(nstatesize..., nstaten)
 nstatev[:, :, 1] = Float16[
   -0.372612   0.00410037  -1.11811   -0.278956;
   -0.744771  -1.63419     -2.12376    1.161;

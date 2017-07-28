@@ -1,6 +1,6 @@
 ### Abstract variable NStates
 
-abstract VariableNState{F<:VariateForm}
+abstract type VariableNState{F<:VariateForm} end
 
 add_dimension(n::Number) = eltype(n)[n]
 add_dimension(a::Array, sa::Tuple=size(a)) = reshape(a, sa..., 1)
@@ -16,7 +16,7 @@ end
 
 BasicUnvVariableNState{N<:Number}(value::Vector{N}) = BasicUnvVariableNState{N}(value, length(value))
 
-BasicUnvVariableNState{N<:Number}(n::Integer, ::Type{N}=Float64) = BasicUnvVariableNState{N}(Array(N, n), n)
+BasicUnvVariableNState{N<:Number}(n::Integer, ::Type{N}=Float64) = BasicUnvVariableNState{N}(Array{N}(n), n)
 
 eltype{N<:Number}(::Type{BasicUnvVariableNState{N}}) = N
 eltype{N<:Number}(::BasicUnvVariableNState{N}) = N
@@ -43,7 +43,7 @@ end
 BasicMuvVariableNState{N<:Number}(value::Matrix{N}) = BasicMuvVariableNState{N}(value, size(value)...)
 
 BasicMuvVariableNState{N<:Number}(size::Integer, n::Integer, ::Type{N}=Float64) =
-  BasicMuvVariableNState{N}(Array(N, size, n), size, n)
+  BasicMuvVariableNState{N}(Array{N}(size, n), size, n)
 
 eltype{N<:Number}(::Type{BasicMuvVariableNState{N}}) = N
 eltype{N<:Number}(::BasicMuvVariableNState{N}) = N
@@ -73,7 +73,7 @@ BasicMavVariableNState{N<:Number}(value::Array{N, 3}) =
   BasicMavVariableNState{N}(value, (size(value, 1), size(value, 2)), size(value, 3))
 
 BasicMavVariableNState{N<:Number}(size::Tuple, n::Integer, ::Type{N}=Float64) =
-  BasicMavVariableNState{N}(Array(N, size..., n), size, n)
+  BasicMavVariableNState{N}(Array{N}(size..., n), size, n)
 
 eltype{N<:Number}(::Type{BasicMavVariableNState{N}}) = N
 eltype{N<:Number}(::BasicMavVariableNState{N}) = N

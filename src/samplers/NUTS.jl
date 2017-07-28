@@ -1,4 +1,4 @@
-abstract NUTSState{F<:VariateForm} <: HMCSamplerState{F}
+abstract type NUTSState{F<:VariateForm} <: HMCSamplerState{F} end
 
 type UnvNUTSState <: NUTSState{Univariate}
   pstateplus::ParameterState{Continuous, Univariate}

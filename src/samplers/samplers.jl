@@ -1,30 +1,30 @@
 ### MCSamplerState represents the Monte Carlo samplers' internal state ("local variables")
 
-abstract MCSamplerState{F<:VariateForm}
+abstract type MCSamplerState{F<:VariateForm} end
 
-abstract MHSamplerState{F<:VariateForm} <: MCSamplerState{F}
+abstract type MHSamplerState{F<:VariateForm} <: MCSamplerState{F} end
 
-abstract HMCSamplerState{F<:VariateForm} <: MCSamplerState{F}
+abstract type HMCSamplerState{F<:VariateForm} <: MCSamplerState{F} end
 
-abstract LMCSamplerState{F<:VariateForm} <: MCSamplerState{F}
+abstract type LMCSamplerState{F<:VariateForm} <: MCSamplerState{F} end
 
 ### Abstract Monte Carlo sampler typesystem
 
 ## Root Monte Carlo sampler
 
-abstract MCSampler
+abstract type MCSampler end
 
 ## Family of samplers based on Metropolis-Hastings
 
-abstract MHSampler <: MCSampler
+abstract type MHSampler <: MCSampler end
 
 ## Family of Hamiltonian Monte Carlo samplers
 
-abstract HMCSampler <: MCSampler
+abstract type HMCSampler <: MCSampler end
 
 ## Family of Langevin Monte Carlo samplers
 
-abstract LMCSampler <: MCSampler
+abstract type LMCSampler <: MCSampler end
 
 tuner_state(parameter::Parameter, sampler::MCSampler, tuner::VanillaMCTuner) = BasicMCTune(NaN, 0, 0, tuner.period)
 

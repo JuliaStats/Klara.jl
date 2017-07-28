@@ -8,7 +8,12 @@ type MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
   tune::MCTunerState
   ratio::Real # Acceptance ratio
 
-  function MHState(proposal::Distribution{F, S}, pstate::ParameterState{S, F}, tune::MCTunerState, ratio::Real)
+  function MHState{S, F}(
+    proposal::Distribution{F, S},
+    pstate::ParameterState{S, F},
+    tune::MCTunerState,
+    ratio::Real
+  ) where {S<:ValueSupport, F<:VariateForm}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
@@ -16,12 +21,12 @@ type MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
   end
 end
 
-MHState{S<:ValueSupport, F<:VariateForm}(
+MHState(
   proposal::Distribution{F, S},
   pstate::ParameterState{S, F},
   tune::MCTunerState,
   ratio::Real
-) =
+) where {S<:ValueSupport, F<:VariateForm} =
   MHState{S, F}(proposal, pstate, tune, ratio)
 
 MHState{S<:ValueSupport, F<:VariateForm}(

@@ -1,6 +1,6 @@
 ### Abstract HMC state
 
-abstract HMCState{F<:VariateForm} <: HMCSamplerState{F}
+abstract type HMCState{F<:VariateForm} <: HMCSamplerState{F} end
 
 ### HMC state subtypes
 

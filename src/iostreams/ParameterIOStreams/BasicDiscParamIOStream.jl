@@ -76,7 +76,7 @@ function BasicDiscParamIOStream(
 )
   fnames = fieldnames(BasicDiscParamIOStream)
 
-  filenames = Array(AbstractString, 5)
+  filenames = Array{AbstractString}(5)
   for i in 1:4
     filenames[i] = (monitor[i] == false ? "" : joinpath(filepath, string(fnames[i])*"."*filesuffix))
   end

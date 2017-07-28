@@ -1,6 +1,6 @@
 ### MCTunerState subtypes hold the samplers' temporary output used for tuning the sampler
 
-abstract MCTunerState
+abstract type MCTunerState end
 
 type BasicMCTune <: MCTunerState
   step::Real # Stepsize of MCMC iteration (for ex leapfrog in HMC or drift stepsize in MALA)
@@ -33,4 +33,4 @@ rate!(tune::MCTunerState) = (tune.rate = tune.accepted/tune.proposed)
 
 ### Root Monte Carlo Tuner
 
-abstract MCTuner
+abstract type MCTuner end
