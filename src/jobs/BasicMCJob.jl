@@ -86,7 +86,7 @@ type BasicMCJob <: MCJob
     if value_support(instance.parameter) == Continuous
       instance.parameter.state = instance.pstate
     end
-    
+
     instance.sstate = sampler_state(instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate)
 
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
@@ -178,7 +178,7 @@ function BasicMCJob(
   verbose::Bool=false,
   check::Bool=false
 )
-  vstate = Array(Any, length(v0))
+  vstate = Array{Any}(length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end

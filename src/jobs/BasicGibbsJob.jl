@@ -59,7 +59,7 @@ type BasicGibbsJob <: GibbsJob
 
     instance.dpstate = instance.vstate[instance.dpindex]
 
-    instance.output = Array(Union{VariableNState, VariableIOStream, Void}, instance.ndp)
+    instance.output = Array{Union{VariableNState, VariableIOStream, Void}}(instance.ndp)
     for i in 1:instance.ndp
       if isa(instance.dependent[i], Parameter)
         augment_parameter_outopts!(instance.outopts[i])
@@ -120,8 +120,8 @@ function BasicGibbsJob{S<:VariableState}(
 )
   ndpindex = length(dpindex)
 
-  jobs = Array(Union{BasicMCJob, Void}, ndpindex)
-  opts = Array(Dict, ndpindex)
+  jobs = Array{Union{BasicMCJob, Void}}(ndpindex)
+  opts = Array{Dict}(ndpindex)
 
   for i in 1:ndpindex
     key = vertex_key(model.vertices[dpindex[i]])
@@ -129,7 +129,7 @@ function BasicGibbsJob{S<:VariableState}(
     opts[i] = haskey(outopts, key) ? outopts[key] : Dict(:destination=>:nstate, :monitor=>[:value])
   end
 
-  vstate = Array(S, length(v0))
+  vstate = Array{S}(length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
