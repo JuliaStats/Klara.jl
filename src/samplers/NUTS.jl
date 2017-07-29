@@ -199,10 +199,10 @@ MuvNUTSState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
     pstate,
     tune,
     NaN,
-    Array(eltype(pstate), pstate.size),
-    Array(eltype(pstate), pstate.size),
-    Array(eltype(pstate), pstate.size),
-    Array(eltype(pstate), pstate.size),
+    Array{eltype(pstate)}(pstate.size),
+    Array{eltype(pstate)}(pstate.size),
+    Array{eltype(pstate)}(pstate.size),
+    Array{eltype(pstate)}(pstate.size),
     NaN,
     NaN,
     NaN,
@@ -242,11 +242,11 @@ function initialize!{F<:VariateForm}(
 )
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+  @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 

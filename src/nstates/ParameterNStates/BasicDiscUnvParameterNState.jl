@@ -20,14 +20,14 @@ type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discr
 
     t = [NI; fill(NR, 3)]
 
-    l = Array(Integer, 4)
+    l = Array{Integer}(4)
     for i in 1:4
       l[i] = (monitor[i] == false ? zero(Integer) : n)
     end
 
     fnames = fieldnames(BasicDiscUnvParameterNState)
     for i in 1:4
-      setfield!(instance, fnames[i], Array(t[i], l[i]))
+      setfield!(instance, fnames[i], Array{t[i]}(l[i]))
     end
 
     instance.diagnosticvalues = diagnosticvalues

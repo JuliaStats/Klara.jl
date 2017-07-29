@@ -10,7 +10,7 @@ outcome = vec(outcome)
 
 function ploglikelihood(p, v)
   Xp = v[2]*p
-  dot(Xp, v[3])-sum(log(1+exp(Xp)))
+  dot(Xp, v[3])-sum(log.(1+exp.(Xp)))
 end
 
 function plogprior(p, v)

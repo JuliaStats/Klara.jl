@@ -85,12 +85,12 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
     tune,
     NaN,
     NaN,
-    Array(eltype(pstate), pstate.size),
-    Array(eltype(pstate), pstate.size, pstate.size),
-    Array(eltype(pstate), pstate.size, pstate.size),
-    RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
-    Array(eltype(pstate), pstate.size),
-    Array(eltype(pstate), pstate.size)
+    Array{eltype(pstate)}(pstate.size),
+    Array{eltype(pstate)}(pstate.size, pstate.size),
+    Array{eltype(pstate)}(pstate.size, pstate.size),
+    RealLowerTriangular(Array{eltype(pstate)}(pstate.size, pstate.size)),
+    Array{eltype(pstate)}(pstate.size),
+    Array{eltype(pstate)}(pstate.size)
   )
 
 ### Metropolis-adjusted Langevin Algorithm (SMMALA)
@@ -124,7 +124,7 @@ function initialize!(
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 
@@ -139,12 +139,12 @@ function initialize!(
     pstate.tensorlogtarget[:, :] = sampler.transform(pstate.tensorlogtarget)
   end
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
-  @assert all(isfinite(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
+  @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+  @assert all(isfinite.(pstate.tensorlogtarget)) "Tensor of log-target not finite: initial values out of support"
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 

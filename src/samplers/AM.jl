@@ -118,7 +118,7 @@ MuvAMState(
   sqrtminorscale::Real,
   w::RealVector,
   tune::MCTunerState=BasicMCTune(),
-  lastmean::RealVector=Array(eltype(pstate), pstate.size)
+  lastmean::RealVector=Array{eltype(pstate)}(pstate.size)
 ) =
   MuvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0)
 
@@ -164,7 +164,7 @@ function initialize!{F<:VariateForm}(
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 

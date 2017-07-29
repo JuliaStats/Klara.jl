@@ -78,7 +78,7 @@ type MuvHMCState <: HMCState{Multivariate}
 end
 
 MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune(), nleaps::Integer=0) =
-  MuvHMCState(pstate, tune, nleaps, NaN, NaN, Array(eltype(pstate), pstate.size), NaN, NaN, 0)
+  MuvHMCState(pstate, tune, nleaps, NaN, NaN, Array{eltype(pstate)}(pstate.size), NaN, NaN, 0)
 
 ### Hamiltonian Monte Carlo (HMC)
 
@@ -107,11 +107,11 @@ function initialize!{F<:VariateForm}(
 )
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
-  @assert all(isfinite(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
+  @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 

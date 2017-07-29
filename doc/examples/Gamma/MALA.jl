@@ -21,6 +21,6 @@ run(job)
 
 chain = output(job)
 
-mean(exp(chain.value))
+mean(exp.(chain.value))
 
 acceptance(chain, diagnostics=false)

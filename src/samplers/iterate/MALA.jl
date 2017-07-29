@@ -32,9 +32,9 @@ function codegen(::Type{Val{:iterate}}, ::Type{MALA}, job::BasicMCJob)
     push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
     push!(body, :(_job.sstate.ratio -= 0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step)))
   elseif vform == Multivariate
-    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
+    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2.(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
     push!(body, :(_job.sstate.μ[:] = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.ratio -= sum(0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step))))
+    push!(body, :(_job.sstate.ratio -= sum(0.5*(abs2.(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step))))
   end
 
   if vform == Univariate

@@ -141,7 +141,7 @@ function BasicMCJob{S<:VariableState}(
   verbose::Bool=false,
   check::Bool=false
 )
-  vstate = Array(S, length(v0))
+  vstate = Array{S}(length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
