@@ -10,7 +10,7 @@ outcome = vec(outcome)
 
 function ploglikelihood(p::Vector{Float64}, v::Vector)
   Xp = v[2]*p
-  dot(Xp, v[3])-sum(log(1+exp(Xp)))
+  dot(Xp, v[3])-sum(log.(1+exp.(Xp)))
 end
 
 plogprior(p::Vector{Float64}, v::Vector) = -0.5*(dot(p, p)/v[1]+length(p)*log(2*pi*v[1]))

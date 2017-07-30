@@ -80,10 +80,10 @@ end
 MuvRAMState(
   pstate::ParameterState{Continuous, Multivariate},
   tune::MCTunerState=BasicMCTune(),
-  S::RealLowerTriangular=RealLowerTriangular(Array(eltype(pstate), pstate.size, pstate.size)),
+  S::RealLowerTriangular=RealLowerTriangular(Array{eltype(pstate)}(pstate.size, pstate.size)),
   SST::RealMatrix=S*S'
 ) =
-  MuvRAMState(pstate, tune, NaN, S, SST, Array(eltype(pstate), pstate.size), NaN, 0)
+  MuvRAMState(pstate, tune, NaN, S, SST, Array{eltype(pstate)}(pstate.size), NaN, 0)
 
 ### Robust adaptive Metropolis (RAM) sampler
 
@@ -121,7 +121,7 @@ function initialize!{F<:VariateForm}(
 
   if !isempty(outopts[:diagnostics])
     pstate.diagnostickeys = copy(outopts[:diagnostics])
-    pstate.diagnosticvalues = Array(Any, length(pstate.diagnostickeys))
+    pstate.diagnosticvalues = Array{Any}(length(pstate.diagnostickeys))
   end
 end
 
@@ -152,7 +152,7 @@ sampler_state(
     generate_empty(pstate),
     tuner_state(parameter, sampler, tuner),
     copy(sampler.S0),
-    Array(eltype(pstate), pstate.size, pstate.size)
+    Array{eltype(pstate)}(pstate.size, pstate.size)
   )
 
 ## Reset parameter state
