@@ -3,7 +3,7 @@ RealVector{N<:Real} = Vector{N}
 RealMatrix{N<:Real} = Matrix{N}
 
 RealLowerTriangular{T, S} = LowerTriangular{T,S} where {T<:Real, S<:AbstractMatrix{T}}
-RealLowerTriangular(arg) = LowerTriangular(arg)
+RealLowerTriangular(m) = LowerTriangular(m)
 
 RealNormal{N<:Real} = Normal{N}
 MultivariateGMM{D<:MvNormal} = MultivariateMixture{Continuous, D}

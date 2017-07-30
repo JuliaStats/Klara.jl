@@ -290,6 +290,10 @@ function codegen(::Type{Val{:run}}, job::BasicMCJob)
   forbody = []
   body = []
 
+  if isa(job.output, VariableIOStream)
+    push!(body, :(mark(_job.output)))
+  end
+
   if job.verbose
     fmt_iter = format_iteration(ndigits(job.range.nsteps))
     push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))

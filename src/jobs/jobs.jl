@@ -152,7 +152,6 @@ function initialize_output(state::BasicDiscMuvParameterState, n::Integer, outopt
       diagnostickeys=outopts[:diagnostics],
       mode="w"
     )
-    mark(output)
   elseif outopts[:destination] == :none
     output = nothing
   else
@@ -201,7 +200,6 @@ function initialize_output(state::BasicContMuvParameterState, n::Integer, outopt
       diagnostickeys=outopts[:diagnostics],
       mode="w"
     )
-    mark(output)
   elseif outopts[:destination] == :none
     output = nothing
   else
