@@ -145,28 +145,6 @@ job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true)
 run(job)
 ```
 
-To use Julia tasks for running the job, set `plain=false`:
-
-```julia
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
-
-job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts, plain=false)
-
-run(job)
-
-chain = output(job)
-```
-
-Task-based jobs can also be reset:
-
-```julia
-reset(job, [-2.8, 3.4])
-
-run(job)
-
-chain = output(job)
-```
-
 To run a sampler which requires the gradient of the log-target, such as MALA, try
 
 ```julia

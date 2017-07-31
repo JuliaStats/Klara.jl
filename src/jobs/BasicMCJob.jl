@@ -17,10 +17,7 @@ type BasicMCJob <: MCJob
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Integer # Current number of post-burnin iterations
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
-  plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
-  task::Union{Task, Void}
   verbose::Bool
-  resetplain!::Function
   reset!::Function
   save!::Union{Function, Void}
   iterate!::Function
@@ -35,7 +32,6 @@ type BasicMCJob <: MCJob
     vstate::VariableStateVector,
     outopts::Dict,
     resetpstate::Bool,
-    plain::Bool,
     verbose::Bool,
     check::Bool
   )
@@ -64,7 +60,6 @@ type BasicMCJob <: MCJob
 
     instance.tuner = tuner
     instance.range = range
-    instance.plain = plain
     instance.verbose = verbose
 
     instance.pstate = instance.vstate[instance.pindex]
@@ -93,19 +88,11 @@ type BasicMCJob <: MCJob
 
     instance.count = 0
 
-    instance.resetplain! = eval(codegen(:resetplain, instance))
+    instance.reset! = eval(codegen(:reset, instance))
 
     instance.save! = (instance.output == nothing) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
-
-    if plain
-      instance.task = nothing
-      instance.reset! = instance.resetplain!
-    else
-      instance.task = Task(() -> initialize_task!(instance))
-      instance.reset! = eval(codegen(:resettask, instance))
-    end
 
     instance.run! = eval(codegen(:run, instance))
 
@@ -122,11 +109,10 @@ BasicMCJob(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 ) =
-  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, plain, verbose, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, verbose, check)
 
 function BasicMCJob{S<:VariableState}(
   model::GenericModel,
@@ -137,7 +123,6 @@ function BasicMCJob{S<:VariableState}(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
@@ -145,7 +130,7 @@ function BasicMCJob{S<:VariableState}(
   for (k, v) in v0
     vstate[model.ofkey[k]] = v
   end
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, verbose, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, verbose, check)
 end
 
 function BasicMCJob(
@@ -157,12 +142,11 @@ function BasicMCJob(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, [outopts], [pindex])
-  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, plain, verbose, check)
+  BasicMCJob(model, pindex, sampler, tuner, range, vstate, outopts, resetpstate, verbose, check)
 end
 
 function BasicMCJob(
@@ -174,7 +158,6 @@ function BasicMCJob(
   tuner::MCTuner=VanillaMCTuner(),
   outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
   resetpstate::Bool=true,
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
@@ -192,7 +175,6 @@ function BasicMCJob(
     tuner=tuner,
     outopts=outopts,
     resetpstate=resetpstate,
-    plain=plain,
     verbose=verbose,
     check=check
   )
@@ -202,7 +184,7 @@ end
 
 codegen(f::Symbol, job::BasicMCJob) = codegen(Val{f}, job)
 
-function codegen(::Type{Val{:resetplain}}, job::BasicMCJob)
+function codegen(::Type{Val{:reset}}, job::BasicMCJob)
   local fsignature::Vector{Union{Symbol, Expr}}
   body = []
 
@@ -219,46 +201,22 @@ function codegen(::Type{Val{:resetplain}}, job::BasicMCJob)
 
   push!(body, :(_job.count = 0))
 
-  @gensym _resetplain
+  @gensym _reset
 
   if job.resetpstate
     vform = variate_form(job.pstate)
     if vform == Univariate
-      fsignature = Union{Symbol, Expr}[_resetplain, :(_job::BasicMCJob), :(_x::Real)]
+      fsignature = Union{Symbol, Expr}[_reset, :(_job::BasicMCJob), :(_x::Real)]
     elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($_resetplain{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
+      fsignature = Union{Symbol, Expr}[:($_reset{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
     else
       error("It is not possible to define plain reset for given job")
     end
   else
-    fsignature = Union{Symbol, Expr}[_resetplain, :(_job::BasicMCJob)]
+    fsignature = Union{Symbol, Expr}[_reset, :(_job::BasicMCJob)]
   end
 
   Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
-end
-
-function codegen(::Type{Val{:resettask}}, job::BasicMCJob)
-  local fsignature::Vector{Union{Symbol, Expr}}
-  local fbody::Expr
-
-  @gensym _resettask
-
-  if job.resetpstate
-    vform = variate_form(job.pstate)
-    if vform == Univariate
-      fsignature = Union{Symbol, Expr}[_resettask, :(_job::BasicMCJob), :(_x::Real)]
-    elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($_resettask{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
-    else
-      error("It is not possible to define plain reset for given job")
-    end
-    fbody = :(_job.task.storage[:reset](_job, _x))
-  else
-    fsignature = Union{Symbol, Expr}[_resettask, :(_job::BasicMCJob)]
-    fbody = :(_job.task.storage[:reset](_job))
-  end
-
-  Expr(:function, Expr(:call, fsignature...), Expr(:block, fbody))
 end
 
 function codegen(::Type{Val{:save}}, job::BasicMCJob)
@@ -299,11 +257,7 @@ function codegen(::Type{Val{:run}}, job::BasicMCJob)
     push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))
   end
 
-  if job.task == nothing
-    push!(forbody, :(iterate(_job)))
-  else
-    push!(forbody, :(consume(_job.task)))
-  end
+  push!(forbody, :(iterate(_job)))
 
   push!(ifforbody, :(_job.count+=1))
   if job.save! != nothing
@@ -365,8 +319,6 @@ end
 output(job::BasicMCJob) = job.output
 
 function show(io::IO, job::BasicMCJob)
-  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
-
   indentation = "  "
 
   println(io, "BasicMCJob:")
@@ -380,5 +332,4 @@ function show(io::IO, job::BasicMCJob)
   show(io, job.tuner)
   print(io, "\n"*indentation)
   show(io, job.range)
-  print(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
 end

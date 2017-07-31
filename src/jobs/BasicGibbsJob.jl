@@ -12,11 +12,8 @@ type BasicGibbsJob <: GibbsJob
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Integer # Number of dependent variables, i.e. length(dependent)
   count::Integer # Current number of post-burnin iterations
-  plain::Bool # If plain=false then job flow is controlled via tasks, else it is controlled without tasks
-  task::Union{Task, Void}
   verbose::Bool
   close::Union{Function, Void}
-  resetplain!::Union{Function, Void}
   reset!::Union{Function, Void}
   save!::Union{Function, Void}
   iterate!::Function
@@ -29,7 +26,6 @@ type BasicGibbsJob <: GibbsJob
     range::BasicMCRange,
     vstate::VariableStateVector,
     outopts::Vector,
-    plain::Bool,
     verbose::Bool,
     check::Bool
   )
@@ -49,7 +45,6 @@ type BasicGibbsJob <: GibbsJob
     instance.outopts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
 
     instance.range = range
-    instance.plain = plain
     instance.verbose = verbose
 
     instance.dependent = instance.model.vertices[instance.dpindex]
@@ -74,19 +69,11 @@ type BasicGibbsJob <: GibbsJob
     instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen(:close, instance))
 
     nodpjob = all(j -> j == nothing, instance.dpjob)
-    instance.resetplain! = nodpjob ? nothing : eval(codegen(:resetplain, instance))
+    instance.reset! = nodpjob ? nothing : eval(codegen(:reset, instance))
 
     instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
-
-    if plain
-      instance.task = nothing
-      instance.reset! = nodpjob ? nothing : instance.resetplain!
-    else
-      instance.task = Task(() -> initialize_task!(instance))
-      instance.reset! = nodpjob ? nothing : eval(codegen(:resettask, instance))
-    end
 
     instance.run! = eval(codegen(:run, instance))
 
@@ -101,11 +88,10 @@ BasicGibbsJob(
   v0::VariableStateVector;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 ) =
-  BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, verbose, check)
 
 function BasicGibbsJob{S<:VariableState}(
   model::GenericModel,
@@ -114,7 +100,6 @@ function BasicGibbsJob{S<:VariableState}(
   v0::Dict{Symbol, S};
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
@@ -134,7 +119,7 @@ function BasicGibbsJob{S<:VariableState}(
     vstate[model.ofkey[k]] = v
   end
 
-  BasicGibbsJob(model, dpindex, jobs, range, vstate, opts, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, jobs, range, vstate, opts, verbose, check)
 end
 
 function BasicGibbsJob(
@@ -144,12 +129,11 @@ function BasicGibbsJob(
   v0::Vector;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Vector=[Dict(:destination=>:nstate, :monitor=>[:value]) for i in 1:length(dpindex)],
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
   vstate = default_state(model.vertices, v0, outopts, dpindex)
-  BasicGibbsJob(model, dpindex, dpjob, range, vstate, outopts, plain, verbose, check)
+  BasicGibbsJob(model, dpindex, dpjob, range, vstate, outopts, verbose, check)
 end
 
 function BasicGibbsJob(
@@ -159,7 +143,6 @@ function BasicGibbsJob(
   v0::Dict;
   dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
-  plain::Bool=true,
   verbose::Bool=false,
   check::Bool=false
 )
@@ -168,17 +151,7 @@ function BasicGibbsJob(
     vstate[k] = default_state(model[k], v, get!(outopts, k, Dict()))
   end
 
-  BasicGibbsJob(
-    model,
-    dpjob,
-    range,
-    vstate,
-    dpindex=dpindex,
-    outopts=outopts,
-    plain=plain,
-    verbose=verbose,
-    check=check
-  )
+  BasicGibbsJob(model, dpjob, range, vstate, dpindex=dpindex, outopts=outopts, verbose=verbose, check=check)
 end
 
 codegen(f::Symbol, job::BasicGibbsJob) = codegen(Val{f}, job)
@@ -201,7 +174,7 @@ function codegen(::Type{Val{:close}}, job::BasicGibbsJob)
   end
 end
 
-function codegen(::Type{Val{:resetplain}}, job::BasicGibbsJob)
+function codegen(::Type{Val{:reset}}, job::BasicGibbsJob)
   body = []
 
   for j in 1:job.ndp
@@ -214,18 +187,13 @@ function codegen(::Type{Val{:resetplain}}, job::BasicGibbsJob)
     end
   end
 
-  @gensym _resetplain
+  @gensym _reset
 
   quote
-    function $_resetplain(_job::BasicGibbsJob)
+    function $_reset(_job::BasicGibbsJob)
       $(body...)
     end
   end
-end
-
-function codegen(::Type{Val{:resettask}}, job::BasicGibbsJob)
-  @gensym _reset
-  Expr(:function, Expr(:call, _reset, :(_job::BasicGibbsJob)), Expr(:block, :(_job.task.storage[:reset](_job))))
 end
 
 function codegen(::Type{Val{:save}}, job::BasicGibbsJob)
@@ -270,10 +238,6 @@ function codegen(::Type{Val{:iterate}}, job::BasicGibbsJob)
     end
   end
 
-  if !job.plain
-    push!(body, :(produce()))
-  end
-
   @gensym _iterate
 
   quote
@@ -294,11 +258,7 @@ function codegen(::Type{Val{:run}}, job::BasicGibbsJob)
     push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))
   end
 
-  if job.task == nothing
-    push!(forbody, :(iterate(_job)))
-  else
-    push!(forbody, :(consume(_job.task)))
-  end
+  push!(forbody, :(iterate(_job)))
 
   push!(ifforbody, :(_job.count+=1))
   if job.save! != nothing
@@ -403,8 +363,6 @@ function show(io::IO, job::BasicGibbsJob)
   ndpviamcmc = num_randdp_viamcmc(job)
   ndpviadistribution = job.ndp-ndptransforms-ndpviamcmc
 
-  isplain = job.plain ? "job flow not controlled by tasks" : "job flow controlled by tasks"
-
   indentation = "  "
 
   println(io, "BasicGibbsJob:")
@@ -419,7 +377,6 @@ function show(io::IO, job::BasicGibbsJob)
   show(io, job.model)
   print(io, "\n"*indentation)
   show(io, job.range)
-  println(io, "\n"*indentation*"plain = $(job.plain) ($isplain)")
 end
 
 function job2dot(stream::IOStream, job::BasicGibbsJob)

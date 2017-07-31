@@ -90,20 +90,6 @@ for fname in (:value, :logtarget, :diagnosticvalues)
   rm(joinpath(filepath, string(fname)*"."*filesuffix))
 end
 
-outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
-
-job = BasicMCJob(model, sampler, mcrange, v0, tuner=VanillaMCTuner(verbose=true), outopts=outopts, plain=false)
-
-run(job)
-
-chain = output(job)
-
-reset(job, [-2.8, 3.4])
-
-run(job)
-
-chain = output(job)
-
 plogtarget(z::Vector{Float64}) = -dot(z, z)
 
 pgradlogtarget(z::Vector{Float64}) = -2*z

@@ -70,10 +70,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{ARS}, job::BasicMCJob)
     ))
   end
 
-  if !job.plain
-    push!(body, :(produce()))
-  end
-
   @gensym _iterate
 
   result = quote

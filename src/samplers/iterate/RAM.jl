@@ -98,10 +98,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{RAM}, job::BasicMCJob)
     push!(body, :(_job.sstate.S[:, :] = ctranspose(chol(Hermitian(_job.sstate.SST)))))
   end
 
-  if !job.plain
-    push!(body, :(produce()))
-  end
-
   @gensym _iterate
 
   result = quote

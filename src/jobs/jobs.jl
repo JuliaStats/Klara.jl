@@ -209,15 +209,6 @@ function initialize_output(state::BasicContMuvParameterState, n::Integer, outopt
   output
 end
 
-function initialize_task!(job::MCJob)
-  # Hook inside task to allow remote resetting
-  task_local_storage(:reset, job.resetplain!)
-
-  while true
-    iterate(job)
-  end
-end
-
 close(job::MCJob) = job.close(job)
 
 reset(job::MCJob) = job.reset!(job)

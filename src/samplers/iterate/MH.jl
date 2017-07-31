@@ -81,10 +81,6 @@ function codegen(::Type{Val{:iterate}}, ::Type{MH}, job::BasicMCJob)
     ))
   end
 
-  if !job.plain
-    push!(body, :(produce()))
-  end
-
   @gensym _iterate
 
   result = quote
