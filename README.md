@@ -2,7 +2,7 @@ Klara.jl
 ==============================
 
 [![Build Status](https://travis-ci.org/JuliaStats/Klara.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/Klara.jl)
-[![Klara](http://pkg.julialang.org/badges/Klara_0.5.svg)](http://pkg.julialang.org/?pkg=Klara&ver=0.6)
+[![Klara](http://pkg.julialang.org/badges/Klara_0.6.svg)](http://pkg.julialang.org/?pkg=Klara&ver=0.6)
 [![Docs](https://readthedocs.org/projects/klarajl/badge/?version=latest)](http://klarajl.readthedocs.org/en/latest/)
 [![Stories in In Progress](https://badge.waffle.io/JuliaStats/Klara.jl.svg?label=In%20Progress&title=In%20Progress)](http://waffle.io/JuliaStats/Klara.jl)
 
