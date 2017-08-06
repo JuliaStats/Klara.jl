@@ -128,6 +128,7 @@ export
   MuvHMCState,
   MuvMALAState,
   MuvNUTSState,
+  MuvRobertsRosenthalMCTune,
   MuvSMMALAState,
   NUTS,
   NUTSState,
@@ -159,6 +160,7 @@ export
   UnvHMCState,
   UnvMALAState,
   UnvNUTSState,
+  UnvRobertsRosenthalMCTune,
   UnvSMMALAState,
   VanillaMCTuner,
   Variable,
@@ -312,6 +314,7 @@ include("ranges/BasicMCRange.jl")
 include("tuners/tuners.jl")
 include("tuners/VanillaMCTuner.jl")
 include("tuners/AcceptanceRateMCTuner.jl")
+include("tuners/RobertsRosenthalMCTuner.jl")
 include("tuners/DualAveragingMCTuner.jl")
 
 include("samplers/samplers.jl")
