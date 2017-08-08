@@ -6,7 +6,7 @@ abstract type SMMALAState{F<:VariateForm} <: LMCSamplerState{F} end
 
 ## UnvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for univariate parameters
 
-type UnvSMMALAState <: SMMALAState{Univariate}
+mutable struct UnvSMMALAState <: SMMALAState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   sqrttunestep::Real
@@ -45,7 +45,7 @@ UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerStat
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
-type MuvSMMALAState <: SMMALAState{Multivariate}
+mutable struct MuvSMMALAState <: SMMALAState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by SMMALA
   tune::MCTunerState
   sqrttunestep::Real
@@ -95,7 +95,7 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
 
 ### Metropolis-adjusted Langevin Algorithm (SMMALA)
 
-immutable SMMALA <: LMCSampler
+struct SMMALA <: LMCSampler
   driftstep::Real
   transform::Union{Function, Void} # Function for transforming metric tensor to a positive-definite matrix
 

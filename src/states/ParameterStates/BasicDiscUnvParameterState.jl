@@ -27,7 +27,7 @@ Dict{Symbol,Bool} with 1 entry:
   :accept => true
 ```
 """
-type BasicDiscUnvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discrete, Univariate}
+mutable struct BasicDiscUnvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discrete, Univariate}
   "Scalar value of basic discrete univariate parameter state"
   value::NI
   "Value of log-likelihood at the state's value"
@@ -42,12 +42,12 @@ type BasicDiscUnvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discret
   diagnostickeys::Vector{Symbol}
 end
 
-function BasicDiscUnvParameterState{NI<:Integer, NR<:Real}(
+function BasicDiscUnvParameterState(
   value::NI,
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NR}=Float64,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-)
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{NR}=Float64,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {NI<:Integer, NR<:Real}
   v = convert(NR, NaN)
   BasicDiscUnvParameterState{NI, NR}(value, v, v, v, diagnosticvalues, diagnostickeys)
 end

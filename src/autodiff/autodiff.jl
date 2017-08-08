@@ -1,4 +1,4 @@
-type DiffMethods
+mutable struct DiffMethods
   closurell::Union{Function, Void}
   closurelp::Union{Function, Void}
   closurelt::Union{Function, Void}
@@ -23,7 +23,7 @@ DiffMethods(;
 ) =
  DiffMethods(closurell, closurelp, closurelt, tapegll, tapeglp, tapeglt, tapetll, tapetlp, tapetlt)
 
-type DiffState
+mutable struct DiffState
   resultll::Union{DiffBase.DiffResult, Void}
   resultlp::Union{DiffBase.DiffResult, Void}
   resultlt::Union{DiffBase.DiffResult, Void}
@@ -52,7 +52,7 @@ DiffState(;
 
 isequal(z::DiffState, w::DiffState) = reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(DiffState)])
 
-type DiffOptions
+mutable struct DiffOptions
   mode::Symbol
   order::Integer
   targets::Vector{Bool}

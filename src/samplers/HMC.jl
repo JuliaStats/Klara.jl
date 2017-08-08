@@ -6,7 +6,7 @@ abstract type HMCState{F<:VariateForm} <: HMCSamplerState{F} end
 
 ## UnvHMCState holds the internal state ("local variables") of the HMC sampler for univariate parameters
 
-type UnvHMCState <: HMCState{Univariate}
+mutable struct UnvHMCState <: HMCState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by HMC
   tune::MCTunerState
   nleaps::Integer
@@ -44,7 +44,7 @@ UnvHMCState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=B
 
 ## MuvHMCState holds the internal state ("local variables") of the HMC sampler for multivariate parameters
 
-type MuvHMCState <: HMCState{Multivariate}
+mutable struct MuvHMCState <: HMCState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by HMC
   tune::MCTunerState
   nleaps::Integer
@@ -82,7 +82,7 @@ MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState
 
 ### Hamiltonian Monte Carlo (HMC)
 
-immutable HMC <: HMCSampler
+struct HMC <: HMCSampler
   leapstep::Real
   nleaps::Integer
 
@@ -99,12 +99,12 @@ HMC(leapstep::Real=0.1) = HMC(leapstep, 10)
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::HMC,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::HMC,
+outopts::Dict
+) where F<:VariateForm
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"

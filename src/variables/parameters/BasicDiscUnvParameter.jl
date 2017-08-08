@@ -1,4 +1,4 @@
-type BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
+mutable struct BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
   key::Symbol
   index::Integer
   pdf::Union{DiscreteUnivariateDistribution, Void}
@@ -167,7 +167,7 @@ variate_form(::BasicDiscUnvParameter) = Univariate
 
 default_state_type(::BasicDiscUnvParameter) = BasicDiscUnvParameterState
 
-default_state{N<:Integer}(variable::BasicDiscUnvParameter, value::N, outopts::Dict) =
+default_state(variable::BasicDiscUnvParameter, value::N, outopts::Dict) where {N<:Integer} =
   BasicDiscUnvParameterState(
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )

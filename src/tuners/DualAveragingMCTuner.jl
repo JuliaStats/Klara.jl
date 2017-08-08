@@ -1,4 +1,4 @@
-type DualAveragingMCTune <: MCTunerState
+mutable struct DualAveragingMCTune <: MCTunerState
   step::Real # Stepsize of MCMC iteration (for ex leapfrog in HMC or drift stepsize in MALA)
   λ::Real
   μ::Real
@@ -49,7 +49,7 @@ DualAveragingMCTune(;
 ) =
   DualAveragingMCTune(step, λ, NaN, 0, εbar, hbar, NaN, NaN, accepted, proposed, totproposed, NaN)
 
-immutable DualAveragingMCTuner <: MCTuner
+struct DualAveragingMCTuner <: MCTuner
   targetrate::Real # Target acceptance rate
   nadapt::Integer
   ε0bar::Real

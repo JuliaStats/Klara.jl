@@ -1,6 +1,6 @@
 ### BasicContMuvParameter
 
-type BasicContMuvParameter <: Parameter{Continuous, Multivariate}
+mutable struct BasicContMuvParameter <: Parameter{Continuous, Multivariate}
   key::Symbol
   index::Integer
   pdf::Union{ContinuousMultivariateDistribution, Void}
@@ -600,7 +600,7 @@ variate_form(::BasicContMuvParameter) = Multivariate
 
 default_state_type(::BasicContMuvParameter) = BasicContMuvParameterState
 
-default_state{N<:Real}(variable::BasicContMuvParameter, value::Vector{N}, outopts::Dict) =
+default_state(variable::BasicContMuvParameter, value::Vector{N}, outopts::Dict) where {N<:Real} =
   BasicContMuvParameterState(
     value,
     [getfield(variable, fieldnames(BasicContMuvParameter)[i]) == nothing ? false : true for i in 10:18],

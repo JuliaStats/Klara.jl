@@ -1,6 +1,6 @@
 abstract type NUTSState{F<:VariateForm} <: HMCSamplerState{F} end
 
-type UnvNUTSState <: NUTSState{Univariate}
+mutable struct UnvNUTSState <: NUTSState{Univariate}
   pstateplus::ParameterState{Continuous, Univariate}
   pstateminus::ParameterState{Continuous, Univariate}
   pstateprime::ParameterState{Continuous, Univariate}
@@ -109,7 +109,7 @@ UnvNUTSState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=
     0
   )
 
-type MuvNUTSState <: NUTSState{Multivariate}
+mutable struct MuvNUTSState <: NUTSState{Multivariate}
   pstateplus::ParameterState{Continuous, Multivariate}
   pstateminus::ParameterState{Continuous, Multivariate}
   pstateprime::ParameterState{Continuous, Multivariate}
@@ -218,7 +218,7 @@ MuvNUTSState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
     0
   )
 
-type NUTS <: HMCSampler
+mutable struct NUTS <: HMCSampler
   leapstep::Real
   maxδ::Integer
   maxndoublings::Integer
@@ -234,12 +234,12 @@ end
 
 NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(leapstep, maxδ, maxndoublings, ()->())
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::NUTS,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::NUTS,
+outopts::Dict
+) where F<:VariateForm
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"
@@ -368,12 +368,12 @@ uturn(positionplus::Real, positionminus::Real, momentumplus::Real, momentumminus
 uturn(positionplus::RealVector, positionminus::RealVector, momentumplus::RealVector, momentumminus::RealVector) =
   dot(positionplus-positionminus, momentumplus) < 0. || dot(positionplus-positionminus, momentumminus) < 0.
 
-function codegen_tree_builder{T<:MCTuner}(
+function codegen_tree_builder(
   parameter::ContinuousParameter,
-  ::Type{NUTS},
-  tunertype::Type{T},
-  outopts::Dict
-)
+::Type{NUTS},
+tunertype::Type{T},
+outopts::Dict
+) where T<:MCTuner
   ifjzero = []
   ifjnotzero = []
   ifsprime = []

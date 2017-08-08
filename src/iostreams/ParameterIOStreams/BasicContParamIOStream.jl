@@ -1,6 +1,6 @@
 ### BasicContParamIOStream
 
-type BasicContParamIOStream <: ParameterIOStream{Continuous}
+mutable struct BasicContParamIOStream <: ParameterIOStream{Continuous}
   value::Union{IOStream, Void}
   loglikelihood::Union{IOStream, Void}
   logprior::Union{IOStream, Void}
@@ -282,7 +282,7 @@ function write(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNS
   end
 end
 
-function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState{N})
+function read!(iostream::BasicContParamIOStream, nstate::BasicContUnvParameterNState{N}) where N<:Real
   fnames = fieldnames(BasicContParamIOStream)
   for i in 1:13
     if getfield(iostream, fnames[i]) != nothing
@@ -294,7 +294,7 @@ function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContUnvPa
   end
 end
 
-function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState{N})
+function read!(iostream::BasicContParamIOStream, nstate::BasicContMuvParameterNState{N}) where N<:Real
   fnames = fieldnames(BasicContParamIOStream)
   for i in 2:4
     if getfield(iostream, fnames[i]) != nothing
@@ -333,7 +333,7 @@ function read!{N<:Real}(iostream::BasicContParamIOStream, nstate::BasicContMuvPa
   end
 end
 
-function read{N<:Real}(iostream::BasicContParamIOStream, T::Type{N})
+function read(iostream::BasicContParamIOStream, T::Type{N}) where N<:Real
   local nstate::ContinuousParameterNState
   fnames = fieldnames(BasicContParamIOStream)
   l = length(iostream.size)

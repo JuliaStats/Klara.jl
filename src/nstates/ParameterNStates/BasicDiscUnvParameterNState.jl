@@ -1,4 +1,4 @@
-type BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Univariate}
+mutable struct BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Univariate}
   value::Vector{NI}
   loglikelihood::Vector{NR}
   logprior::Vector{NR}
@@ -51,14 +51,14 @@ BasicDiscUnvParameterNState(
 ) where {NI<:Integer, NR<:Real} =
   BasicDiscUnvParameterNState{NI, NR}(n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
-function BasicDiscUnvParameterNState{NI<:Integer, NR<:Real}(
+function BasicDiscUnvParameterNState(
   n::Integer,
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int64,
-  ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-)
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{NI}=Int64,
+::Type{NR}=Float64,
+diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscUnvParameterNState)
   BasicDiscUnvParameterNState(
     n, [fnames[i] in monitor ? true : false for i in 1:4], diagnostickeys, NI, NR, diagnosticvalues
@@ -97,12 +97,12 @@ end
 eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscUnvParameterNState{NI, NR}}) = (NI, NR)
 eltype{NI<:Integer, NR<:Real}(::BasicDiscUnvParameterNState{NI, NR}) = (NI, NR)
 
-=={S<:BasicDiscUnvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:7]])
+==(z::S, w::S) where {S<:BasicDiscUnvParameterNState} = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:7]])
 
-isequal{S<:BasicDiscUnvParameterNState}(z::S, w::S) =
+isequal(z::S, w::S) where {S<:BasicDiscUnvParameterNState} =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:7]])
 
-function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscUnvParameterNState{NI, NR})
+function show(io::IO, nstate::BasicDiscUnvParameterNState{NI, NR}) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscUnvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:4])
   indentation = "  "

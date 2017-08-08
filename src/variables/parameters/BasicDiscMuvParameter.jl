@@ -1,6 +1,6 @@
 ### BasicDiscMuvParameter
 
-type BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
+mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
   key::Symbol
   index::Integer
   pdf::Union{DiscreteMultivariateDistribution, Void}
@@ -169,7 +169,7 @@ variate_form(::BasicDiscMuvParameter) = Multivariate
 
 default_state_type(::BasicDiscMuvParameter) = BasicDiscMuvParameterState
 
-default_state{N<:Integer}(variable::BasicDiscMuvParameter, value::Vector{N}, outopts::Dict) =
+default_state(variable::BasicDiscMuvParameter, value::Vector{N}, outopts::Dict) where {N<:Integer} =
   BasicDiscMuvParameterState(
     value, (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[]
   )

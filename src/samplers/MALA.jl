@@ -6,7 +6,7 @@ abstract type MALAState{F<:VariateForm} <: LMCSamplerState{F} end
 
 ## UnvMALAState holds the internal state ("local variables") of the MALA sampler for univariate parameters
 
-type UnvMALAState <: MALAState{Univariate}
+mutable struct UnvMALAState <: MALAState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
@@ -25,7 +25,7 @@ UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=
 
 ## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
-type MuvMALAState <: MALAState{Multivariate}
+mutable struct MuvMALAState <: MALAState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by MALA
   tune::MCTunerState
   ratio::Real
@@ -44,7 +44,7 @@ MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerStat
 
 ### Metropolis-adjusted Langevin Algorithm (MALA)
 
-immutable MALA <: LMCSampler
+struct MALA <: LMCSampler
   driftstep::Real
 
   function MALA(driftstep::Real)
@@ -59,12 +59,12 @@ MALA() = MALA(1.)
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::MALA,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::MALA,
+outopts::Dict
+) where F<:VariateForm
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
   @assert all(isfinite.(pstate.gradlogtarget)) "Gradient of log-target not finite: initial values out of support"

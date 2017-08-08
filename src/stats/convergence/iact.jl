@@ -1,6 +1,6 @@
 ### Integrated autocorrelation time (IACT)
 
-iact{N<:Real}(mcvariance::N, iidvariance::N) = mcvariance/iidvariance
+iact(mcvariance::N, iidvariance::N) where {N<:Real} = mcvariance/iidvariance
 
 iact(v::AbstractVector, vtype::Symbol, args...) = iact(mcvar(v, Val{vtype}, args...), mcvar(v, Val{:iid}))
 

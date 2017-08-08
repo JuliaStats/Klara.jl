@@ -4,7 +4,7 @@ abstract type VariableIOStream end
 
 ### BasicVariableIOStream
 
-type BasicVariableIOStream <: VariableIOStream
+mutable struct BasicVariableIOStream <: VariableIOStream
   stream::IOStream
   size::Tuple
   n::Integer
@@ -37,13 +37,13 @@ function write(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState)
   end
 end
 
-read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState{N}) =
+read!(iostream::BasicVariableIOStream, nstate::BasicUnvVariableNState{N}) where {N<:Number} =
   nstate.value = vec(readdlm(iostream.stream, ',', N))
 
-read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState{N}) =
+read!(iostream::BasicVariableIOStream, nstate::BasicMuvVariableNState{N}) where {N<:Number} =
   nstate.value = readdlm(iostream.stream, ',', N)'
 
-function read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState{N})
+function read!(iostream::BasicVariableIOStream, nstate::BasicMavVariableNState{N}) where N<:Number
   statelen = prod(iostream.size)
   line = 1
   while !eof(iostream.stream)
@@ -52,7 +52,7 @@ function read!{N<:Number}(iostream::BasicVariableIOStream, nstate::BasicMavVaria
   end
 end
 
-function read{N<:Number}(iostream::BasicVariableIOStream, T::Type{N})
+function read(iostream::BasicVariableIOStream, T::Type{N}) where N<:Number
   local nstate::VariableNState
   l = length(iostream.size)
 

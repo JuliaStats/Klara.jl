@@ -1,4 +1,4 @@
-type GenericModel
+mutable struct GenericModel
   is_directed::Bool
   vertices::Vector{Variable}           # An indexable container of vertices (variables)
   edges::Vector{Dependence}            # An indexable container of edges (dependencies)
@@ -141,7 +141,7 @@ end
 
 GenericModel(isdirected::Bool=true) = GenericModel(Variable[], Dependence[], isdirected)
 
-GenericModel{V<:Variable}(vs::Vector{V}, ds::Matrix{V}; isdirected::Bool=true, isindexed::Bool=true) =
+GenericModel(vs::Vector{V}, ds::Matrix{V}; isdirected::Bool=true, isindexed::Bool=true) where {V<:Variable} =
   GenericModel(vs, [Dependence(i, ds[i, 1], ds[i, 2]) for i in 1:size(ds, 1)], isdirected=isdirected, isindexed=isindexed)
 
 function GenericModel(vs::Dict{Symbol, DataType}, ds::Dict{Symbol, Symbol}, isdirected::Bool=true)

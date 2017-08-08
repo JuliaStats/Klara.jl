@@ -22,7 +22,7 @@ erf_rate_score(x::Real, k::Real=3.) = erf(k*x)+1
 # This discrepancy is pernalised via a score function set by the user
 # The default score function is a stretched logistic map
 
-immutable AcceptanceRateMCTuner <: MCTuner
+struct AcceptanceRateMCTuner <: MCTuner
   targetrate::Real # Target acceptance rate
   score::Function # Score function for penalising discrepancy between observed and target acceptance rate
   period::Integer # Tuning period over which acceptance rate is computed

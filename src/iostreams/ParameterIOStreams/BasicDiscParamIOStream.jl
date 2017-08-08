@@ -1,6 +1,6 @@
 ### BasicDiscParamIOStream
 
-type BasicDiscParamIOStream <: ParameterIOStream{Discrete}
+mutable struct BasicDiscParamIOStream <: ParameterIOStream{Discrete}
   value::Union{IOStream, Void}
   loglikelihood::Union{IOStream, Void}
   logprior::Union{IOStream, Void}
@@ -257,7 +257,7 @@ function write(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNS
   end
 end
 
-function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState{NI, NR})
+function read!(iostream::BasicDiscParamIOStream, nstate::BasicDiscUnvParameterNState{NI, NR}) where {NI<:Integer, NR<:Real}
   t = [NI, fill(NR, 3)]
   fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:4
@@ -270,7 +270,7 @@ function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::
   end
 end
 
-function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState{NI, NR})
+function read!(iostream::BasicDiscParamIOStream, nstate::BasicDiscMuvParameterNState{NI, NR}) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscParamIOStream)
   if getfield(iostream, fnames[1]) != nothing
     setfield!(nstate, fnames[1], readdlm(getfield(iostream, fnames[1]), ',', NI)')
@@ -285,7 +285,7 @@ function read!{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, nstate::
   end
 end
 
-function read{NI<:Integer, NR<:Real}(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR})
+function read(iostream::BasicDiscParamIOStream, TI::Type{NI}, TR::Type{NR}) where {NI<:Integer, NR<:Real}
   local nstate::DiscreteParameterNState
   fnames = fieldnames(BasicDiscParamIOStream)
   l = length(iostream.size)
