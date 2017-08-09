@@ -95,13 +95,13 @@ BasicGibbsJob(
 
 function BasicGibbsJob(
   model::GenericModel,
-dpjob::Dict,
-range::BasicMCRange,
-v0::Dict{Symbol, S};
-dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
-outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
-verbose::Bool=false,
-check::Bool=false
+  dpjob::Dict,
+  range::BasicMCRange,
+  v0::Dict{Symbol, S};
+  dpindex::IntegerVector=find(v::Variable -> isa(v, Parameter) || isa(v, Transformation), model.vertices),
+  outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
+  verbose::Bool=false,
+  check::Bool=false
 ) where S<:VariableState
   ndpindex = length(dpindex)
 
