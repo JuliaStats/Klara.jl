@@ -6,14 +6,14 @@
 
 ## Zero variance (ZV) Monte Carlo estimators linear polynomials
 
-function lzv{N<:Real}(chain::Vector{N}, grad::Vector{N})
+function lzv(chain::Vector{N}, grad::Vector{N}) where N<:Real
   z = -0.5*grad
   augmentedcov = cov([z chain])
   a = -augmentedcov[1, 2]/augmentedcov[1, 1]
   return chain+z*a, a
 end
 
-function lzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
+function lzv(chain::Matrix{N}, grad::Matrix{N}) where N<:Real
   npars = size(chain, 2)
 
   augmentedcov = Array(N, npars+1, npars+1, npars)
@@ -39,7 +39,7 @@ lzv(s::ParameterNState{Continuous, Multivariate}) = lzv(transpose(s.value), tran
 
 ## Zero variance (ZV) Monte Carlo estimators quadratic polynomials
 
-function qzv{N<:Real}(chain::Vector{N}, grad::Vector{N})
+function qzv(chain::Vector{N}, grad::Vector{N}) where N<:Real
   z = -0.5*grad
   qz = [z 2*z.*chain-1]
   augmentedcov = cov([qz chain])
@@ -47,7 +47,7 @@ function qzv{N<:Real}(chain::Vector{N}, grad::Vector{N})
   return chain+qz*a, a
 end
 
-function qzv{N<:Real}(chain::Matrix{N}, grad::Matrix{N})
+function qzv(chain::Matrix{N}, grad::Matrix{N}) where N<:Real
   nsamples, npars = size(chain)
   k = convert(Integer, npars*(npars+3)/2)
   l = 2*npars+1

@@ -1,6 +1,6 @@
 ### Effective sample size (ESS)
 
-ess{N<:Real}(mcvariance::N, iidvariance::N, len::Integer) = len*iidvariance/mcvariance
+ess(mcvariance::N, iidvariance::N, len::Integer) where {N<:Real} = len*iidvariance/mcvariance
 
 ess(v::AbstractVector, vtype::Symbol, args...) = ess(mcvar(v, Val{vtype}, args...), mcvar(v, Val{:iid}), length(v))
 

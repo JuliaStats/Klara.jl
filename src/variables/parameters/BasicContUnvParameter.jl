@@ -7,7 +7,7 @@
 
 ### BasicContUnvParameter
 
-type BasicContUnvParameter <: Parameter{Continuous, Univariate}
+mutable struct BasicContUnvParameter <: Parameter{Continuous, Univariate}
   key::Symbol
   index::Integer
   pdf::Union{ContinuousUnivariateDistribution, Void}
@@ -536,7 +536,7 @@ variate_form(::BasicContUnvParameter) = Univariate
 
 default_state_type(::BasicContUnvParameter) = BasicContUnvParameterState
 
-default_state{N<:Real}(variable::BasicContUnvParameter, value::N, outopts::Dict) =
+default_state(variable::BasicContUnvParameter, value::N, outopts::Dict) where {N<:Real} =
   BasicContUnvParameterState(
     value,
     (haskey(outopts, :diagnostics) && in(:accept, outopts[:diagnostics])) ? [:accept] : Symbol[],

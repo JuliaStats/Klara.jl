@@ -1,6 +1,6 @@
 abstract type RobertsRosenthalMCTune <: MCTunerState end
 
-type UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
+mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
   σ::Real # Standard deviation of underlying normal
   δ::Real # Increase or decrease of σ at each batch
   accepted::Integer # Number of accepted MCMC samples during current tuning period
@@ -30,7 +30,7 @@ end
 UnvRobertsRosenthalMCTune(σ::Real=1., accepted::Integer=0, proposed::Integer=0, totproposed::Integer=0) =
   UnvRobertsRosenthalMCTune(σ, NaN, accepted, proposed, totproposed, NaN)
 
-type MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
+mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
   σ::RealVector # Standard deviation of underlying normal
   δ::Real # Increase or decrease of σ at each batch
   accepted::IntegerVector # Number of accepted MCMC samples during current tuning period
@@ -65,7 +65,7 @@ MuvRobertsRosenthalMCTune(size::Integer, proposed::Integer=0, totproposed::Integ
 
 ### RobertsRosenthalMCTuner
 
-immutable RobertsRosenthalMCTuner <: MCTuner
+struct RobertsRosenthalMCTuner <: MCTuner
   targetrate::Real # Target acceptance rate
   period::Integer # Tuning period over which acceptance rate is computed
   verbose::Bool # If verbose=false then the tuner is silent, else it is verbose

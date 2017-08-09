@@ -36,7 +36,7 @@ Dict{Symbol,Bool} with 1 entry:
   :accept => false
 ```
 """
-type BasicContUnvParameterState{N<:Real} <: ParameterState{Continuous, Univariate}
+mutable struct BasicContUnvParameterState{N<:Real} <: ParameterState{Continuous, Univariate}
   "Vector value of basic continuous univariate parameter state"
   value::N
   "Value of log-likelihood at the state's value"
@@ -71,13 +71,13 @@ type BasicContUnvParameterState{N<:Real} <: ParameterState{Continuous, Univariat
   diffstate::Union{DiffState, Void}
 end
 
-function BasicContUnvParameterState{N<:Real}(
+function BasicContUnvParameterState(
   value::N,
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-)
+diagnostickeys::Vector{Symbol}=Symbol[],
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where N<:Real
   v = convert(N, NaN)
 
   diffstate = DiffState()
@@ -99,13 +99,13 @@ function BasicContUnvParameterState{N<:Real}(
   )
 end
 
-BasicContUnvParameterState{N<:Real}(
+BasicContUnvParameterState(
   diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-) =
+::Type{N}=Float64,
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {N<:Real} =
   BasicContUnvParameterState(convert(N, NaN), diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 value_support{N<:Real}(::Type{BasicContUnvParameterState{N}}) = Continuous

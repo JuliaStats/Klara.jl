@@ -2,22 +2,22 @@
 
 # ARSState holds the internal state ("local variables") of the acceptance-rejection sampler
 
-type ARSState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState{F}
+mutable struct ARSState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState{F}
   pstate::ParameterState{S, F} # Parameter state used internally by ARS
   tune::MCTunerState
   logproposal::Real
   weight::Real
 end
 
-ARSState{S<:ValueSupport, F<:VariateForm}(
+ARSState(
   pstate::ParameterState{S, F},
-  tune::MCTunerState=BasicMCTune()
-) =
+tune::MCTunerState=BasicMCTune()
+) where {S<:ValueSupport, F<:VariateForm} =
   ARSState(pstate, tune, NaN, NaN)
 
 ### Acceptance-rejection sampler (ARS)
 
-immutable ARS <: MCSampler
+struct ARS <: MCSampler
   logproposal::Function # Possibly unnormalized log-proposal (envelope)
   proposalscale::Real # Scale factor for logproposal (envelope) to cover target
   jumpscale::Real # Scale factor for adapting jump size
@@ -34,12 +34,12 @@ ARS(logproposal::Function; proposalscale::Real=1., jumpscale::Real=1.) = ARS(log
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::ARS,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::ARS,
+outopts::Dict
+) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 
@@ -51,13 +51,13 @@ end
 
 ## Initialize ARSState
 
-sampler_state{S<:ValueSupport, F<:VariateForm}(
+sampler_state(
   parameter::Parameter{S, F},
-  sampler::ARS,
-  tuner::MCTuner,
-  pstate::ParameterState{S, F},
-  vstate::VariableStateVector
-) =
+sampler::ARS,
+tuner::MCTuner,
+pstate::ParameterState{S, F},
+vstate::VariableStateVector
+) where {S<:ValueSupport, F<:VariateForm} =
   ARSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
@@ -82,13 +82,13 @@ function reset!(
   parameter.logtarget!(pstate)
 end
 
-reset!{S<:ValueSupport, F<:VariateForm}(
+reset!(
   sstate::ARSState{S, F},
-  pstate::ParameterState{S, F},
-  parameter::Parameter{S, F},
-  sampler::MCSampler,
-  tuner::MCTuner
-) =
+pstate::ParameterState{S, F},
+parameter::Parameter{S, F},
+sampler::MCSampler,
+tuner::MCTuner
+) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 
 show(io::IO, sampler::ARS) =

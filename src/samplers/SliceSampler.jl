@@ -1,6 +1,6 @@
 ## SliceSamplerState holds the internal state ("local variables") of the slice sampler for multivariate parameters
 
-type SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
+mutable struct SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
   lstate::ParameterState{Continuous, F}
   rstate::ParameterState{Continuous, F}
   primestate::ParameterState{Continuous, F}
@@ -9,17 +9,17 @@ type SliceSamplerState{F<:VariateForm} <: MCSamplerState{F}
   runiform::Real
 end
 
-SliceSamplerState{F<:VariateForm}(
+SliceSamplerState(
   lstate::ParameterState{Continuous, F},
-  rstate::ParameterState{Continuous, F},
-  primestate::ParameterState{Continuous, F},
-  tune::MCTunerState=BasicMCTune()
-) =
+rstate::ParameterState{Continuous, F},
+primestate::ParameterState{Continuous, F},
+tune::MCTunerState=BasicMCTune()
+) where {F<:VariateForm} =
   SliceSamplerState(lstate, rstate, primestate, tune, NaN, NaN)
 
 ### Slice sampler
 
-immutable SliceSampler <: MCSampler
+struct SliceSampler <: MCSampler
   widths::RealVector # Step sizes for initially expanding the slice
   stepout::Bool # Protects against the case of passing in small widths
 
@@ -37,25 +37,25 @@ SliceSampler(widths::Real=1., n::Integer=1, stepout::Bool=true) = SliceSampler(f
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::SliceSampler,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::SliceSampler,
+outopts::Dict
+) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 end
 
 ## Initialize SliceSampler state
 
-sampler_state{F<:VariateForm}(
+sampler_state(
   parameter::Parameter{Continuous, F},
-  sampler::SliceSampler,
-  tuner::MCTuner,
-  pstate::ParameterState{Continuous, F},
-  vstate::VariableStateVector
-) =
+sampler::SliceSampler,
+tuner::MCTuner,
+pstate::ParameterState{Continuous, F},
+vstate::VariableStateVector
+) where {F<:VariateForm} =
   SliceSamplerState(
     generate_empty(pstate),
     generate_empty(pstate),
@@ -70,13 +70,13 @@ function reset!(pstate::MultivariateParameterState, x::RealVector, parameter::Mu
   parameter.logtarget!(pstate)
 end
 
-function reset!{F<:VariateForm}(
+function reset!(
   sstate::SliceSamplerState{F},
-  pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::MCSampler,
-  tuner::MCTuner
-)
+pstate::ParameterState{Continuous, F},
+parameter::Parameter{Continuous, F},
+sampler::MCSampler,
+tuner::MCTuner
+) where F<:VariateForm
   tune.proposed, tune.totproposed = (0, tuner.period)
 end
 

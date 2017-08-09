@@ -2,7 +2,7 @@
 
 # MHState holds the internal state ("local variables") of the Metropolis-Hastings sampler
 
-type MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
+mutable struct MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
   proposal::Distribution{F, S} # Proposal distribution
   pstate::ParameterState{S, F} # Parameter state used internally by MH
   tune::MCTunerState
@@ -29,11 +29,11 @@ MHState(
 ) where {S<:ValueSupport, F<:VariateForm} =
   MHState{S, F}(proposal, pstate, tune, ratio)
 
-MHState{S<:ValueSupport, F<:VariateForm}(
+MHState(
   proposal::Distribution{F, S},
-  pstate::ParameterState{S, F},
-  tune::MCTunerState=BasicMCTune()
-) =
+pstate::ParameterState{S, F},
+tune::MCTunerState=BasicMCTune()
+) where {S<:ValueSupport, F<:VariateForm} =
   MHState(proposal, pstate, tune, NaN)
 
 ### Metropolis-Hastings (MH) sampler
@@ -42,7 +42,7 @@ MHState{S<:ValueSupport, F<:VariateForm}(
 # For symmetric proposals, the proposal correction factor equals 1, so the logproposal field is set to nothing
 # For non-normalised proposals, the lognormalise() method is used for calculating the proposal correction factor
 
-immutable MH <: MHSampler
+struct MH <: MHSampler
   symmetric::Bool # If symmetric=true then the proposal distribution is symmetric, else it is asymmetric
   normalised::Bool # If normalised=true then the proposal distribution is normalised, else it is non-normalised
   setproposal::Function # Function for setting the proposal distribution
@@ -63,21 +63,21 @@ MH(
 
 # Random-walk Metropolis, i.e. Metropolis with a normal proposal distribution
 
-MH{N<:Real}(σ::Matrix{N}) = MH(x::Vector{N} -> MvNormal(x, σ), signature=:high)
-MH{N<:Real}(σ::Vector{N}) = MH(x::Vector{N} -> MvNormal(x, σ), signature=:high)
-MH{N<:Real}(σ::N) = MH(x::N -> Normal(x, σ), signature=:high)
-MH{N<:Real}(::Type{N}=Float64) = MH(x::N -> Normal(x, 1.0), signature=:high)
+MH(σ::Matrix{N}) where {N<:Real} = MH(x::Vector{N} -> MvNormal(x, σ), signature=:high)
+MH(σ::Vector{N}) where {N<:Real} = MH(x::Vector{N} -> MvNormal(x, σ), signature=:high)
+MH(σ::N) where {N<:Real} = MH(x::N -> Normal(x, σ), signature=:high)
+MH(::Type{N}=Float64) where {N<:Real} = MH(x::N -> Normal(x, 1.0), signature=:high)
 
 ### Initialize Metropolis-Hastings sampler
 
 ## Initialize parameter state
 
-function initialize!{S<:ValueSupport, F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{S, F},
-  parameter::Parameter{S, F},
-  sampler::MH,
-  outopts::Dict
-)
+parameter::Parameter{S, F},
+sampler::MH,
+outopts::Dict
+) where {S<:ValueSupport, F<:VariateForm}
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 
@@ -89,13 +89,13 @@ end
 
 ## Initialize MHState
 
-sampler_state{S<:ValueSupport, F<:VariateForm}(
+sampler_state(
   parameter::Parameter{S, F},
-  sampler::MH,
-  tuner::MCTuner,
-  pstate::ParameterState{S, F},
-  vstate::VariableStateVector
-) =
+sampler::MH,
+tuner::MCTuner,
+pstate::ParameterState{S, F},
+vstate::VariableStateVector
+) where {S<:ValueSupport, F<:VariateForm} =
   MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
 ## Reset parameter state
@@ -110,13 +110,13 @@ function reset!(pstate::MultivariateParameterState, x::RealVector, parameter::Mu
   parameter.logtarget!(pstate)
 end
 
-reset!{S<:ValueSupport, F<:VariateForm}(
+reset!(
   sstate::MHState{S, F},
-  pstate::ParameterState{S, F},
-  parameter::Parameter{S, F},
-  sampler::MCSampler,
-  tuner::MCTuner
-) =
+pstate::ParameterState{S, F},
+parameter::Parameter{S, F},
+sampler::MCSampler,
+tuner::MCTuner
+) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 
 function show(io::IO, sampler::MH)

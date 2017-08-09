@@ -40,7 +40,7 @@ Dict{Symbol,Bool} with 1 entry:
   :accept => false
 ```
 """
-type BasicDiscMuvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discrete, Multivariate}
+mutable struct BasicDiscMuvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discrete, Multivariate}
   "Vector value of basic discrete multivariate parameter state"
   value::Vector{NI}
   "Value of log-likelihood at the state's value"
@@ -57,23 +57,23 @@ type BasicDiscMuvParameterState{NI<:Integer, NR<:Real} <: ParameterState{Discret
   diagnostickeys::Vector{Symbol}
 end
 
-function BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(
+function BasicDiscMuvParameterState(
   value::Vector{NI},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NR}=Float64,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-)
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{NR}=Float64,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {NI<:Integer, NR<:Real}
   v = convert(NR, NaN)
   BasicDiscMuvParameterState{NI, NR}(value, v, v, v, diagnosticvalues, length(value), diagnostickeys)
 end
 
-BasicDiscMuvParameterState{NI<:Integer, NR<:Real}(
+BasicDiscMuvParameterState(
   size::Integer,
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int64,
-  ::Type{NR}=Float64,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-) =
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{NI}=Int64,
+::Type{NR}=Float64,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {NI<:Integer, NR<:Real} =
   BasicDiscMuvParameterState(Array{NI}(size), diagnostickeys, NR, diagnosticvalues)
 
 value_support{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterState{NI, NR}}) = Discrete

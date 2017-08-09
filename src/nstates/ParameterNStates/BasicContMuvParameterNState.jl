@@ -1,4 +1,4 @@
-type BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multivariate}
+mutable struct BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuous, Multivariate}
   value::Matrix{N}
   loglikelihood::Vector{N}
   logprior::Vector{N}
@@ -68,14 +68,14 @@ BasicContMuvParameterNState(
 ) where N<:Real =
   BasicContMuvParameterNState{N}(size, n, monitor, diagnostickeys, N, diagnosticvalues)
 
-function BasicContMuvParameterNState{N<:Real}(
+function BasicContMuvParameterNState(
   size::Integer,
-  n::Integer,
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-)
+n::Integer,
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{N}=Float64,
+diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where N<:Real
   fnames = fieldnames(BasicContMuvParameterNState)
   BasicContMuvParameterNState(
     size, n, [fnames[i] in monitor ? true : false for i in 1:13], diagnostickeys, N, diagnosticvalues
@@ -151,12 +151,12 @@ end
 eltype{N<:Real}(::Type{BasicContMuvParameterNState{N}}) = N
 eltype{N<:Real}(::BasicContMuvParameterNState{N}) = N
 
-=={S<:BasicContMuvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:17]])
+==(z::S, w::S) where {S<:BasicContMuvParameterNState} = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:17]])
 
-isequal{S<:BasicContMuvParameterNState}(z::S, w::S) =
+isequal(z::S, w::S) where {S<:BasicContMuvParameterNState} =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:17]])
 
-function show{N<:Real}(io::IO, nstate::BasicContMuvParameterNState{N})
+function show(io::IO, nstate::BasicContMuvParameterNState{N}) where N<:Real
   fnames = fieldnames(BasicContMuvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
   indentation = "  "

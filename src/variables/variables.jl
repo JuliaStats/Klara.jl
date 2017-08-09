@@ -2,9 +2,9 @@
 
 abstract type Sampleability end
 
-type Deterministic <: Sampleability end
+mutable struct Deterministic <: Sampleability end
 
-type Random <: Sampleability end
+mutable struct Random <: Sampleability end
 
 ### Abstract variable
 
@@ -60,16 +60,16 @@ show(io::IO, v::Variable) = print(io, "Variable [$(v.index)]: $(v.key) ($(typeof
 
 ## Constant
 
-type Constant <: Variable{Deterministic}
+mutable struct Constant <: Variable{Deterministic}
   key::Symbol
   index::Integer
 end
 
 Constant(key::Symbol) = Constant(key, 0)
 
-default_state{N<:Number}(variable::Constant, value::N) = BasicUnvVariableState(value)
-default_state{N<:Number}(variable::Constant, value::Vector{N}) = BasicMuvVariableState(value)
-default_state{N<:Number}(variable::Constant, value::Matrix{N}) = BasicMavVariableState(value)
+default_state(variable::Constant, value::N) where {N<:Number} = BasicUnvVariableState(value)
+default_state(variable::Constant, value::Vector{N}) where {N<:Number} = BasicMuvVariableState(value)
+default_state(variable::Constant, value::Matrix{N}) where {N<:Number} = BasicMavVariableState(value)
 
 show(io::IO, ::Type{Constant}) = print(io, "Constant")
 
@@ -81,7 +81,7 @@ const Hyperparameter = Constant
 
 ## Data
 
-type Data <: Variable{Deterministic}
+mutable struct Data <: Variable{Deterministic}
   key::Symbol
   index::Integer
   update::Union{Function, Void}
@@ -91,9 +91,9 @@ Data(key::Symbol, index::Integer) = Data(key, index, nothing)
 Data(key::Symbol, update::Union{Function, Void}) = Data(key, 0, update)
 Data(key::Symbol) = Data(key, 0, nothing)
 
-default_state{N<:Number}(variable::Data, value::N) = BasicUnvVariableState(value)
-default_state{N<:Number}(variable::Data, value::Vector{N}) = BasicMuvVariableState(value)
-default_state{N<:Number}(variable::Data, value::Matrix{N}) = BasicMavVariableState(value)
+default_state(variable::Data, value::N) where {N<:Number} = BasicUnvVariableState(value)
+default_state(variable::Data, value::Vector{N}) where {N<:Number} = BasicMuvVariableState(value)
+default_state(variable::Data, value::Matrix{N}) where {N<:Number} = BasicMavVariableState(value)
 
 show(io::IO, ::Type{Data}) = print(io, "Data")
 
@@ -101,7 +101,7 @@ dotshape(variable::Data) = "box"
 
 ## Transformation
 
-type Transformation <: Variable{Deterministic}
+mutable struct Transformation <: Variable{Deterministic}
   key::Symbol
   index::Integer
   transform::Function
@@ -114,9 +114,9 @@ Transformation(key::Symbol, index::Integer, transform::Function=()->()) =
 Transformation(key::Symbol, transform::Function=()->(), states::VariableStateVector=VariableState[]) =
   Transformation(key, 0, transform, states)
 
-default_state{N<:Number}(variable::Transformation, value::N) = BasicUnvVariableState(value)
-default_state{N<:Number}(variable::Transformation, value::Vector{N}) = BasicMuvVariableState(value)
-default_state{N<:Number}(variable::Transformation, value::Matrix{N}) = BasicMavVariableState(value)
+default_state(variable::Transformation, value::N) where {N<:Number} = BasicUnvVariableState(value)
+default_state(variable::Transformation, value::Vector{N}) where {N<:Number} = BasicMuvVariableState(value)
+default_state(variable::Transformation, value::Matrix{N}) where {N<:Number} = BasicMavVariableState(value)
 
 show(io::IO, ::Type{Transformation}) = print(io, "Transformation")
 

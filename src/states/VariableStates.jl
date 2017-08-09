@@ -28,16 +28,16 @@ julia> state.value
 1.0
 ```
 """
-type BasicUnvVariableState{N<:Number} <: VariableState{Univariate}
+mutable struct BasicUnvVariableState{N<:Number} <: VariableState{Univariate}
   "Scalar value of basic univariate variable state"
   value::N
 end
 
-variate_form{N<:Number}(s::Type{BasicUnvVariableState{N}}) = Univariate
+variate_form(s::Type{BasicUnvVariableState{N}}) where {N<:Number} = Univariate
 variate_form(::BasicUnvVariableState) = Univariate
 
 eltype{N<:Number}(::Type{BasicUnvVariableState{N}}) = N
-eltype{N<:Number}(s::BasicUnvVariableState{N}) = N
+eltype(s::BasicUnvVariableState{N}) where {N<:Number} = N
 
 """
 Basic multivariate variable state type
@@ -67,16 +67,16 @@ julia> state.size
 2
 ```
 """
-type BasicMuvVariableState{N<:Number} <: VariableState{Multivariate}
+mutable struct BasicMuvVariableState{N<:Number} <: VariableState{Multivariate}
   "Vector value of basic multivariate variable state"
   value::Vector{N}
   "Integer representing the length of vector value of basic multivariate variable state"
   size::Integer
 end
 
-BasicMuvVariableState{N<:Number}(value::Vector{N}) = BasicMuvVariableState{N}(value, length(value))
+BasicMuvVariableState(value::Vector{N}) where {N<:Number} = BasicMuvVariableState{N}(value, length(value))
 
-BasicMuvVariableState{N<:Number}(size::Integer, ::Type{N}=Float64) = BasicMuvVariableState{N}(Array{N}(size), size)
+BasicMuvVariableState(size::Integer, ::Type{N}=Float64) where {N<:Number} = BasicMuvVariableState{N}(Array{N}(size), size)
 
 variate_form{N<:Number}(::Type{BasicMuvVariableState{N}}) = Multivariate
 variate_form(::BasicMuvVariableState) = Multivariate
@@ -114,16 +114,16 @@ julia> state.size
 (2,2)
 ```
 """
-type BasicMavVariableState{N<:Number} <: VariableState{Matrixvariate}
+mutable struct BasicMavVariableState{N<:Number} <: VariableState{Matrixvariate}
   "Matrix value of basic matrix-variate variable state"
   value::Matrix{N}
   "Tuple containing the dimensions of matrix value of basic matrix-variate variable state"
   size::Tuple{Integer, Integer}
 end
 
-BasicMavVariableState{N<:Number}(value::Matrix{N}) = BasicMavVariableState{N}(value, size(value))
+BasicMavVariableState(value::Matrix{N}) where {N<:Number} = BasicMavVariableState{N}(value, size(value))
 
-BasicMavVariableState{N<:Number}(size::Tuple, ::Type{N}=Float64) = BasicMavVariableState{N}(Array{N}(size...), size)
+BasicMavVariableState(size::Tuple, ::Type{N}=Float64) where {N<:Number} = BasicMavVariableState{N}(Array{N}(size...), size)
 
 variate_form{N<:Number}(::Type{BasicMavVariableState{N}}) = Matrixvariate
 variate_form(::BasicMavVariableState) = Matrixvariate

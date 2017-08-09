@@ -1,4 +1,4 @@
-immutable Binary <: DiscreteUnivariateDistribution
+struct Binary <: DiscreteUnivariateDistribution
   a::Int # Failure
   b::Int # Success
   p::Float64

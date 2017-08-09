@@ -59,7 +59,7 @@ julia> state.value
  0.0
 ```
 """
-type BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivariate}
+mutable struct BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivariate}
   "Vector value of basic continuous multivariate parameter state"
   value::Vector{N}
   "Value of log-likelihood at the state's value"
@@ -96,14 +96,14 @@ type BasicContMuvParameterState{N<:Real} <: ParameterState{Continuous, Multivari
   diffstate::Union{DiffState, Void}
 end
 
-function BasicContMuvParameterState{N<:Real}(
+function BasicContMuvParameterState(
   value::Vector{N},
-  monitor::Vector{Bool}=fill(false, 9),
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys)),
-)
+monitor::Vector{Bool}=fill(false, 9),
+diagnostickeys::Vector{Symbol}=Symbol[],
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys)),
+) where N<:Real
   v = convert(N, NaN)
 
   s = length(value)
@@ -201,40 +201,40 @@ function BasicContMuvParameterState{N<:Real}(
   )
 end
 
-function BasicContMuvParameterState{N<:Real}(
+function BasicContMuvParameterState(
   value::Vector{N},
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-)
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where N<:Real
   fnames = fieldnames(BasicContMuvParameterState)
   BasicContMuvParameterState(
     value, [fnames[i] in monitor ? true : false for i in 5:13], diagnostickeys, diffmethods, diffopts, diagnosticvalues
   )
 end
 
-BasicContMuvParameterState{N<:Real}(
+BasicContMuvParameterState(
   size::Integer,
-  monitor::Vector{Bool}=fill(false, 9),
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-) =
+monitor::Vector{Bool}=fill(false, 9),
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{N}=Float64,
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {N<:Real} =
   BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
-BasicContMuvParameterState{N<:Real}(
+BasicContMuvParameterState(
   size::Integer,
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diffmethods::Union{DiffMethods, Void}=nothing,
-  diffopts::Union{DiffOptions, Void}=nothing,
-  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
-) =
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{N}=Float64,
+diffmethods::Union{DiffMethods, Void}=nothing,
+diffopts::Union{DiffOptions, Void}=nothing,
+diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+) where {N<:Real} =
   BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 value_support{N<:Real}(::Type{BasicContMuvParameterState{N}}) = Continuous

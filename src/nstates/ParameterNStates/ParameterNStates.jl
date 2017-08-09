@@ -14,5 +14,5 @@ MatrixvariateParameterNState{S<:ValueSupport} = ParameterNState{S, Matrixvariate
 diagnostics(nstate::ParameterNState) =
   Dict(zip(nstate.diagnostickeys, Any[nstate.diagnosticvalues[i, :][:] for i = 1:size(nstate.diagnosticvalues, 1)]))
 
-copy!{S<:ValueSupport, F<:VariateForm}(nstate::ParameterNState{S, F}, state::ParameterState{S, F}, i::Integer) =
+copy!(nstate::ParameterNState{S, F}, state::ParameterState{S, F}, i::Integer) where {S<:ValueSupport, F<:VariateForm} =
   nstate.copy(nstate, state, i)

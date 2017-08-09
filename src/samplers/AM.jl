@@ -16,7 +16,7 @@ abstract type AMState{F<:VariateForm} <: MHSamplerState{F} end
 
 ## UnvAMState holds the internal state ("local variables") of the AM sampler for univariate parameters
 
-type UnvAMState <: AMState{Univariate}
+mutable struct UnvAMState <: AMState{Univariate}
   proposal::Union{UnivariateGMM, RealNormal}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by AM
   tune::MCTunerState
@@ -70,7 +70,7 @@ UnvAMState(
 
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
-type MuvAMState <: AMState{Multivariate}
+mutable struct MuvAMState <: AMState{Multivariate}
   proposal::Union{MultivariateGMM, AbstractMvNormal}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by AM
   tune::MCTunerState
@@ -124,7 +124,7 @@ MuvAMState(
 
 ### Adaptive Metropolis (AM) sampler
 
-immutable AM <: MHSampler
+struct AM <: MHSampler
   C0::RealMatrix # Initial covariance of proposal according to best prior knowledge
   corescale::Real # Scaling factor of covariance matrix of the core mixture component
   minorscale::Real # Scaling factor of covariance matrix of the stabilizing mixture component
@@ -153,12 +153,12 @@ AM(C0::Real, d::Integer=1; corescale::Real=1., minorscale::Real=1., c::Real=0.05
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::AM,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::AM,
+outopts::Dict
+) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 

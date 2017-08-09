@@ -32,7 +32,7 @@ mcse(s::VariableNState{Multivariate}, ::Type{Val{:iid}}, r::AbstractVector=1:s.s
 ## Batch Means and Spectral Variance Estimators in Markov chain Monte Carlo
 ## Annals of Statistics, 2010, 38 (2), pp 1034-1070
 
-function mcvar{T}(v::AbstractVector{T}, ::Type{Val{:bm}}, batchlen::Integer=100)
+function mcvar(v::AbstractVector{T}, ::Type{Val{:bm}}, batchlen::Integer=100) where T
   nbatches = div(length(v), batchlen)
   @assert nbatches > 1 "Choose batch size such that the number of batches is greather than one"
   nbsamples = nbatches*batchlen
@@ -72,7 +72,7 @@ mcse(s::VariableNState{Multivariate}, ::Type{Val{:bm}}, r::AbstractVector=1:s.si
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
-function mcvar{T}(v::AbstractVector{T}, ::Type{Val{:imse}}, maxlag::Integer=length(v)-1)
+function mcvar(v::AbstractVector{T}, ::Type{Val{:imse}}, maxlag::Integer=length(v)-1) where T
   k = convert(Integer, floor((maxlag-1)/2))
   m = k+1
 
@@ -134,7 +134,7 @@ mcse(s::VariableNState{Multivariate}, ::Type{Val{:imse}}, r::AbstractVector=1:s.
 ## Practical Markov Chain Monte Carlo
 ## Statistical Science, 1992, 7 (4), pp 473-483
 
-function mcvar{T}(v::AbstractVector{T}, ::Type{Val{:ipse}}, maxlag::Integer=length(v)-1)
+function mcvar(v::AbstractVector{T}, ::Type{Val{:ipse}}, maxlag::Integer=length(v)-1) where T
   k = convert(Integer, floor((maxlag-1)/2))
 
   # Preallocate memory

@@ -1,6 +1,6 @@
 ### BasicGibbsJob
 
-type BasicGibbsJob <: GibbsJob
+mutable struct BasicGibbsJob <: GibbsJob
   model::GenericModel
   dpindex::IntegerVector # Indices of dependent variables (parameters and transformations) in model.vertices
   dependent::Vector{Union{Parameter, Transformation}} # Points to model.vertices[dpindex] for faster access
@@ -93,7 +93,7 @@ BasicGibbsJob(
 ) =
   BasicGibbsJob(model, dpindex, dpjob, range, v0, outopts, verbose, check)
 
-function BasicGibbsJob{S<:VariableState}(
+function BasicGibbsJob(
   model::GenericModel,
   dpjob::Dict,
   range::BasicMCRange,
@@ -102,7 +102,7 @@ function BasicGibbsJob{S<:VariableState}(
   outopts::Dict=Dict([(k, Dict(:destination=>:nstate, :monitor=>[:value])) for k in keys(model.vertices[dpindex])]),
   verbose::Bool=false,
   check::Bool=false
-)
+) where S<:VariableState
   ndpindex = length(dpindex)
 
   jobs = Array{Union{BasicMCJob, Void}}(ndpindex)

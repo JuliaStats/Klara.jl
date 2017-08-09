@@ -11,7 +11,7 @@ abstract type RAMState{F<:VariateForm} <: MHSamplerState{F} end
 
 ## UnvRAMState holds the internal state ("local variables") of the RAM sampler for univariate parameters
 
-type UnvRAMState <: RAMState{Univariate}
+mutable struct UnvRAMState <: RAMState{Univariate}
   pstate::ParameterState{Continuous, Univariate} # Parameter state used internally by RAM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
@@ -49,7 +49,7 @@ UnvRAMState(
 
 ## MuvRAMState holds the internal state ("local variables") of the RAM sampler for multivariate parameters
 
-type MuvRAMState <: RAMState{Multivariate}
+mutable struct MuvRAMState <: RAMState{Multivariate}
   pstate::ParameterState{Continuous, Multivariate} # Parameter state used internally by RAM
   tune::MCTunerState
   ratio::Real # Acceptance ratio
@@ -87,7 +87,7 @@ MuvRAMState(
 
 ### Robust adaptive Metropolis (RAM) sampler
 
-immutable RAM <: MHSampler
+struct RAM <: MHSampler
   S0::RealLowerTriangular # Initial adaptation matrix
   targetrate::Real # Target acceptance rate
   γ::Real # Exponent for scaling stepsize η
@@ -110,12 +110,12 @@ RAM(S0::Real=1., n::Integer=1; targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(
 
 ## Initialize parameter state
 
-function initialize!{F<:VariateForm}(
+function initialize!(
   pstate::ParameterState{Continuous, F},
-  parameter::Parameter{Continuous, F},
-  sampler::RAM,
-  outopts::Dict
-)
+parameter::Parameter{Continuous, F},
+sampler::RAM,
+outopts::Dict
+) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
 

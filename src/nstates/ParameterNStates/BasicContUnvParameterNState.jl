@@ -1,4 +1,4 @@
-type BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univariate}
+mutable struct BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuous, Univariate}
   value::Vector{N}
   loglikelihood::Vector{N}
   logprior::Vector{N}
@@ -56,13 +56,13 @@ BasicContUnvParameterNState(
 ) where N<:Real =
   BasicContUnvParameterNState{N}(n, monitor, diagnostickeys, N, diagnosticvalues)
 
-function BasicContUnvParameterNState{N<:Real}(
+function BasicContUnvParameterNState(
   n::Integer,
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{N}=Float64,
-  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-)
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{N}=Float64,
+diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where N<:Real
   fnames = fieldnames(BasicContUnvParameterNState)
   BasicContUnvParameterNState(n, [fnames[i] in monitor ? true : false for i in 1:13], diagnostickeys, N, diagnosticvalues)
 end
@@ -99,12 +99,12 @@ end
 eltype{N<:Real}(::Type{BasicContUnvParameterNState{N}}) = N
 eltype{N<:Real}(::BasicContUnvParameterNState{N}) = N
 
-=={S<:BasicContUnvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:16]])
+==(z::S, w::S) where {S<:BasicContUnvParameterNState} = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:16]])
 
-isequal{S<:BasicContUnvParameterNState}(z::S, w::S) =
+isequal(z::S, w::S) where {S<:BasicContUnvParameterNState} =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:16]])
 
-function show{N<:Real}(io::IO, nstate::BasicContUnvParameterNState{N})
+function show(io::IO, nstate::BasicContUnvParameterNState{N}) where N<:Real
   fnames = fieldnames(BasicContUnvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:13])
   indentation = "  "

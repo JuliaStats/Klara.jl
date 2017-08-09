@@ -1,4 +1,4 @@
-type BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Multivariate}
+mutable struct BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNState{Discrete, Multivariate}
   value::Matrix{NI}
   loglikelihood::Vector{NR}
   logprior::Vector{NR}
@@ -50,15 +50,15 @@ BasicDiscMuvParameterNState(
 ) where {NI<:Integer, NR<:Real} =
   BasicDiscMuvParameterNState{NI, NR}(size, n, monitor, diagnostickeys, NI, NR, diagnosticvalues)
 
-function BasicDiscMuvParameterNState{NI<:Integer, NR<:Real}(
+function BasicDiscMuvParameterNState(
   size::Integer,
-  n::Integer,
-  monitor::Vector{Symbol},
-  diagnostickeys::Vector{Symbol}=Symbol[],
-  ::Type{NI}=Int64,
-  ::Type{NR}=Float64,
-  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
-)
+n::Integer,
+monitor::Vector{Symbol},
+diagnostickeys::Vector{Symbol}=Symbol[],
+::Type{NI}=Int64,
+::Type{NR}=Float64,
+diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscMuvParameterNState)
   BasicDiscMuvParameterNState(
     size, n, [fnames[i] in monitor ? true : false for i in 1:4], diagnostickeys, NI, NR, diagnosticvalues
@@ -105,12 +105,12 @@ end
 eltype{NI<:Integer, NR<:Real}(::Type{BasicDiscMuvParameterNState{NI, NR}}) = (NI, NR)
 eltype{NI<:Integer, NR<:Real}(::BasicDiscMuvParameterNState{NI, NR}) = (NI, NR)
 
-=={S<:BasicDiscMuvParameterNState}(z::S, w::S) = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:8]])
+==(z::S, w::S) where {S<:BasicDiscMuvParameterNState} = reduce(&, [getfield(z, n) == getfield(w, n) for n in fieldnames(S)[1:8]])
 
-isequal{S<:BasicDiscMuvParameterNState}(z::S, w::S) =
+isequal(z::S, w::S) where {S<:BasicDiscMuvParameterNState} =
   reduce(&, [isequal(getfield(z, n), getfield(w, n)) for n in fieldnames(S)[1:8]])
 
-function show{NI<:Integer, NR<:Real}(io::IO, nstate::BasicDiscMuvParameterNState{NI, NR})
+function show(io::IO, nstate::BasicDiscMuvParameterNState{NI, NR}) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscMuvParameterNState)
   fbool = map(n -> !isempty(getfield(nstate, n)), fnames[1:4])
   indentation = "  "

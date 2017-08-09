@@ -2,7 +2,7 @@
 
 abstract type MCTunerState end
 
-type BasicMCTune <: MCTunerState
+mutable struct BasicMCTune <: MCTunerState
   step::Real # Stepsize of MCMC iteration (for ex leapfrog in HMC or drift stepsize in MALA)
   accepted::Integer # Number of accepted MCMC samples during current tuning period
   proposed::Integer # Number of proposed MCMC samples during current tuning period

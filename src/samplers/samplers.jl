@@ -77,13 +77,13 @@ function reset!(tune::BasicMCTune, sampler::LMCSampler, tuner::AcceptanceRateMCT
   (tune.accepted, tune.proposed, tune.totproposed, tune.rate) = (0, 0, tuner.period, NaN)
 end
 
-reset!{S<:ValueSupport, F<:VariateForm}(
+reset!(
   sstate::MCSamplerState{F},
-  pstate::ParameterState{S, F},
-  parameter::Parameter{S, F},
-  sampler::MCSampler,
-  tuner::MCTuner
-) =
+pstate::ParameterState{S, F},
+parameter::Parameter{S, F},
+sampler::MCSampler,
+tuner::MCTuner
+) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 
 hamiltonian(logtarget::Real, momentum::Real) = logtarget-0.5*abs2(momentum)

@@ -90,16 +90,16 @@ function codegen_uptotarget_closures(parameter::Parameter, fields::Vector{Symbol
   end
 end
 
-setpdf!{S<:ValueSupport, F<:VariateForm}(parameter::Parameter{S, F}, state::ParameterState{S, F}) =
+setpdf!(parameter::Parameter{S, F}, state::ParameterState{S, F}) where {S<:ValueSupport, F<:VariateForm} =
   parameter.setpdf(state, parameter.states)
 
-setprior!{S<:ValueSupport, F<:VariateForm}(parameter::Parameter{S, F}, state::ParameterState{S, F}) =
+setprior!(parameter::Parameter{S, F}, state::ParameterState{S, F}) where {S<:ValueSupport, F<:VariateForm} =
   parameter.setprior(state, parameter.states)
 
 value_support{S<:ValueSupport, F<:VariateForm}(::Type{Parameter{S, F}}) = S
 variate_form{S<:ValueSupport, F<:VariateForm}(::Type{Parameter{S, F}}) = F
 
-function check_support{S<:ValueSupport, F<:VariateForm}(parameter::Parameter{S, F}, state::ParameterState{S, F})
+function check_support(parameter::Parameter{S, F}, state::ParameterState{S, F}) where {S<:ValueSupport, F<:VariateForm}
   if value_support(parameter) != value_support(state)
     warn("Value support of parameter ($(value_support(parameter))) and of ($(value_support(state))) not in agreement")
   end

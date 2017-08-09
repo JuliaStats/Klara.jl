@@ -30,7 +30,7 @@ function augment_variable_outopts!(outopts::Dict)
   end
 end
 
-augment_variable_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_variable_outopts!, outopts)
+augment_variable_outopts!(outopts::Vector{Dict{K, V}}) where {K, V} = map(augment_variable_outopts!, outopts)
 
 function augment_parameter_outopts!(outopts::Dict)
   augment_variable_outopts!(outopts)
@@ -42,7 +42,7 @@ function augment_parameter_outopts!(outopts::Dict)
   end
 end
 
-augment_parameter_outopts!{K, V}(outopts::Vector{Dict{K, V}}) = map(augment_parameter_outopts!, outopts)
+augment_parameter_outopts!(outopts::Vector{Dict{K, V}}) where {K, V} = map(augment_parameter_outopts!, outopts)
 
 # initialize_output() needs to be defined for custom variable state or NState input arguments
 # Thus multiple dispatch allows to extend the code base to accommodate new variable states or NStates
@@ -213,11 +213,11 @@ close(job::MCJob) = job.close(job)
 
 reset(job::MCJob) = job.reset!(job)
 reset(job::MCJob, x::Real) = job.reset!(job, x)
-reset{N<:Real}(job::MCJob, x::Vector{N}) = job.reset!(job, x)
+reset(job::MCJob, x::Vector{N}) where {N<:Real} = job.reset!(job, x)
 
 save(job::MCJob, i::Integer) = job.save!(job, i)
 
 iterate(job::MCJob) = job.iterate!(job)
 
 run(job::MCJob) = job.run!(job)
-run{J<:MCJob}(job::Vector{J}) = map(run, job)
+run(job::Vector{J}) where {J<:MCJob} = map(run, job)

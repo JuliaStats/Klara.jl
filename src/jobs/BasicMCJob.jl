@@ -3,7 +3,7 @@
 # BasicMCJob is used for sampling a single parameter via serial Monte Carlo
 # It is the most elementary and typical Markov chain Monte Carlo (MCMC) job
 
-type BasicMCJob <: MCJob
+mutable struct BasicMCJob <: MCJob
   model::GenericModel # Model of single parameter
   pindex::Integer # Index of single parameter in model.vertices
   parameter::Parameter # Points to model.vertices[pindex] for faster access
@@ -114,18 +114,18 @@ BasicMCJob(
 ) =
   BasicMCJob(model, pindex, sampler, tuner, range, v0, outopts, resetpstate, verbose, check)
 
-function BasicMCJob{S<:VariableState}(
+function BasicMCJob(
   model::GenericModel,
-  sampler::MCSampler,
-  range::BasicMCRange,
-  v0::Dict{Symbol, S};
-  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
-  tuner::MCTuner=VanillaMCTuner(),
-  outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
-  resetpstate::Bool=true,
-  verbose::Bool=false,
-  check::Bool=false
-)
+sampler::MCSampler,
+range::BasicMCRange,
+v0::Dict{Symbol, S};
+pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+tuner::MCTuner=VanillaMCTuner(),
+outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+resetpstate::Bool=true,
+verbose::Bool=false,
+check::Bool=false
+) where S<:VariableState
   vstate = Array{S}(length(v0))
   for (k, v) in v0
     vstate[model.ofkey[k]] = v

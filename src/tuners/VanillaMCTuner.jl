@@ -3,7 +3,7 @@
 # VanillaMCTuner is a dummy tuner type in the sense that it does not perform any tuning
 # It is used only for determining whether the MCSampler will be verbose
 
-immutable VanillaMCTuner <: MCTuner
+struct VanillaMCTuner <: MCTuner
   period::Integer # Tuning period over which acceptance rate is computed
   verbose::Bool # If verbose=false then the tuner is silent, else it is verbose
 
