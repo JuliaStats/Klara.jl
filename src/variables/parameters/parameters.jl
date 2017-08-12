@@ -72,19 +72,20 @@ function codegen_sumtarget_closure(
   end
 end
 
-function codegen_uptotarget_closures(parameter::Parameter, fields::Vector{Symbol})
-  body = []
-  local f::Symbol
+### TODO:
+# + 1) Check the speed of anonymous functions to avoid gensym if possible. Safe to use anonymous functions, not worse.
+# + 2) Check if breakage happens with function encaptulation. I checked, the breakage happens with function encaptulation.
+# - 3) Sort out default_state_type(parameter)
 
-  for i in 1:length(fields)
-    f = fields[i]
-    push!(body, :(getfield($parameter, $(QuoteNode(f)))(_state)))
+macro codegen_uptotarget_closures(parameter, fields)
+  body = []
+
+  for i in 1:length(fields.args)
+    push!(body, :(getfield($(esc(parameter)), $(fields.args[i]))(_state)))
   end
 
-  @gensym uptotarget_closures
-
   quote
-    function $uptotarget_closures(_state::$(default_state_type(parameter)))
+    function (_state)
       $(body...)
     end
   end

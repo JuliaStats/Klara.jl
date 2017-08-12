@@ -266,7 +266,7 @@ function BasicContUnvParameter!(
       eval(codegen_closure(parameter, args[15]))
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
-        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!]))
+        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!])
       else
         nothing
       end
@@ -283,7 +283,7 @@ function BasicContUnvParameter!(
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function)
-        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!]))
+        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!])
       else
         nothing
       end
@@ -301,7 +301,7 @@ function BasicContUnvParameter!(
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function) &&
         isa(parameter.dtensorlogtarget!, Function)
-        eval(codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!]))
+        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!])
       else
         nothing
       end
