@@ -32,11 +32,10 @@ function codegen_setfield(parameter::Parameter, field::Symbol, distribution::Sym
   end
 end
 
-function codegen_closure(parameter::Parameter, f::Function)
-  @gensym closure
+macro codegen_closure(parameter, f)
   quote
-    function $closure(_state::$(default_state_type(parameter)))
-      $(f)(_state, $(parameter).states)
+    function (_state)
+      $(esc(f))(_state, $(esc(parameter)).states)
     end
   end
 end
@@ -72,14 +71,8 @@ function codegen_sumtarget_closure(
   end
 end
 
-### TODO:
-# + 1) Check the speed of anonymous functions to avoid gensym if possible. Safe to use anonymous functions, not worse.
-# + 2) Check if breakage happens with function encaptulation. I checked, the breakage happens with function encaptulation.
-# - 3) Sort out default_state_type(parameter)
-
 macro codegen_uptotarget_closures(parameter, fields)
   body = []
-
   for i in 1:length(fields.args)
     push!(body, :(getfield($(esc(parameter)), $(fields.args[i]))(_state)))
   end
