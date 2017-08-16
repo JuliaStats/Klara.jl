@@ -71,19 +71,6 @@ function codegen_sumtarget_closure(
   end
 end
 
-macro codegen_uptotarget_closures(parameter, fields)
-  body = []
-  for i in 1:length(fields.args)
-    push!(body, :(getfield($(esc(parameter)), $(fields.args[i]))(_state)))
-  end
-
-  quote
-    function (_state)
-      $(body...)
-    end
-  end
-end
-
 setpdf!(parameter::Parameter{S, F}, state::ParameterState{S, F}) where {S<:ValueSupport, F<:VariateForm} =
   parameter.setpdf(state, parameter.states)
 

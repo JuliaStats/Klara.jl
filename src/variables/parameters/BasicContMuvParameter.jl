@@ -259,7 +259,10 @@ function BasicContMuvParameter!(
       @codegen_closure(parameter, args[15])
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
-        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!])
+        function (state::BasicContMuvParameterState)
+          parameter.logtarget!(state)
+          parameter.gradlogtarget!(state)
+        end
       else
         nothing
       end
@@ -276,7 +279,11 @@ function BasicContMuvParameter!(
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function)
-        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!])
+        function (state::BasicContMuvParameterState)
+          parameter.logtarget!(state)
+          parameter.gradlogtarget!(state)
+          parameter.tensorlogtarget!(state)
+        end
       else
         nothing
       end
@@ -294,7 +301,12 @@ function BasicContMuvParameter!(
         isa(parameter.gradlogtarget!, Function) &&
         isa(parameter.tensorlogtarget!, Function) &&
         isa(parameter.dtensorlogtarget!, Function)
-        @codegen_uptotarget_closures(parameter, [:logtarget!, :gradlogtarget!, :tensorlogtarget!, :dtensorlogtarget!])
+        function (state::BasicContMuvParameterState)
+          parameter.logtarget!(state)
+          parameter.gradlogtarget!(state)
+          parameter.tensorlogtarget!(state)
+          parameter.dtensorlogtarget!(state)
+        end
       else
         nothing
       end
