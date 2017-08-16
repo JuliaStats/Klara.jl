@@ -53,11 +53,11 @@ BasicDiscUnvParameterNState(
 
 function BasicDiscUnvParameterNState(
   n::Integer,
-monitor::Vector{Symbol},
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{NI}=Int64,
-::Type{NR}=Float64,
-diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  monitor::Vector{Symbol},
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{NI}=Int64,
+  ::Type{NR}=Float64,
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 ) where {NI<:Integer, NR<:Real}
   fnames = fieldnames(BasicDiscUnvParameterNState)
   BasicDiscUnvParameterNState(

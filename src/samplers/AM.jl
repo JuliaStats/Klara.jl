@@ -155,9 +155,9 @@ AM(C0::Real, d::Integer=1; corescale::Real=1., minorscale::Real=1., c::Real=0.05
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::AM,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::AM,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"

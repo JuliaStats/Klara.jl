@@ -70,11 +70,11 @@ BasicContMuvParameterNState(
 
 function BasicContMuvParameterNState(
   size::Integer,
-n::Integer,
-monitor::Vector{Symbol},
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{N}=Float64,
-diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  n::Integer,
+  monitor::Vector{Symbol},
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{N}=Float64,
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 ) where N<:Real
   fnames = fieldnames(BasicContMuvParameterNState)
   BasicContMuvParameterNState(

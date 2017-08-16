@@ -44,9 +44,9 @@ end
 
 function BasicDiscUnvParameterState(
   value::NI,
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{NR}=Float64,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{NR}=Float64,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where {NI<:Integer, NR<:Real}
   v = convert(NR, NaN)
   BasicDiscUnvParameterState{NI, NR}(value, v, v, v, diagnosticvalues, diagnostickeys)

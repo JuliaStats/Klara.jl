@@ -116,15 +116,15 @@ BasicMCJob(
 
 function BasicMCJob(
   model::GenericModel,
-sampler::MCSampler,
-range::BasicMCRange,
-v0::Dict{Symbol, S};
-pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
-tuner::MCTuner=VanillaMCTuner(),
-outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
-resetpstate::Bool=true,
-verbose::Bool=false,
-check::Bool=false
+  sampler::MCSampler,
+  range::BasicMCRange,
+  v0::Dict{Symbol, S};
+  pindex::Integer=findfirst(v::Variable -> isa(v, Parameter), model.vertices),
+  tuner::MCTuner=VanillaMCTuner(),
+  outopts::Dict=Dict(:destination=>:nstate, :monitor=>[:value], :diagnostics=>Symbol[]),
+  resetpstate::Bool=true,
+  verbose::Bool=false,
+  check::Bool=false
 ) where S<:VariableState
   vstate = Array{S}(length(v0))
   for (k, v) in v0

@@ -59,9 +59,9 @@ end
 
 function BasicDiscMuvParameterState(
   value::Vector{NI},
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{NR}=Float64,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{NR}=Float64,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where {NI<:Integer, NR<:Real}
   v = convert(NR, NaN)
   BasicDiscMuvParameterState{NI, NR}(value, v, v, v, diagnosticvalues, length(value), diagnostickeys)
@@ -69,10 +69,10 @@ end
 
 BasicDiscMuvParameterState(
   size::Integer,
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{NI}=Int64,
-::Type{NR}=Float64,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{NI}=Int64,
+  ::Type{NR}=Float64,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where {NI<:Integer, NR<:Real} =
   BasicDiscMuvParameterState(Array{NI}(size), diagnostickeys, NR, diagnosticvalues)
 

@@ -11,7 +11,7 @@ end
 
 ARSState(
   pstate::ParameterState{S, F},
-tune::MCTunerState=BasicMCTune()
+  tune::MCTunerState=BasicMCTune()
 ) where {S<:ValueSupport, F<:VariateForm} =
   ARSState(pstate, tune, NaN, NaN)
 
@@ -36,9 +36,9 @@ ARS(logproposal::Function; proposalscale::Real=1., jumpscale::Real=1.) = ARS(log
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::ARS,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::ARS,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
@@ -53,10 +53,10 @@ end
 
 sampler_state(
   parameter::Parameter{S, F},
-sampler::ARS,
-tuner::MCTuner,
-pstate::ParameterState{S, F},
-vstate::VariableStateVector
+  sampler::ARS,
+  tuner::MCTuner,
+  pstate::ParameterState{S, F},
+  vstate::VariableStateVector
 ) where {S<:ValueSupport, F<:VariateForm} =
   ARSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
@@ -84,10 +84,10 @@ end
 
 reset!(
   sstate::ARSState{S, F},
-pstate::ParameterState{S, F},
-parameter::Parameter{S, F},
-sampler::MCSampler,
-tuner::MCTuner
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
 ) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 

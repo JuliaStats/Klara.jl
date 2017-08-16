@@ -79,10 +79,10 @@ end
 
 reset!(
   sstate::MCSamplerState{F},
-pstate::ParameterState{S, F},
-parameter::Parameter{S, F},
-sampler::MCSampler,
-tuner::MCTuner
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
 ) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 

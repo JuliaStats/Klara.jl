@@ -98,11 +98,11 @@ end
 
 function BasicContMuvParameterState(
   value::Vector{N},
-monitor::Vector{Bool}=fill(false, 9),
-diagnostickeys::Vector{Symbol}=Symbol[],
-diffmethods::Union{DiffMethods, Void}=nothing,
-diffopts::Union{DiffOptions, Void}=nothing,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys)),
+  monitor::Vector{Bool}=fill(false, 9),
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys)),
 ) where N<:Real
   v = convert(N, NaN)
 
@@ -203,11 +203,11 @@ end
 
 function BasicContMuvParameterState(
   value::Vector{N},
-monitor::Vector{Symbol},
-diagnostickeys::Vector{Symbol}=Symbol[],
-diffmethods::Union{DiffMethods, Void}=nothing,
-diffopts::Union{DiffOptions, Void}=nothing,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  monitor::Vector{Symbol},
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where N<:Real
   fnames = fieldnames(BasicContMuvParameterState)
   BasicContMuvParameterState(
@@ -217,23 +217,23 @@ end
 
 BasicContMuvParameterState(
   size::Integer,
-monitor::Vector{Bool}=fill(false, 9),
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{N}=Float64,
-diffmethods::Union{DiffMethods, Void}=nothing,
-diffopts::Union{DiffOptions, Void}=nothing,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  monitor::Vector{Bool}=fill(false, 9),
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{N}=Float64,
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where {N<:Real} =
   BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 
 BasicContMuvParameterState(
   size::Integer,
-monitor::Vector{Symbol},
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{N}=Float64,
-diffmethods::Union{DiffMethods, Void}=nothing,
-diffopts::Union{DiffOptions, Void}=nothing,
-diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
+  monitor::Vector{Symbol},
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{N}=Float64,
+  diffmethods::Union{DiffMethods, Void}=nothing,
+  diffopts::Union{DiffOptions, Void}=nothing,
+  diagnosticvalues::Vector=Array{Any}(length(diagnostickeys))
 ) where {N<:Real} =
   BasicContMuvParameterState(Array{N}(size), monitor, diagnostickeys, diffmethods, diffopts, diagnosticvalues)
 

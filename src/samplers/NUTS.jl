@@ -236,9 +236,9 @@ NUTS(leapstep::Real=0.1; maxδ::Integer=1000, maxndoublings::Integer=5) = NUTS(l
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::NUTS,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::NUTS,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
@@ -370,9 +370,9 @@ uturn(positionplus::RealVector, positionminus::RealVector, momentumplus::RealVec
 
 function codegen_tree_builder(
   parameter::ContinuousParameter,
-::Type{NUTS},
-tunertype::Type{T},
-outopts::Dict
+  ::Type{NUTS},
+  tunertype::Type{T},
+  outopts::Dict
 ) where T<:MCTuner
   ifjzero = []
   ifjnotzero = []

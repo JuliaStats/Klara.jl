@@ -31,8 +31,8 @@ MHState(
 
 MHState(
   proposal::Distribution{F, S},
-pstate::ParameterState{S, F},
-tune::MCTunerState=BasicMCTune()
+  pstate::ParameterState{S, F},
+  tune::MCTunerState=BasicMCTune()
 ) where {S<:ValueSupport, F<:VariateForm} =
   MHState(proposal, pstate, tune, NaN)
 
@@ -74,9 +74,9 @@ MH(::Type{N}=Float64) where {N<:Real} = MH(x::N -> Normal(x, 1.0), signature=:hi
 
 function initialize!(
   pstate::ParameterState{S, F},
-parameter::Parameter{S, F},
-sampler::MH,
-outopts::Dict
+  parameter::Parameter{S, F},
+  sampler::MH,
+  outopts::Dict
 ) where {S<:ValueSupport, F<:VariateForm}
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
@@ -91,10 +91,10 @@ end
 
 sampler_state(
   parameter::Parameter{S, F},
-sampler::MH,
-tuner::MCTuner,
-pstate::ParameterState{S, F},
-vstate::VariableStateVector
+  sampler::MH,
+  tuner::MCTuner,
+  pstate::ParameterState{S, F},
+  vstate::VariableStateVector
 ) where {S<:ValueSupport, F<:VariateForm} =
   MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(parameter, sampler, tuner))
 
@@ -112,10 +112,10 @@ end
 
 reset!(
   sstate::MHState{S, F},
-pstate::ParameterState{S, F},
-parameter::Parameter{S, F},
-sampler::MCSampler,
-tuner::MCTuner
+  pstate::ParameterState{S, F},
+  parameter::Parameter{S, F},
+  sampler::MCSampler,
+  tuner::MCTuner
 ) where {S<:ValueSupport, F<:VariateForm} =
   reset!(sstate.tune, sampler, tuner)
 

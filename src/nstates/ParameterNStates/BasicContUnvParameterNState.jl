@@ -58,10 +58,10 @@ BasicContUnvParameterNState(
 
 function BasicContUnvParameterNState(
   n::Integer,
-monitor::Vector{Symbol},
-diagnostickeys::Vector{Symbol}=Symbol[],
-::Type{N}=Float64,
-diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
+  monitor::Vector{Symbol},
+  diagnostickeys::Vector{Symbol}=Symbol[],
+  ::Type{N}=Float64,
+  diagnosticvalues::Matrix=Array{Any}(length(diagnostickeys), isempty(diagnostickeys) ? 0 : n)
 ) where N<:Real
   fnames = fieldnames(BasicContUnvParameterNState)
   BasicContUnvParameterNState(n, [fnames[i] in monitor ? true : false for i in 1:13], diagnostickeys, N, diagnosticvalues)

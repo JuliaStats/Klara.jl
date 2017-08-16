@@ -112,9 +112,9 @@ RAM(S0::Real=1., n::Integer=1; targetrate::Real=0.234, γ::Real=0.7) = RAM(fill(
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::RAM,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::RAM,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"

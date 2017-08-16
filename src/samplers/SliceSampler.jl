@@ -11,9 +11,9 @@ end
 
 SliceSamplerState(
   lstate::ParameterState{Continuous, F},
-rstate::ParameterState{Continuous, F},
-primestate::ParameterState{Continuous, F},
-tune::MCTunerState=BasicMCTune()
+  rstate::ParameterState{Continuous, F},
+  primestate::ParameterState{Continuous, F},
+  tune::MCTunerState=BasicMCTune()
 ) where {F<:VariateForm} =
   SliceSamplerState(lstate, rstate, primestate, tune, NaN, NaN)
 
@@ -39,9 +39,9 @@ SliceSampler(widths::Real=1., n::Integer=1, stepout::Bool=true) = SliceSampler(f
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::SliceSampler,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::SliceSampler,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.logtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
@@ -51,10 +51,10 @@ end
 
 sampler_state(
   parameter::Parameter{Continuous, F},
-sampler::SliceSampler,
-tuner::MCTuner,
-pstate::ParameterState{Continuous, F},
-vstate::VariableStateVector
+  sampler::SliceSampler,
+  tuner::MCTuner,
+  pstate::ParameterState{Continuous, F},
+  vstate::VariableStateVector
 ) where {F<:VariateForm} =
   SliceSamplerState(
     generate_empty(pstate),
@@ -72,10 +72,10 @@ end
 
 function reset!(
   sstate::SliceSamplerState{F},
-pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::MCSampler,
-tuner::MCTuner
+  pstate::ParameterState{Continuous, F},
+  parameter::Parameter{Continuous, F},
+  sampler::MCSampler,
+  tuner::MCTuner
 ) where F<:VariateForm
   tune.proposed, tune.totproposed = (0, tuner.period)
 end

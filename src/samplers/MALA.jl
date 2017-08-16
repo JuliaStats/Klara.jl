@@ -61,9 +61,9 @@ MALA() = MALA(1.)
 
 function initialize!(
   pstate::ParameterState{Continuous, F},
-parameter::Parameter{Continuous, F},
-sampler::MALA,
-outopts::Dict
+  parameter::Parameter{Continuous, F},
+  sampler::MALA,
+  outopts::Dict
 ) where F<:VariateForm
   parameter.uptogradlogtarget!(pstate)
   @assert isfinite(pstate.logtarget) "Log-target not finite: initial value out of support"
