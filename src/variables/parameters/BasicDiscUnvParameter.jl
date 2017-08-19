@@ -59,7 +59,7 @@ mutable struct BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :loglikelihood!,
       if isa(args[3], Function)
-        eval(codegen_closure(instance, args[3]))
+        state::BasicDiscUnvParameterState -> args[3](state, instance.states)
       else
         nothing
       end
@@ -70,7 +70,7 @@ mutable struct BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :logprior!,
       if isa(args[4], Function)
-        eval(codegen_closure(instance, args[4]))
+        state::BasicDiscUnvParameterState -> args[4](state, instance.states)
       else
         if (isa(prior, DiscreteUnivariateDistribution) && method_exists(logpdf, (typeof(prior), eltype(prior)))) ||
           isa(args[2], Function)
@@ -86,7 +86,7 @@ mutable struct BasicDiscUnvParameter <: Parameter{Discrete, Univariate}
       instance,
       :logtarget!,
       if isa(args[5], Function)
-        eval(codegen_closure(instance, args[5]))
+        state::BasicDiscUnvParameterState -> args[5](state, instance.states)
       else
         if isa(args[3], Function) && isa(getfield(parameter, :logprior!), Function)
           eval(codegen_sumtarget_closure(instance, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))

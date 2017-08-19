@@ -145,7 +145,7 @@ function BasicContUnvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         nothing
       end
@@ -159,7 +159,7 @@ function BasicContUnvParameter!(
     parameter,
       ppfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         if (
             isa(parameter.prior, ContinuousUnivariateDistribution) &&
@@ -185,7 +185,7 @@ function BasicContUnvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
           eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
@@ -209,7 +209,7 @@ function BasicContUnvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         nothing
       end
@@ -223,7 +223,7 @@ function BasicContUnvParameter!(
       parameter,
       ppfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         nothing
       end
@@ -247,7 +247,7 @@ function BasicContUnvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        @codegen_closure(parameter, args[i])
+        state::BasicContUnvParameterState -> args[i](state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
           eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
@@ -263,7 +263,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptogradlogtarget!,
     if isa(args[15], Function)
-      @codegen_closure(parameter, args[15])
+      state::BasicContUnvParameterState -> args[15](state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
         function (state::BasicContUnvParameterState)
@@ -281,7 +281,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptotensorlogtarget!,
     if isa(args[16], Function)
-      @codegen_closure(parameter, args[16])
+      state::BasicContUnvParameterState -> args[16](state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
@@ -302,7 +302,7 @@ function BasicContUnvParameter!(
     parameter,
     :uptodtensorlogtarget!,
     if isa(args[17], Function)
-      @codegen_closure(parameter, args[17])
+      state::BasicContUnvParameterState -> args[17](state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&

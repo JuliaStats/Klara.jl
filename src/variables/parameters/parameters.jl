@@ -32,14 +32,6 @@ function codegen_setfield(parameter::Parameter, field::Symbol, distribution::Sym
   end
 end
 
-macro codegen_closure(parameter, f)
-  quote
-    function (_state)
-      $(esc(f))(_state, $(esc(parameter)).states)
-    end
-  end
-end
-
 function codegen_target_closure_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
   @gensym target_closure_via_distribution
   quote
