@@ -1,17 +1,7 @@
-function codegen_autodiff_function(::Type{Val{:reverse}}, ::Type{Val{:gradient}})
-  body = []
-
-  push!(body, :(getfield(ReverseDiff, :gradient!)(_result, _f, _x)))
-
-  push!(body, :(return DiffBase.gradient(_result)))
-
-  @gensym autodiff_function
-  quote
-    function $autodiff_function(
-      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, _x::Vector
-    )
-      $(body...)
-    end
+function set_autodiff_function(::Type{Val{:reverse}}, ::Type{Val{:gradient}})
+  function (result::DiffBase.DiffResult, f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, x::Vector)
+    ReverseDiff.gradient!(result, f, x)
+    return DiffBase.gradient(result)
   end
 end
 

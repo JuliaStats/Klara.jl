@@ -490,7 +490,7 @@ function BasicContMuvParameter(
     )
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_autodiff_function(diffopts.mode, :gradient)),
+          set_autodiff_function(diffopts.mode, :gradient),
           statetype=:BasicContMuvParameterState,
           returns=fnames[i],
           diffresult=diffresult,

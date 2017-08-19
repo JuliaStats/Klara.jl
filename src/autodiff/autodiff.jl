@@ -75,7 +75,7 @@ DiffOptions(;
 ) =
   DiffOptions(mode, order, targets, chunksize, compiled)
 
-codegen_autodiff_function(mode::Symbol, method::Symbol) = codegen_autodiff_function(Val{mode}, Val{method})
+set_autodiff_function(mode::Symbol, method::Symbol) = set_autodiff_function(Val{mode}, Val{method})
 
 codegen_autodiff_target(mode::Symbol, method::Symbol) = codegen_autodiff_target(Val{mode}, Val{method})
 

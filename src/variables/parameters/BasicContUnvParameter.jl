@@ -501,7 +501,7 @@ function BasicContUnvParameter(
     for (i, diffresult, diffmethod) in ((6, :resultll, :closurell), (7, :resultlp, :closurelp), (8, :resultlt, :closurelt))
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
         outargs[i] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_autodiff_function(diffopts.mode, :derivative)),
+          set_autodiff_function(diffopts.mode, :derivative),
           statetype=:BasicContUnvParameterState,
           returns=fnames[i],
           diffresult=diffresult,
