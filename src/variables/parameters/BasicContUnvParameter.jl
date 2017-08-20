@@ -493,7 +493,7 @@ function BasicContUnvParameter(
         setfield!(
           parameter.diffmethods,
           field,
-          nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
+          nkeys == 0 ? inargs[i] : x::Real -> inargs[i](x, Any[s.value for s in parameter.states])
         )
       end
     end
@@ -526,18 +526,6 @@ function BasicContUnvParameter(
   BasicContUnvParameter!(parameter, outargs...)
 
   parameter
-end
-
-function codegen_internal_autodiff_closure(parameter::BasicContUnvParameter, f::Function, nkeys::Integer)
-  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
-
-  @gensym internal_autodiff_closure
-
-  quote
-    function $internal_autodiff_closure(_x::Real)
-      $(f)(_x, $(fstatesarg...))
-    end
-  end
 end
 
 value_support(::Type{BasicContUnvParameter}) = Continuous

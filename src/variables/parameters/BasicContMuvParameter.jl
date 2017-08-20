@@ -471,16 +471,28 @@ function BasicContMuvParameter(
   end
 
   if diffopts != nothing
-    for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
-      if isa(inargs[i], Function)
-        setfield!(
-          parameter.diffmethods,
-          field,
-          nkeys == 0 ? inargs[i] : eval(codegen_internal_autodiff_closure(parameter, inargs[i], nkeys))
-        )
+    if diffopts.mode == :reverse
+      for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
+        if isa(inargs[i], Function)
+          setfield!(
+            parameter.diffmethods, field, nkeys == 0 ? inargs[i] : x -> inargs[i](x, Any[s.value for s in parameter.states])
+          )
+        end
+      end
+    elseif diffopts.mode == :forward
+      for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
+        if isa(inargs[i], Function)
+          setfield!(
+            parameter.diffmethods,
+            field,
+            nkeys == 0 ? inargs[i] : x::Vector -> inargs[i](x, Any[s.value for s in parameter.states])
+          )
+        end
       end
     end
+  end
 
+  if diffopts != nothing
     diffmethods = diffopts.mode == :reverse ? (:tapegll, :tapeglp, :tapeglt) : (:closurell, :closurelp, :closurelt)
 
     for (i, diffresult, diffmethod, diffconfig) in (
@@ -547,20 +559,6 @@ function BasicContMuvParameter(
   BasicContMuvParameter!(parameter, outargs...)
 
   parameter
-end
-
-function codegen_internal_autodiff_closure(parameter::BasicContMuvParameter, f::Function, nkeys::Integer)
-  fstatesarg = [Expr(:ref, :Any, [:($(parameter).states[$i].value) for i in 1:nkeys]...)]
-
-  arg = parameter.diffopts.mode == :reverse ? :_x : :(_x::Vector)
-
-  @gensym internal_autodiff_closure
-
-  quote
-    function $internal_autodiff_closure($arg)
-      $(f)(_x, $(fstatesarg...))
-    end
-  end
 end
 
 function set_tapes!(parameter::BasicContMuvParameter, pstate::ParameterState{Continuous, Multivariate})
