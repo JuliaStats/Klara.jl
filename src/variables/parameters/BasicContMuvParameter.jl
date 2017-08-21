@@ -138,7 +138,7 @@ function BasicContMuvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         nothing
       end
@@ -152,7 +152,7 @@ function BasicContMuvParameter!(
       parameter,
       ppfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         if (
             isa(parameter.prior, ContinuousMultivariateDistribution) &&
@@ -178,7 +178,7 @@ function BasicContMuvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
           eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
@@ -202,7 +202,7 @@ function BasicContMuvParameter!(
       parameter,
       plfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         nothing
       end
@@ -216,7 +216,7 @@ function BasicContMuvParameter!(
       parameter,
       ppfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         nothing
       end
@@ -240,7 +240,7 @@ function BasicContMuvParameter!(
       parameter,
       ptfield,
       if isa(args[i], Function)
-        state::BasicContMuvParameterState -> args[i](state, parameter.states)
+        _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
           eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
@@ -256,7 +256,7 @@ function BasicContMuvParameter!(
     parameter,
     :uptogradlogtarget!,
     if isa(args[15], Function)
-      state::BasicContMuvParameterState -> args[15](state, parameter.states)
+      _state::BasicContMuvParameterState -> args[15](_state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) && isa(parameter.gradlogtarget!, Function)
         function (state::BasicContMuvParameterState)
@@ -274,7 +274,7 @@ function BasicContMuvParameter!(
     parameter,
     :uptotensorlogtarget!,
     if isa(args[16], Function)
-      state::BasicContMuvParameterState -> args[16](state, parameter.states)
+      _state::BasicContMuvParameterState -> args[16](_state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
@@ -295,7 +295,7 @@ function BasicContMuvParameter!(
     parameter,
     :uptodtensorlogtarget!,
     if isa(args[17], Function)
-      state::BasicContMuvParameterState -> args[17](state, parameter.states)
+      _state::BasicContMuvParameterState -> args[17](_state, parameter.states)
     else
       if isa(parameter.logtarget!, Function) &&
         isa(parameter.gradlogtarget!, Function) &&
@@ -475,8 +475,27 @@ function BasicContMuvParameter(
       for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
         if isa(inargs[i], Function)
           setfield!(
-            parameter.diffmethods, field, nkeys == 0 ? inargs[i] : x -> inargs[i](x, Any[s.value for s in parameter.states])
+            parameter.diffmethods,
+            field,
+            nkeys == 0 ? inargs[i] : _x -> inargs[i](_x, Any[s.value for s in parameter.states])
           )
+        end
+      end
+
+      for (i, returnname, diffresult, diffmethod) in (
+        (6, :gradloglikelihood, :resultll, :tapegll),
+        (7, :gradlogprior, :resultlp, :tapeglp),
+        (8, :gradlogtarget, :resultlt, :tapetlt)
+      )
+        if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
+          local f = set_autodiff_function(diffopts.mode, :gradient)
+          outargs[i] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
+            setfield!(
+              _state,
+              returnname,
+              f(getfield(_state.diffstate, diffresult), getfield(_state.diffmethods, diffmethod), _state.value)
+            )
+          end
         end
       end
     elseif diffopts.mode == :forward
@@ -485,8 +504,30 @@ function BasicContMuvParameter(
           setfield!(
             parameter.diffmethods,
             field,
-            nkeys == 0 ? inargs[i] : x::Vector -> inargs[i](x, Any[s.value for s in parameter.states])
+            nkeys == 0 ? inargs[i] : _x::Vector -> inargs[i](_x, Any[s.value for s in parameter.states])
           )
+        end
+      end
+
+      for (i, returnname, diffresult, diffmethod, diffconfig) in (
+        (6, :gradloglikelihood, :resultll, :closurell, :cfggll),
+        (7, :gradlogprior, :resultlp, :closurelp, :cfgglp),
+        (8, :gradlogtarget, :resultlt, :closurelt, :cfgglt)
+      )
+        if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
+          local f = set_autodiff_function(diffopts.mode, :gradient)
+          outargs[i] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
+            setfield!(
+              _state,
+              returnname,
+              f(
+                getfield(_state.diffstate, diffresult),
+                getfield(_state.diffmethods, diffmethod),
+                _state.value,
+                getfield(_state.diffstate, diffconfig)
+              )
+            )
+          end
         end
       end
     end
@@ -494,23 +535,6 @@ function BasicContMuvParameter(
 
   if diffopts != nothing
     diffmethods = diffopts.mode == :reverse ? (:tapegll, :tapeglp, :tapeglt) : (:closurell, :closurelp, :closurelt)
-
-    for (i, diffresult, diffmethod, diffconfig) in (
-      (6, :resultll, diffmethods[1], :cfggll),
-      (7, :resultlp, diffmethods[2], :cfgglp),
-      (8, :resultlt, diffmethods[3], :cfgglt)
-    )
-      if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-        outargs[i] = eval(codegen_lowlevel_variable_method(
-          set_autodiff_function(diffopts.mode, :gradient),
-          statetype=:BasicContMuvParameterState,
-          returns=fnames[i],
-          diffresult=diffresult,
-          diffmethod=diffmethod,
-          diffconfig=(diffopts.mode == :reverse ? nothing : diffconfig)
-        ))
-      end
-    end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
       outargs[15] = eval(codegen_lowlevel_variable_method(

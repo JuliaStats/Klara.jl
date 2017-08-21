@@ -61,7 +61,7 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
       instance,
       :loglikelihood!,
       if isa(args[3], Function)
-        state::BasicDiscMuvParameterState -> args[3](state, instance.states)
+        _state::BasicDiscMuvParameterState -> args[3](_state, instance.states)
       else
         nothing
       end
@@ -72,7 +72,7 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
       instance,
       :logprior!,
       if isa(args[4], Function)
-        state::BasicDiscMuvParameterState -> args[4](state, instance.states)
+        _state::BasicDiscMuvParameterState -> args[4](_state, instance.states)
       else
         if (isa(prior, DiscreteMultivariateDistribution) && method_exists(logpdf, (typeof(prior), Vector{eltype(prior)}))) ||
           isa(args[2], Function)
@@ -88,7 +88,7 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
       instance,
       :logtarget!,
       if isa(args[5], Function)
-        state::BasicDiscMuvParameterState -> args[5](state, instance.states)
+        _state::BasicDiscMuvParameterState -> args[5](_state, instance.states)
       else
         if isa(args[3], Function) && isa(getfield(instance, :logprior!), Function)
           eval(codegen_sumtarget_closure(instance, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))
