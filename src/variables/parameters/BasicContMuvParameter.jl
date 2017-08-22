@@ -488,14 +488,22 @@ function BasicContMuvParameter(
         (8, :gradlogtarget, :resultlt, :tapetlt)
       )
         if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-          local f = set_autodiff_function(diffopts.mode, :gradient)
           outargs[i] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
             setfield!(
               _state,
               returnname,
-              f(getfield(_state.diffstate, diffresult), getfield(_state.diffmethods, diffmethod), _state.value)
+              reverse_autodiff_gradient(
+                getfield(_state.diffstate, diffresult), getfield(_state.diffmethods, diffmethod), _state.value
+              )
             )
           end
+        end
+      end
+
+      if !isa(inargs[15], Function) && isa(inargs[5], Function)
+        outargs[15] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
+          (_state.logtarget, _state.gradlogtarget) =
+            reverse_autodiff_upto_gradient(_state.diffstate.resultlt, _state.diffmethods.tapeglt, _state.value)
         end
       end
     elseif diffopts.mode == :forward
@@ -515,12 +523,11 @@ function BasicContMuvParameter(
         (8, :gradlogtarget, :resultlt, :closurelt, :cfgglt)
       )
         if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-          local f = set_autodiff_function(diffopts.mode, :gradient)
           outargs[i] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
             setfield!(
               _state,
               returnname,
-              f(
+              forward_autodiff_gradient(
                 getfield(_state.diffstate, diffresult),
                 getfield(_state.diffmethods, diffmethod),
                 _state.value,
@@ -530,22 +537,20 @@ function BasicContMuvParameter(
           end
         end
       end
+
+      if !isa(inargs[15], Function) && isa(inargs[5], Function)
+        outargs[15] = function (_state::BasicContMuvParameterState, _states::VariableStateVector)
+          (_state.logtarget, _state.gradlogtarget) =
+            forward_autodiff_upto_gradient(
+              _state.diffstate.resultlt, _state.diffmethods.closurelt, _state.value, _state.diffstate.cfgglt
+            )
+        end
+      end
     end
   end
 
   if diffopts != nothing
     diffmethods = diffopts.mode == :reverse ? (:tapegll, :tapeglp, :tapeglt) : (:closurell, :closurelp, :closurelt)
-
-    if !isa(inargs[15], Function) && isa(inargs[5], Function)
-      outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_autodiff_uptofunction(diffopts.mode, :gradient)),
-        statetype=:BasicContMuvParameterState,
-        returns=fnames[15],
-        diffresult=:resultlt,
-        diffmethod=diffmethods[3],
-        diffconfig=(diffopts.mode == :reverse ? nothing : :cfgglt)
-      ))
-    end
 
     if diffopts.order == 2
       diffmethods = diffopts.mode == :reverse ? (:tapetll, :tapetlp, :tapetlt) : (:closurell, :closurelp, :closurelt)

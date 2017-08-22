@@ -498,28 +498,29 @@ function BasicContUnvParameter(
       end
     end
 
-    for (i, diffresult, diffmethod) in ((6, :resultll, :closurell), (7, :resultlp, :closurelp), (8, :resultlt, :closurelt))
+    for (i, returnname, diffresult, diffmethod) in (
+      (6, :gradloglikelihood, :resultll, :closurell),
+      (7, :gradlogprior, :resultlp, :closurelp),
+      (8, :gradlogtarget, :resultlt, :closurelt)
+    )
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-        outargs[i] = eval(codegen_lowlevel_variable_method(
-          set_autodiff_function(diffopts.mode, :derivative),
-          statetype=:BasicContUnvParameterState,
-          returns=fnames[i],
-          diffresult=diffresult,
-          diffmethod=diffmethod,
-          diffconfig=nothing
-        ))
+        outargs[i] = function (_state::BasicContUnvParameterState, _states::VariableStateVector)
+          setfield!(
+            _state,
+            returnname,
+            forward_autodiff_derivative(
+              getfield(_state.diffstate, diffresult), getfield(_state.diffmethods, diffmethod), _state.value
+            )
+          )
+        end
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
-      outargs[15] = eval(codegen_lowlevel_variable_method(
-        eval(codegen_autodiff_uptofunction(diffopts.mode, :derivative)),
-        statetype=:BasicContUnvParameterState,
-        returns=fnames[15],
-        diffresult=:resultlt,
-        diffmethod=:closurelt,
-        diffconfig=nothing
-      ))
+      outargs[15] = function (_state::BasicContUnvParameterState, _states::VariableStateVector)
+        (_state.logtarget, _state.gradlogtarget) =
+          forward_autodiff_upto_derivative(_state.diffstate.resultlt, _state.diffmethods.closurelt, _state.value)
+      end
     end
   end
 

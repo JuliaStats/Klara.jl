@@ -79,6 +79,6 @@ set_autodiff_function(mode::Symbol, method::Symbol) = set_autodiff_function(Val{
 
 codegen_autodiff_target(mode::Symbol, method::Symbol) = codegen_autodiff_target(Val{mode}, Val{method})
 
-codegen_autodiff_uptofunction(mode::Symbol, method::Symbol) = codegen_autodiff_uptofunction(Val{mode}, Val{method})
+set_autodiff_uptofunction(mode::Symbol, method::Symbol) = set_autodiff_uptofunction(Val{mode}, Val{method})
 
 codegen_autodiff_uptotarget(mode::Symbol, method::Symbol) = codegen_autodiff_uptotarget(Val{mode}, Val{method})

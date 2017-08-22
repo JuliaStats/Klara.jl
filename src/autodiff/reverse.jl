@@ -1,8 +1,10 @@
-function set_autodiff_function(::Type{Val{:reverse}}, ::Type{Val{:gradient}})
-  function (result::DiffBase.DiffResult, f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, x::Vector)
-    ReverseDiff.gradient!(result, f, x)
-    return DiffBase.gradient(result)
-  end
+function reverse_autodiff_gradient(
+  result::DiffBase.DiffResult,
+  f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape},
+  x::Vector
+)
+  ReverseDiff.gradient!(result, f, x)
+  return DiffBase.gradient(result)
 end
 
 function codegen_autodiff_target(::Type{Val{:reverse}}, ::Type{Val{:hessian}})
@@ -22,21 +24,13 @@ function codegen_autodiff_target(::Type{Val{:reverse}}, ::Type{Val{:hessian}})
   end
 end
 
-function codegen_autodiff_uptofunction(::Type{Val{:reverse}}, ::Type{Val{:gradient}})
-  body = []
-
-  push!(body, :(getfield(ReverseDiff, :gradient!)(_result, _f, _x)))
-
-  push!(body, :(return DiffBase.value(_result), DiffBase.gradient(_result)))
-
-  @gensym autodiff_uptofunction
-  quote
-    function $autodiff_uptofunction(
-      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape}, _x::Vector
-    )
-      $(body...)
-    end
-  end
+function reverse_autodiff_upto_gradient(
+  result::DiffBase.DiffResult,
+  f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape},
+  x::Vector
+)
+  ReverseDiff.gradient!(result, f, x)
+  return DiffBase.value(result), DiffBase.gradient(result)
 end
 
 function codegen_autodiff_uptotarget(::Type{Val{:reverse}}, ::Type{Val{:hessian}})
