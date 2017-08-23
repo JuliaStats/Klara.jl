@@ -504,7 +504,7 @@ function BasicContUnvParameter(
       (8, :gradlogtarget, :resultlt, :closurelt)
     )
       if !isa(inargs[i], Function) && isa(inargs[i-3], Function)
-        outargs[i] = function (_state::BasicContUnvParameterState, _states::VariableStateVector)
+        outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
           setfield!(
             _state,
             returnname,
@@ -512,15 +512,13 @@ function BasicContUnvParameter(
               getfield(_state.diffstate, diffresult), getfield(_state.diffmethods, diffmethod), _state.value
             )
           )
-        end
       end
     end
 
     if !isa(inargs[15], Function) && isa(inargs[5], Function)
-      outargs[15] = function (_state::BasicContUnvParameterState, _states::VariableStateVector)
+      outargs[15] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
         (_state.logtarget, _state.gradlogtarget) =
           forward_autodiff_upto_derivative(_state.diffstate.resultlt, _state.diffmethods.closurelt, _state.value)
-      end
     end
   end
 

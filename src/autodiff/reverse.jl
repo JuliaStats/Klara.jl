@@ -7,21 +7,13 @@ function reverse_autodiff_gradient(
   return DiffBase.gradient(result)
 end
 
-function codegen_autodiff_target(::Type{Val{:reverse}}, ::Type{Val{:hessian}})
-  body = []
-
-  push!(body, :(getfield(ReverseDiff, :hessian!)(_result, _f, _x)))
-
-  push!(body, :(return -DiffBase.hessian(_result)))
-
-  @gensym autodiff_target
-  quote
-    function $autodiff_target(
-      _result::DiffBase.DiffResult, _f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape}, _x::Vector
-    )
-      $(body...)
-    end
-  end
+function reverse_autodiff_negative_hessian(
+  result::DiffBase.DiffResult,
+  f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape},
+  x::Vector
+)
+  ReverseDiff.hessian!(result, f, x)
+  return -DiffBase.hessian(result)
 end
 
 function reverse_autodiff_upto_gradient(

@@ -8,19 +8,11 @@ function forward_autodiff_gradient(result::DiffBase.DiffResult, f::Function, x::
   return DiffBase.gradient(result)
 end
 
-function codegen_autodiff_target(::Type{Val{:forward}}, ::Type{Val{:hessian}})
-  body = []
-
-  push!(body, :(getfield(ForwardDiff, :hessian!)(_result, _f, _x, _cfg)))
-
-  push!(body, :(return -DiffBase.hessian(_result)))
-
-  @gensym autodiff_target
-  quote
-    function $autodiff_target(_result::DiffBase.DiffResult, _f::Function, _x::Vector, _cfg::ForwardDiff.HessianConfig)
-      $(body...)
-    end
-  end
+function forward_autodiff_negative_hessian(
+  result::DiffBase.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.HessianConfig
+)
+  ForwardDiff.hessian!(result, f, x, cfg)
+  return -DiffBase.hessian(result)
 end
 
 function forward_autodiff_upto_derivative(result::DiffBase.DiffResult, f::Function, x::Real)
