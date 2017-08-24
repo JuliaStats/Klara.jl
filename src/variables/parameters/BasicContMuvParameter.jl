@@ -524,6 +524,12 @@ function BasicContMuvParameter(
               )
           end
         end
+
+        if !isa(inargs[16], Function) && isa(inargs[5], Function)
+          outargs[16] = (_state::BasicContMuvParameterState, _states::VariableStateVector) ->
+            (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget) =
+              reverse_autodiff_upto_negative_hessian(_state.diffstate.resultlt, _state.diffmethods.tapetlt, _state.value)
+        end
       end
     elseif diffopts.mode == :forward
       for (i, field) in ((3, :closurell), (4, :closurelp), (5, :closurelt))
@@ -584,25 +590,14 @@ function BasicContMuvParameter(
               )
           end
         end
-      end
-    end
-  end
 
-  if diffopts != nothing
-    diffmethods = diffopts.mode == :reverse ? (:tapegll, :tapeglp, :tapeglt) : (:closurell, :closurelp, :closurelt)
-
-    if diffopts.order == 2
-      diffmethods = diffopts.mode == :reverse ? (:tapetll, :tapetlp, :tapetlt) : (:closurell, :closurelp, :closurelt)
-
-      if !isa(inargs[16], Function) && isa(inargs[5], Function)
-        outargs[16] = eval(codegen_lowlevel_variable_method(
-          eval(codegen_autodiff_uptotarget(diffopts.mode, :hessian)),
-          statetype=:BasicContMuvParameterState,
-          returns=fnames[16],
-          diffresult=:resultlt,
-          diffmethod=diffmethods[3],
-          diffconfig=(diffopts.mode == :reverse ? nothing : :cfgtlt)
-        ))
+        if !isa(inargs[16], Function) && isa(inargs[5], Function)
+          outargs[16] = (_state::BasicContMuvParameterState, _states::VariableStateVector) ->
+            (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget) =
+              forward_autodiff_upto_negative_hessian(
+                _state.diffstate.resultlt, _state.diffmethods.closurelt, _state.value, _state.diffstate.cfgtlt
+              )
+        end
       end
     end
   end

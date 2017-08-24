@@ -74,11 +74,3 @@ DiffOptions(;
   mode::Symbol=:reverse, order::Integer=1, targets::Vector{Bool}=fill(false, 3), chunksize::Integer=0, compiled::Bool=true
 ) =
   DiffOptions(mode, order, targets, chunksize, compiled)
-
-set_autodiff_function(mode::Symbol, method::Symbol) = set_autodiff_function(Val{mode}, Val{method})
-
-codegen_autodiff_target(mode::Symbol, method::Symbol) = codegen_autodiff_target(Val{mode}, Val{method})
-
-set_autodiff_uptofunction(mode::Symbol, method::Symbol) = set_autodiff_uptofunction(Val{mode}, Val{method})
-
-codegen_autodiff_uptotarget(mode::Symbol, method::Symbol) = codegen_autodiff_uptotarget(Val{mode}, Val{method})
