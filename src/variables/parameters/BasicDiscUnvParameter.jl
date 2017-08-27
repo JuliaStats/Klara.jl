@@ -138,21 +138,58 @@ function BasicDiscUnvParameter(
 )
   inargs = (setpdf, setprior, loglikelihood, logprior, logtarget)
 
-  fnames = Array{Any}(5)
-  fnames[1:2] = fill(Symbol[], 2)
-  fnames[3:5] = [Symbol[f] for f in fieldnames(BasicDiscUnvParameterState)[2:4]]
+  fnames = fieldnames(BasicDiscUnvParameterState)[2:4]
 
-  @assert nkeys >= 0 "nkeys must be non-negative, got $nkeys"
+  if vfarg
+    @assert nkeys > 0 "If vfarg=$vfarg, nkeys must be positive, got $nkeys"
+  else
+    @assert nkeys >= 0 "If vfarg=$vfarg, nkeys must be non-negative, got $nkeys"
+  end
 
   outargs = Union{Function, Void}[nothing for i in 1:5]
 
-  for i in 1:5
-    if isa(inargs[i], Function)
-      outargs[i] = eval(
-        codegen_lowlevel_variable_method(
-          inargs[i], statetype=:BasicDiscUnvParameterState, returns=fnames[i], vfarg=vfarg, nkeys=nkeys
-        )
-      )
+  if vfarg
+    for i in 1:2
+      if isa(inargs[i], Function)
+        outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) ->
+          inargs[i](Any[s.value for s in _states])
+      end
+    end
+
+    for i in 3:5
+      if isa(inargs[i], Function)
+        outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) ->
+          setfield!(_state, fnames[i-2], inargs[i](Any[s.value for s in _states]))
+      end
+    end
+  else
+    if nkeys > 0
+      for i in 1:2
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) ->
+            inargs[i](_state.value, Any[s.value for s in _states])
+        end
+      end
+
+      for i in 3:5
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) ->
+            setfield!(_state, fnames[i-2], inargs[i](_state.value, Any[s.value for s in _states]))
+        end
+      end
+    else
+      for i in 1:2
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) -> inargs[i](_state.value)
+        end
+      end
+
+      for i in 3:5
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicDiscUnvParameterState, _states::VariableStateVector) ->
+            setfield!(_state, fnames[i-2], inargs[i](_state.value))
+        end
+      end
     end
   end
 

@@ -427,19 +427,18 @@ function BasicContUnvParameter(
     uptodtensorlogtarget
   )
 
-  fnames = Array{Any}(17)
-  fnames[1:2] = fill(Symbol[], 2)
-  fnames[3:14] = [Symbol[f] for f in fieldnames(BasicContUnvParameterState)[2:13]]
-  for i in 1:3
-    fnames[14+i] = Symbol[fnames[j][1] for j in 5:3:(5+i*3)]
-  end
+  fnames = fieldnames(BasicContUnvParameterState)[2:13]
 
-  if nkeys > 0
-    if diffopts != nothing && vfarg
-      error("In the case of autodiff, if nkeys is not 0, then vfarg must be false")
+  if vfarg
+    if nkeys > 0
+      if diffopts != nothing
+        error("In the case of autodiff, if nkeys is not 0, then vfarg must be false")
+      end
+    else
+      error("If vfarg=$vfarg, nkeys must be positive, got $nkeys")
     end
-  elseif nkeys < 0
-    "nkeys must be non-negative, got $nkeys"
+  else
+    @assert nkeys >= 0 "If vfarg=$vfarg, nkeys must be non-negative, got $nkeys"
   end
 
   if diffopts != nothing
@@ -464,13 +463,97 @@ function BasicContUnvParameter(
 
   outargs = Union{Function, Void}[nothing for i in 1:17]
 
-  for i in 1:17
-    if isa(inargs[i], Function)
-      outargs[i] = eval(
-        codegen_lowlevel_variable_method(
-          inargs[i], statetype=:BasicContUnvParameterState, returns=fnames[i], vfarg=vfarg, nkeys=nkeys
-        )
-      )
+  if vfarg
+    for i in 1:2
+      if isa(inargs[i], Function)
+        outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          inargs[i](Any[s.value for s in _states])
+      end
+    end
+
+    for i in 3:14
+      if isa(inargs[i], Function)
+        outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          setfield!(_state, fnames[i-2], inargs[i](Any[s.value for s in _states]))
+      end
+    end
+
+    if isa(inargs[15], Function)
+      outargs[15] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+        (_state.logtarget, _state.gradlogtarget) = inargs[15](Any[s.value for s in _states])
+    end
+
+    if isa(inargs[16], Function)
+      outargs[16] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+        (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget) = inargs[16](Any[s.value for s in _states])
+    end
+
+    if isa(inargs[17], Function)
+      outargs[17] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+        (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget, _state.dtensorlogtarget) =
+          inargs[17](Any[s.value for s in _states])
+    end
+  else
+    if nkeys > 0
+      for i in 1:2
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+            inargs[i](_state.value, Any[s.value for s in _states])
+        end
+      end
+
+      for i in 3:14
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+            setfield!(_state, fnames[i-2], inargs[i](_state.value, Any[s.value for s in _states]))
+        end
+      end
+
+      if isa(inargs[15], Function)
+        outargs[15] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget) = inargs[15](_state.value, Any[s.value for s in _states])
+      end
+
+      if isa(inargs[16], Function)
+        outargs[16] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget) =
+            inargs[16](_state.value, Any[s.value for s in _states])
+      end
+
+      if isa(inargs[17], Function)
+        outargs[17] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget, _state.dtensorlogtarget) =
+            inargs[17](_state.value, Any[s.value for s in _states])
+      end
+    else
+      for i in 1:2
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) -> inargs[i](_state.value)
+        end
+      end
+
+      for i in 3:14
+        if isa(inargs[i], Function)
+          outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+            setfield!(_state, fnames[i-2], inargs[i](_state.value))
+        end
+      end
+
+      if isa(inargs[15], Function)
+        outargs[15] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget) = inargs[15](_state.value)
+      end
+
+      if isa(inargs[16], Function)
+        outargs[16] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget) = inargs[16](_state.value)
+      end
+
+      if isa(inargs[17], Function)
+        outargs[17] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          (_state.logtarget, _state.gradlogtarget, _state.tensorlogtarget, _state.dtensorlogtarget) =
+            inargs[17](_state.value)
+      end
     end
   end
 
