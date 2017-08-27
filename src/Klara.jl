@@ -267,8 +267,6 @@ include("format.jl")
 
 include("data.jl")
 
-include("codegen.jl")
-
 include("stats/logistic.jl")
 
 include("distributions/Binary.jl")

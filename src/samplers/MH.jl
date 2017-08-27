@@ -53,13 +53,8 @@ MH(setproposal::Function; signature::Symbol=:high, args...) = MH(setproposal, Va
 MH(setproposal::Function, ::Type{Val{:low}}; symmetric::Bool=true, normalised::Bool=true) =
   MH(symmetric, normalised, setproposal)
 
-MH(
-  setproposal::Function,
-  ::Type{Val{:high}};
-  symmetric::Bool=true,
-  normalised::Bool=true
-) =
-  MH(symmetric, normalised, eval(codegen_lowlevel_variable_method(setproposal, states=false)))
+MH(setproposal::Function, ::Type{Val{:high}}; symmetric::Bool=true, normalised::Bool=true) =
+  MH(symmetric, normalised, _state -> setproposal(_state.value))
 
 # Random-walk Metropolis, i.e. Metropolis with a normal proposal distribution
 
