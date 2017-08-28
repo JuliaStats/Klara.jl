@@ -124,7 +124,8 @@ function BasicContMuvParameter!(
       parameter,
       setter,
       if isa(args[i], Function)
-        eval(codegen_setfield(parameter, distribution, args[i]))
+        (_state::BasicContMuvParameterState, _states::VariableStateVector) ->
+          setfield!(parameter, distribution, args[i](_state, _states))
       else
         nothing
       end
@@ -181,7 +182,11 @@ function BasicContMuvParameter!(
         _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
-          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
+          function (_state::BasicContMuvParameterState)
+            getfield(parameter, plfield)(_state)
+            getfield(parameter, ppfield)(_state)
+            setfield!(_state, stfield, getfield(_state, slfield)+getfield(_state, spfield))
+          end
         elseif (
             isa(parameter.pdf, ContinuousMultivariateDistribution) &&
             method_exists(f, (typeof(parameter.pdf), Vector{eltype(parameter.pdf)}))
@@ -243,7 +248,11 @@ function BasicContMuvParameter!(
         _state::BasicContMuvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
+          function (_state::BasicContMuvParameterState)
+            getfield(parameter, plfield)(_state)
+            getfield(parameter, ppfield)(_state)
+            setfield!(_state, stfield, getfield(_state, slfield)+getfield(_state, spfield))
+          end
         else
           nothing
         end
@@ -549,7 +558,8 @@ function BasicContMuvParameter(
         ) ||
         isa(inargs[j], Function)
       )
-      outargs[i] = eval(codegen_setfield(parameter, field, distribution, f))
+      outargs[i] = (_state::BasicContMuvParameterState, _states::VariableStateVector) ->
+        setfield!(_state, field, f(getfield(parameter, distribution), _state.value))
     end
   end
 

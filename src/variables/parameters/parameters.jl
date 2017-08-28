@@ -14,51 +14,11 @@ ParameterVector{P<:Parameter} = Vector{P}
 
 ### Code generation of parameter fields
 
-function codegen_setfield(parameter::Parameter, field::Symbol, f::Function)
-  @gensym setfield
-  quote
-    function $setfield(_state::$(default_state_type(parameter)), _states::VariableStateVector)
-      setfield!($parameter, $(QuoteNode(field)), $f(_state, _states))
-    end
-  end
-end
-
-function codegen_setfield(parameter::Parameter, field::Symbol, distribution::Symbol, f::Function)
-  @gensym setfield
-  quote
-    function $setfield(_state::$(default_state_type(parameter)), _states::VariableStateVector)
-      setfield!(_state, $(QuoteNode(field)), $(f)(getfield($parameter, $(QuoteNode(distribution))), _state.value))
-    end
-  end
-end
-
 function codegen_target_closure_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
   @gensym target_closure_via_distribution
   quote
     function $target_closure_via_distribution(_state::$(default_state_type(parameter)))
       setfield!(_state, $(QuoteNode(field)), $(f)(getfield($parameter, $(QuoteNode(distribution))), _state.value))
-    end
-  end
-end
-
-function codegen_sumtarget_closure(
-  parameter::Parameter, plfield::Symbol, ppfield::Symbol, stfield::Symbol, slfield::Symbol, spfield::Symbol
-)
-  body = []
-
-  push!(body, :(getfield($parameter, $(QuoteNode(plfield)))(_state)))
-  push!(body, :(getfield($parameter, $(QuoteNode(ppfield)))(_state)))
-  push!(body, :(setfield!(
-    _state,
-    $(QuoteNode(stfield)),
-    getfield(_state, $(QuoteNode(slfield)))+getfield(_state, $(QuoteNode(spfield)))))
-  )
-
-  @gensym sumtarget_closure
-
-  quote
-    function $sumtarget_closure(_state::$(default_state_type(parameter)))
-      $(body...)
     end
   end
 end

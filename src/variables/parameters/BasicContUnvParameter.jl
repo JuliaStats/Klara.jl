@@ -131,7 +131,8 @@ function BasicContUnvParameter!(
       parameter,
       setter,
       if isa(args[i], Function)
-        eval(codegen_setfield(parameter, distribution, args[i]))
+        (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+          setfield!(parameter, distribution, args[i](_state, _states))
       else
         nothing
       end
@@ -188,7 +189,11 @@ function BasicContUnvParameter!(
         _state::BasicContUnvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(getfield(parameter, ppfield), Function)
-          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
+          function (_state::BasicContUnvParameterState)
+            getfield(parameter, plfield)(_state)
+            getfield(parameter, ppfield)(_state)
+            setfield!(_state, stfield, getfield(_state, slfield)+getfield(_state, spfield))
+          end
         elseif (
             isa(parameter.pdf, ContinuousUnivariateDistribution) &&
             method_exists(f, (typeof(parameter.pdf), eltype(parameter.pdf)))
@@ -250,7 +255,11 @@ function BasicContUnvParameter!(
         _state::BasicContUnvParameterState -> args[i](_state, parameter.states)
       else
         if isa(args[i-2], Function) && isa(args[i-1], Function)
-          eval(codegen_sumtarget_closure(parameter, plfield, ppfield, stfield, slfield, spfield))
+          function (_state::BasicContUnvParameterState)
+            getfield(parameter, plfield)(_state)
+            getfield(parameter, ppfield)(_state)
+            setfield!(_state, stfield, getfield(_state, slfield)+getfield(_state, spfield))
+          end
         else
           nothing
         end
@@ -566,7 +575,8 @@ function BasicContUnvParameter(
         ) ||
         isa(inargs[j], Function)
       )
-      outargs[i] = eval(codegen_setfield(parameter, field, distribution, f))
+      outargs[i] = (_state::BasicContUnvParameterState, _states::VariableStateVector) ->
+        setfield!(_state, field, f(getfield(parameter, distribution), _state.value))
     end
   end
 

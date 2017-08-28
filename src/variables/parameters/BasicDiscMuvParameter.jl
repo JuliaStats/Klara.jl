@@ -49,7 +49,8 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
         instance,
         setter,
         if isa(args[i], Function)
-          eval(codegen_setfield(instance, distribution, args[i]))
+          (_state::BasicDiscMuvParameterState, _states::VariableStateVector) ->
+            setfield!(instance, distribution, args[i](_state, _states))
         else
           nothing
         end
@@ -91,7 +92,11 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
         _state::BasicDiscMuvParameterState -> args[5](_state, instance.states)
       else
         if isa(args[3], Function) && isa(getfield(instance, :logprior!), Function)
-          eval(codegen_sumtarget_closure(instance, :loglikelihood!, :logprior!, :logtarget, :loglikelihood, :logprior))
+          function (_state::BasicDiscMuvParameterState)
+            getfield(instance, :loglikelihood!)(_state)
+            getfield(instance, :logprior!)(_state)
+            setfield!(_state, :logtarget, getfield(_state, :loglikelihood)+getfield(_state, :logprior))
+          end
         elseif (isa(pdf, DiscreteMultivariateDistribution) && method_exists(logpdf, (typeof(pdf), Vector{eltype(pdf)}))) ||
           isa(args[1], Function)
           eval(codegen_target_closure_via_distribution(instance, :pdf, logpdf, :logtarget))
