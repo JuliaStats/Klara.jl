@@ -77,7 +77,8 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
       else
         if (isa(prior, DiscreteMultivariateDistribution) && method_exists(logpdf, (typeof(prior), Vector{eltype(prior)}))) ||
           isa(args[2], Function)
-          eval(codegen_target_closure_via_distribution(instance, :prior, logpdf, :logprior))
+          _state::BasicDiscMuvParameterState ->
+            setfield!(_state, :logprior, logpdf(getfield(instance, :prior), _state.value))
         else
           nothing
         end
@@ -99,7 +100,7 @@ mutable struct BasicDiscMuvParameter <: Parameter{Discrete, Multivariate}
           end
         elseif (isa(pdf, DiscreteMultivariateDistribution) && method_exists(logpdf, (typeof(pdf), Vector{eltype(pdf)}))) ||
           isa(args[1], Function)
-          eval(codegen_target_closure_via_distribution(instance, :pdf, logpdf, :logtarget))
+          _state::BasicDiscMuvParameterState -> setfield!(_state, :logtarget, logpdf(getfield(instance, :pdf), _state.value))
         else
           nothing
         end

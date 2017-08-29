@@ -160,7 +160,7 @@ function BasicContMuvParameter!(
             method_exists(f, (typeof(parameter.prior), Vector{eltype(parameter.prior)}))
           ) ||
           isa(args[2], Function)
-          eval(codegen_target_closure_via_distribution(parameter, :prior, f, spfield))
+          _state::BasicContMuvParameterState -> setfield!(_state, spfield, f(getfield(parameter, :prior), _state.value))
         else
           nothing
         end
@@ -192,7 +192,7 @@ function BasicContMuvParameter!(
             method_exists(f, (typeof(parameter.pdf), Vector{eltype(parameter.pdf)}))
           ) ||
           isa(args[1], Function)
-          eval(codegen_target_closure_via_distribution(parameter, :pdf, f, stfield))
+          _state::BasicContMuvParameterState -> setfield!(_state, stfield, f(getfield(parameter, :pdf), _state.value))
         else
           nothing
         end

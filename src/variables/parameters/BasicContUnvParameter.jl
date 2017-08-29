@@ -167,7 +167,7 @@ function BasicContUnvParameter!(
             method_exists(f, (typeof(parameter.prior), eltype(parameter.prior)))
           ) ||
           isa(args[2], Function)
-          eval(codegen_target_closure_via_distribution(parameter, :prior, f, spfield))
+          _state::BasicContUnvParameterState -> setfield!(_state, spfield, f(getfield(parameter, :prior), _state.value))
         else
           nothing
         end
@@ -199,7 +199,7 @@ function BasicContUnvParameter!(
             method_exists(f, (typeof(parameter.pdf), eltype(parameter.pdf)))
           ) ||
           isa(args[1], Function)
-          eval(codegen_target_closure_via_distribution(parameter, :pdf, f, stfield))
+          _state::BasicContUnvParameterState -> setfield!(_state, stfield, f(getfield(parameter, :pdf), _state.value))
         else
           nothing
         end

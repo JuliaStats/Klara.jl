@@ -12,17 +12,6 @@ MatrixvariateParameter{S<:ValueSupport} = Parameter{S, Matrixvariate}
 
 ParameterVector{P<:Parameter} = Vector{P}
 
-### Code generation of parameter fields
-
-function codegen_target_closure_via_distribution(parameter::Parameter, distribution::Symbol, f::Function, field::Symbol)
-  @gensym target_closure_via_distribution
-  quote
-    function $target_closure_via_distribution(_state::$(default_state_type(parameter)))
-      setfield!(_state, $(QuoteNode(field)), $(f)(getfield($parameter, $(QuoteNode(distribution))), _state.value))
-    end
-  end
-end
-
 setpdf!(parameter::Parameter{S, F}, state::ParameterState{S, F}) where {S<:ValueSupport, F<:VariateForm} =
   parameter.setpdf(state, parameter.states)
 
