@@ -21,7 +21,6 @@ mutable struct BasicMCJob <: MCJob
   reset!::Function
   save!::Union{Function, Void}
   iterate!::Function
-  run!::Function
 
   function BasicMCJob(
     model::GenericModel,
@@ -93,8 +92,6 @@ mutable struct BasicMCJob <: MCJob
     instance.save! = (instance.output == nothing) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
-
-    instance.run! = eval(codegen(:run, instance))
 
     instance
   end
@@ -242,45 +239,36 @@ function codegen(::Type{Val{:save}}, job::BasicMCJob)
   end
 end
 
-function codegen(::Type{Val{:run}}, job::BasicMCJob)
-  local result::Expr
-  ifforbody = []
-  forbody = []
-  body = []
+function run(job::BasicMCJob)
+  local fmt_iter::Union{Function, Void} = nothing
 
   if isa(job.output, VariableIOStream)
-    push!(body, :(mark(_job.output)))
+    mark(job.output)
   end
 
   if job.verbose
     fmt_iter = format_iteration(ndigits(job.range.nsteps))
-    push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))
   end
 
-  push!(forbody, :(iterate(_job)))
+  for i = 1:job.range.nsteps
+    if job.verbose
+      println("Iteration ", fmt_iter(i), " of ", job.range.nsteps)
+    end
 
-  push!(ifforbody, :(_job.count+=1))
-  if job.save! != nothing
-    push!(ifforbody, :(save(_job, _job.count)))
-  end
+    iterate(job)
 
-  push!(forbody, Expr(:if, :(in(i, _job.range.postrange)), Expr(:block, ifforbody...)))
+    if in(i, job.range.postrange)
+      job.count += 1
 
-  push!(body, Expr(:for, :(i = 1:_job.range.nsteps), Expr(:block, forbody...)))
-
-  if isa(job.output, VariableIOStream)
-    push!(body, :(close(_job.output)))
-  end
-
-  @gensym _run
-
-  result = quote
-    function $_run(_job::BasicMCJob)
-      $(body...)
+      if job.save! != nothing
+        save(job, job.count)
+      end
     end
   end
 
-  result
+  if isa(job.output, VariableIOStream)
+    close(job.output)
+  end
 end
 
 function checkin(job::BasicMCJob)
