@@ -19,7 +19,6 @@ mutable struct BasicMCJob <: MCJob
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   verbose::Bool
   reset!::Function
-  save!::Union{Function, Void}
   iterate!::Function
 
   function BasicMCJob(
@@ -88,8 +87,6 @@ mutable struct BasicMCJob <: MCJob
     instance.count = 0
 
     instance.reset! = eval(codegen(:reset, instance))
-
-    instance.save! = (instance.output == nothing) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
 
@@ -216,38 +213,20 @@ function codegen(::Type{Val{:reset}}, job::BasicMCJob)
   Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
 end
 
-function codegen(::Type{Val{:save}}, job::BasicMCJob)
-  body = []
+save(job::BasicMCJob, i::Integer) = copy!(job.output, job.pstate, i)
 
-  if isa(job.output, VariableNState)
-    push!(body, :(copy!(_job.output, _job.pstate, _i)))
-  elseif isa(job.output, VariableIOStream)
-    push!(body, :(write(_job.output, _job.pstate)))
-    if job.outopts[:flush]
-      push!(body, :(flush(_job.output)))
-    end
-  else
-    error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
-  end
-
-  @gensym _save
-
-  quote
-    function $_save(_job::BasicMCJob, _i::Integer)
-      $(body...)
-    end
+function save(job::BasicMCJob)
+  write(job.output, job.pstate)
+  if job.outopts[:flush]
+    flush(job.output)
   end
 end
 
 function run(job::BasicMCJob)
-  local fmt_iter::Union{Function, Void} = nothing
+  fmt_iter::Union{Function, Void} = job.verbose ? format_iteration(ndigits(job.range.nsteps)) : nothing
 
   if isa(job.output, VariableIOStream)
     mark(job.output)
-  end
-
-  if job.verbose
-    fmt_iter = format_iteration(ndigits(job.range.nsteps))
   end
 
   for i = 1:job.range.nsteps
@@ -260,8 +239,14 @@ function run(job::BasicMCJob)
     if in(i, job.range.postrange)
       job.count += 1
 
-      if job.save! != nothing
-        save(job, job.count)
+      if job.output != nothing
+        if isa(job.output, VariableNState)
+          save(job, job.count)
+        elseif isa(job.output, VariableIOStream)
+          save(job)
+        else
+          error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[:destination])")
+        end
       end
     end
   end
