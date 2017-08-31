@@ -211,10 +211,6 @@ end
 
 close(job::MCJob) = job.close(job)
 
-reset(job::MCJob) = job.reset!(job)
-reset(job::MCJob, x::Real) = job.reset!(job, x)
-reset(job::MCJob, x::Vector{N}) where {N<:Real} = job.reset!(job, x)
-
 save(job::MCJob, i::Integer) = job.save!(job, i)
 
 iterate(job::MCJob) = job.iterate!(job)

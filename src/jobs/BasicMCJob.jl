@@ -18,7 +18,6 @@ mutable struct BasicMCJob <: MCJob
   count::Integer # Current number of post-burnin iterations
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   verbose::Bool
-  reset!::Function
   iterate!::Function
 
   function BasicMCJob(
@@ -85,8 +84,6 @@ mutable struct BasicMCJob <: MCJob
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 
     instance.count = 0
-
-    instance.reset! = eval(codegen(:reset, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
 
@@ -174,46 +171,23 @@ function BasicMCJob(
   )
 end
 
-# It is likely that MCMC inference for parameters of ODEs will require a separate ODEBasicMCJob
-
 codegen(f::Symbol, job::BasicMCJob) = codegen(Val{f}, job)
 
-function codegen(::Type{Val{:reset}}, job::BasicMCJob)
-  local fsignature::Vector{Union{Symbol, Expr}}
-  body = []
-
-  if job.resetpstate
-    push!(body, :(reset!(_job.pstate, _x, _job.parameter, _job.sampler)))
-  end
-
-  push!(body, :(reset!(_job.sstate, _job.pstate, _job.parameter, _job.sampler, _job.tuner)))
+function reset(job::BasicMCJob)
+  reset!(job.sstate, job.pstate, job.parameter, job.sampler, job.tuner)
 
   if isa(job.output, VariableIOStream)
-    push!(body, :(reset(_job.output)))
-    push!(body, :(mark(_job.output)))
+    reset(job.output)
+    mark(job.output)
   end
 
-  push!(body, :(_job.count = 0))
-
-  @gensym _reset
-
-  if job.resetpstate
-    vform = variate_form(job.pstate)
-    if vform == Univariate
-      fsignature = Union{Symbol, Expr}[_reset, :(_job::BasicMCJob), :(_x::Real)]
-    elseif vform == Multivariate
-      fsignature = Union{Symbol, Expr}[:($_reset{N<:Real}), :(_job::BasicMCJob), :(_x::Vector{N})]
-    else
-      error("It is not possible to define plain reset for given job")
-    end
-  else
-    fsignature = Union{Symbol, Expr}[_reset, :(_job::BasicMCJob)]
-  end
-
-  Expr(:function, Expr(:call, fsignature...), Expr(:block, body...))
+  job.count = 0
 end
 
-save(job::BasicMCJob, i::Integer) = copy!(job.output, job.pstate, i)
+function reset(job::BasicMCJob, x)
+  reset!(job.pstate, x, job.parameter, job.sampler)
+  reset(job)
+end
 
 function save(job::BasicMCJob)
   write(job.output, job.pstate)
@@ -221,6 +195,8 @@ function save(job::BasicMCJob)
     flush(job.output)
   end
 end
+
+save(job::BasicMCJob, i::Integer) = copy!(job.output, job.pstate, i)
 
 function run(job::BasicMCJob)
   fmt_iter::Union{Function, Void} = job.verbose ? format_iteration(ndigits(job.range.nsteps)) : nothing

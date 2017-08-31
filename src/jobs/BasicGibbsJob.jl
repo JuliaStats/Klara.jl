@@ -11,10 +11,10 @@ mutable struct BasicGibbsJob <: GibbsJob
   outopts::Vector # Options related to output
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Integer # Number of dependent variables, i.e. length(dependent)
+  hasdpjob::Bool
   count::Integer # Current number of post-burnin iterations
   verbose::Bool
   close::Union{Function, Void}
-  reset!::Union{Function, Void}
   save!::Union{Function, Void}
   iterate!::Function
   run!::Function
@@ -42,6 +42,8 @@ mutable struct BasicGibbsJob <: GibbsJob
 
     instance.ndp = length(dpindex)
 
+    instance.hasdpjob = any(j -> j != nothing, instance.dpjob)
+
     instance.outopts = isa(outopts, Vector{Dict{Symbol, Any}}) ? outopts : convert(Vector{Dict{Symbol, Any}}, outopts)
 
     instance.range = range
@@ -67,9 +69,6 @@ mutable struct BasicGibbsJob <: GibbsJob
     instance.count = 0
 
     instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen(:close, instance))
-
-    nodpjob = all(j -> j == nothing, instance.dpjob)
-    instance.reset! = nodpjob ? nothing : eval(codegen(:reset, instance))
 
     instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen(:save, instance))
 
@@ -174,24 +173,14 @@ function codegen(::Type{Val{:close}}, job::BasicGibbsJob)
   end
 end
 
-function codegen(::Type{Val{:reset}}, job::BasicGibbsJob)
-  body = []
-
-  for j in 1:job.ndp
-    if isa(job.dpjob[j], BasicMCJob)
-      if job.dpjob[j].resetpstate
-        push!(body, :(reset(_job.dpjob[$j], rand(_job.dependent[$j].prior))))
+function reset(job::BasicGibbsJob)
+  for i in 1:job.ndp
+    if isa(job.dpjob[i], BasicMCJob)
+      if job.dpjob[i].resetpstate
+        reset(job.dpjob[i], rand(job.dependent[i].prior))
       else
-        push!(body, :(reset(_job.dpjob[$j])))
+        reset(job.dpjob[i])
       end
-    end
-  end
-
-  @gensym _reset
-
-  quote
-    function $_reset(_job::BasicGibbsJob)
-      $(body...)
     end
   end
 end
@@ -267,7 +256,7 @@ function codegen(::Type{Val{:run}}, job::BasicGibbsJob)
 
   push!(forbody, Expr(:if, :(in(i, _job.range.postrange)), Expr(:block, ifforbody...)))
 
-  if job.reset! != nothing
+  if job.hasdpjob
     push!(forbody, :(reset(_job)))
   end
 
