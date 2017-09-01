@@ -12,12 +12,11 @@ mutable struct BasicGibbsJob <: GibbsJob
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Integer # Number of dependent variables, i.e. length(dependent)
   hasdpjob::Bool
+  hasiostream::Bool
   count::Integer # Current number of post-burnin iterations
   verbose::Bool
-  close::Union{Function, Void}
   save!::Union{Function, Void}
   iterate!::Function
-  run!::Function
 
   function BasicGibbsJob(
     model::GenericModel,
@@ -66,15 +65,13 @@ mutable struct BasicGibbsJob <: GibbsJob
       instance.output[i] = initialize_output(instance.dpstate[i], range.npoststeps, instance.outopts[i])
     end
 
-    instance.count = 0
+    instance.hasiostream = any(o -> o == VariableIOStream, instance.output)
 
-    instance.close = all(o -> o != VariableIOStream, instance.output) ? nothing : eval(codegen(:close, instance))
+    instance.count = 0
 
     instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
-
-    instance.run! = eval(codegen(:run, instance))
 
     instance
   end
@@ -155,20 +152,10 @@ end
 
 codegen(f::Symbol, job::BasicGibbsJob) = codegen(Val{f}, job)
 
-function codegen(::Type{Val{:close}}, job::BasicGibbsJob)
-  body = []
-
-  for j in 1:job.ndp
-    if isa(job.output[j], VariableIOStream)
-      push!(body, :(close(_job.output[$j])))
-    end
-  end
-
-  @gensym _close
-
-  quote
-    function $_close(_job::BasicGibbsJob)
-      $(body...)
+function close(job::BasicGibbsJob)
+  for i in 1:job.ndp
+    if isa(job.output[i], VariableIOStream)
+      close(job.output[i])
     end
   end
 end
@@ -236,49 +223,36 @@ function codegen(::Type{Val{:iterate}}, job::BasicGibbsJob)
   end
 end
 
-function codegen(::Type{Val{:run}}, job::BasicGibbsJob)
-  local result::Expr
-  ifforbody = []
-  forbody = []
-  body = []
+function run(job::BasicGibbsJob)
+  fmt_iter::Union{Function, Void} = job.verbose ? format_iteration(ndigits(job.range.nsteps)) : nothing
 
   if job.verbose
-    fmt_iter = format_iteration(ndigits(job.range.nsteps))
-    push!(forbody, :(println("Iteration ", $(fmt_iter)(i), " of ", _job.range.nsteps)))
+    println("Iteration ", fmt_iter(i), " of ", job.range.nsteps)
   end
 
-  push!(forbody, :(iterate(_job)))
+  for i = 1:job.range.nsteps
+    iterate(job)
 
-  push!(ifforbody, :(_job.count+=1))
-  if job.save! != nothing
-    push!(ifforbody, :(save(_job, _job.count)))
-  end
+    if in(i, job.range.postrange)
+      job.count += 1
 
-  push!(forbody, Expr(:if, :(in(i, _job.range.postrange)), Expr(:block, ifforbody...)))
+      if job.save! != nothing
+        save(job, job.count)
+      end
+    end
 
-  if job.hasdpjob
-    push!(forbody, :(reset(_job)))
-  end
-
-  push!(body, Expr(:for, :(i = 1:_job.range.nsteps), Expr(:block, forbody...)))
-
-  if isa(job.output, VariableIOStream)
-    push!(body, :(close(_job.output)))
-  end
-
-  if job.close != nothing
-    push!(body, :(close(_job)))
-  end
-
-  @gensym _run
-
-  result = quote
-    function $_run(_job::BasicGibbsJob)
-      $(body...)
+    if job.hasdpjob
+      reset(job)
     end
   end
 
-  result
+  if isa(job.output, VariableIOStream)
+    close(job.output)
+  end
+
+  if job.hasiostream
+    close(job)
+  end
 end
 
 function checkin(job::BasicGibbsJob)
