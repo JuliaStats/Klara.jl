@@ -1,4 +1,4 @@
-function codegen(::Type{Val{:iterate}}, ::Type{NUTS}, job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{NUTS})
   local result::Expr
   whilebody = []
   ifwhilebody = []

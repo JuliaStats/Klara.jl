@@ -1,4 +1,4 @@
-function codegen(::Type{Val{:iterate}}, ::Type{SMMALA}, job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{SMMALA})
   local result::Expr
   update = []
   noupdate = []

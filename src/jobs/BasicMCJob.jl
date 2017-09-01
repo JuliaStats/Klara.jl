@@ -85,7 +85,7 @@ mutable struct BasicMCJob <: MCJob
 
     instance.count = 0
 
-    instance.iterate! = eval(codegen(:iterate, instance))
+    instance.iterate! = eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
 
     instance
   end

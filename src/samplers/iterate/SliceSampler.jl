@@ -1,4 +1,4 @@
-function codegen(::Type{Val{:iterate}}, ::Type{SliceSampler}, job::BasicMCJob)
+function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{SliceSampler})
   local result::Expr
   innerbody = []
   burninbody = []

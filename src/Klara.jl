@@ -339,7 +339,6 @@ include("samplers/iterate/HMC.jl")
 include("samplers/iterate/NUTS.jl")
 include("samplers/iterate/MALA.jl")
 include("samplers/iterate/SMMALA.jl")
-include("samplers/iterate/iterate.jl")
 
 include("stats/acceptance.jl")
 
