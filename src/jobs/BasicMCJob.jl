@@ -16,9 +16,12 @@ mutable struct BasicMCJob <: MCJob
   outopts::Dict # Options related to output
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Integer # Current number of post-burnin iterations
+  dindex::Integer
+  fmt_iter::Union{Function, Void}
+  fmt_perc::Union{Function, Void}
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   verbose::Bool
-  iterate!::Function
+  iterate!::Union{Function, Void}
 
   function BasicMCJob(
     model::GenericModel,
@@ -85,7 +88,13 @@ mutable struct BasicMCJob <: MCJob
 
     instance.count = 0
 
-    instance.iterate! = eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
+    instance.dindex = findfirst(instance.outopts[:diagnostics], :accept)
+
+    instance.fmt_iter = instance.tuner.verbose ? format_iteration(ndigits(instance.range.burnin)) : nothing
+
+    instance.fmt_perc = instance.tuner.verbose ? format_percentage() : nothing
+
+    instance.iterate! = isa(sampler, AM) ? nothing : eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
 
     instance
   end
@@ -210,7 +219,11 @@ function run(job::BasicMCJob)
       println("Iteration ", fmt_iter(i), " of ", job.range.nsteps)
     end
 
-    iterate(job)
+    if isa(job.sampler, AM)
+      iterate!(job)
+    else
+      iterate(job)
+    end
 
     if in(i, job.range.postrange)
       job.count += 1

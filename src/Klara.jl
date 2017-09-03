@@ -202,6 +202,7 @@ export
   is_indexed,
   isequal,
   iterate,
+  iterate!,
   job2dot,
   keys,
   likelihood_model,

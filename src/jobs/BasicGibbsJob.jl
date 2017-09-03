@@ -12,10 +12,10 @@ mutable struct BasicGibbsJob <: GibbsJob
   output::Vector{Union{VariableNState, VariableIOStream, Void}} # Output of model's dependent variables
   ndp::Integer # Number of dependent variables, i.e. length(dependent)
   hasdpjob::Bool
+  hasoutput::Bool
   hasiostream::Bool
   count::Integer # Current number of post-burnin iterations
   verbose::Bool
-  save!::Union{Function, Void}
   iterate!::Function
 
   function BasicGibbsJob(
@@ -65,11 +65,11 @@ mutable struct BasicGibbsJob <: GibbsJob
       instance.output[i] = initialize_output(instance.dpstate[i], range.npoststeps, instance.outopts[i])
     end
 
+    instance.hasoutput = any(o -> o != nothing, instance.output)
+
     instance.hasiostream = any(o -> o == VariableIOStream, instance.output)
 
     instance.count = 0
-
-    instance.save! = all(o -> o == nothing, instance.output) ? nothing : eval(codegen(:save, instance))
 
     instance.iterate! = eval(codegen(:iterate, instance))
 
@@ -172,27 +172,17 @@ function reset(job::BasicGibbsJob)
   end
 end
 
-function codegen(::Type{Val{:save}}, job::BasicGibbsJob)
-  body = []
-
+function save(job::BasicGibbsJob, i::Integer)
   for j in 1:job.ndp
     if isa(job.output[j], VariableNState)
-      push!(body, :(copy!(_job.output[$j], _job.dpstate[$j], _i)))
+      copy!(job.output[j], job.dpstate[j], i)
     elseif isa(job.output[j], VariableIOStream)
-      push!(body, :(write(_job.output[$j], _job.dpstate[$j])))
+      write(job.output[j], job.dpstate[j])
       if job.outopts[j][:flush]
-        push!(body, :(flush(_job.outopts[$j])))
+        flush(job.outopts[j])
       end
     else
       error("To save output, :destination must be set to :nstate or :iostream, got $(job.outopts[j][:destination])")
-    end
-  end
-
-  @gensym _save
-
-  quote
-    function $_save(_job::BasicGibbsJob, _i::Integer)
-      $(body...)
     end
   end
 end
@@ -236,7 +226,7 @@ function run(job::BasicGibbsJob)
     if in(i, job.range.postrange)
       job.count += 1
 
-      if job.save! != nothing
+      if job.hasoutput
         save(job, job.count)
       end
     end
