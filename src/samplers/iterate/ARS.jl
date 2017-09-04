@@ -1,82 +1,105 @@
-function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{ARS})
-  local result::Expr
-  update = []
-  noupdate = []
-  body = []
-  local dindex::Integer
-
-  vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in ARS code generation")
-  end
-
+function iterate!(job::BasicMCJob, ::Type{ARS}, ::Type{Univariate})
   if job.tuner.verbose
-    push!(body, :(_job.sstate.tune.proposed += 1))
+    job.sstate.tune.proposed += 1
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.pstate.value = _job.pstate.value+_job.sampler.jumpscale*randn()))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstate.value[:] = _job.pstate.value+_job.sampler.jumpscale*randn(_job.pstate.size)))
-  end
+  job.sstate.pstate.value = job.pstate.value+job.sampler.jumpscale*randn()
 
-  push!(body, :(_job.parameter.logtarget!(_job.sstate.pstate)))
+  job.parameter.logtarget!(job.sstate.pstate)
 
-  push!(body, :(_job.sstate.logproposal = _job.sampler.logproposal(_job.sstate.pstate.value)))
+  job.sstate.logproposal = job.sampler.logproposal(job.sstate.pstate.value)
 
-  push!(body, :(_job.sstate.weight = _job.sstate.pstate.logtarget-_job.sampler.proposalscale-_job.sstate.logproposal))
+  job.sstate.weight = job.sstate.pstate.logtarget-job.sampler.proposalscale-job.sstate.logproposal
 
-  if vform == Univariate
-    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
-  elseif vform == Multivariate
-    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
-  end
-  push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
-  if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
-  end
-  if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
-  end
-  dindex = findfirst(job.outopts[:diagnostics], :accept)
-  if dindex != 0
-    push!(update, :(_job.pstate.diagnosticvalues[$dindex] = true))
-    push!(noupdate, :(_job.pstate.diagnosticvalues[$dindex] = false))
-  end
-  if job.tuner.verbose
-    push!(update, :(_job.sstate.tune.accepted += 1))
-  end
+  if (job.sstate.weight > log(rand()))
+    job.pstate.value = job.sstate.pstate.value
 
-  push!(body, Expr(:if, :(_job.sstate.weight > log(rand())), Expr(:block, update...), noupdate...))
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
 
-  if job.tuner.verbose
-    fmt_iter = format_iteration(ndigits(job.range.burnin))
-    fmt_perc = format_percentage()
-
-    push!(body, :(
-      if _job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0
-        rate!(_job.sstate.tune)
-        println(
-          "Burnin iteration ",
-          $(fmt_iter)(_job.sstate.tune.totproposed),
-          " of ",
-          _job.range.burnin,
-          ": ",
-          $(fmt_perc)(100*_job.sstate.tune.rate),
-          " % acceptance rate"
-        )
-        reset_burnin!(_job.sstate.tune)
-      end
-    ))
-  end
-
-  @gensym _iterate
-
-  result = quote
-    function $_iterate(_job::BasicMCJob)
-      $(body...)
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = true
+    end
+    if job.tuner.verbose
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = false
     end
   end
 
-  result
+  if job.tuner.verbose
+    if job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0
+      rate!(job.sstate.tune)
+      println(
+        "Burnin iteration ",
+        job.fmt_iter(job.sstate.tune.totproposed),
+        " of ",
+        job.range.burnin,
+        ": ",
+        job.fmt_perc(100*_job.sstate.tune.rate),
+        " % acceptance rate"
+      )
+      reset_burnin!(job.sstate.tune)
+    end
+  end
+end
+
+function iterate!(job::BasicMCJob, ::Type{ARS}, ::Type{Multivariate})
+  if job.tuner.verbose
+    job.sstate.tune.proposed += 1
+  end
+
+  job.sstate.pstate.value[:] = job.pstate.value+job.sampler.jumpscale*randn(job.pstate.size)
+
+  job.parameter.logtarget!(job.sstate.pstate)
+
+  job.sstate.logproposal = job.sampler.logproposal(job.sstate.pstate.value)
+
+  job.sstate.weight = job.sstate.pstate.logtarget-job.sampler.proposalscale-job.sstate.logproposal
+
+  if (job.sstate.weight > log(rand()))
+    job.pstate.value = copy(job.sstate.pstate.value)
+
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
+
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = true
+    end
+    if job.tuner.verbose
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = false
+    end
+  end
+
+  if job.tuner.verbose
+    if job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0
+      rate!(job.sstate.tune)
+      println(
+        "Burnin iteration ",
+        job.fmt_iter(job.sstate.tune.totproposed),
+        " of ",
+        job.range.burnin,
+        ": ",
+        job.fmt_perc(100*_job.sstate.tune.rate),
+        " % acceptance rate"
+      )
+      reset_burnin!(job.sstate.tune)
+    end
+  end
 end

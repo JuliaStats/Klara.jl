@@ -69,7 +69,7 @@ println("Acceptance rate: ", acceptance(chain2, diagnostics=false))
 
 theta = hcat(chain1.value, chain2.value);
 for i in sample(1:length(theta), 200)
-  @test_approx_eq h0(theta[i])/M0 h1(theta[i])/M1
+  @test isapprox(h0(theta[i])/M0, h1(theta[i])/M1)
 end
 
 # plot(x=chain1.value, Geom.histogram(bincount=20))
