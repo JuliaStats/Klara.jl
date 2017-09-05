@@ -1,120 +1,147 @@
-function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{MALA})
-  local result::Expr
-  update = []
-  noupdate = []
-  burninbody = []
-  body = []
-  local dindex::Integer
-
-  vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in MALA code generation")
-  end
+function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Univariate})
 
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(body, :(_job.sstate.tune.proposed += 1))
+    job.sstate.tune.proposed += 1
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn()))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.μ[:] = _job.pstate.value+0.5*_job.sstate.tune.step*_job.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.pstate.value[:] = _job.sstate.μ+sqrt(_job.sstate.tune.step)*randn(_job.pstate.size)))
-  end
+  job.sstate.μ = job.pstate.value+0.5*job.sstate.tune.step*job.pstate.gradlogtarget
+  job.sstate.pstate.value = job.sstate.μ+sqrt(job.sstate.tune.step)*randn()
 
-  push!(body, :(_job.parameter.uptogradlogtarget!(_job.sstate.pstate)))
+  job.parameter.uptogradlogtarget!(job.sstate.pstate)
 
-  push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
+  job.sstate.ratio = job.sstate.pstate.logtarget-job.pstate.logtarget
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.ratio += 0.5*(abs2(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step)))
-    push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.ratio -= 0.5*(abs2(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step)))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.ratio += sum(0.5*(abs2.(_job.sstate.μ-_job.sstate.pstate.value)/_job.sstate.tune.step))))
-    push!(body, :(_job.sstate.μ[:] = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.ratio -= sum(0.5*(abs2.(_job.sstate.μ-_job.pstate.value)/_job.sstate.tune.step))))
-  end
+  job.sstate.ratio += 0.5*(abs2(job.sstate.μ-job.sstate.pstate.value)/job.sstate.tune.step)
+  job.sstate.μ = job.sstate.pstate.value+0.5*job.sstate.tune.step*job.sstate.pstate.gradlogtarget
+  job.sstate.ratio -= 0.5*(abs2(job.sstate.μ-job.pstate.value)/job.sstate.tune.step)
 
-  if vform == Univariate
-    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
-    push!(update, :(_job.pstate.gradlogtarget = _job.sstate.pstate.gradlogtarget))
+  if (job.sstate.ratio > 0 || (job.sstate.ratio > log(rand())))
+    job.pstate.value = job.sstate.pstate.value
+
+    job.pstate.gradlogtarget = job.sstate.pstate.gradlogtarget
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = _job.sstate.pstate.gradloglikelihood))
+      job.pstate.gradloglikelihood = job.sstate.pstate.gradloglikelihood
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = _job.sstate.pstate.gradlogprior))
+      job.pstate.gradlogprior = job.sstate.pstate.gradlogprior
     end
-  elseif vform == Multivariate
-    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
-    push!(update, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstate.gradlogtarget)))
+
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
+
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = true
+    end
+
+    if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = false
+    end
+  end
+
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
+
+      if isa(job.tuner, AcceptanceRateMCTuner)
+        tune!(job.sstate.tune, job.tuner)
+      end
+
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+      end
+
+      reset_burnin!(job.sstate.tune)
+    end
+  end
+end
+
+function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Multivariate})
+
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+    job.sstate.tune.proposed += 1
+  end
+
+  job.sstate.μ[:] = job.pstate.value+0.5*job.sstate.tune.step*job.pstate.gradlogtarget
+  job.sstate.pstate.value[:] = job.sstate.μ+sqrt(job.sstate.tune.step)*randn(job.pstate.size)
+
+  job.parameter.uptogradlogtarget!(job.sstate.pstate)
+
+  job.sstate.ratio = job.sstate.pstate.logtarget-job.pstate.logtarget
+
+  job.sstate.ratio += sum(0.5*(abs2.(job.sstate.μ-job.sstate.pstate.value)/job.sstate.tune.step))
+  job.sstate.μ[:] = job.sstate.pstate.value+0.5*job.sstate.tune.step*job.sstate.pstate.gradlogtarget
+  job.sstate.ratio -= sum(0.5*(abs2.(job.sstate.μ-job.pstate.value)/job.sstate.tune.step))
+
+  if (job.sstate.ratio > 0 || (job.sstate.ratio > log(rand())))
+    job.pstate.value = copy(job.sstate.pstate.value)
+
+    job.pstate.gradlogtarget = copy(job.sstate.pstate.gradlogtarget)
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstate.gradloglikelihood)))
+      job.pstate.gradloglikelihood = copy(job.sstate.pstate.gradloglikelihood)
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = copy(_job.sstate.pstate.gradlogprior)))
+      job.pstate.gradlogprior = copy(job.sstate.pstate.gradlogprior)
+    end
+
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
+
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = true
+    end
+
+    if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if job.dindex != 0
+      job.pstate.diagnosticvalues[job.dindex] = false
     end
   end
-  push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
-  if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
-  end
-  if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
-  end
-  dindex = findfirst(job.outopts[:diagnostics], :accept)
-  if dindex != 0
-    push!(update, :(_job.pstate.diagnosticvalues[$dindex] = true))
-    push!(noupdate, :(_job.pstate.diagnosticvalues[$dindex] = false))
-  end
+
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(update, :(_job.sstate.tune.accepted += 1))
-  end
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
 
-  push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+      if isa(job.tuner, AcceptanceRateMCTuner)
+        tune!(job.sstate.tune, job.tuner)
+      end
 
-  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(burninbody, :(rate!(_job.sstate.tune)))
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+      end
 
-    if isa(job.tuner, AcceptanceRateMCTuner)
-      push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner)))
-    end
-
-    if job.tuner.verbose
-      fmt_iter = format_iteration(ndigits(job.range.burnin))
-      fmt_perc = format_percentage()
-
-      push!(burninbody, :(println(
-        "Burnin iteration ",
-        $(fmt_iter)(_job.sstate.tune.totproposed),
-        " of ",
-        _job.range.burnin,
-        ": ",
-        $(fmt_perc)(100*_job.sstate.tune.rate),
-        " % acceptance rate"
-      )))
-    end
-
-    push!(burninbody, :(reset_burnin!(_job.sstate.tune)))
-
-    push!(
-      body,
-      Expr(
-        :if,
-        :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
-        Expr(:block, burninbody...)
-      )
-    )
-  end
-
-  @gensym _iterate
-
-  result = quote
-    function $_iterate(_job::BasicMCJob)
-      $(body...)
+      reset_burnin!(job.sstate.tune)
     end
   end
-
-  result
 end
