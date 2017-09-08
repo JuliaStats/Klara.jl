@@ -1,5 +1,4 @@
 function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Univariate})
-
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
     job.sstate.tune.proposed += 1
   end
@@ -73,7 +72,6 @@ function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Univariate})
 end
 
 function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Multivariate})
-
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
     job.sstate.tune.proposed += 1
   end

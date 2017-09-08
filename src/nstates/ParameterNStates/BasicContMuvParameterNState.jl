@@ -14,9 +14,11 @@ mutable struct BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuou
   dtensorlogtarget::Array{N, 4}
   diagnosticvalues::Matrix
   size::Integer
+  sizesquared::Integer
+  sizecubed::Integer
+  monitor::Vector{Bool}
   n::Integer
   diagnostickeys::Vector{Symbol}
-  copy::Function
 
   function BasicContMuvParameterNState{N}(
     size::Integer,
@@ -49,10 +51,11 @@ mutable struct BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuou
     instance.diagnosticvalues = diagnosticvalues
 
     instance.size = size
+    instance.sizesquared = instance.size^2
+    instance.sizecubed = instance.size^3
+    instance.monitor = monitor
     instance.n = n
     instance.diagnostickeys = diagnostickeys
-
-    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -86,65 +89,35 @@ const ContMuvMarkovChain = BasicContMuvParameterNState
 
 codegen(f::Symbol, nstate::BasicContMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 
-function codegen(::Type{Val{:copy}}, nstate::BasicContMuvParameterNState, monitor::Vector{Bool})
-  body = []
+function copy!(nstate::BasicContMuvParameterNState, state::BasicContMuvParameterState, i::Integer)
   fnames = fieldnames(BasicContMuvParameterNState)
-  local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
-  local statelen::Integer
 
   for j in 2:4
-    if monitor[j]
-      f = fnames[j]
-      push!(body, :(getfield(_nstate, $(QuoteNode(f)))[_i] = getfield(_state, $(QuoteNode(f)))))
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[i] = getfield(state, fnames[j])
     end
   end
 
   for j in (1, 5, 6, 7)
-    if monitor[j]
-      f = fnames[j]
-      push!(
-        body,
-        :(getfield(_nstate, $(QuoteNode(f)))[1+(_i-1)*_state.size:_i*_state.size] = getfield(_state, $(QuoteNode(f))))
-      )
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[1+(i-1)*state.size:i*state.size] = getfield(state, fnames[j])
     end
   end
 
-  if monitor[8] || monitor[9] || monitor[10]
-    statelen = (nstate.size)^2
-  end
   for j in 8:10
-    if monitor[j]
-      f = fnames[j]
-      push!(
-        body,
-        :(getfield(_nstate, $(QuoteNode(f)))[1+(_i-1)*$(statelen):_i*$(statelen)] = getfield(_state, $(QuoteNode(f))))
-      )
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[1+(i-1)*nstate.sizesquared:i*nstate.sizesquared] = getfield(state, fnames[j])
     end
   end
 
-  if monitor[11] || monitor[12] || monitor[13]
-    statelen = (nstate.size)^3
-  end
   for j in 11:13
-    if monitor[j]
-      f = fnames[j]
-      push!(
-        body,
-        :(getfield(_nstate, $(QuoteNode(f)))[1+(_i-1)*$(statelen):_i*$(statelen)] = getfield(_state, $(QuoteNode(f))))
-      )
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[1+(i-1)*nstate.sizecubed:i*nstate.sizecubed] = getfield(state, fnames[j])
     end
   end
 
   if !isempty(nstate.diagnosticvalues)
-    push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
-  end
-
-  @gensym _copy
-
-  quote
-    function $_copy(_nstate::BasicContMuvParameterNState, _state::BasicContMuvParameterState, _i::Integer)
-      $(body...)
-    end
+    nstate.diagnosticvalues[:, i] = state.diagnosticvalues
   end
 end
 
