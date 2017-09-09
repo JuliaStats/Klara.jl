@@ -223,7 +223,7 @@ function run(job::BasicMCJob)
     end
 
     if (isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, MALA))
-      iterate!(job)
+      iterate!(job, typeof(job.sampler), variate_form(job.parameter))
     else
       iterate(job)
     end

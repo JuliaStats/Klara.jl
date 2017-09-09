@@ -16,7 +16,6 @@ mutable struct BasicGibbsJob <: GibbsJob
   hasiostream::Bool
   count::Integer # Current number of post-burnin iterations
   verbose::Bool
-  iterate!::Function
 
   function BasicGibbsJob(
     model::GenericModel,
@@ -70,8 +69,6 @@ mutable struct BasicGibbsJob <: GibbsJob
     instance.hasiostream = any(o -> o == VariableIOStream, instance.output)
 
     instance.count = 0
-
-    instance.iterate! = eval(codegen(:iterate, instance))
 
     instance
   end
@@ -187,28 +184,18 @@ function save(job::BasicGibbsJob, i::Integer)
   end
 end
 
-function codegen(::Type{Val{:iterate}}, job::BasicGibbsJob)
-  body = []
-
-  for j in 1:job.ndp
-    if isa(job.dependent[j], Parameter)
-      if isa(job.dpjob[j], BasicMCJob)
-        push!(body, :(run(_job.dpjob[$j])))
-        push!(body, :(_job.dpstate[$j] = _job.dpjob[$j].pstate))
+function iterate!(job::BasicGibbsJob)
+  for i in 1:job.ndp
+    if isa(job.dependent[i], Parameter)
+      if isa(job.dpjob[i], BasicMCJob)
+        run(job.dpjob[i])
+        job.dpstate[i] = job.dpjob[i].pstate
       else
-        push!(body, :(setpdf!(_job.dependent[$j], _job.dpstate[$j])))
-        push!(body, :(_job.dpstate[$j].value = rand(_job.dependent[$j].pdf)))
+        setpdf!(job.dependent[i], job.dpstate[i])
+        job.dpstate[i].value = rand(job.dependent[i].pdf)
       end
     else
-      push!(body, :(_job.dependent[$j].transform!(_job.dpstate[$j])))
-    end
-  end
-
-  @gensym _iterate
-
-  quote
-    function $_iterate(_job::BasicGibbsJob)
-      $(body...)
+      job.dependent[i].transform!(job.dpstate[i])
     end
   end
 end
@@ -221,7 +208,7 @@ function run(job::BasicGibbsJob)
   end
 
   for i = 1:job.range.nsteps
-    iterate(job)
+    iterate!(job)
 
     if in(i, job.range.postrange)
       job.count += 1

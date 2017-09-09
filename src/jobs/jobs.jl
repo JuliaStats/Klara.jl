@@ -211,6 +211,4 @@ end
 
 iterate(job::MCJob) = job.iterate!(job)
 
-iterate!(job::MCJob) = iterate!(job, typeof(job.sampler), variate_form(job.parameter))
-
 run(job::Vector{J}) where {J<:MCJob} = map(run, job)
