@@ -4,7 +4,7 @@ p = BasicContUnvParameter(:p, logtarget=p::Float64 -> -abs2(p))
 
 model = likelihood_model([p], isindexed=false)
 
-sampler = AM(1.)
+mcsampler = AM(1.)
 
 tuner = VanillaMCTuner()
 
@@ -14,7 +14,7 @@ v0 = Dict(:p=>3.11)
 
 outopts = Dict(:monitor=>[:value, :logtarget], :diagnostics=>[:accept])
 
-job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+job = BasicMCJob(model, mcsampler, mcrange, v0, outopts=outopts)
 
 @time run(job)
 

@@ -19,13 +19,13 @@ p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, 
 
 model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
-sampler = RAM(ones(npars))
+mcsampler = RAM(ones(npars))
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
 v0 = Dict(:λ=>100, :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 
-job = BasicMCJob(model, sampler, mcrange, v0)
+job = BasicMCJob(model, mcsampler, mcrange, v0)
 
 run(job)
 

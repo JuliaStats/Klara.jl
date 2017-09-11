@@ -10,7 +10,7 @@ p = BasicContUnvParameter(
 
 model = likelihood_model([p], isindexed=false)
 
-sampler = MALA(0.95)
+mcsampler = MALA(0.95)
 
 tuner = VanillaMCTuner()
 
@@ -20,7 +20,7 @@ v0 = Dict(:p=>3.11)
 
 outopts = Dict(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
-job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+job = BasicMCJob(model, mcsampler, mcrange, v0, outopts=outopts)
 
 @time run(job)
 

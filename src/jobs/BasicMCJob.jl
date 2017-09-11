@@ -95,7 +95,7 @@ mutable struct BasicMCJob <: MCJob
     instance.fmt_perc = instance.tuner.verbose ? format_percentage() : nothing
 
     instance.iterate! =
-      (isa(sampler, AM) || isa(sampler, ARS) || isa(sampler, HMC) || isa(sampler, MALA)) ?
+      (isa(sampler, AM) || isa(sampler, ARS) || isa(sampler, HMC) || isa(sampler, MALA)|| isa(sampler, MH)) ?
         nothing :
         eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
 
@@ -222,7 +222,9 @@ function run(job::BasicMCJob)
       println("Iteration ", fmt_iter(i), " of ", job.range.nsteps)
     end
 
-    if (isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, HMC) || isa(job.sampler, MALA))
+    if (
+      isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, HMC) || isa(job.sampler, MALA)|| isa(job.sampler, MH)
+    )
       iterate!(job, typeof(job.sampler), variate_form(job.parameter))
     else
       iterate(job)

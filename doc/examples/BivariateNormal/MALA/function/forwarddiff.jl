@@ -12,7 +12,7 @@ p = BasicContMuvParameter(
 
 model = GenericModel([C, p], isindexed=false)
 
-sampler = MALA(0.3)
+mcsampler = MALA(0.3)
 
 tuner = VanillaMCTuner()
 
@@ -22,7 +22,7 @@ v0 = Dict(:C=>inv([1. 0.8; 0.8 1.]), :p=>[1.25, 3.11])
 
 outopts = Dict(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
-job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+job = BasicMCJob(model, mcsampler, mcrange, v0, outopts=outopts)
 
 @time run(job)
 

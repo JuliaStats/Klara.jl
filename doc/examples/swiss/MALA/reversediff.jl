@@ -23,13 +23,13 @@ p = BasicContMuvParameter(:p, loglikelihood=ploglikelihood, logprior=plogprior, 
 
 model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
-sampler = MALA(0.1)
+mcsampler = MALA(0.1)
 
 mcrange = BasicMCRange(nsteps=10000, burnin=1000)
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept])
 
-job = BasicMCJob(model, sampler, mcrange, v0, outopts=outopts)
+job = BasicMCJob(model, mcsampler, mcrange, v0, outopts=outopts)
 
 run(job)
 

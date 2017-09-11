@@ -1,4 +1,4 @@
-### TODO: add Adaptive Metropolis-within Gibbs (AMWG) sampler and complete BUGS rats example
+### TODO: add Adaptive Metropolis-within Gibbs (AMWG) mcsampler and complete BUGS rats example
 
 using Klara
 

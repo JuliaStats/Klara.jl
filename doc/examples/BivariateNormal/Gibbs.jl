@@ -1,4 +1,4 @@
-# https://theclevermachine.wordpress.com/2012/11/05/mcmc-the-gibbs-sampler/
+# https://theclevermachine.wordpress.com/2012/11/05/mcmc-the-gibbs-mcsampler/
 
 using Distributions
 using Klara

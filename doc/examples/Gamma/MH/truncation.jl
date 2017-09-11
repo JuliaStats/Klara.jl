@@ -11,13 +11,13 @@ model = likelihood_model([Constant(:k), Constant(:θ), p], isindexed=false)
 
 psetproposal(x::Float64) = Truncated(Normal(x), 0, Inf)
 
-sampler = MH(psetproposal, symmetric=false)
+mcsampler = MH(psetproposal, symmetric=false)
 
 mcrange = BasicMCRange(nsteps=100000, burnin=10000)
 
 v0 = Dict(:k=>2., :θ=>1., :p=>10.)
 
-job = BasicMCJob(model, sampler, mcrange, v0)
+job = BasicMCJob(model, mcsampler, mcrange, v0)
 
 run(job)
 

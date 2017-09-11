@@ -25,7 +25,7 @@ p = BasicContMuvParameter(
 
 model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed=false)
 
-sampler = NUTS(0.2, maxndoublings=7)
+mcsampler = NUTS(0.2, maxndoublings=7)
 
 mcrange = BasicMCRange(nsteps=5000, burnin=1000)
 
@@ -35,7 +35,7 @@ tuner = DualAveragingMCTuner(0.651, 5000)
 
 outopts = Dict{Symbol, Any}(:monitor=>[:value, :logtarget, :gradlogtarget], :diagnostics=>[:accept, :ndoublings, :a, :na])
 
-job = BasicMCJob(model, sampler, mcrange, v0, tuner=tuner, outopts=outopts)
+job = BasicMCJob(model, mcsampler, mcrange, v0, tuner=tuner, outopts=outopts)
 
 run(job)
 
