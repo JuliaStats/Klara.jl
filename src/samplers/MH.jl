@@ -7,17 +7,19 @@ mutable struct MHState{S<:ValueSupport, F<:VariateForm} <: MHSamplerState{F}
   pstate::ParameterState{S, F} # Parameter state used internally by MH
   tune::MCTunerState
   ratio::Real # Acceptance ratio
+  diagnosticindices::Dict{Symbol, Integer}
 
   function MHState{S, F}(
     proposal::Distribution{F, S},
     pstate::ParameterState{S, F},
     tune::MCTunerState,
-    ratio::Real
+    ratio::Real,
+    diagnosticindices::Dict{Symbol, Integer}
   ) where {S<:ValueSupport, F<:VariateForm}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    new(proposal, pstate, tune, ratio)
+    new(proposal, pstate, tune, ratio, diagnosticindices)
   end
 end
 
@@ -27,7 +29,7 @@ MHState(
   tune::MCTunerState,
   ratio::Real
 ) where {S<:ValueSupport, F<:VariateForm} =
-  MHState{S, F}(proposal, pstate, tune, ratio)
+  MHState{S, F}(proposal, pstate, tune, ratio, Dict{Symbol, Integer}())
 
 MHState(
   proposal::Distribution{F, S},
@@ -84,14 +86,18 @@ end
 
 ## Initialize MHState
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{S, F},
   sampler::MH,
   tuner::MCTuner,
   pstate::ParameterState{S, F},
-  vstate::VariableStateVector
-) where {S<:ValueSupport, F<:VariateForm} =
-  MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+) where {S<:ValueSupport, F<:VariateForm}
+  sstate = MHState(sampler.setproposal(pstate), generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
 ## Reset parameter state
 

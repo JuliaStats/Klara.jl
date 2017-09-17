@@ -16,6 +16,7 @@ mutable struct UnvHMCState <: HMCState{Univariate}
   oldhamiltonian::Real
   newhamiltonian::Real
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function UnvHMCState(
     pstate::ParameterState{Continuous, Univariate},
@@ -26,7 +27,8 @@ mutable struct UnvHMCState <: HMCState{Univariate}
     momentum::Real,
     oldhamiltonian::Real,
     newhamiltonian::Real,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -35,12 +37,12 @@ mutable struct UnvHMCState <: HMCState{Univariate}
       @assert 0 <= a <= 1 "Acceptance probability should be in [0, 1]"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count)
+    new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count, diagnosticindices)
   end
 end
 
 UnvHMCState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune(), nleaps::Integer=0) =
-  UnvHMCState(pstate, tune, nleaps, NaN, NaN, NaN, NaN, NaN, 0)
+  UnvHMCState(pstate, tune, nleaps, NaN, NaN, NaN, NaN, NaN, 0, Dict{Symbol, Integer}())
 
 ## MuvHMCState holds the internal state ("local variables") of the HMC sampler for multivariate parameters
 
@@ -54,6 +56,7 @@ mutable struct MuvHMCState <: HMCState{Multivariate}
   oldhamiltonian::Real
   newhamiltonian::Real
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function MuvHMCState(
     pstate::ParameterState{Continuous, Multivariate},
@@ -64,7 +67,8 @@ mutable struct MuvHMCState <: HMCState{Multivariate}
     momentum::RealVector,
     oldhamiltonian::Real,
     newhamiltonian::Real,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -73,12 +77,12 @@ mutable struct MuvHMCState <: HMCState{Multivariate}
       @assert 0 <= a <= 1 "Acceptance probability should be in [0, 1]"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count)
+    new(pstate, tune, nleaps, ratio, a, momentum, oldhamiltonian, newhamiltonian, count, diagnosticindices)
   end
 end
 
 MuvHMCState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune(), nleaps::Integer=0) =
-  MuvHMCState(pstate, tune, nleaps, NaN, NaN, Array{eltype(pstate)}(pstate.size), NaN, NaN, 0)
+  MuvHMCState(pstate, tune, nleaps, NaN, NaN, Array{eltype(pstate)}(pstate.size), NaN, NaN, 0, Dict{Symbol, Integer}())
 
 ### Hamiltonian Monte Carlo (HMC)
 
@@ -128,48 +132,60 @@ tuner_state(parameter::Parameter, sampler::HMC, tuner::DualAveragingMCTuner) =
   totproposed=tuner.period
 )
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{Continuous, Univariate},
   sampler::HMC,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
-) =
-  UnvHMCState(
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = UnvHMCState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
     tuner_state(parameter, sampler, tuner),
     sampler.nleaps
   )
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
   sampler::HMC,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
-) =
-  MuvHMCState(
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = MuvHMCState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
     tuner_state(parameter, sampler, tuner),
     sampler.nleaps
   )
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
 function sampler_state(
   parameter::Parameter{Continuous, Univariate},
   sampler::HMC,
   tuner::DualAveragingMCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sstate = UnvHMCState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
     tuner_state(parameter, sampler, tuner),
     0
   )
+
   sstate.tune.step = initialize_step!(
     sstate.pstate, pstate, randn(), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
   )
   sstate.tune.μ = log(10*sstate.tune.step)
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
   sstate
 end
 
@@ -178,17 +194,21 @@ function sampler_state(
   sampler::HMC,
   tuner::DualAveragingMCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sstate = MuvHMCState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts),
     tuner_state(parameter, sampler, tuner),
     0
   )
+
   sstate.tune.step = initialize_step!(
     sstate.pstate, sstate.momentum, pstate, randn(pstate.size), sstate.tune.step, parameter.gradlogtarget!, typeof(tuner)
   )
   sstate.tune.μ = log(10*sstate.tune.step)
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
   sstate
 end
 

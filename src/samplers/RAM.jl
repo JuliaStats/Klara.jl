@@ -20,6 +20,7 @@ mutable struct UnvRAMState <: RAMState{Univariate}
   randnsample::Real
   η::Real
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function UnvRAMState(
     pstate::ParameterState{Continuous, Univariate},
@@ -29,13 +30,14 @@ mutable struct UnvRAMState <: RAMState{Univariate}
     SST::Real,
     randnsample::Real,
     η::Real,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(pstate, tune, ratio, S, SST, randnsample, η, count)
+    new(pstate, tune, ratio, S, SST, randnsample, η, count, diagnosticindices)
   end
 end
 
@@ -45,7 +47,7 @@ UnvRAMState(
   S::Real=NaN,
   SST::Real=abs2(S)
 ) =
-  UnvRAMState(pstate, tune, NaN, S, SST, NaN, NaN, 0)
+  UnvRAMState(pstate, tune, NaN, S, SST, NaN, NaN, 0, Dict{Symbol, Integer}())
 
 ## MuvRAMState holds the internal state ("local variables") of the RAM sampler for multivariate parameters
 
@@ -58,6 +60,7 @@ mutable struct MuvRAMState <: RAMState{Multivariate}
   randnsample::RealVector
   η::Real
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function MuvRAMState(
     pstate::ParameterState{Continuous, Multivariate},
@@ -67,13 +70,14 @@ mutable struct MuvRAMState <: RAMState{Multivariate}
     SST::RealMatrix,
     randnsample::RealVector,
     η::Real,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(pstate, tune, ratio, S, SST, randnsample, η, count)
+    new(pstate, tune, ratio, S, SST, randnsample, η, count, diagnosticindices)
   end
 end
 
@@ -83,7 +87,7 @@ MuvRAMState(
   S::RealLowerTriangular=RealLowerTriangular(Array{eltype(pstate)}(pstate.size, pstate.size)),
   SST::RealMatrix=S*S'
 ) =
-  MuvRAMState(pstate, tune, NaN, S, SST, Array{eltype(pstate)}(pstate.size), NaN, 0)
+  MuvRAMState(pstate, tune, NaN, S, SST, Array{eltype(pstate)}(pstate.size), NaN, 0, Dict{Symbol, Integer}())
 
 ### Robust adaptive Metropolis (RAM) sampler
 
@@ -127,33 +131,36 @@ end
 
 ## Initialize RAM state
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{Continuous, Univariate},
   sampler::RAM,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
-) =
-  UnvRAMState(
-    generate_empty(pstate),
-    tuner_state(parameter, sampler, tuner),
-    sampler.S0[1, 1],
-    NaN
-  )
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = UnvRAMState( generate_empty(pstate), tuner_state(parameter, sampler, tuner), sampler.S0[1, 1], NaN)
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
   sampler::RAM,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
-) =
-  MuvRAMState(
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = MuvRAMState(
     generate_empty(pstate),
     tuner_state(parameter, sampler, tuner),
     copy(sampler.S0),
     Array{eltype(pstate)}(pstate.size, pstate.size)
   )
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
 ## Reset parameter state
 

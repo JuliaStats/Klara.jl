@@ -16,7 +16,6 @@ mutable struct BasicMCJob <: MCJob
   outopts::Dict # Options related to output
   output::Union{VariableNState, VariableIOStream, Void} # Output of model's single parameter
   count::Integer # Current number of post-burnin iterations
-  dindex::Integer
   fmt_iter::Union{Function, Void}
   fmt_perc::Union{Function, Void}
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
@@ -53,11 +52,6 @@ mutable struct BasicMCJob <: MCJob
     instance.parameter.states = instance.vstate
 
     instance.sampler = sampler
-    if isa(sampler, NUTS)
-      instance.sampler.buildtree! =
-        eval(codegen_tree_builder(instance.parameter, typeof(sampler), typeof(tuner), instance.outopts))
-    end
-
     instance.tuner = tuner
     instance.range = range
     instance.verbose = verbose
@@ -82,20 +76,29 @@ mutable struct BasicMCJob <: MCJob
       instance.parameter.state = instance.pstate
     end
 
-    instance.sstate = sampler_state(instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate)
+    instance.sstate = sampler_state(
+      instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate, instance.outopts[:diagnostics]
+    )
 
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 
     instance.count = 0
 
-    instance.dindex = findfirst(instance.outopts[:diagnostics], :accept)
-
-    instance.fmt_iter = instance.tuner.verbose ? format_iteration(ndigits(instance.range.burnin)) : nothing
+    instance.fmt_iter =
+      if instance.tuner.verbose
+        if isa(sampler, NUTS) && isa(instance.tuner, DualAveragingMCTuner)
+          format_iteration(ndigits(instance.tuner.nadapt))
+        else
+          format_iteration(ndigits(range.burnin))
+        end
+      else
+        nothing
+      end
 
     instance.fmt_perc = instance.tuner.verbose ? format_percentage() : nothing
 
     instance.iterate! =
-      (isa(sampler, AM) || isa(sampler, ARS) || isa(sampler, HMC) || isa(sampler, MALA)|| isa(sampler, MH)) ?
+      (isa(sampler, AM) || isa(sampler, ARS) || isa(sampler, NUTS) || isa(sampler, HMC) || isa(sampler, MALA)|| isa(sampler, MH)) ?
         nothing :
         eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
 
@@ -223,7 +226,7 @@ function run(job::BasicMCJob)
     end
 
     if (
-      isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, HMC) || isa(job.sampler, MALA)|| isa(job.sampler, MH)
+      isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, NUTS) || isa(job.sampler, HMC) || isa(job.sampler, MALA)|| isa(job.sampler, MH)
     )
       iterate!(job, typeof(job.sampler), variate_form(job.parameter))
     else

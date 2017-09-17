@@ -27,6 +27,7 @@ mutable struct UnvAMState <: AMState{Univariate}
   sqrtminorscale::Real
   w::RealVector
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function UnvAMState(
     proposal::Union{UnivariateGMM, RealNormal},
@@ -38,7 +39,8 @@ mutable struct UnvAMState <: AMState{Univariate}
     C::Real,
     sqrtminorscale::Real,
     w::RealVector,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -53,7 +55,7 @@ mutable struct UnvAMState <: AMState{Univariate}
       @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count)
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count, diagnosticindices)
   end
 end
 
@@ -66,7 +68,7 @@ UnvAMState(
   tune::MCTunerState=BasicMCTune(),
   lastmean::Real=NaN
 ) =
-  UnvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0)
+  UnvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0, Dict{Symbol, Integer}())
 
 ## MuvAMState holds the internal state ("local variables") of the AM sampler for multivariate parameters
 
@@ -81,6 +83,7 @@ mutable struct MuvAMState <: AMState{Multivariate}
   sqrtminorscale::Real
   w::RealVector
   count::Integer
+  diagnosticindices::Dict{Symbol, Integer}
 
   function MuvAMState(
     proposal::Union{MultivariateGMM, AbstractMvNormal},
@@ -92,7 +95,8 @@ mutable struct MuvAMState <: AMState{Multivariate}
     C::RealMatrix,
     sqrtminorscale::Real,
     w::RealVector,
-    count::Integer
+    count::Integer,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -107,7 +111,7 @@ mutable struct MuvAMState <: AMState{Multivariate}
       @assert w[2] >= 0 "Weight of minor mixture component must be non-negative"
     end
     @assert count >= 0 "Number of iterations (count) should be non-negative"
-    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count)
+    new(proposal, pstate, tune, ratio, lastmean, secondlastmean, C, sqrtminorscale, w, count, diagnosticindices)
   end
 end
 
@@ -120,7 +124,7 @@ MuvAMState(
   tune::MCTunerState=BasicMCTune(),
   lastmean::RealVector=Array{eltype(pstate)}(pstate.size)
 ) =
-  MuvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0)
+  MuvAMState(proposal, pstate, tune, NaN, lastmean, lastmean, C, sqrtminorscale, w, 0, Dict{Symbol, Integer}())
 
 ### Adaptive Metropolis (AM) sampler
 
@@ -187,12 +191,13 @@ function sampler_state(
   sampler::AM,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sqrtminorscale = sqrt(sampler.minorscale)
   w = [1-sampler.c, sampler.c]
 
-  UnvAMState(
+  sstate = UnvAMState(
     set_normal(sampler, pstate, sqrtminorscale),
     generate_empty(pstate),
     sampler.C0[1, 1],
@@ -201,6 +206,10 @@ function sampler_state(
     tuner_state(parameter, sampler, tuner),
     pstate.value
   )
+
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
+  sstate
 end
 
 set_gmm(sampler::AM, pstate::ParameterState{Continuous, Multivariate}, C::RealMatrix, sqrtminorscale::Real, w::RealVector) =
@@ -220,12 +229,13 @@ function sampler_state(
   sampler::AM,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sqrtminorscale = sqrt(sampler.minorscale)
   w = [1-sampler.c, sampler.c]
 
-  MuvAMState(
+  sstate = MuvAMState(
     set_normal(sampler, pstate, sqrtminorscale),
     generate_empty(pstate),
     copy(sampler.C0),
@@ -234,6 +244,10 @@ function sampler_state(
     tuner_state(parameter, sampler, tuner),
     copy(pstate.value)
   )
+
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
+  sstate
 end
 
 ## Reset parameter state

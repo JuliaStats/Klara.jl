@@ -7,13 +7,14 @@ mutable struct ARSState{S<:ValueSupport, F<:VariateForm} <: MCSamplerState{F}
   tune::MCTunerState
   logproposal::Real
   weight::Real
+  diagnosticindices::Dict{Symbol, Integer}
 end
 
 ARSState(
   pstate::ParameterState{S, F},
   tune::MCTunerState=BasicMCTune()
 ) where {S<:ValueSupport, F<:VariateForm} =
-  ARSState(pstate, tune, NaN, NaN)
+  ARSState(pstate, tune, NaN, NaN, diagnosticindices)
 
 ### Acceptance-rejection sampler (ARS)
 
@@ -51,14 +52,18 @@ end
 
 ## Initialize ARSState
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{S, F},
   sampler::ARS,
   tuner::MCTuner,
   pstate::ParameterState{S, F},
-  vstate::VariableStateVector
-) where {S<:ValueSupport, F<:VariateForm} =
-  ARSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+) where {S<:ValueSupport, F<:VariateForm}
+  sstate = ARSState(generate_empty(pstate), tuner_state(parameter, sampler, tuner))
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
 ## Reset parameter state
 

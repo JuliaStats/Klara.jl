@@ -44,6 +44,18 @@ tuner_state(parameter::Parameter, sampler::HMCSampler, tuner::AcceptanceRateMCTu
 tuner_state(parameter::Parameter, sampler::LMCSampler, tuner::AcceptanceRateMCTuner) =
   BasicMCTune(sampler.driftstep, 0, 0, tuner.period)
 
+function set_diagnosticindices!(sstate::MCSamplerState, diagnostickeys::Vector{Symbol}, samplerkeys::Vector{Symbol})
+  if !isempty(diagnostickeys)
+    dindices = map(k -> findfirst(diagnostickeys, k), samplerkeys)
+
+    for (k, i) in zip(samplerkeys, dindices)
+      if i != 0
+        sstate.diagnosticindices[k] = i
+      end
+    end
+  end
+end
+
 function reset!(
   pstate::ParameterState{Continuous, Univariate},
   x::Real,

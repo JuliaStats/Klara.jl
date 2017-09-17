@@ -54,7 +54,8 @@ sampler_state(
   sampler::SliceSampler,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, F},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 ) where {F<:VariateForm} =
   SliceSamplerState(
     generate_empty(pstate),

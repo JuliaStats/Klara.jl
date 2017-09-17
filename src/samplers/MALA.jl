@@ -11,17 +11,24 @@ mutable struct UnvMALAState <: MALAState{Univariate}
   tune::MCTunerState
   ratio::Real
   μ::Real
+  diagnosticindices::Dict{Symbol, Integer}
 
-  function UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState, ratio::Real, μ::Real)
+  function UnvMALAState(
+    pstate::ParameterState{Continuous, Univariate},
+    tune::MCTunerState,
+    ratio::Real,
+    μ::Real,
+    diagnosticindices::Dict{Symbol, Integer}
+  )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    new(pstate, tune, ratio, μ)
+    new(pstate, tune, ratio, μ, diagnosticindices)
   end
 end
 
 UnvMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
-  UnvMALAState(pstate, tune, NaN, NaN)
+  UnvMALAState(pstate, tune, NaN, NaN, Dict{Symbol, Integer}())
 
 ## MuvMALAState holds the internal state ("local variables") of the MALA sampler for multivariate parameters
 
@@ -30,17 +37,24 @@ mutable struct MuvMALAState <: MALAState{Multivariate}
   tune::MCTunerState
   ratio::Real
   μ::RealVector
+  diagnosticindices::Dict{Symbol, Integer}
 
-  function MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState, ratio::Real, μ::RealVector)
+  function MuvMALAState(
+    pstate::ParameterState{Continuous, Multivariate},
+    tune::MCTunerState,
+    ratio::Real,
+    μ::RealVector,
+    diagnosticindices::Dict{Symbol, Integer}
+  )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    new(pstate, tune, ratio, μ)
+    new(pstate, tune, ratio, μ, diagnosticindices)
   end
 end
 
 MuvMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerState=BasicMCTune()) =
-  MuvMALAState(pstate, tune, NaN, Array{eltype(pstate)}(pstate.size))
+  MuvMALAState(pstate, tune, NaN, Array{eltype(pstate)}(pstate.size), Dict{Symbol, Integer}())
 
 ### Metropolis-adjusted Langevin Algorithm (MALA)
 
@@ -77,23 +91,37 @@ end
 
 ## Initialize MALA state
 
-sampler_state(
+# Stopped at this point, fixing the sampler_state functions
+
+function sampler_state(
   parameter::Parameter{Continuous, Univariate},
   sampler::MALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
-) =
-  UnvMALAState(generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner))
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = UnvMALAState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
+  )
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
-sampler_state(
+function sampler_state(
   parameter::Parameter{Continuous, Multivariate},
   sampler::MALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
-) =
-  MuvMALAState(generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner))
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
+)
+  sstate = MuvMALAState(
+    generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
+  )
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+  sstate
+end
 
 ## Reset parameter state
 

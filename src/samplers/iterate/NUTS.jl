@@ -1,308 +1,457 @@
-function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{NUTS})
-  local result::Expr
-  whilebody = []
-  ifwhilebody = []
-  burninbody = []
-  ifburninbody = []
-  body = []
-  local dindex::Integer
+function iterate!(job::BasicMCJob, ::Type{NUTS}, ::Type{Univariate})
+  local a::Real
+  local na::Integer
 
   if isa(job.tuner, DualAveragingMCTuner)
-    push!(body, :(local a::Real))
-    push!(body, :(local na::Integer))
-  end
-
-  vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in NUTS code generation")
-  end
-
-  if isa(job.tuner, DualAveragingMCTuner)
-    push!(body, :(_job.sstate.count += 1))
+    job.sstate.count += 1
   end
 
   if job.tuner.verbose
-    push!(body, :(_job.sstate.tune.proposed += 1))
+    job.sstate.tune.proposed += 1
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.momentum = randn()))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.momentum[:] = randn(_job.pstate.size)))
-  end
+  job.sstate.momentum = randn()
 
-  push!(body, :(_job.sstate.oldhamiltonian = hamiltonian(_job.pstate.logtarget, _job.sstate.momentum)))
+  job.sstate.oldhamiltonian = hamiltonian(job.pstate.logtarget, job.sstate.momentum)
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.pstateplus.value = _job.pstate.value))
-    push!(body, :(_job.sstate.pstateplus.gradlogtarget = _job.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.momentumplus = _job.sstate.momentum))
-    push!(body, :(_job.sstate.pstateminus.value = _job.pstate.value))
-    push!(body, :(_job.sstate.pstateminus.gradlogtarget = _job.pstate.gradlogtarget))
-    push!(body, :(_job.sstate.momentumminus = _job.sstate.momentum))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.pstateplus.value = copy(_job.pstate.value)))
-    push!(body, :(_job.sstate.pstateplus.gradlogtarget = copy(_job.pstate.gradlogtarget)))
-    push!(body, :(_job.sstate.momentumplus = copy(_job.sstate.momentum)))
-    push!(body, :(_job.sstate.pstateminus.value = copy(_job.pstate.value)))
-    push!(body, :(_job.sstate.pstateminus.gradlogtarget = copy(_job.pstate.gradlogtarget)))
-    push!(body, :(_job.sstate.momentumminus = copy(_job.sstate.momentum)))
-  end
+  job.sstate.pstateplus.value = job.pstate.value
+  job.sstate.pstateplus.gradlogtarget = job.pstate.gradlogtarget
+  job.sstate.momentumplus = job.sstate.momentum
+  job.sstate.pstateminus.value = job.pstate.value
+  job.sstate.pstateminus.gradlogtarget = job.pstate.gradlogtarget
+  job.sstate.momentumminus = job.sstate.momentum
 
-  push!(body, :(_job.sstate.j = 0))
-  push!(body, :(_job.sstate.n = 1))
-  push!(body, :(_job.sstate.s = true))
+  job.sstate.j = 0
+  job.sstate.n = 1
+  job.sstate.s = true
   if in(:accept, job.outopts[:diagnostics]) || job.tuner.verbose
-    push!(body, :(_job.sstate.update = false))
+    job.sstate.update = false
   end
 
-  push!(body, :(_job.sstate.u = log(rand())+_job.sstate.oldhamiltonian))
+  job.sstate.u = log(rand())+job.sstate.oldhamiltonian
 
-  push!(whilebody, :(_job.sstate.v = rand(Bool) ? 1 : -1))
+  while (job.sstate.s && (job.sstate.j < job.sampler.maxndoublings))
+    job.sstate.v = rand(Bool) ? 1 : -1
 
-  if isa(job.tuner, VanillaMCTuner)
-    push!(whilebody, :(
-      if _job.sstate.v == -1
-        _job.sstate.pstateminus,
-        _job.sstate.momentumminus,
+    if isa(job.tuner, VanillaMCTuner)
+      if job.sstate.v == -1
+        job.sstate.pstateminus,
+        job.sstate.momentumminus,
         _,
         _,
-        _job.sstate.pstateprime,
-        _job.sstate.nprime,
-        _job.sstate.sprime =
-          _job.sampler.buildtree!(
-            _job.sstate,
-            _job.sstate.pstateminus,
-            _job.sstate.momentumminus,
-            _job.sstate.u,
-            _job.sstate.v,
-            _job.sstate.j,
-            _job.sstate.tune.step,
-            _job.parameter.logtarget!,
-            _job.parameter.gradlogtarget!,
-            _job.sampler
-          )
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime = build_tree!(
+          job.sstate,
+          job.sstate.pstateminus,
+          job.sstate.momentumminus,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          VanillaMCTuner,
+          job.outopts
+        )
       else
         _,
         _,
-        _job.sstate.pstateplus,
-        _job.sstate.momentumplus,
-        _job.sstate.pstateprime,
-        _job.sstate.nprime,
-        _job.sstate.sprime =
-          _job.sampler.buildtree!(
-            _job.sstate,
-            _job.sstate.pstateplus,
-            _job.sstate.momentumplus,
-            _job.sstate.u,
-            _job.sstate.v,
-            _job.sstate.j,
-            _job.sstate.tune.step,
-            _job.parameter.logtarget!,
-            _job.parameter.gradlogtarget!,
-            _job.sampler
-          )
+        job.sstate.pstateplus,
+        job.sstate.momentumplus,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime = build_tree!(
+          job.sstate,
+          job.sstate.pstateplus,
+          job.sstate.momentumplus,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          VanillaMCTuner,
+          job.outopts
+        )
       end
-    ))
-  elseif isa(job.tuner, DualAveragingMCTuner)
-    push!(whilebody, :(
-      if _job.sstate.v == -1
-        _job.sstate.pstateminus,
-        _job.sstate.momentumminus,
+    elseif isa(job.tuner, DualAveragingMCTuner)
+      if job.sstate.v == -1
+        job.sstate.pstateminus,
+        job.sstate.momentumminus,
         _,
         _,
-        _job.sstate.pstateprime,
-        _job.sstate.nprime,
-        _job.sstate.sprime,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime,
         a,
-        na =
-          _job.sampler.buildtree!(
-            _job.sstate,
-            _job.sstate.pstateminus,
-            _job.sstate.momentumminus,
-            _job.sstate.oldhamiltonian,
-            _job.sstate.u,
-            _job.sstate.v,
-            _job.sstate.j,
-            _job.sstate.tune.step,
-            _job.parameter.logtarget!,
-            _job.parameter.gradlogtarget!,
-            _job.sampler
-          )
+        na = build_tree!(
+          job.sstate,
+          job.sstate.pstateminus,
+          job.sstate.momentumminus,
+          job.sstate.oldhamiltonian,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          DualAveragingMCTuner,
+          job.outopts
+        )
       else
         _,
         _,
-        _job.sstate.pstateplus,
-        _job.sstate.momentumplus,
-        _job.sstate.pstateprime,
-        _job.sstate.nprime,
-        _job.sstate.sprime,
+        job.sstate.pstateplus,
+        job.sstate.momentumplus,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime,
         a,
-        na =
-          _job.sampler.buildtree!(
-            _job.sstate,
-            _job.sstate.pstateplus,
-            _job.sstate.momentumplus,
-            _job.sstate.oldhamiltonian,
-            _job.sstate.u,
-            _job.sstate.v,
-            _job.sstate.j,
-            _job.sstate.tune.step,
-            _job.parameter.logtarget!,
-            _job.parameter.gradlogtarget!,
-            _job.sampler
-          )
+        na = build_tree!(
+          job.sstate,
+          job.sstate.pstateplus,
+          job.sstate.momentumplus,
+          job.sstate.oldhamiltonian,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          DualAveragingMCTuner,
+          job.outopts
+        )
       end
-    ))
-  end
-
-  if vform == Univariate
-    push!(ifwhilebody, :(_job.pstate.value = _job.sstate.pstateprime.value))
-    push!(ifwhilebody, :(_job.pstate.gradlogtarget = _job.sstate.pstateprime.gradlogtarget))
-    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(ifwhilebody, :(_job.pstate.gradloglikelihood = _job.sstate.pstateprime.gradloglikelihood))
     end
-    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(ifwhilebody, :(_job.pstate.gradlogprior = _job.sstate.pstateprime.gradlogprior))
+
+    if (job.sstate.sprime && (rand() < job.sstate.nprime/job.sstate.n))
+      job.pstate.value = job.sstate.pstateprime.value
+
+      job.pstate.gradlogtarget = job.sstate.pstateprime.gradlogtarget
+      if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+        job.pstate.gradloglikelihood = job.sstate.pstateprime.gradloglikelihood
+      end
+      if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+        job.pstate.gradlogprior = job.sstate.pstateprime.gradlogprior
+      end
+
+      job.pstate.logtarget = job.sstate.pstateprime.logtarget
+      if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+        job.pstate.loglikelihood = job.sstate.pstateprime.loglikelihood
+      end
+      if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+        job.pstate.logprior = job.sstate.pstateprime.logprior
+      end
+
+      if in(:accept, job.outopts[:diagnostics]) || job.tuner.verbose
+        job.sstate.update = true
+      end
     end
-  elseif vform == Multivariate
-    push!(ifwhilebody, :(_job.pstate.value = copy(_job.sstate.pstateprime.value)))
-    push!(ifwhilebody, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstateprime.gradlogtarget)))
-    if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(ifwhilebody, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstateprime.gradloglikelihood)))
+
+    job.sstate.j += 1
+    job.sstate.n += job.sstate.nprime
+    job.sstate.s =
+      job.sstate.sprime &&
+      !uturn(job.sstate.pstateplus.value, job.sstate.pstateminus.value, job.sstate.momentumplus, job.sstate.momentumminus)
+  end
+
+  if !isempty(job.sstate.diagnosticindices)
+    if haskey(job.sstate.diagnosticindices, :accept)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = job.sstate.update
     end
-    if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(ifwhilebody, :(_job.pstate.gradlogprior = copy(_job.sstate.pstateprime.gradlogprior)))
+
+    if haskey(job.sstate.diagnosticindices, :ndoublings)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:ndoublings]] = job.sstate.j
     end
-  end
-  push!(ifwhilebody, :(_job.pstate.logtarget = _job.sstate.pstateprime.logtarget))
-  if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(ifwhilebody, :(_job.pstate.loglikelihood = _job.sstate.pstateprime.loglikelihood))
-  end
-  if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(ifwhilebody, :(_job.pstate.logprior = _job.sstate.pstateprime.logprior))
-  end
-  if in(:accept, job.outopts[:diagnostics]) || job.tuner.verbose
-    push!(ifwhilebody, :(_job.sstate.update = true))
-  end
 
-  push!(
-    whilebody,
-    Expr(:if, :(_job.sstate.sprime && (rand() < _job.sstate.nprime/_job.sstate.n)), Expr(:block, ifwhilebody...))
-  )
+    if haskey(job.sstate.diagnosticindices, :a)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:a]] = a
+    end
 
-  push!(whilebody, :(_job.sstate.j += 1))
-  push!(whilebody, :(_job.sstate.n += _job.sstate.nprime))
-  push!(
-    whilebody,
-    :(
-      _job.sstate.s =
-      _job.sstate.sprime &&
-      !uturn(
-        _job.sstate.pstateplus.value,
-        _job.sstate.pstateminus.value,
-        _job.sstate.momentumplus,
-        _job.sstate.momentumminus
-      )
-    )
-  )
-
-  push!(body, Expr(:while, :(_job.sstate.s && (_job.sstate.j < _job.sampler.maxndoublings)), Expr(:block, whilebody...)))
-
-  dindex = findfirst(job.outopts[:diagnostics], :accept)
-  if dindex != 0
-    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = _job.sstate.update))
-  end
-
-  dindex = findfirst(job.outopts[:diagnostics], :ndoublings)
-  if dindex != 0
-    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = _job.sstate.j))
-  end
-
-  dindex = findfirst(job.outopts[:diagnostics], :a)
-  if dindex != 0
-    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = a))
-  end
-
-  dindex = findfirst(job.outopts[:diagnostics], :na)
-  if dindex != 0
-    push!(body, :( _job.pstate.diagnosticvalues[$dindex] = na))
+    if haskey(job.sstate.diagnosticindices, :na)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:na]] = na
+    end
   end
 
   if job.tuner.verbose
-    push!(body, :(_job.sstate.update && (_job.sstate.tune.accepted += 1)))
+    job.sstate.update && (job.sstate.tune.accepted += 1)
   end
 
   if isa(job.tuner, VanillaMCTuner) && job.tuner.verbose
-    push!(burninbody, :(rate!(_job.sstate.tune)))
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
 
-    if job.tuner.verbose
-      fmt_iter = format_iteration(ndigits(job.range.burnin))
-      fmt_perc = format_percentage()
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+      end
 
-      push!(burninbody, :(println(
-        "Burnin iteration ",
-        $(fmt_iter)(_job.sstate.tune.totproposed),
-        " of ",
-        _job.range.burnin,
-        ": ",
-        $(fmt_perc)(100*_job.sstate.tune.rate),
-        " % acceptance rate"
-      )))
+      reset_burnin!(job.sstate.tune)
     end
-
-    push!(burninbody, :(reset_burnin!(_job.sstate.tune)))
-
-    push!(
-      body,
-      Expr(
-        :if,
-        :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
-        Expr(:block, burninbody...)
-      )
-    )
   elseif isa(job.tuner, DualAveragingMCTuner)
-    push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner, _job.sstate.count, a/na)))
+    if (job.sstate.count <= job.tuner.nadapt)
+      tune!(job.sstate.tune, job.tuner, job.sstate.count, a/na)
+    else
+      job.sstate.tune.step = job.sstate.tune.εbar
+    end
 
     if job.tuner.verbose
-      fmt_iter = format_iteration(ndigits(job.tuner.nadapt))
-      fmt_perc = format_percentage()
+      if (mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+        rate!(job.sstate.tune)
 
-      push!(ifburninbody, :(rate!(_job.sstate.tune)))
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.tuner.nadapt,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
 
-      push!(ifburninbody, :(println(
-        "Burnin iteration ",
-        $(fmt_iter)(_job.sstate.tune.totproposed),
-        " of ",
-        _job.tuner.nadapt,
-        ": ",
-        $(fmt_perc)(100*_job.sstate.tune.rate),
-        " % acceptance rate"
-      )))
-
-      push!(ifburninbody, :(reset_burnin!(_job.sstate.tune)))
-
-      push!(burninbody, Expr(:if, :(mod(_job.sstate.tune.proposed, _job.tuner.period) == 0), Expr(:block, ifburninbody...)))
-    end
-
-    push!(
-      body,
-      Expr(
-        :if,
-        :(_job.sstate.count <= _job.tuner.nadapt),
-        Expr(:block, burninbody...),
-        :(_job.sstate.tune.step = _job.sstate.tune.εbar)
-      )
-    )
-  end
-
-  @gensym _iterate
-
-  result = quote
-    function $_iterate(_job::BasicMCJob)
-      $(body...)
+        reset_burnin!(job.sstate.tune)
+      end
     end
   end
+end
 
-  result
+function iterate!(job::BasicMCJob, ::Type{NUTS}, ::Type{Multivariate})
+  local a::Real
+  local na::Integer
+
+  if isa(job.tuner, DualAveragingMCTuner)
+    job.sstate.count += 1
+  end
+
+  if job.tuner.verbose
+    job.sstate.tune.proposed += 1
+  end
+
+  job.sstate.momentum[:] = randn(job.pstate.size)
+
+  job.sstate.oldhamiltonian = hamiltonian(job.pstate.logtarget, job.sstate.momentum)
+
+  job.sstate.pstateplus.value = copy(job.pstate.value)
+  job.sstate.pstateplus.gradlogtarget = copy(job.pstate.gradlogtarget)
+  job.sstate.momentumplus = copy(job.sstate.momentum)
+  job.sstate.pstateminus.value = copy(job.pstate.value)
+  job.sstate.pstateminus.gradlogtarget = copy(job.pstate.gradlogtarget)
+  job.sstate.momentumminus = copy(job.sstate.momentum)
+
+  job.sstate.j = 0
+  job.sstate.n = 1
+  job.sstate.s = true
+  if in(:accept, job.outopts[:diagnostics]) || job.tuner.verbose
+    job.sstate.update = false
+  end
+
+  job.sstate.u = log(rand())+job.sstate.oldhamiltonian
+
+  while (job.sstate.s && (job.sstate.j < job.sampler.maxndoublings))
+    job.sstate.v = rand(Bool) ? 1 : -1
+
+    if isa(job.tuner, VanillaMCTuner)
+      if job.sstate.v == -1
+        job.sstate.pstateminus,
+        job.sstate.momentumminus,
+        _,
+        _,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime = build_tree!(
+          job.sstate,
+          job.sstate.pstateminus,
+          job.sstate.momentumminus,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          VanillaMCTuner,
+          job.outopts
+        )
+      else
+        _,
+        _,
+        job.sstate.pstateplus,
+        job.sstate.momentumplus,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime = build_tree!(
+          job.sstate,
+          job.sstate.pstateplus,
+          job.sstate.momentumplus,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          VanillaMCTuner,
+          job.outopts
+        )
+      end
+    elseif isa(job.tuner, DualAveragingMCTuner)
+      if job.sstate.v == -1
+        job.sstate.pstateminus,
+        job.sstate.momentumminus,
+        _,
+        _,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime,
+        a,
+        na = build_tree!(
+          job.sstate,
+          job.sstate.pstateminus,
+          job.sstate.momentumminus,
+          job.sstate.oldhamiltonian,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          DualAveragingMCTuner,
+          job.outopts
+        )
+      else
+        _,
+        _,
+        job.sstate.pstateplus,
+        job.sstate.momentumplus,
+        job.sstate.pstateprime,
+        job.sstate.nprime,
+        job.sstate.sprime,
+        a,
+        na = build_tree!(
+          job.sstate,
+          job.sstate.pstateplus,
+          job.sstate.momentumplus,
+          job.sstate.oldhamiltonian,
+          job.sstate.u,
+          job.sstate.v,
+          job.sstate.j,
+          job.sstate.tune.step,
+          job.parameter,
+          job.sampler.maxδ,
+          NUTS,
+          DualAveragingMCTuner,
+          job.outopts
+        )
+      end
+    end
+
+    if (job.sstate.sprime && (rand() < job.sstate.nprime/job.sstate.n))
+      job.pstate.value = copy(job.sstate.pstateprime.value)
+
+      job.pstate.gradlogtarget = copy(job.sstate.pstateprime.gradlogtarget)
+      if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
+        job.pstate.gradloglikelihood = copy(job.sstate.pstateprime.gradloglikelihood)
+      end
+      if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
+        job.pstate.gradlogprior = copy(job.sstate.pstateprime.gradlogprior)
+      end
+
+      job.pstate.logtarget = job.sstate.pstateprime.logtarget
+      if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+        job.pstate.loglikelihood = job.sstate.pstateprime.loglikelihood
+      end
+      if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+        job.pstate.logprior = job.sstate.pstateprime.logprior
+      end
+
+      if in(:accept, job.outopts[:diagnostics]) || job.tuner.verbose
+        job.sstate.update = true
+      end
+    end
+
+    job.sstate.j += 1
+    job.sstate.n += job.sstate.nprime
+    job.sstate.s =
+      job.sstate.sprime &&
+      !uturn(job.sstate.pstateplus.value, job.sstate.pstateminus.value, job.sstate.momentumplus, job.sstate.momentumminus)
+  end
+
+  if !isempty(job.sstate.diagnosticindices)
+    if haskey(job.sstate.diagnosticindices, :accept)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = job.sstate.update
+    end
+
+    if haskey(job.sstate.diagnosticindices, :ndoublings)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:ndoublings]] = job.sstate.j
+    end
+
+    if haskey(job.sstate.diagnosticindices, :a)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:a]] = a
+    end
+
+    if haskey(job.sstate.diagnosticindices, :na)
+      job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:na]] = na
+    end
+  end
+
+  if job.tuner.verbose
+    job.sstate.update && (job.sstate.tune.accepted += 1)
+  end
+
+  if isa(job.tuner, VanillaMCTuner) && job.tuner.verbose
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
+
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+      end
+
+      reset_burnin!(job.sstate.tune)
+    end
+  elseif isa(job.tuner, DualAveragingMCTuner)
+    if (job.sstate.count <= job.tuner.nadapt)
+      tune!(job.sstate.tune, job.tuner, job.sstate.count, a/na)
+    else
+      job.sstate.tune.step = job.sstate.tune.εbar
+    end
+
+    if job.tuner.verbose
+      if (mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+        rate!(job.sstate.tune)
+
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.tuner.nadapt,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+
+        reset_burnin!(job.sstate.tune)
+      end
+    end
+  end
 end

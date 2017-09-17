@@ -33,16 +33,20 @@ function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Univariate})
       job.pstate.logprior = job.sstate.pstate.logprior
     end
 
-    if job.dindex != 0
-      job.pstate.diagnosticvalues[job.dindex] = true
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = true
+      end
     end
 
     if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
       job.sstate.tune.accepted += 1
     end
   else
-    if job.dindex != 0
-      job.pstate.diagnosticvalues[job.dindex] = false
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = false
+      end
     end
   end
 
@@ -106,16 +110,20 @@ function iterate!(job::BasicMCJob, ::Type{MALA}, ::Type{Multivariate})
       job.pstate.logprior = job.sstate.pstate.logprior
     end
 
-    if job.dindex != 0
-      job.pstate.diagnosticvalues[job.dindex] = true
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = true
+      end
     end
 
     if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
       job.sstate.tune.accepted += 1
     end
   else
-    if job.dindex != 0
-      job.pstate.diagnosticvalues[job.dindex] = false
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = false
+      end
     end
   end
 
