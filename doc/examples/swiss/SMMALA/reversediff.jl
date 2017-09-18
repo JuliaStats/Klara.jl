@@ -27,7 +27,7 @@ model = likelihood_model([Hyperparameter(:λ), Data(:X), Data(:y), p], isindexed
 
 mcsampler = SMMALA(0.02)
 
-mcrange = BasicMCRange(nsteps=50000, burnin=10000)
+mcrange = BasicMCRange(nsteps=30000, burnin=10000)
 
 v0 = Dict(:λ=>100., :X=>covariates, :y=>outcome, :p=>[5.1, -0.9, 8.2, -4.5])
 

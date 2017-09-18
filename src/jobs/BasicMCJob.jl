@@ -20,7 +20,6 @@ mutable struct BasicMCJob <: MCJob
   fmt_perc::Union{Function, Void}
   resetpstate::Bool # If resetpstate=true then pstate is reset by reset(job), else pstate is not modified by reset(job)
   verbose::Bool
-  iterate!::Union{Function, Void}
 
   function BasicMCJob(
     model::GenericModel,
@@ -96,11 +95,6 @@ mutable struct BasicMCJob <: MCJob
       end
 
     instance.fmt_perc = instance.tuner.verbose ? format_percentage() : nothing
-
-    instance.iterate! =
-      (isa(sampler, AM) || isa(sampler, ARS) || isa(sampler, NUTS) || isa(sampler, HMC) || isa(sampler, MALA)|| isa(sampler, MH)) ?
-        nothing :
-        eval(codegen(Val{:iterate}, instance, typeof(instance.sampler)))
 
     instance
   end
@@ -225,13 +219,7 @@ function run(job::BasicMCJob)
       println("Iteration ", fmt_iter(i), " of ", job.range.nsteps)
     end
 
-    if (
-      isa(job.sampler, AM) || isa(job.sampler, ARS) || isa(job.sampler, NUTS) || isa(job.sampler, HMC) || isa(job.sampler, MALA)|| isa(job.sampler, MH)
-    )
-      iterate!(job, typeof(job.sampler), variate_form(job.parameter))
-    else
-      iterate(job)
-    end
+    iterate!(job, typeof(job.sampler), variate_form(job.parameter))
 
     if in(i, job.range.postrange)
       job.count += 1

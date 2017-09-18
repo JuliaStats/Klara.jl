@@ -17,6 +17,7 @@ mutable struct UnvSMMALAState <: SMMALAState{Univariate}
   cholinvtensor::Real
   newfirstterm::Real
   oldfirstterm::Real
+  diagnosticindices::Dict{Symbol, Integer}
 
   function UnvSMMALAState(
     pstate::ParameterState{Continuous, Univariate},
@@ -28,7 +29,8 @@ mutable struct UnvSMMALAState <: SMMALAState{Univariate}
     oldinvtensor::Real,
     cholinvtensor::Real,
     newfirstterm::Real,
-    oldfirstterm::Real
+    oldfirstterm::Real,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -36,12 +38,24 @@ mutable struct UnvSMMALAState <: SMMALAState{Univariate}
     if !isnan(sqrttunestep)
       @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     end
-    new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
+    new(
+      pstate,
+      tune,
+      sqrttunestep,
+      ratio,
+      μ,
+      newinvtensor,
+      oldinvtensor,
+      cholinvtensor,
+      newfirstterm,
+      oldfirstterm,
+      diagnosticindices
+    )
   end
 end
 
 UnvSMMALAState(pstate::ParameterState{Continuous, Univariate}, tune::MCTunerState=BasicMCTune()) =
-  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+  UnvSMMALAState(pstate, tune, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, Dict{Symbol, Integer}())
 
 ## MuvSMMALAState holds the internal state ("local variables") of the SMMALA sampler for multivariate parameters
 
@@ -56,6 +70,7 @@ mutable struct MuvSMMALAState <: SMMALAState{Multivariate}
   cholinvtensor::RealLowerTriangular
   newfirstterm::RealVector
   oldfirstterm::RealVector
+  diagnosticindices::Dict{Symbol, Integer}
 
   function MuvSMMALAState(
     pstate::ParameterState{Continuous, Multivariate},
@@ -67,7 +82,8 @@ mutable struct MuvSMMALAState <: SMMALAState{Multivariate}
     oldinvtensor::RealMatrix,
     cholinvtensor::RealLowerTriangular,
     newfirstterm::RealVector,
-    oldfirstterm::RealVector
+    oldfirstterm::RealVector,
+    diagnosticindices::Dict{Symbol, Integer}
   )
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
@@ -75,7 +91,19 @@ mutable struct MuvSMMALAState <: SMMALAState{Multivariate}
     if !isnan(sqrttunestep)
       @assert sqrttunestep > 0 "Square root of tuned drift step is not positive"
     end
-    new(pstate, tune, sqrttunestep, ratio, μ, newinvtensor, oldinvtensor, cholinvtensor, newfirstterm, oldfirstterm)
+    new(
+      pstate,
+      tune,
+      sqrttunestep,
+      ratio,
+      μ,
+      newinvtensor,
+      oldinvtensor,
+      cholinvtensor,
+      newfirstterm,
+      oldfirstterm,
+      diagnosticindices
+    )
   end
 end
 
@@ -90,7 +118,8 @@ MuvSMMALAState(pstate::ParameterState{Continuous, Multivariate}, tune::MCTunerSt
     Array{eltype(pstate)}(pstate.size, pstate.size),
     RealLowerTriangular(Array{eltype(pstate)}(pstate.size, pstate.size)),
     Array{eltype(pstate)}(pstate.size),
-    Array{eltype(pstate)}(pstate.size)
+    Array{eltype(pstate)}(pstate.size),
+    Dict{Symbol, Integer}()
   )
 
 ### Metropolis-adjusted Langevin Algorithm (SMMALA)
@@ -155,15 +184,22 @@ function sampler_state(
   sampler::SMMALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Univariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sstate = UnvSMMALAState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
   )
+
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor = inv(pstate.tensorlogtarget)
+  println("tensorlogtarget = ", pstate.tensorlogtarget) 
+  println("oldinvtensor = ", sstate.oldinvtensor)
   sstate.cholinvtensor = chol(sstate.oldinvtensor)
   sstate.oldfirstterm = sstate.oldinvtensor*pstate.gradlogtarget
+
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
   sstate
 end
 
@@ -172,15 +208,20 @@ function sampler_state(
   sampler::SMMALA,
   tuner::MCTuner,
   pstate::ParameterState{Continuous, Multivariate},
-  vstate::VariableStateVector
+  vstate::VariableStateVector,
+  diagnostickeys::Vector{Symbol}
 )
   sstate = MuvSMMALAState(
     generate_empty(pstate, parameter.diffmethods, parameter.diffopts), tuner_state(parameter, sampler, tuner)
   )
+
   sstate.sqrttunestep = sqrt(sstate.tune.step)
   sstate.oldinvtensor[:, :] = inv(pstate.tensorlogtarget)
   sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(sstate.oldinvtensor)))
   sstate.oldfirstterm[:] = sstate.oldinvtensor*pstate.gradlogtarget
+
+  set_diagnosticindices!(sstate, [:accept], diagnostickeys)
+
   sstate
 end
 

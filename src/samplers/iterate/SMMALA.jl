@@ -1,204 +1,221 @@
-function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{SMMALA})
-  local result::Expr
-  update = []
-  noupdate = []
-  burninbody = []
-  body = []
-  local dindex::Integer
-
-  vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in SMMALA code generation")
-  end
-
+function iterate!(job::BasicMCJob, ::Type{SMMALA}, ::Type{Univariate})
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(body, :(_job.sstate.tune.proposed += 1))
+    job.sstate.tune.proposed += 1
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.μ = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
-    push!(body, :(_job.sstate.pstate.value = _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn()))
-  elseif vform == Multivariate
-    push!(body, :(_job.sstate.μ[:] = _job.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.oldfirstterm))
-    push!(
-      body,
-      :(_job.sstate.pstate.value[:] =
-        _job.sstate.μ+_job.sstate.sqrttunestep*_job.sstate.cholinvtensor*randn(_job.pstate.size)
-      )
+  job.sstate.μ = job.pstate.value+0.5*job.sstate.tune.step*job.sstate.oldfirstterm
+  job.sstate.pstate.value = job.sstate.μ+job.sstate.sqrttunestep*job.sstate.cholinvtensor*randn()
+
+  job.parameter.uptotensorlogtarget!(job.sstate.pstate)
+
+  job.sstate.ratio = job.sstate.pstate.logtarget-job.pstate.logtarget
+
+  job.sstate.ratio += (
+    0.5*(
+      log(job.sstate.tune.step*job.sstate.oldinvtensor)
+      +abs2(job.sstate.pstate.value-job.sstate.μ)*job.pstate.tensorlogtarget/job.sstate.tune.step
     )
-  end
+  )
 
-  push!(body, :(_job.parameter.uptotensorlogtarget!(_job.sstate.pstate)))
+  job.sstate.newinvtensor = inv(job.sstate.pstate.tensorlogtarget)
 
-  if vform == Multivariate && job.sampler.transform != nothing
-    push!(body, :(_job.sstate.pstate.tensorlogtarget[:, :] = _job.sampler.transform(_job.sstate.pstate.tensorlogtarget)))
-  end
+  job.sstate.newfirstterm = job.sstate.newinvtensor*job.sstate.pstate.gradlogtarget
 
-  push!(body, :(_job.sstate.ratio = _job.sstate.pstate.logtarget-_job.pstate.logtarget))
+  job.sstate.μ = job.sstate.pstate.value+0.5*job.sstate.tune.step*job.sstate.newfirstterm
 
-  if vform == Univariate
-    push!(
-      body,
-      :(
-        _job.sstate.ratio += (
-          0.5*(
-            log(_job.sstate.tune.step*_job.sstate.oldinvtensor)
-            +abs2(_job.sstate.pstate.value-_job.sstate.μ)*_job.pstate.tensorlogtarget/_job.sstate.tune.step
-          )
-        )
-      )
+  job.sstate.ratio -= (
+    0.5*(
+      log(job.sstate.tune.step*job.sstate.newinvtensor)
+      +abs2(job.pstate.value-job.sstate.μ)*job.sstate.pstate.tensorlogtarget/job.sstate.tune.step
     )
+  )
 
-    push!(body, :(_job.sstate.newinvtensor = inv(_job.sstate.pstate.tensorlogtarget)))
+  if (job.sstate.ratio > 0 || (job.sstate.ratio > log(rand())))
+    job.pstate.value = job.sstate.pstate.value
 
-    push!(body, :(_job.sstate.newfirstterm = _job.sstate.newinvtensor*_job.sstate.pstate.gradlogtarget))
-
-    push!(body, :(_job.sstate.μ = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
-
-    push!(
-      body,
-      :(
-        _job.sstate.ratio -= (
-          0.5*(
-            log(_job.sstate.tune.step*_job.sstate.newinvtensor)
-            +abs2(_job.pstate.value-_job.sstate.μ)*_job.sstate.pstate.tensorlogtarget/_job.sstate.tune.step
-          )
-        )
-      )
-    )
-
-    push!(update, :(_job.pstate.value = _job.sstate.pstate.value))
-    push!(update, :(_job.pstate.gradlogtarget = _job.sstate.pstate.gradlogtarget))
+    job.pstate.gradlogtarget = job.sstate.pstate.gradlogtarget
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = _job.sstate.pstate.gradloglikelihood))
+      job.pstate.gradloglikelihood = job.sstate.pstate.gradloglikelihood
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = _job.sstate.pstate.gradlogprior))
+      job.pstate.gradlogprior = job.sstate.pstate.gradlogprior
     end
-    push!(update, :(_job.pstate.tensorlogtarget = _job.sstate.pstate.tensorlogtarget))
+
+    job.pstate.tensorlogtarget = job.sstate.pstate.tensorlogtarget
     if in(:tensorloglikelihood, job.outopts[:monitor]) && job.parameter.tensorloglikelihood! != nothing
-      push!(update, :(_job.pstate.tensorloglikelihood = _job.sstate.pstate.tensorloglikelihood))
+      job.pstate.tensorloglikelihood = job.sstate.pstate.tensorloglikelihood
     end
     if in(:tensorlogprior, job.outopts[:monitor]) && job.parameter.tensorlogprior! != nothing
-      push!(update, :(_job.pstate.tensorlogprior = _job.sstate.pstate.tensorlogprior))
+      job.pstate.tensorlogprior = job.sstate.pstate.tensorlogprior
     end
-    push!(update, :(_job.sstate.oldinvtensor = _job.sstate.newinvtensor))
-    push!(update, :(_job.sstate.cholinvtensor = chol(_job.sstate.newinvtensor)))
-    push!(update, :(_job.sstate.oldfirstterm = _job.sstate.newfirstterm))
-  elseif vform == Multivariate
-    push!(
-      body,
-      :(
-        _job.sstate.ratio += (
-          0.5*(
-            logdet(_job.sstate.tune.step*_job.sstate.oldinvtensor)
-            +dot(
-              _job.sstate.pstate.value-_job.sstate.μ,
-              _job.pstate.tensorlogtarget*(_job.sstate.pstate.value-_job.sstate.μ)
-            )/_job.sstate.tune.step
-          )
+
+    job.sstate.oldinvtensor = job.sstate.newinvtensor
+    job.sstate.cholinvtensor = chol(job.sstate.newinvtensor)
+    job.sstate.oldfirstterm = job.sstate.newfirstterm
+
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
+
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = true
+      end
+    end
+
+    if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = false
+      end
+    end
+  end
+
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
+
+      if isa(job.tuner, AcceptanceRateMCTuner)
+        tune!(job.sstate.tune, job.tuner)
+        job.sstate.sqrttunestep = sqrt(job.sstate.tune.step)
+      end
+
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
         )
-      )
+      end
+
+      reset_burnin!(job.sstate.tune)
+    end
+  end
+end
+
+function iterate!(job::BasicMCJob, ::Type{SMMALA}, ::Type{Multivariate})
+  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+    job.sstate.tune.proposed += 1
+  end
+
+  job.sstate.μ[:] = job.pstate.value+0.5*job.sstate.tune.step*job.sstate.oldfirstterm
+  job.sstate.pstate.value[:] = job.sstate.μ+job.sstate.sqrttunestep*job.sstate.cholinvtensor*randn(job.pstate.size)
+
+  job.parameter.uptotensorlogtarget!(job.sstate.pstate)
+
+  if job.sampler.transform != nothing
+    job.sstate.pstate.tensorlogtarget[:, :] = job.sampler.transform(job.sstate.pstate.tensorlogtarget)
+  end
+
+  job.sstate.ratio = job.sstate.pstate.logtarget-job.pstate.logtarget
+
+  job.sstate.ratio += (
+    0.5*(
+      logdet(job.sstate.tune.step*job.sstate.oldinvtensor)
+      +dot(
+        job.sstate.pstate.value-job.sstate.μ,
+        job.pstate.tensorlogtarget*(job.sstate.pstate.value-job.sstate.μ)
+      )/job.sstate.tune.step
     )
+  )
 
-    push!(body, :(_job.sstate.newinvtensor[:, :] = inv(_job.sstate.pstate.tensorlogtarget)))
+  job.sstate.newinvtensor[:, :] = inv(job.sstate.pstate.tensorlogtarget)
 
-    push!(body, :(_job.sstate.newfirstterm[:] = _job.sstate.newinvtensor*_job.sstate.pstate.gradlogtarget))
+  job.sstate.newfirstterm[:] = job.sstate.newinvtensor*job.sstate.pstate.gradlogtarget
 
-    push!(body, :(_job.sstate.μ[:] = _job.sstate.pstate.value+0.5*_job.sstate.tune.step*_job.sstate.newfirstterm))
+  job.sstate.μ[:] = job.sstate.pstate.value+0.5*job.sstate.tune.step*job.sstate.newfirstterm
 
-    push!(
-      body,
-      :(
-        _job.sstate.ratio -= (
-          0.5*(
-            logdet(_job.sstate.tune.step*_job.sstate.newinvtensor)
-            +dot(
-              _job.pstate.value-_job.sstate.μ,
-              _job.sstate.pstate.tensorlogtarget*(_job.pstate.value-_job.sstate.μ)
-            )/_job.sstate.tune.step
-          )
-        )
-      )
+  job.sstate.ratio -= (
+    0.5*(
+      logdet(job.sstate.tune.step*job.sstate.newinvtensor)
+      +dot(
+        job.pstate.value-job.sstate.μ,
+        job.sstate.pstate.tensorlogtarget*(job.pstate.value-job.sstate.μ)
+      )/job.sstate.tune.step
     )
+  )
 
-    push!(update, :(_job.pstate.value = copy(_job.sstate.pstate.value)))
-    push!(update, :(_job.pstate.gradlogtarget = copy(_job.sstate.pstate.gradlogtarget)))
+  if (job.sstate.ratio > 0 || (job.sstate.ratio > log(rand())))
+    job.pstate.value = copy(job.sstate.pstate.value)
+
+    job.pstate.gradlogtarget = copy(job.sstate.pstate.gradlogtarget)
     if in(:gradloglikelihood, job.outopts[:monitor]) && job.parameter.gradloglikelihood! != nothing
-      push!(update, :(_job.pstate.gradloglikelihood = copy(_job.sstate.pstate.gradloglikelihood)))
+      job.pstate.gradloglikelihood = copy(job.sstate.pstate.gradloglikelihood)
     end
     if in(:gradlogprior, job.outopts[:monitor]) && job.parameter.gradlogprior! != nothing
-      push!(update, :(_job.pstate.gradlogprior = copy(_job.sstate.pstate.gradlogprior)))
+      job.pstate.gradlogprior = copy(job.sstate.pstate.gradlogprior)
     end
-    push!(update, :(_job.pstate.tensorlogtarget = copy(_job.sstate.pstate.tensorlogtarget)))
+
+    job.pstate.tensorlogtarget = copy(job.sstate.pstate.tensorlogtarget)
     if in(:tensorloglikelihood, job.outopts[:monitor]) && job.parameter.tensorloglikelihood! != nothing
-      push!(update, :(_job.pstate.tensorloglikelihood = copy(_job.sstate.pstate.tensorloglikelihood)))
+      job.pstate.tensorloglikelihood = copy(job.sstate.pstate.tensorloglikelihood)
     end
     if in(:tensorlogprior, job.outopts[:monitor]) && job.parameter.tensorlogprior! != nothing
-      push!(update, :(_job.pstate.tensorlogprior = copy(_job.sstate.pstate.tensorlogprior)))
+      job.pstate.tensorlogprior = copy(job.sstate.pstate.tensorlogprior)
     end
-    push!(update, :(_job.sstate.oldinvtensor = copy(_job.sstate.newinvtensor)))
-    push!(update, :(_job.sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(_job.sstate.newinvtensor)))))
-    push!(update, :(_job.sstate.oldfirstterm = copy(_job.sstate.newfirstterm)))
+
+    job.sstate.oldinvtensor = copy(job.sstate.newinvtensor)
+    job.sstate.cholinvtensor[:, :] = ctranspose(chol(Hermitian(job.sstate.newinvtensor)))
+    job.sstate.oldfirstterm = copy(job.sstate.newfirstterm)
+
+    job.pstate.logtarget = job.sstate.pstate.logtarget
+    if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
+      job.pstate.loglikelihood = job.sstate.pstate.loglikelihood
+    end
+    if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
+      job.pstate.logprior = job.sstate.pstate.logprior
+    end
+
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = true
+      end
+    end
+
+    if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
+      job.sstate.tune.accepted += 1
+    end
+  else
+    if !isempty(job.sstate.diagnosticindices)
+      if haskey(job.sstate.diagnosticindices, :accept)
+        job.pstate.diagnosticvalues[job.sstate.diagnosticindices[:accept]] = false
+      end
+    end
   end
 
-  push!(update, :(_job.pstate.logtarget = _job.sstate.pstate.logtarget))
-  if in(:loglikelihood, job.outopts[:monitor]) && job.parameter.loglikelihood! != nothing
-    push!(update, :(_job.pstate.loglikelihood = _job.sstate.pstate.loglikelihood))
-  end
-  if in(:logprior, job.outopts[:monitor]) && job.parameter.logprior! != nothing
-    push!(update, :(_job.pstate.logprior = _job.sstate.pstate.logprior))
-  end
-  dindex = findfirst(job.outopts[:diagnostics], :accept)
-  if dindex != 0
-    push!(update, :(_job.pstate.diagnosticvalues[$dindex] = true))
-    push!(noupdate, :(_job.pstate.diagnosticvalues[$dindex] = false))
-  end
   if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(update, :(_job.sstate.tune.accepted += 1))
-  end
+    if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      rate!(job.sstate.tune)
 
-  push!(body, Expr(:if, :(_job.sstate.ratio > 0 || (_job.sstate.ratio > log(rand()))), Expr(:block, update...), noupdate...))
+      if isa(job.tuner, AcceptanceRateMCTuner)
+        tune!(job.sstate.tune, job.tuner)
+        job.sstate.sqrttunestep = sqrt(job.sstate.tune.step)
+      end
 
-  if (isa(job.tuner, VanillaMCTuner) && job.tuner.verbose) || isa(job.tuner, AcceptanceRateMCTuner)
-    push!(burninbody, :(rate!(_job.sstate.tune)))
+      if job.tuner.verbose
+        println(
+          "Burnin iteration ",
+          job.fmt_iter(job.sstate.tune.totproposed),
+          " of ",
+          job.range.burnin,
+          ": ",
+          job.fmt_perc(100*job.sstate.tune.rate),
+          " % acceptance rate"
+        )
+      end
 
-    if isa(job.tuner, AcceptanceRateMCTuner)
-      push!(burninbody, :(tune!(_job.sstate.tune, _job.tuner)))
-      push!(burninbody, :(_job.sstate.sqrttunestep = sqrt(_job.sstate.tune.step)))
-    end
-
-    if job.tuner.verbose
-      fmt_iter = format_iteration(ndigits(job.range.burnin))
-      fmt_perc = format_percentage()
-
-      push!(burninbody, :(println(
-        "Burnin iteration ",
-        $(fmt_iter)(_job.sstate.tune.totproposed),
-        " of ",
-        _job.range.burnin,
-        ": ",
-        $(fmt_perc)(100*_job.sstate.tune.rate),
-        " % acceptance rate"
-      )))
-    end
-
-    push!(burninbody, :(reset_burnin!(_job.sstate.tune)))
-
-    push!(body, Expr(
-      :if,
-      :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
-      Expr(:block, burninbody...)
-    ))
-  end
-
-  @gensym _iterate
-
-  result = quote
-    function $_iterate(_job::BasicMCJob)
-      $(body...)
+      reset_burnin!(job.sstate.tune)
     end
   end
-
-  result
 end

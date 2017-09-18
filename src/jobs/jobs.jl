@@ -209,6 +209,4 @@ function initialize_output(state::BasicContMuvParameterState, n::Integer, outopt
   output
 end
 
-iterate(job::MCJob) = job.iterate!(job)
-
 run(job::Vector{J}) where {J<:MCJob} = map(run, job)
