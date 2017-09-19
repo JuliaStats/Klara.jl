@@ -29,6 +29,7 @@ files =
     joinpath("Normal", "NUTS", "function", "dualaveraging", "forwarddiff"),
     joinpath("Normal", "NUTS", "function", "noadaptation", "analytical"),
     joinpath("Normal", "NUTS", "function", "noadaptation", "forwarddiff"),
+    joinpath("Normal", "SliceSampler"),    
     joinpath("Poisson", "MH"),
     joinpath("swiss", "HMC", "dualaveraging", "analytical"),
     joinpath("swiss", "HMC", "dualaveraging", "forwarddiff"),

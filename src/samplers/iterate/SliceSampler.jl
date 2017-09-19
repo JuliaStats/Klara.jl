@@ -1,143 +1,119 @@
-function codegen(::Type{Val{:iterate}}, job::BasicMCJob, ::Type{SliceSampler})
-  local result::Expr
-  innerbody = []
-  burninbody = []
-  body = []
-
-  vform = variate_form(job.pstate)
-  if vform != Univariate && vform != Multivariate
-    error("Only univariate or multivariate parameter states allowed in SliceSampler code generation")
-  end
-
+function iterate!(job::BasicMCJob, ::Type{SliceSampler}, ::Type{Univariate})
   if job.tuner.verbose
-    push!(body, :(_job.sstate.tune.proposed += 1))
+    job.sstate.tune.proposed += 1
   end
 
-  if vform == Univariate
-    push!(body, :(_job.sstate.loguprime = log(rand())+_job.pstate.logtarget))
-    push!(body, :(_job.sstate.lstate.value = _job.pstate.value))
-    push!(body, :(_job.sstate.rstate.value = _job.pstate.value))
-    push!(body, :(_job.sstate.primestate.value = _job.pstate.value))
+  job.sstate.loguprime = log(rand())+job.pstate.logtarget
+  job.sstate.lstate.value = job.pstate.value
+  job.sstate.rstate.value = job.pstate.value
+  job.sstate.primestate.value = job.pstate.value
 
-    push!(body, :(_job.sstate.runiform = rand()))
-    push!(body, :(_job.sstate.lstate.value = _job.pstate.value-_job.sstate.runiform*_job.sampler.widths[1]))
-    push!(body, :(_job.sstate.rstate.value = _job.pstate.value+(1-_job.sstate.runiform)*_job.sampler.widths[1]))
+  job.sstate.runiform = rand()
+  job.sstate.lstate.value = job.pstate.value-job.sstate.runiform*job.sampler.widths[1]
+  job.sstate.rstate.value = job.pstate.value+(1-job.sstate.runiform)*job.sampler.widths[1]
+
+  if job.sampler.stepout
+    job.parameter.logtarget!(job.sstate.lstate)
+
+    while job.sstate.lstate.logtarget > job.sstate.loguprime
+      job.sstate.lstate.value -= job.sampler.widths[1]
+      job.parameter.logtarget!(job.sstate.lstate)
+    end
+
+    job.parameter.logtarget!(job.sstate.rstate)
+
+    while job.sstate.rstate.logtarget > job.sstate.loguprime
+      job.sstate.rstate.value += job.sampler.widths[1]
+      job.parameter.logtarget!(job.sstate.rstate)
+    end
+  end
+
+  while true
+    job.sstate.primestate.value =
+      rand()*(job.sstate.rstate.value-job.sstate.lstate.value)+job.sstate.lstate.value
+    job.pstate.logtarget = job.parameter.logtarget!(job.sstate.primestate)
+    if job.pstate.logtarget > job.sstate.loguprime
+      break
+    else
+      if job.sstate.primestate.value > job.pstate.value
+        job.sstate.rstate.value = job.sstate.primestate.value
+      elseif job.sstate.primestate.value < job.pstate.value
+        job.sstate.lstate.value = job.sstate.primestate.value
+      else
+        @assert false "Shrunk to current position and still not acceptable"
+      end
+    end
+  end
+
+  job.pstate.value = job.sstate.primestate.value
+
+  if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+    if job.tuner.verbose
+      println("Burnin iteration ", job.fmt_iter(job.sstate.tune.totproposed), " of ", job.range.burnin)
+    end
+
+    job.sstate.tune.totproposed += job.sstate.tune.proposed
+    job.sstate.tune.proposed = 0
+  end
+end
+
+function iterate!(job::BasicMCJob, ::Type{SliceSampler}, ::Type{Multivariate})
+  if job.tuner.verbose
+    job.sstate.tune.proposed += 1
+  end
+
+  for i = 1:job.pstate.size
+    job.sstate.loguprime = log(rand())+job.pstate.logtarget
+    job.sstate.lstate.value = copy(job.pstate.value)
+    job.sstate.rstate.value = copy(job.pstate.value)
+    job.sstate.primestate.value = copy(job.pstate.value)
+
+    job.sstate.runiform = rand()
+    job.sstate.lstate.value[i] = job.pstate.value[i]-job.sstate.runiform*job.sampler.widths[i]
+    job.sstate.rstate.value[i] = job.pstate.value[i]+(1-job.sstate.runiform)*job.sampler.widths[i]
 
     if job.sampler.stepout
-      push!(body, :(_job.parameter.logtarget!(_job.sstate.lstate)))
-      push!(body, :(
-        while _job.sstate.lstate.logtarget > _job.sstate.loguprime
-          _job.sstate.lstate.value -= _job.sampler.widths[1]
-          _job.parameter.logtarget!(_job.sstate.lstate)
-        end
-      ))
+      job.parameter.logtarget!(job.sstate.lstate)
 
-      push!(body, :(_job.parameter.logtarget!(_job.sstate.rstate)))
-      push!(body, :(
-        while _job.sstate.rstate.logtarget > _job.sstate.loguprime
-          _job.sstate.rstate.value += _job.sampler.widths[1]
-          _job.parameter.logtarget!(_job.sstate.rstate)
-        end
-      ))
+      while job.sstate.lstate.logtarget > job.sstate.loguprime
+        job.sstate.lstate.value[i] -= job.sampler.widths[i]
+        job.parameter.logtarget!(job.sstate.lstate)
+      end
+
+      job.parameter.logtarget!(job.sstate.rstate)
+
+      while job.sstate.rstate.logtarget > job.sstate.loguprime
+        job.sstate.rstate.value[i] += job.sampler.widths[i]
+        job.parameter.logtarget!(job.sstate.rstate)
+      end
     end
 
-    push!(body, :(
-      while true
-        _job.sstate.primestate.value =
-          rand()*(_job.sstate.rstate.value-_job.sstate.lstate.value)+_job.sstate.lstate.value
-        _job.pstate.logtarget = _job.parameter.logtarget!(_job.sstate.primestate)
-        if _job.pstate.logtarget > _job.sstate.loguprime
-          break
+    while true
+      job.sstate.primestate.value[i] =
+        rand()*(job.sstate.rstate.value[i]-job.sstate.lstate.value[i])+job.sstate.lstate.value[i]
+      job.pstate.logtarget = job.parameter.logtarget!(job.sstate.primestate)
+      if job.pstate.logtarget > job.sstate.loguprime
+        break
+      else
+        if job.sstate.primestate.value[i] > job.pstate.value[i]
+          job.sstate.rstate.value[i] = job.sstate.primestate.value[i]
+        elseif job.sstate.primestate.value[i] < job.pstate.value[i]
+          job.sstate.lstate.value[i] = job.sstate.primestate.value[i]
         else
-          if _job.sstate.primestate.value > _job.pstate.value
-            _job.sstate.rstate.value = _job.sstate.primestate.value
-          elseif _job.sstate.primestate.value < _job.pstate.value
-            _job.sstate.lstate.value = _job.sstate.primestate.value
-          else
-            @assert false "Shrunk to current position and still not acceptable"
-          end
+          @assert false "Shrunk to current position and still not acceptable"
         end
       end
-    ))
-
-    push!(body, :(_job.pstate.value = _job.sstate.primestate.value))
-  elseif vform == Multivariate
-    push!(innerbody, :(_job.sstate.loguprime = log(rand())+_job.pstate.logtarget))
-    push!(innerbody, :(_job.sstate.lstate.value = copy(_job.pstate.value)))
-    push!(innerbody, :(_job.sstate.rstate.value = copy(_job.pstate.value)))
-    push!(innerbody, :(_job.sstate.primestate.value = copy(_job.pstate.value)))
-
-    push!(innerbody, :(_job.sstate.runiform = rand()))
-    push!(innerbody, :(_job.sstate.lstate.value[i] = _job.pstate.value[i]-_job.sstate.runiform*_job.sampler.widths[i]))
-    push!(innerbody, :(_job.sstate.rstate.value[i] = _job.pstate.value[i]+(1-_job.sstate.runiform)*_job.sampler.widths[i]))
-
-    if job.sampler.stepout
-      push!(innerbody, :(_job.parameter.logtarget!(_job.sstate.lstate)))
-      push!(innerbody, :(
-        while _job.sstate.lstate.logtarget > _job.sstate.loguprime
-          _job.sstate.lstate.value[i] -= _job.sampler.widths[i]
-          _job.parameter.logtarget!(_job.sstate.lstate)
-        end
-      ))
-
-      push!(innerbody, :(_job.parameter.logtarget!(_job.sstate.rstate)))
-      push!(innerbody, :(
-        while _job.sstate.rstate.logtarget > _job.sstate.loguprime
-          _job.sstate.rstate.value[i] += _job.sampler.widths[i]
-          _job.parameter.logtarget!(_job.sstate.rstate)
-        end
-      ))
     end
 
-    push!(innerbody, :(
-      while true
-        _job.sstate.primestate.value[i] =
-          rand()*(_job.sstate.rstate.value[i]-_job.sstate.lstate.value[i])+_job.sstate.lstate.value[i]
-        _job.pstate.logtarget = _job.parameter.logtarget!(_job.sstate.primestate)
-        if _job.pstate.logtarget > _job.sstate.loguprime
-          break
-        else
-          if _job.sstate.primestate.value[i] > _job.pstate.value[i]
-            _job.sstate.rstate.value[i] = _job.sstate.primestate.value[i]
-          elseif _job.sstate.primestate.value[i] < _job.pstate.value[i]
-            _job.sstate.lstate.value[i] = _job.sstate.primestate.value[i]
-          else
-            @assert false "Shrunk to current position and still not acceptable"
-          end
-        end
-      end
-    ))
-
-    push!(innerbody, :(_job.pstate.value[i] = _job.sstate.primestate.value[i]))
-
-    push!(body, Expr(:for, :(i = 1:_job.pstate.size), Expr(:block, innerbody...)))
+    job.pstate.value[i] = job.sstate.primestate.value[i]
   end
 
-  if job.tuner.verbose
-    fmt_iter = format_iteration(ndigits(job.range.burnin))
-
-    push!(burninbody, :(println("Burnin iteration ", $(fmt_iter)(_job.sstate.tune.totproposed), " of ", _job.range.burnin)))
-  end
-
-  push!(burninbody, :(_job.sstate.tune.totproposed += _job.sstate.tune.proposed))
-  push!(burninbody, :(_job.sstate.tune.proposed = 0))
-
-  push!(
-    body,
-    Expr(
-      :if,
-      :(_job.sstate.tune.totproposed <= _job.range.burnin && mod(_job.sstate.tune.proposed, _job.tuner.period) == 0),
-      Expr(:block, burninbody...)
-    )
-  )
-
-  @gensym _iterate
-
-  result = quote
-    function $_iterate(_job::BasicMCJob)
-      $(body...)
+  if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+    if job.tuner.verbose
+      println("Burnin iteration ", job.fmt_iter(job.sstate.tune.totproposed), " of ", job.range.burnin)
     end
-  end
 
-  result
+    job.sstate.tune.totproposed += job.sstate.tune.proposed
+    job.sstate.tune.proposed = 0
+  end
 end
