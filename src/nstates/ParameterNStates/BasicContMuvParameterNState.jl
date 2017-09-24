@@ -49,7 +49,6 @@ mutable struct BasicContMuvParameterNState{N<:Real} <: ParameterNState{Continuou
     end
 
     instance.diagnosticvalues = diagnosticvalues
-
     instance.size = size
     instance.sizesquared = instance.size^2
     instance.sizecubed = instance.size^3
@@ -86,8 +85,6 @@ function BasicContMuvParameterNState(
 end
 
 const ContMuvMarkovChain = BasicContMuvParameterNState
-
-codegen(f::Symbol, nstate::BasicContMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
 
 function copy!(nstate::BasicContMuvParameterNState, state::BasicContMuvParameterState, i::Integer)
   fnames = fieldnames(BasicContMuvParameterNState)

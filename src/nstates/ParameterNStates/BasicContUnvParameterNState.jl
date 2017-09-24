@@ -13,9 +13,9 @@ mutable struct BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuou
   dtensorlogprior::Vector{N}
   dtensorlogtarget::Vector{N}
   diagnosticvalues::Matrix
+  monitor::Vector{Bool}
   n::Integer
   diagnostickeys::Vector{Symbol}
-  copy::Function
 
   function BasicContUnvParameterNState{N}(
     n::Integer,
@@ -37,11 +37,9 @@ mutable struct BasicContUnvParameterNState{N<:Real} <: ParameterNState{Continuou
     end
 
     instance.diagnosticvalues = diagnosticvalues
-
+    instance.monitor = monitor
     instance.n = n
     instance.diagnostickeys = diagnostickeys
-
-    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -69,30 +67,17 @@ end
 
 const ContUnvMarkovChain = BasicContUnvParameterNState
 
-codegen(f::Symbol, nstate::BasicContUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
-
-function codegen(::Type{Val{:copy}}, nstate::BasicContUnvParameterNState, monitor::Vector{Bool})
-  body = []
+function copy!(nstate::BasicContUnvParameterNState, state::BasicContUnvParameterState, i::Integer)
   fnames = fieldnames(BasicContUnvParameterNState)
-  local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
   for j in 1:13
-    if monitor[j]
-      f = fnames[j]
-      push!(body, :(getfield(_nstate, $(QuoteNode(f)))[_i] = getfield(_state, $(QuoteNode(f)))))
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[i] = getfield(state, fnames[j])
     end
   end
 
   if !isempty(nstate.diagnosticvalues)
-    push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
-  end
-
-  @gensym _copy
-
-  quote
-    function $_copy(_nstate::BasicContUnvParameterNState, _state::BasicContUnvParameterState, _i::Integer)
-      $(body...)
-    end
+    nstate.diagnosticvalues[:, i] = state.diagnosticvalues
   end
 end
 
