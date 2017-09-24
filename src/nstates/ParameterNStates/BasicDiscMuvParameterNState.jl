@@ -5,9 +5,11 @@ mutable struct BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNS
   logtarget::Vector{NR}
   diagnosticvalues::Matrix
   size::Integer
+  sizesquared::Integer
+  sizecubed::Integer
+  monitor::Vector{Bool}
   n::Integer
   diagnostickeys::Vector{Symbol}
-  copy::Function
 
   function BasicDiscMuvParameterNState{NI, NR}(
     size::Integer,
@@ -28,12 +30,12 @@ mutable struct BasicDiscMuvParameterNState{NI<:Integer, NR<:Real} <: ParameterNS
     end
 
     instance.diagnosticvalues = diagnosticvalues
-
     instance.size = size
+    instance.sizesquared = instance.size^2
+    instance.sizecubed = instance.size^3
+    instance.monitor = monitor
     instance.n = n
     instance.diagnostickeys = diagnostickeys
-
-    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -67,38 +69,21 @@ end
 
 const DiscMuvMarkovChain = BasicDiscMuvParameterNState
 
-codegen(f::Symbol, nstate::BasicDiscMuvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
-
-function codegen(::Type{Val{:copy}}, nstate::BasicDiscMuvParameterNState, monitor::Vector{Bool})
-  body = []
+function copy!(nstate::BasicDiscMuvParameterNState, state::BasicDiscMuvParameterState, i::Integer)
   fnames = fieldnames(BasicDiscMuvParameterNState)
-  local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
-  if monitor[1]
-    f = fnames[1]
-    push!(
-      body,
-      :(getfield(_nstate, $(QuoteNode(f)))[1+(_i-1)*_state.size:_i*_state.size] = getfield(_state, $(QuoteNode(f))))
-    )
+  if nstate.monitor[1]
+    getfield(nstate, fnames[1])[1+(i-1)*state.size:i*state.size] = getfield(state, fnames[1])
   end
 
   for j in 2:4
-    if monitor[j]
-      f = fnames[j]
-      push!(body, :(getfield(_nstate, $(QuoteNode(f)))[_i] = getfield(_state, $(QuoteNode(f)))))
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[i] = getfield(state, fnames[j])
     end
   end
 
   if !isempty(nstate.diagnosticvalues)
-    push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
-  end
-
-  @gensym _copy
-
-  quote
-    function $_copy(_nstate::BasicDiscMuvParameterNState, _state::BasicDiscMuvParameterState, _i::Integer)
-      $(body...)
-    end
+    nstate.diagnosticvalues[:, i] = state.diagnosticvalues
   end
 end
 

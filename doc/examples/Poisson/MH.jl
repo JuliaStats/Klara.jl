@@ -1,6 +1,6 @@
 using Klara
 
-plogtarget(p::Int, v::Vector) = p*log(v[1])-log(factorial(p))
+plogtarget(p::Int, v::Vector) = p*log(v[1])-lfact(p)
 
 p = BasicDiscUnvParameter(:p, logtarget=plogtarget, nkeys=2)
 

@@ -4,9 +4,9 @@ mutable struct BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNS
   logprior::Vector{NR}
   logtarget::Vector{NR}
   diagnosticvalues::Matrix
+  monitor::Vector{Bool}
   n::Integer
   diagnostickeys::Vector{Symbol}
-  copy::Function
 
   function BasicDiscUnvParameterNState{NI, NR}(
     n::Integer,
@@ -31,11 +31,9 @@ mutable struct BasicDiscUnvParameterNState{NI<:Integer, NR<:Real} <: ParameterNS
     end
 
     instance.diagnosticvalues = diagnosticvalues
-
+    instance.monitor = monitor
     instance.n = n
     instance.diagnostickeys = diagnostickeys
-
-    instance.copy = eval(codegen(:copy, instance, monitor))
 
     instance
   end
@@ -67,30 +65,17 @@ end
 
 const DiscUnvMarkovChain = BasicDiscUnvParameterNState
 
-codegen(f::Symbol, nstate::BasicDiscUnvParameterNState, monitor::Vector{Bool}) = codegen(Val{f}, nstate, monitor)
-
-function codegen(::Type{Val{:copy}}, nstate::BasicDiscUnvParameterNState, monitor::Vector{Bool})
-  body = []
+function copy!(nstate::BasicDiscUnvParameterNState, state::BasicDiscUnvParameterState, i::Integer)
   fnames = fieldnames(BasicDiscUnvParameterNState)
-  local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
 
   for j in 1:4
-    if monitor[j]
-      f = fnames[j]
-      push!(body, :(getfield(_nstate, $(QuoteNode(f)))[_i] = getfield(_state, $(QuoteNode(f)))))
+    if nstate.monitor[j]
+      getfield(nstate, fnames[j])[i] = getfield(state, fnames[j])
     end
   end
 
   if !isempty(nstate.diagnosticvalues)
-    push!(body, :(_nstate.diagnosticvalues[:, _i] = _state.diagnosticvalues))
-  end
-
-  @gensym _copy
-
-  quote
-    function $_copy(_nstate::BasicDiscUnvParameterNState, _state::BasicDiscUnvParameterState, _i::Integer)
-      $(body...)
-    end
+    nstate.diagnosticvalues[:, i] = state.diagnosticvalues
   end
 end
 
