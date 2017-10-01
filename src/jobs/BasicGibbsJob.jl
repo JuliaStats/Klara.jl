@@ -147,8 +147,6 @@ function BasicGibbsJob(
   BasicGibbsJob(model, dpjob, range, vstate, dpindex=dpindex, outopts=outopts, verbose=verbose, check=check)
 end
 
-codegen(f::Symbol, job::BasicGibbsJob) = codegen(Val{f}, job)
-
 function close(job::BasicGibbsJob)
   for i in 1:job.ndp
     if isa(job.output[i], VariableIOStream)

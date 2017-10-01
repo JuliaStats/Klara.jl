@@ -180,8 +180,6 @@ function BasicMCJob(
   )
 end
 
-codegen(f::Symbol, job::BasicMCJob) = codegen(Val{f}, job)
-
 function reset(job::BasicMCJob)
   reset!(job.sstate, job.pstate, job.parameter, job.sampler, job.tuner)
 

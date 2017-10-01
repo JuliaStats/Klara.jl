@@ -10,12 +10,6 @@ mutable struct BasicDiscParamIOStream <: ParameterIOStream{Discrete}
   size::Tuple
   n::Integer
   diagnostickeys::Vector{Symbol}
-  open::Function
-  close::Function
-  mark::Function
-  reset::Function
-  flush::Function
-  write::Function
 
   function BasicDiscParamIOStream(
     size::Tuple,
@@ -36,13 +30,6 @@ mutable struct BasicDiscParamIOStream <: ParameterIOStream{Discrete}
     instance.size = size
     instance.n = n
     instance.diagnostickeys = diagnostickeys
-
-    instance.open = eval(codegen(:open, instance, fnames))
-    instance.close = eval(codegen(:close, instance, fnames))
-    instance.mark = eval(codegen(:mark, instance, fnames))
-    instance.reset = eval(codegen(:reset, instance, fnames))
-    instance.flush = eval(codegen(:flush, instance, fnames))
-    instance.write = eval(codegen(:write, instance, fnames))
 
     instance
   end
@@ -106,127 +93,58 @@ function BasicDiscParamIOStream(
   )
 end
 
-function codegen(::Type{Val{:open}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
-
-  push!(body,:(_iostream.names = _names))
+function open(iostream::BasicDiscParamIOStream, filenames::Vector{S}, mode::AbstractString="w") where {S<:AbstractString}
+  iostream.names = filenames
+  fnames = fieldnames(BasicDiscParamIOStream)
 
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(setfield!(_iostream, $(QuoteNode(f)), open(_names[$i], _mode))))
-    end
-  end
-
-  @gensym _open
-
-  quote
-    function $_open{S<:AbstractString}(_iostream::BasicDiscParamIOStream, _names::Vector{S}, _mode::AbstractString="w")
-      $(body...)
+      setfield!(iostream, fnames[i], open(filenames[i], mode))
     end
   end
 end
 
-function codegen(::Type{Val{:close}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
-
+function close(iostream::BasicDiscParamIOStream)
+  fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(close(getfield(_iostream, $(QuoteNode(f))))))
-    end
-  end
-
-  @gensym _close
-
-  quote
-    function $_close(_iostream::BasicDiscParamIOStream)
-      $(body...)
+      close(getfield(iostream, fnames[i]))
     end
   end
 end
 
-function codegen(::Type{Val{:mark}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
-
+function mark(iostream::BasicDiscParamIOStream)
+  fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(mark(getfield(_iostream, $(QuoteNode(f))))))
-    end
-  end
-
-  @gensym _mark
-
-  quote
-    function $_mark(_iostream::BasicDiscParamIOStream)
-      $(body...)
+      mark(getfield(iostream, fnames[i]))
     end
   end
 end
 
-function codegen(::Type{Val{:reset}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
-
+function reset(iostream::BasicDiscParamIOStream)
+  fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(reset(getfield($(iostream), $(QuoteNode(f))))))
-    end
-  end
-
-  @gensym _reset
-
-  quote
-    function $_reset(_iostream::BasicDiscParamIOStream)
-      $(body...)
+      reset(getfield(iostream, fnames[i]))
     end
   end
 end
 
-function codegen(::Type{Val{:flush}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol
-
+function flush(iostream::BasicDiscParamIOStream)
+  fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(body, :(flush(getfield($(iostream), $(QuoteNode(f))))))
-    end
-  end
-
-  @gensym _flush
-
-  quote
-    function $_flush(_iostream::BasicDiscParamIOStream)
-      $(body...)
+      flush(getfield(iostream, fnames[i]))
     end
   end
 end
 
-function codegen(::Type{Val{:write}}, iostream::BasicDiscParamIOStream, fnames::Vector{Symbol})
-  body = []
-  local f::Symbol # f must be local to avoid compiler errors. Alternatively, this variable declaration can be omitted
-
+function write(iostream::BasicDiscParamIOStream, state::ParameterState{Discrete, F}) where {F<:VariateForm}
+  fnames = fieldnames(BasicDiscParamIOStream)
   for i in 1:5
     if getfield(iostream, fnames[i]) != nothing
-      f = fnames[i]
-      push!(
-        body,
-        :(write(getfield($(iostream), $(QuoteNode(f))), join(getfield(_state, $(QuoteNode(f))), ','), "\n"))
-      )
-    end
-  end
-
-  @gensym _write
-
-  quote
-    function $_write{F<:VariateForm}(_iostream::BasicDiscParamIOStream, _state::ParameterState{Discrete, F})
-      $(body...)
+      write(getfield(iostream, fnames[i]), join(getfield(state, fnames[i]), ','), "\n")
     end
   end
 end

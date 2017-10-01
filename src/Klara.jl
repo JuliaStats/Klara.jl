@@ -177,7 +177,6 @@ export
   add_edge!,
   add_vertex!,
   close,
-  codegen,
   copy!,
   count!,
   covariance!,
