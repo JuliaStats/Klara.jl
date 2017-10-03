@@ -2,7 +2,7 @@ __precompile__()
 
 module Klara
 
-using DiffResults
+using DiffBase
 using Distributions
 using Formatting
 using StatsBase

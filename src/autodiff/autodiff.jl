@@ -24,9 +24,9 @@ DiffMethods(;
  DiffMethods(closurell, closurelp, closurelt, tapegll, tapeglp, tapeglt, tapetll, tapetlp, tapetlt)
 
 mutable struct DiffState
-  resultll::Union{DiffResults.DiffResult, Void}
-  resultlp::Union{DiffResults.DiffResult, Void}
-  resultlt::Union{DiffResults.DiffResult, Void}
+  resultll::Union{DiffBase.DiffResult, Void}
+  resultlp::Union{DiffBase.DiffResult, Void}
+  resultlt::Union{DiffBase.DiffResult, Void}
   cfggll::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}
   cfgglp::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}
   cfgglt::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}
@@ -36,9 +36,9 @@ mutable struct DiffState
 end
 
 DiffState(;
-  resultll::Union{DiffResults.DiffResult, Void}=nothing,
-  resultlp::Union{DiffResults.DiffResult, Void}=nothing,
-  resultlt::Union{DiffResults.DiffResult, Void}=nothing,
+  resultll::Union{DiffBase.DiffResult, Void}=nothing,
+  resultlp::Union{DiffBase.DiffResult, Void}=nothing,
+  resultlt::Union{DiffBase.DiffResult, Void}=nothing,
   cfggll::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}=nothing,
   cfgglp::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}=nothing,
   cfgglt::Union{ReverseDiff.GradientConfig, ForwardDiff.GradientConfig, Void}=nothing,

@@ -119,13 +119,13 @@ function BasicContMuvParameterState(
     if diffopts.order == 1
       for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          setfield!(diffstate, field, DiffResults.GradientResult(value))
+          setfield!(diffstate, field, DiffBase.GradientResult(value))
         end
       end
     else
       for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          setfield!(diffstate, field, DiffResults.HessianResult(value))
+          setfield!(diffstate, field, DiffBase.HessianResult(value))
         end
       end
     end
