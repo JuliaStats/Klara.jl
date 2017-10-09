@@ -1,6 +1,6 @@
-abstract type RobertsRosenthalMCTune <: MCTunerState end
+abstract type RobertsRosenthalMCTune{F<:VariateForm} <: MCTunerState end
 
-mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
+mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Univariate}
   σ::Real # Standard deviation of underlying normal
   δ::Real # Increase or decrease of σ at each batch
   accepted::Integer # Number of accepted MCMC samples during current tuning period
@@ -30,7 +30,7 @@ end
 UnvRobertsRosenthalMCTune(σ::Real=1., accepted::Integer=0, proposed::Integer=0, totproposed::Integer=0) =
   UnvRobertsRosenthalMCTune(σ, NaN, accepted, proposed, totproposed, NaN)
 
-mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
+mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Multivariate}
   σ::RealVector # Standard deviation of underlying normal
   δ::Real # Increase or decrease of σ at each batch
   accepted::IntegerVector # Number of accepted MCMC samples during current tuning period
@@ -57,11 +57,13 @@ mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
   end
 end
 
-MuvRobertsRosenthalMCTune(σ::RealVector, accepted::IntegerVector, proposed::Integer=0, totproposed::Integer=0) =
-  MuvRobertsRosenthalMCTune(σ, NaN, accepted, proposed, totproposed, NaN)
+function MuvRobertsRosenthalMCTune(σ::RealVector, proposed::Integer=0, totproposed::Integer=0)
+  l = length(σ)
+  MuvRobertsRosenthalMCTune(σ, NaN, fill(0, l), proposed, totproposed, fill(NaN, l))
+end
 
 MuvRobertsRosenthalMCTune(size::Integer, proposed::Integer=0, totproposed::Integer=0) =
-  MuvRobertsRosenthalMCTune(fill(NaN, size), fill(0, size), proposed, totproposed)
+  MuvRobertsRosenthalMCTune(fill(1., size), NaN, fill(0, size), proposed, totproposed, fill(NaN, size))
 
 ### RobertsRosenthalMCTuner
 

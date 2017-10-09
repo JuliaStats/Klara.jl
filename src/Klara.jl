@@ -45,6 +45,7 @@ export
   ### Types
   AM,
   AMState,
+  AMWGState,
   ARS,
   ARSState,
   AcceptanceRateMCTuner,
@@ -321,6 +322,7 @@ include("samplers/SliceSampler.jl")
 include("samplers/MH.jl")
 include("samplers/AM.jl")
 include("samplers/RAM.jl")
+include("samplers/AMWG.jl")
 include("samplers/HMC.jl")
 include("samplers/NUTS.jl")
 include("samplers/MALA.jl")
