@@ -1,3 +1,5 @@
+### AMWG state
+
 mutable struct AMWGState{F<:VariateForm} <: MHSamplerState{F}
   pstate::ParameterState{Continuous, F}
   tune::RobertsRosenthalMCTune{F}
@@ -22,3 +24,11 @@ AMWGState(pstate::ParameterState{Continuous, F}, tune::RobertsRosenthalMCTune{F}
 
 AMWGState(pstate::ParameterState{Continuous, F}, tune::RobertsRosenthalMCTune{F}) where {F<:VariateForm} =
   AMWGState(pstate, tune, NaN)
+
+### Adaptive Metropolis-within-Gibbs (AMWG) sampler
+
+struct AMWG <: MHSampler
+  logσ0::RealVector
+end
+
+AMWG(logσ0::Real, d::Integer=1) = AMWG(fill(logσ0, d))

@@ -45,6 +45,7 @@ export
   ### Types
   AM,
   AMState,
+  AMWG,
   AMWGState,
   ARS,
   ARSState,

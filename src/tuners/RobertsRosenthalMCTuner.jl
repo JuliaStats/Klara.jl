@@ -69,22 +69,25 @@ MuvRobertsRosenthalMCTune(size::Integer, proposed::Integer=0, totproposed::Integ
 
 struct RobertsRosenthalMCTuner <: MCTuner
   targetrate::Real # Target acceptance rate
+  nadapt::Integer # Number of steps in which the proposal variance is scaled
   period::Integer # Tuning period over which acceptance rate is computed
   verbose::Bool # If verbose=false then the tuner is silent, else it is verbose
 
-  function RobertsRosenthalMCTuner(targetrate::Real, period::Integer, verbose::Bool)
+  function RobertsRosenthalMCTuner(targetrate::Real, nadapt::Integer, period::Integer, verbose::Bool)
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1"
+    @assert nadapt > 0 "Number of adaptation steps should be positive"
     @assert period > 0 "Tuning period should be positive"
-    new(targetrate, period, verbose)
+    new(targetrate, nadapt, period, verbose)
   end
 end
 
 RobertsRosenthalMCTuner(
-  targetrate::Real;
+  targetrate::Real,
+  nadapt::Integer;
   period::Integer=100,
   verbose::Bool=false
 ) =
-  RobertsRosenthalMCTuner(targetrate, period, verbose)
+  RobertsRosenthalMCTuner(targetrate, nadapt, period, verbose)
 
 set_delta!(tune::RobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner) =
   tune.δ = min(0.01, sqrt(tuner.period/tune.totproposed))
@@ -97,5 +100,15 @@ tune!(tune::MuvRobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner, i::Intege
 
 show(io::IO, tuner::RobertsRosenthalMCTuner) =
   print(
-    io, "RobertsRosenthalMCTuner: target rate = $(tuner.targetrate), period = $(tuner.period), verbose = $(tuner.verbose)"
+    io,
+    string(
+      "RobertsRosenthalMCTuner: target rate = ",
+      tuner.targetrate,
+      ", nadapt = ",
+      tuner.nadapt,
+      ", period = ",
+      tuner.period,
+      ", verbose = ",
+      tuner.verbose
+    )
   )

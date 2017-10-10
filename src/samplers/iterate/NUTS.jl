@@ -208,14 +208,14 @@ function iterate!(job::BasicMCJob, ::Type{NUTS}, ::Type{Univariate})
     end
 
     if job.tuner.verbose
-      if (mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
         rate!(job.sstate.tune)
 
         println(
           "Burnin iteration ",
           job.fmt_iter(job.sstate.tune.totproposed),
           " of ",
-          job.tuner.nadapt,
+          job.range.burnin,
           ": ",
           job.fmt_perc(100*job.sstate.tune.rate),
           " % acceptance rate"
@@ -437,14 +437,14 @@ function iterate!(job::BasicMCJob, ::Type{NUTS}, ::Type{Multivariate})
     end
 
     if job.tuner.verbose
-      if (mod(job.sstate.tune.proposed, job.tuner.period) == 0)
+      if (job.sstate.tune.totproposed <= job.range.burnin && mod(job.sstate.tune.proposed, job.tuner.period) == 0)
         rate!(job.sstate.tune)
 
         println(
           "Burnin iteration ",
           job.fmt_iter(job.sstate.tune.totproposed),
           " of ",
-          job.tuner.nadapt,
+          job.range.burnin,
           ": ",
           job.fmt_perc(100*job.sstate.tune.rate),
           " % acceptance rate"
