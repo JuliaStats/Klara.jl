@@ -15,7 +15,7 @@ mutable struct AMWGState{F<:VariateForm} <: MHSamplerState{F}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    new(pstate, tune, ratio, count, diagnosticindices)
+    new(pstate, tune, ratio, diagnosticindices)
   end
 end
 
