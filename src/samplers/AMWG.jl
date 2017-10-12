@@ -3,7 +3,7 @@
 mutable struct AMWGState{F<:VariateForm} <: MHSamplerState{F}
   pstate::ParameterState{Continuous, F}
   tune::RobertsRosenthalMCTune{F}
-  ratio::Real # Acceptance ratio
+  ratio::Real
   diagnosticindices::Dict{Symbol, Integer}
 
   function AMWGState{F}(
@@ -15,7 +15,7 @@ mutable struct AMWGState{F<:VariateForm} <: MHSamplerState{F}
     if !isnan(ratio)
       @assert ratio > 0 "Acceptance ratio should be positive"
     end
-    new(pstate, tune, ratio, diagnosticindices)
+    new(pstate, tune, ratio, count, diagnosticindices)
   end
 end
 
