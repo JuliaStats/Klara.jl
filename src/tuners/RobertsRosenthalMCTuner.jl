@@ -1,9 +1,8 @@
-abstract type RobertsRosenthalMCTune{F<:VariateForm} <: MCTunerState end
+abstract type RobertsRosenthalMCTune <: MCTunerState end
 
-mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Univariate}
+mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
   logσ::Real # Standard deviation of underlying normal
   δ::Real # Increase or decrease of logσ at each batch
-  count::Integer
   batch::Integer
   accepted::Integer # Number of accepted MCMC samples during current tuning period
   proposed::Integer # Number of proposed MCMC samples during current tuning period
@@ -11,16 +10,8 @@ mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Univariate}
   rate::Real # Observed acceptance rate over current tuning period
 
   function UnvRobertsRosenthalMCTune(
-    logσ::Real,
-    δ::Real,
-    count::Integer,
-    batch::Integer,
-    accepted::Integer,
-    proposed::Integer,
-    totproposed::Integer,
-    rate::Real
+    logσ::Real, δ::Real, batch::Integer, accepted::Integer, proposed::Integer, totproposed::Integer, rate::Real
   )
-    @assert count >= 0 "Number of iterations (count) should be non-negative"
     @assert batch >= 0 "Batch should be non-negative"
     @assert accepted >= 0 "Number of accepted MCMC samples should be non-negative"
     @assert proposed >= 0 "Number of proposed MCMC samples should be non-negative"
@@ -28,17 +19,16 @@ mutable struct UnvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Univariate}
     if !isnan(rate)
       @assert 0 <= rate <= 1 "Observed acceptance rate should be in [0, 1]"
     end
-    new(logσ, NaN, count, batch, accepted, proposed, totproposed, rate)
+    new(logσ, NaN, batch, accepted, proposed, totproposed, rate)
   end
 end
 
-UnvRobertsRosenthalMCTune(logσ::Real=0., accepted::Integer=0, proposed::Integer=0, totproposed::Integer=0) =
-  UnvRobertsRosenthalMCTune(σ, 0, 0, accepted, proposed, totproposed, NaN)
+UnvRobertsRosenthalMCTune(; logσ::Real=0., accepted::Integer=0, proposed::Integer=0, totproposed::Integer=0) =
+  UnvRobertsRosenthalMCTune(logσ, NaN, 0, accepted, proposed, totproposed, NaN)
 
-mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Multivariate}
+mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune
   logσ::RealVector # Standard deviation of underlying normal
   δ::Real # Increase or decrease of logσ at each batch
-  count::Integer
   batch::Integer
   accepted::IntegerVector # Number of accepted MCMC samples during current tuning period
   proposed::Integer # Number of proposed MCMC samples during current tuning period
@@ -48,14 +38,12 @@ mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Multivariate}
   function MuvRobertsRosenthalMCTune(
     logσ::RealVector,
     δ::Real,
-    count::Integer,
     batch::Integer,
     accepted::IntegerVector,
     proposed::Integer,
     totproposed::Integer,
     rate::RealVector
   )
-    @assert count >= 0 "Number of iterations (count) should be non-negative"
     @assert batch >= 0 "Batch should be non-negative"
     @assert all(i -> i >= 0, accepted) "Number of accepted MCMC samples should be non-negative"
     @assert proposed >= 0 "Number of proposed MCMC samples should be non-negative"
@@ -63,43 +51,52 @@ mutable struct MuvRobertsRosenthalMCTune <: RobertsRosenthalMCTune{Multivariate}
     if all(i -> !isnan(i), rate)
       @assert all(i -> 0 <= i <= 1, rate) "Observed acceptance rates should be in [0, 1]"
     end
-    new(logσ, NaN, count, batch, accepted, proposed, totproposed, rate)
+    new(logσ, NaN, batch, accepted, proposed, totproposed, rate)
   end
 end
 
-function MuvRobertsRosenthalMCTune(logσ::RealVector, proposed::Integer=0, totproposed::Integer=0)
-  l = length(logσ)
-  MuvRobertsRosenthalMCTune(logσ, NaN, 0, 0, fill(0, l), proposed, totproposed, fill(NaN, l))
+MuvRobertsRosenthalMCTune(
+  logσ::RealVector; accepted::IntegerVector=fill(0, length(logσ)), proposed::Integer=0, totproposed::Integer=0
+) =
+  MuvRobertsRosenthalMCTune(logσ, NaN, 0, accepted, proposed, totproposed, fill(NaN, length(logσ)))
+
+MuvRobertsRosenthalMCTune(
+  d::Integer; logσ::Real=0., accepted::IntegerVector=fill(0, d), proposed::Integer=0, totproposed::Integer=0
+) =
+  MuvRobertsRosenthalMCTune(fill(logσ, d), NaN, 0, accepted, proposed, totproposed, fill(NaN, d))
+
+reset!(tune::UnvRobertsRosenthalMCTune) = reset_burnin!(tune::MCTunerState)
+
+function reset!(tune::MuvRobertsRosenthalMCTune, i::Integer)
+  tune.accepted[i] = 0
+  tune.rate[i] = NaN
 end
 
-MuvRobertsRosenthalMCTune(size::Integer, proposed::Integer=0, totproposed::Integer=0) =
-  MuvRobertsRosenthalMCTune(fill(0., size), NaN, 0, 0, fill(0, size), proposed, totproposed, fill(NaN, size))
+function reset!(tune::MuvRobertsRosenthalMCTune)
+  tune.totproposed += tune.proposed
+  tune.proposed = 0
+end
+
+rate!(tune::MuvRobertsRosenthalMCTune, i::Integer) = (tune.rate[i] = tune.accepted[i]/tune.proposed)
 
 ### RobertsRosenthalMCTuner
 
 struct RobertsRosenthalMCTuner <: MCTuner
   targetrate::Real # Target acceptance rate
-  nbatch::Integer # Number of batches
   period::Integer # Tuning period over which acceptance rate is computed
   verbose::Bool # If verbose=false then the tuner is silent, else it is verbose
 
-  function RobertsRosenthalMCTuner(targetrate::Real, nadapt::Integer, period::Integer, verbose::Bool)
+  function RobertsRosenthalMCTuner(targetrate::Real, period::Integer, verbose::Bool)
     @assert 0 < targetrate < 1 "Target acceptance rate should be between 0 and 1"
-    @assert nbatch > 0 "Number of batches should be positive"
     @assert period > 0 "Tuning period should be positive"
-    new(targetrate, nbatch, period, verbose)
+    new(targetrate, period, verbose)
   end
 end
 
-RobertsRosenthalMCTuner(
-  targetrate::Real,
-  nbatch::Integer;
-  period::Integer=100,
-  verbose::Bool=false
-) =
-  RobertsRosenthalMCTuner(targetrate, nbatch, period, verbose)
+RobertsRosenthalMCTuner(; targetrate::Real=0.44, period::Integer=100, verbose::Bool=false) =
+  RobertsRosenthalMCTuner(targetrate, period, verbose)
 
-set_batch!(tune::RobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner) = (tune.batch = tune.count/tuner.nbatch)
+set_batch!(tune::RobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner) = (tune.batch = tune.totproposed/tuner.period)
 
 set_delta!(tune::RobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner) = (tune.δ = min(0.01, tune.batch^-0.5))
 
@@ -115,8 +112,6 @@ show(io::IO, tuner::RobertsRosenthalMCTuner) =
     string(
       "RobertsRosenthalMCTuner: target rate = ",
       tuner.targetrate,
-      ", nbatch = ",
-      tuner.nbatch,
       ", period = ",
       tuner.period,
       ", verbose = ",

@@ -5,7 +5,7 @@ function iterate!(job::BasicMCJob, ::Type{MH}, ::Type{Univariate})
 
   job.sstate.proposal = job.sampler.setproposal(job.pstate)
 
-  job.sstate.pstate.value =  rand(job.sstate.proposal)
+  job.sstate.pstate.value = rand(job.sstate.proposal)
 
   job.parameter.logtarget!(job.sstate.pstate)
 

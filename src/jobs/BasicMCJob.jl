@@ -79,6 +79,10 @@ mutable struct BasicMCJob <: MCJob
       instance.parameter, instance.sampler, tuner, instance.pstate, instance.vstate, instance.outopts[:diagnostics]
     )
 
+    if isa(instance.sampler, MuvAMWG)
+      initialize_diagnosticvalues!(instance.pstate, instance.sstate)
+    end
+
     instance.output = initialize_output(instance.pstate, range.npoststeps, instance.outopts)
 
     instance.count = 0
