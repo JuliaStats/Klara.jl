@@ -21,5 +21,3 @@ job = BasicMCJob(model, mcsampler, mcrange, v0, tuner=tuner, outopts=outopts)
 chain = output(job)
 
 mean(chain)
-
-acceptance(chain)

@@ -93,7 +93,7 @@ struct RobertsRosenthalMCTuner <: MCTuner
   end
 end
 
-RobertsRosenthalMCTuner(; targetrate::Real=0.44, period::Integer=100, verbose::Bool=false) =
+RobertsRosenthalMCTuner(; targetrate::Real=0.44, period::Integer=50, verbose::Bool=false) =
   RobertsRosenthalMCTuner(targetrate, period, verbose)
 
 set_batch!(tune::RobertsRosenthalMCTune, tuner::RobertsRosenthalMCTuner) = (tune.batch = tune.totproposed/tuner.period)

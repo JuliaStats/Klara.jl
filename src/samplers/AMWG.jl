@@ -1,3 +1,8 @@
+### Reference:
+### Gareth O. Roberts and Jeffrey S. Rosenthal
+### Examples of Adaptive MCMC
+### Journal of Computational and Graphical Statistics, 2009, 18 (2), pp 349-367
+
 ### AMWG state
 
 abstract type AMWGState{F<:VariateForm} <: MHSamplerState{F} end
