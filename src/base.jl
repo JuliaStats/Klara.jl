@@ -2,8 +2,13 @@ IntegerVector{I<:Integer} = Vector{I}
 RealVector{N<:Real} = Vector{N}
 RealMatrix{N<:Real} = Matrix{N}
 
-RealLowerTriangular{T, S} = LowerTriangular{T,S} where {T<:Real, S<:AbstractMatrix{T}}
+RealLowerTriangular{N, M} = LowerTriangular{N, M} where {N<:Real, M<:AbstractMatrix{N}}
 RealLowerTriangular(m) = LowerTriangular(m)
+
+RealPair{N<:Real} = Pair{N, N}
+RealPairVector{N, P} = Vector{P} where {N<:Real, P<:RealPair{N}}
+
+FunctionVector{F<:Function} = Vector{F}
 
 RealNormal{N<:Real} = Normal{N}
 MultivariateGMM{D<:MvNormal} = MultivariateMixture{Continuous, D}

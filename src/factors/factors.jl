@@ -1,1 +1,1 @@
-abstract Factor
+abstract type Factor end
