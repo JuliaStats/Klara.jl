@@ -273,6 +273,9 @@ include("data.jl")
 
 include("stats/logistic.jl")
 
+include("factors/factors.jl")
+include("factors/GibbsFactor.jl")
+
 include("distributions/Binary.jl")
 include("distributions/TruncatedNormal.jl")
 
