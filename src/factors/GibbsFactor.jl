@@ -64,9 +64,9 @@ function GibbsFactor(
   reparametrize::Dict{Symbol, Symbol}=Dict{Symbol, Symbol}(),
   n::Integer=length(variables)
 )
-  local vtypes::Vector{DataType} = Array(DataType, n)
-  local vsupport::Vector{Union{RealPair, RealPairVector}} = Array(Union{RealPair, RealPairVector}, n)
-  local vreparametrize::Vector{Symbol} = Array(Symbol, n)
+  local vtypes::Vector{DataType} = Array{DataType}(n)
+  local vsupport::Vector{Union{RealPair, RealPairVector}} = Array{Union{RealPair, RealPairVector}}(n)
+  local vreparametrize::Vector{Symbol} = Array{Symbol}(n)
 
   for (v, i) in zip(variables, 1:n)
     vtypes[i] = variabletypes[v]
@@ -111,10 +111,10 @@ function GibbsFactor(
   reparametrize::Dict=Dict{Symbol, Symbol}(),
   n::Integer=length(variabletypes)
 )
-  local variables::Vector{Symbol} = Array(Symbol, n)
-  local vtypes::Vector{DataType} = Array(DataType, n)
-  local vsupport::Vector{Union{RealPair, RealPairVector}} = Array(Union{RealPair, RealPairVector}, n)
-  local vreparametrize::Vector{Symbol} = Array(Symbol, n)
+  local variables::Vector{Symbol} = Array{Symbol}(n)
+  local vtypes::Vector{DataType} = Array{DataType}(n)
+  local vsupport::Vector{Union{RealPair, RealPairVector}} = Array{Union{RealPair, RealPairVector}}(n)
+  local vreparametrize::Vector{Symbol} = Array{Symbol}(n)
   local i::Int64 = 1
 
   for (k, t) in variabletypes
@@ -231,7 +231,7 @@ function codegen_transform(f::GibbsFactor, i::Integer, nt::Integer=num_transform
 end
 
 function generate_variables(f::GibbsFactor, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f))
-  local variables::VariableVector = Array(Variable, nv)
+  local variables::VariableVector = Array{Variable}(nv)
 
   for i in 1:nv
     if issubtype(f.variabletypes[i], Parameter)

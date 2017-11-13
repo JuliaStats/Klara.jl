@@ -626,6 +626,7 @@ value_support(::BasicContUnvParameter) = Continuous
 variate_form(::Type{BasicContUnvParameter}) = Univariate
 variate_form(::BasicContUnvParameter) = Univariate
 
+default_state_type(::Type{BasicContUnvParameter}) = BasicContUnvParameterState
 default_state_type(::BasicContUnvParameter) = BasicContUnvParameterState
 
 default_state(variable::BasicContUnvParameter, value::N, outopts::Dict) where {N<:Real} =

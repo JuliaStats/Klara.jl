@@ -210,6 +210,7 @@ value_support(::BasicDiscMuvParameter) = Discrete
 variate_form(::Type{BasicDiscMuvParameter}) = Multivariate
 variate_form(::BasicDiscMuvParameter) = Multivariate
 
+default_state_type(::Type{BasicDiscMuvParameter}) = BasicDiscMuvParameterState
 default_state_type(::BasicDiscMuvParameter) = BasicDiscMuvParameterState
 
 default_state(variable::BasicDiscMuvParameter, value::Vector{N}, outopts::Dict) where {N<:Integer} =
