@@ -96,6 +96,7 @@ export
   DiscreteParameterState,
   DualAveragingMCTuner,
   Factor,
+  FunctionVector,
   GenericModel,
   GibbsFactor,
   GibbsJob,

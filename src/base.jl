@@ -7,7 +7,6 @@ RealLowerTriangular(m) = LowerTriangular(m)
 
 RealPair{F<:Real, S<:Real} = Pair{F, S}
 RealPairVector{P<:RealPair} = Vector{P}
-# RealPairVector{N, P} = Vector{P} where {N<:Real, P<:RealPair{N}}
 
 FunctionVector{F<:Function} = Vector{F}
 
