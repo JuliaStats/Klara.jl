@@ -1,5 +1,5 @@
 function generate_logtarget(
-  f::GibbsFactor, i::Integer, s, ::Type{Klara.Univariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor, i::Integer, stream::IOStream, ::Type{Klara.Univariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
 )
   local body = ["_state.logtarget = 0."]
   local lpargs::Vector{String}
@@ -27,7 +27,7 @@ function generate_logtarget(
         end
       end
 
-      push!(body, "_state.logtarget += f.logpotentials[$j]($(lpargs...))")
+      push!(body, "_state.logtarget += f.logpotentials[$j]($(join(lpargs, ", ")))")
     end
   end
 
@@ -39,19 +39,34 @@ function generate_logtarget(
     end
   end
 
-  f = open(s, "w")
+  write(
+    stream,
+    string(
+      "function logtarget_",
+      f.variables[1],
+      "(_state::",
+      Klara.default_state_type(f.variabletypes[i]),
+      "_states::VariableStateVector)\n")
+  )
+
   for ln in body
-    write(f, ln*"\n")
+    write(stream, "  $(ln)\n")
   end
-  close(f)
 
-  # @gensym logtarget
+  write(stream, "end\n")
+end
 
-  # quote
-  #   function $logtarget(_state::$(default_state_type(f.variabletypes[i])), _states::VariableStateVector)
-  #     $(body...)
-  #   end
-  # end
+function generate_logtarget(
+  f::GibbsFactor,
+  i::Integer,
+  filename::AbstractString,
+  vform::Type{Klara.Univariate},
+  nc::Integer=num_cliques(f),
+  nv::Integer=num_vertices(f)
+)
+  stream = open(filename, "w")
+  generate_logtarget(f, i, stream, vform, nc, nv)
+  close(stream)
 end
 
 generate_logtarget(f, 1, "test.jl", Klara.variate_form(BasicContUnvParameter), 4)
