@@ -129,7 +129,7 @@ function GibbsFactor(
 end
 
 function generate_logtarget(
-  f::GibbsFactor, i::Integer, stream::IOStream, ::Type{Univariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor, i::Integer, stream::IO, ::Type{Univariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
 )
   local body = ["_state.logtarget = 0."]
   local lpargs::Vector{String}
@@ -187,7 +187,7 @@ function generate_logtarget(
 end
 
 function generate_logtarget(
-  f::GibbsFactor, i::Integer, stream::IOStream, ::Type{Multivariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor, i::Integer, stream::IO, ::Type{Multivariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
 )
   local body = ["_state.logtarget = 0."]
   local lpargs::Vector{String}
@@ -226,21 +226,30 @@ function generate_logtarget(
   write(stream, "end\n")
 end
 
-# TODO 1: Add generate_logtarget() without vform input argument (to be inferred)
-# TODO 2: Modify generate_logtarget() below to operate without vform input argument
-# TODO 3: Allow to optionally add empty line between file-generated chunks of code
+# TODO 1: Add generate_logtarget_ln for filename version too
+# TODO 2: Add STDOUT as default for stream input argument
+# TODO 3: Rename nc to ncliques and nv to nvertices in named arguments
+
+generate_logtarget(f::GibbsFactor, i::Integer, stream::IO, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)) =
+  generate_logtarget(f, i, stream, variate_form(f.variabletypes[i]), nc, nv)
+
+function generate_logtarget_ln(
+  f::GibbsFactor, i::Integer, stream::IO, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+)
+  generate_logtarget(f, i, stream, variate_form(f.variabletypes[i]), nc, nv)
+  print(stream, '\n')
+end
 
 function generate_logtarget(
   f::GibbsFactor,
   i::Integer,
-  filename::AbstractString,
-  vform::Type{F};
+  filename::AbstractString;
   mode::AbstractString="w",
   nc::Integer=num_cliques(f),
-  nv::Integer=num_vertices(f)
-) where F<:VariateForm
+  nv::Integer=num_vertices(f),
+)
   stream = open(filename, mode)
-  generate_logtarget(f, i, stream, vform, nc, nv)
+  generate_logtarget(f, i, stream, nc, nv)
   close(stream)
 end
 
