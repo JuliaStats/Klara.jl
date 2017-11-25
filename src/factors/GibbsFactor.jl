@@ -129,13 +129,18 @@ function GibbsFactor(
 end
 
 function generate_logtarget(
-  f::GibbsFactor, i::Integer, stream::IO, ::Type{Univariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor,
+  i::Integer,
+  ::Type{Univariate};
+  stream::IO=STDOUT,
+  ncliques::Integer=num_cliques(f),
+  nvertices::Integer=num_vertices(f)
 )
   local body = ["_state.logtarget = 0."]
   local lpargs::Vector{String}
-  local lptargs::Vector{Int8} = fill(Int8(0), nv)
+  local lptargs::Vector{Int8} = fill(Int8(0), nvertices)
 
-  for j in 1:nc
+  for j in 1:ncliques
     if in(f.variables[i], f.cliques[j])
       lpargs = []
 
@@ -161,7 +166,7 @@ function generate_logtarget(
     end
   end
 
-  for k in 1:nv
+  for k in 1:nvertices
     if lptargs[k] == 1
       push!(body, "_state.logtarget += _state.value")
     elseif lptargs[k] == 2
@@ -187,12 +192,17 @@ function generate_logtarget(
 end
 
 function generate_logtarget(
-  f::GibbsFactor, i::Integer, stream::IO, ::Type{Multivariate}, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor,
+  i::Integer,
+  ::Type{Multivariate};
+  stream::IO=STDOUT,
+  ncliques::Integer=num_cliques(f),
+  nvertices::Integer=num_vertices(f)
 )
   local body = ["_state.logtarget = 0."]
   local lpargs::Vector{String}
 
-  for j in 1:nc
+  for j in 1:ncliques
     if in(f.variables[i], f.cliques[j])
       lpargs = []
 
@@ -226,17 +236,15 @@ function generate_logtarget(
   write(stream, "end\n")
 end
 
-# TODO 1: Add generate_logtarget_ln for filename version too
-# TODO 2: Add STDOUT as default for stream input argument
-# TODO 3: Rename nc to ncliques and nv to nvertices in named arguments
-
-generate_logtarget(f::GibbsFactor, i::Integer, stream::IO, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)) =
-  generate_logtarget(f, i, stream, variate_form(f.variabletypes[i]), nc, nv)
+generate_logtarget(
+  f::GibbsFactor, i::Integer; stream::IO=STDOUT, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f)
+) =
+  generate_logtarget(f, i, variate_form(f.variabletypes[i]), stream=stream, ncliques=ncliques, nvertices=nvertices)
 
 function generate_logtarget_ln(
-  f::GibbsFactor, i::Integer, stream::IO, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f)
+  f::GibbsFactor, i::Integer; stream::IO=STDOUT, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f)
 )
-  generate_logtarget(f, i, stream, variate_form(f.variabletypes[i]), nc, nv)
+  generate_logtarget(f, i, variate_form(f.variabletypes[i]), stream=stream, ncliques=ncliques, nvertices=nvertices)
   print(stream, '\n')
 end
 
@@ -245,11 +253,24 @@ function generate_logtarget(
   i::Integer,
   filename::AbstractString;
   mode::AbstractString="w",
-  nc::Integer=num_cliques(f),
-  nv::Integer=num_vertices(f),
+  ncliques::Integer=num_cliques(f),
+  nvertices::Integer=num_vertices(f),
 )
   stream = open(filename, mode)
-  generate_logtarget(f, i, stream, nc, nv)
+  generate_logtarget(f, i, stream=stream, ncliques=ncliques, nvertices=nvertices)
+  close(stream)
+end
+
+function generate_logtarget_ln(
+  f::GibbsFactor,
+  i::Integer,
+  filename::AbstractString;
+  mode::AbstractString="w",
+  ncliques::Integer=num_cliques(f),
+  nvertices::Integer=num_vertices(f),
+)
+  stream = open(filename, mode)
+  generate_logtarget_ln(f, i, stream=stream, ncliques=ncliques, nvertices=nvertices)
   close(stream)
 end
 
@@ -274,13 +295,13 @@ function codegen_transform(f::GibbsFactor, i::Integer, nt::Integer=num_transform
   end
 end
 
-function generate_variables(f::GibbsFactor, nc::Integer=num_cliques(f), nv::Integer=num_vertices(f))
-  local variables::VariableVector = Array{Variable}(nv)
+function generate_variables(f::GibbsFactor, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f))
+  local variables::VariableVector = Array{Variable}(nvertices)
 
-  for i in 1:nv
+  for i in 1:nvertices
     if issubtype(f.variabletypes[i], Parameter)
       variables[i] = f.variabletypes[i](
-        f.variables[i], signature=:low, logtarget=eval(codegen_logtarget(f, i, variate_form(f.variabletypes[i]), nc, nv))
+        f.variables[i], signature=:low, logtarget=eval(codegen_logtarget(f, i, variate_form(f.variabletypes[i]), ncliques, nvertices))
       )
     else
       variables[i] = f.variabletypes[i](f.variables[i])
