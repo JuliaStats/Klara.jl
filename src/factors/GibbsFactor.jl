@@ -181,7 +181,8 @@ function generate_logtarget(
       f.variables[i],
       "(_state::",
       default_state_type(f.variabletypes[i]),
-      "_states::VariableStateVector)\n")
+      "_states::VariableStateVector)\n"
+    )
   )
 
   for ln in body
@@ -214,7 +215,6 @@ function generate_logtarget(
         end
       end
 
-      push!(body, :(_state.logtarget += f.logpotentials[$j]($(lpargs...))))
       push!(body, "_state.logtarget += f.logpotentials[$j]($(join(lpargs, ", ")))")
     end
   end
@@ -226,7 +226,8 @@ function generate_logtarget(
       f.variables[i],
       "(_state::",
       default_state_type(f.variabletypes[i]),
-      "_states::VariableStateVector)\n")
+      "_states::VariableStateVector)\n"
+    )
   )
 
   for ln in body
@@ -236,16 +237,18 @@ function generate_logtarget(
   write(stream, "end\n")
 end
 
-generate_logtarget(
-  f::GibbsFactor, i::Integer; stream::IO=STDOUT, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f)
-) =
-  generate_logtarget(f, i, variate_form(f.variabletypes[i]), stream=stream, ncliques=ncliques, nvertices=nvertices)
-
-function generate_logtarget_ln(
-  f::GibbsFactor, i::Integer; stream::IO=STDOUT, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f)
+function generate_logtarget(
+  f::GibbsFactor,
+  i::Integer;
+  stream::IO=STDOUT,
+  ncliques::Integer=num_cliques(f),
+  nvertices::Integer=num_vertices(f),
+  lnend::Bool=false
 )
   generate_logtarget(f, i, variate_form(f.variabletypes[i]), stream=stream, ncliques=ncliques, nvertices=nvertices)
-  print(stream, '\n')
+  if lnend
+    print(stream, '\n')
+  end
 end
 
 function generate_logtarget(
@@ -255,26 +258,14 @@ function generate_logtarget(
   mode::AbstractString="w",
   ncliques::Integer=num_cliques(f),
   nvertices::Integer=num_vertices(f),
+  lnend::Bool=false
 )
   stream = open(filename, mode)
-  generate_logtarget(f, i, stream=stream, ncliques=ncliques, nvertices=nvertices)
+  generate_logtarget(f, i, stream=stream, ncliques=ncliques, nvertices=nvertices, lnend=lnend)
   close(stream)
 end
 
-function generate_logtarget_ln(
-  f::GibbsFactor,
-  i::Integer,
-  filename::AbstractString;
-  mode::AbstractString="w",
-  ncliques::Integer=num_cliques(f),
-  nvertices::Integer=num_vertices(f),
-)
-  stream = open(filename, mode)
-  generate_logtarget_ln(f, i, stream=stream, ncliques=ncliques, nvertices=nvertices)
-  close(stream)
-end
-
-function codegen_transform(f::GibbsFactor, i::Integer, nt::Integer=num_transforms(f))
+function generate_transform(f::GibbsFactor, i::Integer; stream::IO=STDOUT, lnend::Bool=false)
   local transformations::Vector{Symbol} = Symbol[a.first for a in f.assignments]
 
   local k::Integer = findfirst(transformations, f.variables[i])
@@ -283,16 +274,32 @@ function codegen_transform(f::GibbsFactor, i::Integer, nt::Integer=num_transform
   local lpargs::Vector{Expr} = Expr[]
 
   for v in f.assignments[k].second
-    push!(lpargs, :(_states[$(f.ofvariable[v])].value))
+    push!(lpargs, "_states[f.ofvariable[$v]].value")
   end
 
-  @gensym transform
+  write(
+    stream,
+    string(
+      "function transform_",
+      f.variables[k],
+      "(_states::VariableStateVector)\n")
+  )
 
-  quote
-    function $transform(_states::VariableStateVector)
-      f.transforms[$k]($(lpargs...))
-    end
+  write(stream, "  f.transforms[$k]($(join(lpargs, ", ")))\n")
+
+  write(stream, "end\n")
+
+  if lnend
+    print(stream, '\n')
   end
+end
+
+function generate_transform(
+  f::GibbsFactor, i::Integer, filename::AbstractString; mode::AbstractString="w", lnend::Bool=false
+)
+  stream = open(filename, mode)
+  generate_transform(f, i, stream=stream, lnend=lnend)
+  close(stream)
 end
 
 function generate_variables(f::GibbsFactor, ncliques::Integer=num_cliques(f), nvertices::Integer=num_vertices(f))
