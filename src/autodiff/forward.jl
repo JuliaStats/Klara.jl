@@ -1,33 +1,33 @@
-function forward_autodiff_derivative(result::DiffBase.DiffResult, f::Function, x::Real)
+function forward_autodiff_derivative(result::DiffResults.DiffResult, f::Function, x::Real)
   ForwardDiff.derivative!(result, f, x)
-  return DiffBase.derivative(result)
+  return DiffResults.derivative(result)
 end
 
-function forward_autodiff_gradient(result::DiffBase.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig)
-  ForwardDiff.gradient!(result, f, x, cfg)
-  return DiffBase.gradient(result)
+function forward_autodiff_gradient(result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig)
+  result = ForwardDiff.gradient!(result, f, x, cfg)
+  return DiffResults.gradient(result)
 end
 
 function forward_autodiff_negative_hessian(
-  result::DiffBase.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.HessianConfig
+  result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.HessianConfig
 )
   ForwardDiff.hessian!(result, f, x, cfg)
-  return -DiffBase.hessian(result)
+  return -DiffResults.hessian(result)
 end
 
-function forward_autodiff_upto_derivative(result::DiffBase.DiffResult, f::Function, x::Real)
+function forward_autodiff_upto_derivative(result::DiffResults.DiffResult, f::Function, x::Real)
   ForwardDiff.derivative!(result, f, x)
-  return DiffBase.value(result), DiffBase.derivative(result)
+  return DiffResults.value(result), DiffResults.derivative(result)
 end
 
-function forward_autodiff_upto_gradient(result::DiffBase.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig)
+function forward_autodiff_upto_gradient(result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig)
   ForwardDiff.gradient!(result, f, x, cfg)
-  return DiffBase.value(result), DiffBase.gradient(result)
+  return DiffResults.value(result), DiffResults.gradient(result)
 end
 
 function forward_autodiff_upto_negative_hessian(
-  result::DiffBase.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.HessianConfig
+  result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.HessianConfig
 )
   ForwardDiff.hessian!(result, f, x, cfg)
-  return DiffBase.value(result), DiffBase.gradient(result), -DiffBase.hessian(result)
+  return DiffResults.value(result), DiffResults.gradient(result), -DiffResults.hessian(result)
 end

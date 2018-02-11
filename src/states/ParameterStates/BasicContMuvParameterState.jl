@@ -119,13 +119,13 @@ function BasicContMuvParameterState(
     if diffopts.order == 1
       for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          setfield!(diffstate, field, DiffBase.GradientResult(value))
+          setfield!(diffstate, field, DiffResults.GradientResult(value))
         end
       end
     else
       for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          setfield!(diffstate, field, DiffBase.HessianResult(value))
+          setfield!(diffstate, field, DiffResults.HessianResult(value))
         end
       end
     end
@@ -146,9 +146,9 @@ function BasicContMuvParameterState(
       end
     else
       if diffopts.chunksize == 0
-        for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
+        for (i, field, diffmethod) in ((4, :cfggll, :closurell), (5, :cfgglp, :closurelp), (6, :cfgglt, :closurelt))
           if diffopts.targets[i-3]
-            setfield!(diffstate, field, ForwardDiff.GradientConfig(value))
+            setfield!(diffstate, field, ForwardDiff.GradientConfig(getfield(diffmethods, diffmethod), value))
           end
         end
 
@@ -162,6 +162,7 @@ function BasicContMuvParameterState(
       else
         for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
           if diffopts.targets[i-3]
+            # TODO fix case of given chunksize and test it by passing DiffOptions() to parameter
             setfield!(diffstate, field, ForwardDiff.GradientConfig{diffopts.chunksize}(value))
           end
         end

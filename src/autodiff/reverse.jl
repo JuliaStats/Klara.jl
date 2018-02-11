@@ -1,35 +1,35 @@
 function reverse_autodiff_gradient(
-  result::DiffBase.DiffResult,
+  result::DiffResults.DiffResult,
   f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape},
   x::Vector
 )
   ReverseDiff.gradient!(result, f, x)
-  return DiffBase.gradient(result)
+  return DiffResults.gradient(result)
 end
 
 function reverse_autodiff_negative_hessian(
-  result::DiffBase.DiffResult,
+  result::DiffResults.DiffResult,
   f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape},
   x::Vector
 )
   ReverseDiff.hessian!(result, f, x)
-  return -DiffBase.hessian(result)
+  return -DiffResults.hessian(result)
 end
 
 function reverse_autodiff_upto_gradient(
-  result::DiffBase.DiffResult,
+  result::DiffResults.DiffResult,
   f::Union{ReverseDiff.GradientTape, ReverseDiff.CompiledTape},
   x::Vector
 )
   ReverseDiff.gradient!(result, f, x)
-  return DiffBase.value(result), DiffBase.gradient(result)
+  return DiffResults.value(result), DiffResults.gradient(result)
 end
 
 function reverse_autodiff_upto_negative_hessian(
-  result::DiffBase.DiffResult,
+  result::DiffResults.DiffResult,
   f::Union{ReverseDiff.HessianTape, ReverseDiff.CompiledTape},
   x::Vector
 )
   ReverseDiff.hessian!(result, f, x)
-  return DiffBase.value(result), DiffBase.gradient(result), -DiffBase.hessian(result)
+  return DiffResults.value(result), DiffResults.gradient(result), -DiffResults.hessian(result)
 end

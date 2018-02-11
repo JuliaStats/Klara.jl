@@ -86,7 +86,7 @@ function BasicContUnvParameterState(
     if diffopts.order == 1
       for (i, field) in ((1, :resultll), (2, :resultlp), (3, :resultlt))
         if diffopts.targets[i]
-          setfield!(diffstate, field, DiffBase.DiffResult(zero(value), zero(value)))
+          setfield!(diffstate, field, DiffResults.DiffResult(zero(value), zero(value)))
         end
       end
     else
