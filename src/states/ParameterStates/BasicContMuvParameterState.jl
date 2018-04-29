@@ -153,9 +153,17 @@ function BasicContMuvParameterState(
         end
 
         if diffopts.order == 2
-          for (i, diffresult, diffconfig) in ((7, :resultll, :cfgtll), (8, :resultlp, :cfgtlp), (9, :resultlt, :cfgtlt))
+          for (i, diffmethod, diffresult, diffconfig) in (
+            (7, :closurell, :resultll, :cfgtll),
+            (8, :closurelp, :resultlp, :cfgtlp),
+            (9, :closurelt, :resultlt, :cfgtlt)
+          )
             if diffopts.targets[i-6]
-              setfield!(diffstate, diffconfig, ForwardDiff.HessianConfig(getfield(diffstate, diffresult), value))
+              setfield!(
+                diffstate,
+                diffconfig,
+                ForwardDiff.HessianConfig(getfield(diffmethods, diffmethod), getfield(diffstate, diffresult), value)
+              )
             end
           end
         end
@@ -168,10 +176,19 @@ function BasicContMuvParameterState(
         end
 
         if diffopts.order == 2
-          for (i, diffresult, diffconfig) in ((7, :resultll, :cfgtll), (8, :resultlp, :cfgtlp), (9, :resultlt, :cfgtlt))
+          for (i, diffmethod, diffresult, diffconfig) in (
+            (7, :closurell, :resultll, :cfgtll),
+            (8, :closurelp, :resultlp, :cfgtlp),
+            (9, :closurelt, :resultlt, :cfgtlt)
+          )
             if diffopts.targets[i-6]
+              # TODO fix case of given chunksize and test it by passing DiffOptions() to parameter
               setfield!(
-                diffstate, diffconfig, ForwardDiff.HessianConfig{diffopts.chunksize}(getfield(diffstate, diffresult), value)
+                diffstate,
+                diffconfig,
+                ForwardDiff.HessianConfig{diffopts.chunksize}(
+                  getfield(diffmethods, diffmethod), getfield(diffstate, diffresult), value
+                )
               )
             end
           end

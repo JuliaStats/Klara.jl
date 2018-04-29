@@ -20,7 +20,9 @@ function forward_autodiff_upto_derivative(result::DiffResults.DiffResult, f::Fun
   return DiffResults.value(result), DiffResults.derivative(result)
 end
 
-function forward_autodiff_upto_gradient(result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig)
+function forward_autodiff_upto_gradient(
+  result::DiffResults.DiffResult, f::Function, x::Vector, cfg::ForwardDiff.GradientConfig
+)
   ForwardDiff.gradient!(result, f, x, cfg)
   return DiffResults.value(result), DiffResults.gradient(result)
 end
