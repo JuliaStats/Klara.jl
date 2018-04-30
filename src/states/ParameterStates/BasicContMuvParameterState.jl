@@ -168,10 +168,15 @@ function BasicContMuvParameterState(
           end
         end
       else
-        for (i, field) in ((4, :cfggll), (5, :cfgglp), (6, :cfgglt))
+        for (i, field, diffmethod) in ((4, :cfggll, :closurell), (5, :cfgglp, :closurelp), (6, :cfgglt, :closurelt))
           if diffopts.targets[i-3]
-            # TODO fix case of given chunksize and test it by passing DiffOptions() to parameter
-            setfield!(diffstate, field, ForwardDiff.GradientConfig{diffopts.chunksize}(value))
+            setfield!(
+              diffstate,
+              field,
+              ForwardDiff.GradientConfig(
+                getfield(diffmethods, diffmethod), value, ForwardDiff.Chunk{diffopts.chunksize}()
+              )
+            )
           end
         end
 
@@ -182,12 +187,14 @@ function BasicContMuvParameterState(
             (9, :closurelt, :resultlt, :cfgtlt)
           )
             if diffopts.targets[i-6]
-              # TODO fix case of given chunksize and test it by passing DiffOptions() to parameter
               setfield!(
                 diffstate,
                 diffconfig,
-                ForwardDiff.HessianConfig{diffopts.chunksize}(
-                  getfield(diffmethods, diffmethod), getfield(diffstate, diffresult), value
+                ForwardDiff.HessianConfig(
+                  getfield(diffmethods, diffmethod),
+                  getfield(diffstate, diffresult),
+                  value,
+                  ForwardDiff.Chunk{diffopts.chunksize}()
                 )
               )
             end
